@@ -5,7 +5,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/mrdrzit/Pythonic_Analyze">
+  <a href="https://github.com/mrdrzit/Behavython">
     <img class="fit-picture"
      src="logo/Pythonic_analyse_logo.png"
      alt="Grapefruit slice atop a pile of other slices"
@@ -13,16 +13,16 @@
      height="500">
   </a>
 
-<h3 align="center">Pythonic_Analyze</h3>
+<h1 align="center">Behavython </h1>
 
   <p align="center">
     A port to Python of the MATLAB script created by Flávio Mourão in NNC
     <br />
     <br />
     ·
-    <a href="https://github.com/mrdrzit/Pythonic_Analyze/issues">Report Bug</a>
+    <a href="https://github.com/mrdrzit/Behavython/issues">Report Bug</a>
     ·
-    <a href="https://github.com/mrdrzit/Pythonic_Analyze/issues">Request Feature</a>
+    <a href="https://github.com/mrdrzit/Behavython/issues">Request Feature</a>
   </p>
 </div>
 
@@ -95,7 +95,7 @@
 
 <br/>
                                 
-See the [open issues](https://github.com/mrdrzit/Pythonic_Analyze/issues) for a full list of proposed features (and known issues).
+See the [open issues](https://github.com/mrdrzit/Behavython/issues) for a full list of proposed features (and known issues).
 
 <br/>
 
@@ -137,7 +137,7 @@ Brazil<br/>
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
-[issues-shield]: https://img.shields.io/github/issues/mrdrzit/Pythonic_Analyze
-[issues-url]: https://github.com/mrdrzit/Pythonic_Analyze/issues
-[license-shield]: https://img.shields.io/github/license/mrdrzit/Pythonic_Analyze
-[license-url]: https://github.com/mrdrzit/Pythonic_Analyze/blob/main/LICENSE.txt
+[issues-shield]: https://img.shields.io/github/issues/mrdrzit/Behavython
+[issues-url]: https://github.com/mrdrzit/Behavython/issues
+[license-shield]: https://img.shields.io/github/license/mrdrzit/Behavython
+[license-url]: https://github.com/mrdrzit/Behavython/blob/main/LICENSE.txt
