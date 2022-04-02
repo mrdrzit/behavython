@@ -6,7 +6,11 @@
 <br />
 <div align="center">
   <a href="https://github.com/mrdrzit/Pythonic_Analyze">
-    <img src="logo/Pythonic_analyse_logo.png alt="Logo" width="80" height="80">
+    <img class="fit-picture"
+     src="logo/Pythonic_analyse_logo.png"
+     alt="Grapefruit slice atop a pile of other slices"
+     width="500"
+     height="500">
   </a>
 
 <h3 align="center">Pythonic_Analyze</h3>
@@ -110,8 +114,8 @@ Distributed under the GNU General Public License v3.0. See `LICENSE.txt` for mor
 <!-- CONTACT -->
 ## Contact
 
-Matheus Costa - matheuscosta3004@gmail.com<br />
-João Pedro Carvalho Moreira - mcjpedro@gmail.com
+João Pedro Carvalho Moreira - mcjpedro@gmail.com<br />
+Matheus Costa - matheuscosta3004@gmail.com
 
 <br/>
 
