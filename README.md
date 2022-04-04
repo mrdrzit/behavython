@@ -126,8 +126,10 @@ Matheus Costa - matheuscosta3004@gmail.com
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
 
-* [Flávio Mourão](https://github.com/fgmourao)
-* [Núcleo de Nuerociências](www.nnc.ufmg.br/)
+* Flávio Mourão:<br/>
+    Github: [Flávio Mourão](https://github.com/fgmourao) Twitter: [@F_Mourao_](https://twitter.com/F_Mourao_)
+* Lab:<br/>
+    [Núcleo de Neurociências](http://www.nnc.ufmg.br) 
 
 
 ### Developed at                                
