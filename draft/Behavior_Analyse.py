@@ -50,6 +50,8 @@ for file in range(0, len(FileName)):
     
   if FileName[file].name.endswith(".csv"):
     Data[file] = pd.read_csv(FileName[file].buffer, header=None, delimiter=",", dtype={"0": np.float32, "1": np.float32, "2": np.intc, "3": np.intc, "4": np.intc, "5": np.intc, "6": np.intc})
+    Data[file][0] = Data[file][0].interpolate() # Here, it the data is missing at the start or the end of the file might generate a sequence of zero (as there is no point to interpolate)
+    Data[file][1] = Data[file][1].interpolate() 
     File_Header.File_Name_Csv[file] = os.path.basename(FileName[file].name)
     print("Reading", File_Header.File_Name_Csv[file])
 
