@@ -7,7 +7,7 @@
 <div align="center">
   <a href="https://github.com/mrdrzit/Behavython">
     <img class="fit-picture"
-     src="logo/Pythonic_analyse_logo.png"
+     src="logo/logo.png"
      alt="Grapefruit slice atop a pile of other slices"
      width="500"
      height="500">
