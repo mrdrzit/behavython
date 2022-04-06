@@ -78,5 +78,3 @@ if int(Input_Settings[1]) == 1 and int(Input_Settings[2]) == 1:
 elif int(Input_Settings[1]) == 2 and int(Input_Settings[2]) == 1:
   Plot_EPM
 pass
-
-#TODO #9 Separate the dialog creation from the main file to clean up the space a little
