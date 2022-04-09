@@ -6,11 +6,10 @@
 <br />
 <div align="center">
   <a href="https://github.com/mrdrzit/Behavython">
-    <img class="fit-picture"
+    <img
      src="logo/logo.png"
-     alt="Grapefruit slice atop a pile of other slices"
-     width="500"
-     height="500">
+     style="max-width: 100%; height: 100%;"
+     alt="Behavython software"
   </a>
 
 <h1 align="center">Behavython </h1>
