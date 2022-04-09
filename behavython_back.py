@@ -40,7 +40,7 @@ class experiment_class:
         
         accumulate_distance = np.cumsum(displacement)
         total_distance = max(accumulate_distance)
-        time_vector = np.linspace(0, len(self.data),len(self.data)/frames_per_second)
+        time_vector = np.linspace(0, len(self.data)/frames_per_second, len(self.data))
         velocity = np.divide(displacement, np.append(0, np.diff(time_vector)))
         mean_velocity = np.mean(velocity)
         
@@ -50,6 +50,7 @@ class experiment_class:
         time_resting = np.sum(displacement == 0)*frames_per_second
         
         plt.hist(displacement_raw, 400, density=True, facecolor='g', alpha=0.75)
+        plt.show()
         
         analyse_results = {'video_width'         : video_width,
                            'video_height'        : video_height,
@@ -69,8 +70,8 @@ class experiment_class:
                            'aceleration'         : aceleration,
                            'moviments'           : moviments,
                            'time_moviments'      : time_moviments,
-                           'time_resting'        : time_resting}
-        
+                           'time_resting'        : time_resting
+                           }
         return analyse_results
         
 class files_class:
