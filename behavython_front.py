@@ -12,9 +12,8 @@ class behavython_gui(QMainWindow):
         '''
         This private function calls the interface of a .ui file created in Qt Designer.
         '''
-        super(behavython_gui, self).__init__()                                                       # Calls the inherited classes __init__ method
-        QMainWindow.__init__(self)                                                                  # Creates the main window
-        self.interface = uic.loadUi("Behavython_GUI.ui", self)                                      # Loads the interface design archive (made in Qt Designer)
+        super(behavython_gui, self).__init__()                                     # Calls the inherited classes __init__ method
+        uic.loadUi("Behavython_GUI.ui", self)                                      # Loads the interface design archive (made in Qt Designer)
         
         self.options = {}
         
@@ -39,18 +38,10 @@ class behavython_gui(QMainWindow):
         self.arena_height_lineedit.setText('50')
         self.frames_per_second_lineedit.setText('0.0267')
 
-if __name__ == '__main__':   
-    def main():
-        if not QtWidgets.QApplication.instance():
-            QtWidgets.QApplication(sys.argv)
-        else:
-            QtWidgets.QApplication.instance()
-            main = behavython_gui()
-            main.show()
-            return main  
-    show = main()
-        
-        
-        
-        
-
+def main(): 
+  app = QtWidgets.QApplication(sys.argv)                                           # Create an instance of QtWidgets.QApplication
+  window = behavython_gui()                                                        # Create an instance of our class
+  app.exec_()                                                                      # Start the application
+ 
+if __name__ == '__main__': 
+  show = main()
