@@ -40,7 +40,7 @@ class experiment_class:
         
         accumulate_distance = np.cumsum(displacement)
         total_distance = max(accumulate_distance)
-        time_vector = range(0, len(self.data), len(self.data)/frames_per_second)
+        time_vector = np.linspace(0, len(self.data),len(self.data)/frames_per_second)
         velocity = np.divide(displacement, np.append(0, np.diff(time_vector)))
         mean_velocity = np.mean(velocity)
         
