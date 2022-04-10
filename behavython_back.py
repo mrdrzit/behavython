@@ -71,7 +71,7 @@ class experiment_class:
         fig = plt.figure()
         plt.scatter(x_axe, y_axe, pdf, c=pdf, alpha=1, linewidths=5, marker='D')
 
-        # Alternativa method using a function found here:
+        # Alternative method using a function found here:
         # https://stackoverflow.com/questions/41577705/how-does-2d-kernel-density-estimation-in-python-sklearn-work
         # xx, yy, zz = kde2D(x, y, 1.0, 50j, 100j)
         # fig1 = plt.figure()
@@ -101,6 +101,7 @@ class experiment_class:
                            'time_moviments'      : time_moviments,
                            'time_resting'        : time_resting
                            }
+                           
         return analyse_results
         
 class files_class:
