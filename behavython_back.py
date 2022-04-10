@@ -38,14 +38,14 @@ class experiment_class:
         accumulate_distance = np.cumsum(displacement)
         total_distance = max(accumulate_distance)
         
-        # time_vector = range(0, len(self.data), len(self.data)/frames_per_second)
-        # velocity = np.divide(displacement, np.append(0, np.diff(time_vector)))
-        # mean_velocity = np.mean(velocity)
+        time_vector = np.linspace(0, len(self.data)/frames_per_second, len(self.data))
+        velocity = np.divide(displacement, np.transpose(np.append(0, np.diff(time_vector)))) # Expand steps to make the code more readable
+        mean_velocity = np.nanmean(velocity)
         
-        # aceleration = np.divide(np.append(0, velocity), np.append(0, time_vector))
-        # moviments = np.sum(displacement > 0)
-        # time_moviments = np.sum(displacement > 0)*frames_per_second
-        # time_resting = np.sum(displacement == 0)*frames_per_second
+        aceleration = np.divide(np.append(0, np.diff(velocity)), np.append(0, np.diff(time_vector)))
+        moviments = np.sum(displacement > 0)
+        time_moviments = np.sum(displacement > 0)*(1/frames_per_second)
+        time_resting = np.sum(displacement == 0)*(1/frames_per_second)
         
         plt.hist(displacement_raw, 400, density=True, facecolor='g', alpha=0.75)
         
@@ -58,17 +58,17 @@ class experiment_class:
                            'y_axe_cm'            : y_axe_cm,
                            'd_x_axe_cm'          : d_x_axe_cm,
                            'd_y_axe_cm'          : d_y_axe_cm,
-                           'displacement'        : displacement}
-                           # 'accumulate_distance' : accumulate_distance,
-                           # 'total_distance'      : total_distance,
-                           # 'time_vector'         : time_vector,
-                           # 'velocity'            : velocity,
-                           # 'mean_velocity'       : mean_velocity,
-                           # 'aceleration'         : aceleration,
-                           # 'moviments'           : moviments,
-                           # 'time_moviments'      : time_moviments,
-                           # 'time_resting'        : time_resting}
-        
+                           'displacement'        : displacement,
+                           'accumulate_distance' : accumulate_distance,
+                           'total_distance'      : total_distance,
+                           'time_vector'         : time_vector,
+                           'velocity'            : velocity,
+                           'mean_velocity'       : mean_velocity,
+                           'aceleration'         : aceleration,
+                           'moviments'           : moviments,
+                           'time_moviments'      : time_moviments,
+                           'time_resting'        : time_resting
+                           }        
         return analyse_results
         
 class files_class:
