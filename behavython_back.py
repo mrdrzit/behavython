@@ -6,6 +6,24 @@ import numpy as np
 from matplotlib import pyplot as plt 
 from tkinter import filedialog
 from skimage.color import rgb2gray
+from scipy import stats
+from sklearn.neighbors import KernelDensity
+
+# Alternative method using a function found here:
+# https://stackoverflow.com/questions/41577705/how-does-2d-kernel-density-estimation-in-python-sklearn-work
+
+# def kde2D(x, y, bandwidth, xbins=100j, ybins=100j, **kwargs): 
+#     """Build 2D kernel density estimate (KDE)."""
+#     # create grid of sample locations (default: 100x100)
+#     xx, yy = np.mgrid[x.min():x.max():xbins, 
+#                       y.min():y.max():ybins]
+#     xy_sample = np.vstack([yy.ravel(), xx.ravel()]).T
+#     xy_train  = np.vstack([y, x]).T
+#     kde_skl = KernelDensity(bandwidth=bandwidth, **kwargs)
+#     kde_skl.fit(xy_train)
+#     # score_samples() returns the log-likelihood of the samples
+#     z = np.exp(kde_skl.score_samples(xy_sample))
+#     return xx, yy, np.reshape(z, xx.shape)
 
 class experiment_class:
     def __init__(self):
@@ -38,14 +56,28 @@ class experiment_class:
         accumulate_distance = np.cumsum(displacement)
         total_distance = max(accumulate_distance)
         
-        # time_vector = range(0, len(self.data), len(self.data)/frames_per_second)
-        # velocity = np.divide(displacement, np.append(0, np.diff(time_vector)))
-        # mean_velocity = np.mean(velocity)
+        time_vector = np.linspace(0, len(self.data)/frames_per_second, len(self.data))
+        velocity = np.divide(displacement, np.transpose(np.append(0, np.diff(time_vector)))) # Expand steps to make the code more readable
+        mean_velocity = np.nanmean(velocity)
         
-        # aceleration = np.divide(np.append(0, velocity), np.append(0, time_vector))
-        # moviments = np.sum(displacement > 0)
-        # time_moviments = np.sum(displacement > 0)*frames_per_second
-        # time_resting = np.sum(displacement == 0)*frames_per_second
+        aceleration = np.divide(np.append(0, np.diff(velocity)), np.append(0, np.diff(time_vector)))
+        moviments = np.sum(displacement > 0)
+        time_moviments = np.sum(displacement > 0)*(1/frames_per_second)
+        time_resting = np.sum(displacement == 0)*(1/frames_per_second)
+
+        xy = np.array([np.array(x_axe), np.array(y_axe)])
+        kde = stats.gaussian_kde(xy)
+        pdf = kde.evaluate(xy)
+        fig = plt.figure()
+        plt.scatter(x_axe, y_axe, pdf, c=pdf, alpha=1, linewidths=5, marker='D')
+
+        # Alternativa method using a function found here:
+        # https://stackoverflow.com/questions/41577705/how-does-2d-kernel-density-estimation-in-python-sklearn-work
+        # xx, yy, zz = kde2D(x, y, 1.0, 50j, 100j)
+        # fig1 = plt.figure()
+        # plt.pcolormesh(xx, yy, zz)
+        # plt.scatter(x, y, s=0.01, facecolor='white')
+        # plt.show()
         
         plt.hist(displacement_raw, 400, density=True, facecolor='g', alpha=0.75)
         
@@ -58,17 +90,17 @@ class experiment_class:
                            'y_axe_cm'            : y_axe_cm,
                            'd_x_axe_cm'          : d_x_axe_cm,
                            'd_y_axe_cm'          : d_y_axe_cm,
-                           'displacement'        : displacement}
-                           # 'accumulate_distance' : accumulate_distance,
-                           # 'total_distance'      : total_distance,
-                           # 'time_vector'         : time_vector,
-                           # 'velocity'            : velocity,
-                           # 'mean_velocity'       : mean_velocity,
-                           # 'aceleration'         : aceleration,
-                           # 'moviments'           : moviments,
-                           # 'time_moviments'      : time_moviments,
-                           # 'time_resting'        : time_resting}
-        
+                           'displacement'        : displacement,
+                           'accumulate_distance' : accumulate_distance,
+                           'total_distance'      : total_distance,
+                           'time_vector'         : time_vector,
+                           'velocity'            : velocity,
+                           'mean_velocity'       : mean_velocity,
+                           'aceleration'         : aceleration,
+                           'moviments'           : moviments,
+                           'time_moviments'      : time_moviments,
+                           'time_resting'        : time_resting
+                           }
         return analyse_results
         
 class files_class:
