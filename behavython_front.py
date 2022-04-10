@@ -30,13 +30,14 @@ class behavython_gui(QMainWindow):
         functions = behavython_back.interface_functions()
         self.experiments = functions.get_experiments()
         
-        self.experiments[0].video_analyse(self.options)
+        self.analyse_results = self.experiments[0].video_analyse(self.options)
+        #print(self.analyse_results)
           
     def clear_function(self):
         self.type_combobox.setCurrentIndex(1)
         self.video_frames_lineedit.setText('30')
-        self.arena_width_lineedit.setText('50')
-        self.arena_height_lineedit.setText('50')
+        self.arena_width_lineedit.setText('65')
+        self.arena_height_lineedit.setText('65')
         self.frames_per_second_lineedit.setText('0.0267')
 
 if __name__ == '__main__':   

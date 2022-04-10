@@ -225,7 +225,7 @@
           <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
          </property>
          <property name="text">
-          <string notr="true">50</string>
+          <string notr="true">65</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
@@ -244,7 +244,7 @@
           <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
          </property>
          <property name="text">
-          <string notr="true">50</string>
+          <string notr="true">65</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
