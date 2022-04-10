@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 from tkinter import filedialog
 from skimage.color import rgb2gray
 from scipy import stats
-from sklearn.neighbors import KernelDensity
+# from sklearn.neighbors import KernelDensity
 
 # Alternative method using a function found here:
 # https://stackoverflow.com/questions/41577705/how-does-2d-kernel-density-estimation-in-python-sklearn-work
