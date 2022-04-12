@@ -67,7 +67,7 @@ class experiment_class:
 
         xy = np.array([np.array(x_axe), np.array(y_axe)])
         kde = stats.gaussian_kde(xy)
-        pdf = kde.evaluate(xy)
+        pdf = kde.evaluate(xy) # # Convert to to double and compare
         fig = plt.figure()
         plt.scatter(x_axe, y_axe, pdf, c=pdf, alpha=1, linewidths=5, marker='D')
 
