@@ -65,11 +65,11 @@ class experiment_class:
         time_moviments = np.sum(displacement > 0)*(1/frames_per_second)
         time_resting = np.sum(displacement == 0)*(1/frames_per_second)
 
-        xy = np.array([np.array(x_axe), np.array(y_axe)])
-        kde = stats.gaussian_kde(xy)
-        pdf = kde.evaluate(xy) # # Convert to to double and compare
-        fig = plt.figure()
-        plt.scatter(x_axe, y_axe, pdf, c=pdf, alpha=1, linewidths=5, marker='D')
+        kde_space_coordinates = np.array([np.array(x_axe), np.array(y_axe)])
+        kde_instance = stats.gaussian_kde(kde_space_coordinates)
+        point_density_function = kde_instance.evaluate(kde_space_coordinates) # # Convert to to double and compare
+        point_density_figure = plt.figure()
+        plt.scatter(x_axe, y_axe, point_density_function, c=point_density_function, alpha=1, linewidths=5, marker='D')
 
         # Alternative method using a function found here:
         # https://stackoverflow.com/questions/41577705/how-does-2d-kernel-density-estimation-in-python-sklearn-work
