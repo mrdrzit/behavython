@@ -58,7 +58,7 @@ class experiment_class:
         total_distance = max(accumulate_distance)
         
         time_vector = np.linspace(0, len(self.data)/frames_per_second, len(self.data))
-        velocity = np.divide(displacement, np.transpose(np.append(0, np.diff(time_vector)))) # Expand steps to make the code more readable
+        velocity = np.divide(displacement, np.transpose(np.append(0, np.diff(time_vector))))        # Expand steps to make the code more readable
         mean_velocity = np.nanmean(velocity)
         
         aceleration = np.divide(np.append(0, np.diff(velocity)), np.append(0, np.diff(time_vector)))
@@ -73,16 +73,22 @@ class experiment_class:
         
         fig, ax = plt.subplots()
         movement_points = np.array([x_axe, y_axe]).T.reshape(-1, 1, 2) 
-        movement_segments = np.concatenate([movement_points[:-1], movement_points[1:]], axis=1) # Creates a 2D array containing the line segments coordinates
-        movement_line_collection = LineCollection(movement_segments, cmap="CMRmap", linewidth=1.5) # TODO edit this line to customize the movement graph
-        movement_line_collection.set_array(color_limits) # Set the line color to the normalized values of "color_limits"
+        movement_segments = np.concatenate([movement_points[:-1], movement_points[1:]], axis=1)      # Creates a 2D array containing the line segments coordinates
+        movement_line_collection = LineCollection(movement_segments, cmap="CMRmap", linewidth=1.5)   # TODO edit this line to customize the movement graph
+        movement_line_collection.set_array(color_limits)                                             # Set the line color to the normalized values of "color_limits"
         ax.add_collection(movement_line_collection)
         ax.autoscale_view()
-        plt.show()
+        # plt.show()
 
-        quadrant_data = np.array(self.data[[2,3,4,5,6]]) # Extract the quadrant data from csv file
-        colDif = np.abs(quadrant_data[:,0] - np.sum(quadrant_data[:][0:],axis=1))
-        idx = colDif[colDif!=1]
+        if (len(self.data.columns) == 7) or (len(self.data.columns) == 4):                           # The number of columns must be 7. Two for "x" and "y", the other 5 to each arm in the PLus maze. For the Open Field the number is 4 for some reason i'm gonna find out later.  
+          quadrant_data = np.array(self.data[[2,3,4,5,6]])                                           # Extract the quadrant data from csv file
+          colDif = np.abs(quadrant_data[:,0] - np.sum(quadrant_data[:][0:],axis=1))                  # ver porque no valor 205 (animal 2) já tem um "2" (off by one?)
+          # full_entry_indexes = colDif[colDif==1]
+
+          pass
+        else:
+          print("Your CSV file has and incorrect number of data columns.")
+          quit()
 
         # Alternative method using a function found here:
         # https://stackoverflow.com/questions/41577705/how-does-2d-kernel-density-estimation-in-python-sklearn-work
