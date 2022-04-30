@@ -68,8 +68,8 @@ class experiment_class:
         xy = np.array([np.array(x_axe), np.array(y_axe)])
         kde = stats.gaussian_kde(xy)
         pdf = np.array(kde.evaluate(xy)) # # Convert to to double and compare
-        limits = np.array([(x - np.min(pdf))/(np.max(pdf) - np.min(pdf)) for x in pdf])
-        fig = plt.scatter(y_axe, x_axe, c=limits, cmap = 'jet', linewidths=0.1, marker='.')
+        color_limits = np.array([(x - np.min(pdf))/(np.max(pdf) - np.min(pdf)) for x in pdf])
+        fig = plt.scatter(y_axe, x_axe, c=color_limits, cmap = 'jet', linewidths=0.1, marker='.')
         plt.show()
         pass
 
