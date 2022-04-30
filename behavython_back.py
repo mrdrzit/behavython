@@ -3,6 +3,7 @@ import skimage.io
 import tkinter as tk
 import pandas as pd
 import numpy as np
+from matplotlib.collections import LineCollection 
 from matplotlib import pyplot as plt 
 from tkinter import filedialog
 from skimage.color import rgb2gray
@@ -67,10 +68,16 @@ class experiment_class:
 
         kde_space_coordinates = np.array([np.array(x_axe), np.array(y_axe)])
         kde_instance = stats.gaussian_kde(kde_space_coordinates)
-        point_density_function = kde_instance.evaluate(kde_space_coordinates) # Convert to to double and compare
-        point_density_figure = plt.figure()
-        fig = plt.scatter(x_axe, y_axe, point_density_function, c=point_density_function, alpha=1, linewidths=5, marker='D')
+        point_density_function = kde_instance.evaluate(kde_space_coordinates)
         color_limits = np.array([(x - np.min(point_density_function))/(np.max(point_density_function) - np.min(point_density_function)) for x in point_density_function])
+        
+        fig, ax = plt.subplots()
+        movement_points = np.array([x_axe, y_axe]).T.reshape(-1, 1, 2) 
+        movement_segments = np.concatenate([movement_points[:-1], movement_points[1:]], axis=1) # Creates a 2D array containing the line segments coordinates
+        movement_line_collection = LineCollection(movement_segments, cmap="CMRmap", linewidth=1.5) # TODO edit this line to customize the movement graph
+        movement_line_collection.set_array(color_limits) # Set the line color to the normalized values of "color_limits"
+        ax.add_collection(movement_line_collection)
+        ax.autoscale_view()
         plt.show()
 
         quadrant_data = np.array(self.data[[2,3,4,5,6]]) # Extract the quadrant data from csv file
