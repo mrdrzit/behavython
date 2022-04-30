@@ -67,9 +67,15 @@ class experiment_class:
 
         kde_space_coordinates = np.array([np.array(x_axe), np.array(y_axe)])
         kde_instance = stats.gaussian_kde(kde_space_coordinates)
-        point_density_function = kde_instance.evaluate(kde_space_coordinates) # # Convert to to double and compare
+        point_density_function = kde_instance.evaluate(kde_space_coordinates) # Convert to to double and compare
         point_density_figure = plt.figure()
-        plt.scatter(x_axe, y_axe, point_density_function, c=point_density_function, alpha=1, linewidths=5, marker='D')
+        fig = plt.scatter(x_axe, y_axe, point_density_function, c=point_density_function, alpha=1, linewidths=5, marker='D')
+        color_limits = np.array([(x - np.min(pdf))/(np.max(pdf) - np.min(pdf)) for x in pdf])
+        plt.show()
+
+        quadrant_data = np.array(self.data[[2,3,4,5,6]]) # Extract the quadrant data from csv file
+        colDif = np.abs(quadrant_data[:,0] - np.sum(quadrant_data[:][0:],axis=1))
+        idx = colDif[colDif!=1]
 
         # Alternative method using a function found here:
         # https://stackoverflow.com/questions/41577705/how-does-2d-kernel-density-estimation-in-python-sklearn-work
