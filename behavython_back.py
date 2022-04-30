@@ -65,11 +65,12 @@ class experiment_class:
         time_moviments = np.sum(displacement > 0)*(1/frames_per_second)
         time_resting = np.sum(displacement == 0)*(1/frames_per_second)
 
-        xy = np.array([np.array(x_axe), np.array(y_axe)])
-        kde = stats.gaussian_kde(xy)
-        pdf = np.array(kde.evaluate(xy)) # # Convert to to double and compare
+        kde_space_coordinates = np.array([np.array(x_axe), np.array(y_axe)])
+        kde_instance = stats.gaussian_kde(kde_space_coordinates)
+        point_density_function = kde_instance.evaluate(kde_space_coordinates) # Convert to to double and compare
+        point_density_figure = plt.figure()
+        fig = plt.scatter(x_axe, y_axe, point_density_function, c=point_density_function, alpha=1, linewidths=5, marker='D')
         color_limits = np.array([(x - np.min(pdf))/(np.max(pdf) - np.min(pdf)) for x in pdf])
-        fig = plt.scatter(y_axe, x_axe, c=color_limits, cmap = 'jet', linewidths=0.1, marker='.')
         plt.show()
 
         quadrant_data = np.array(self.data[[2,3,4,5,6]]) # Extract the quadrant data from csv file
