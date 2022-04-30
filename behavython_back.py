@@ -72,6 +72,10 @@ class experiment_class:
         fig = plt.scatter(y_axe, x_axe, c=color_limits, cmap = 'jet', linewidths=0.1, marker='.')
         plt.show()
 
+        quadrant_data = np.array(self.data[[2,3,4,5,6]]) # Extract the quadrant data from csv file
+        colDif = np.abs(quadrant_data[:,0] - np.sum(quadrant_data[:][0:],axis=1))
+        idx = colDif[colDif!=1]
+
         # Alternative method using a function found here:
         # https://stackoverflow.com/questions/41577705/how-does-2d-kernel-density-estimation-in-python-sklearn-work
         # xx, yy, zz = kde2D(x, y, 1.0, 50j, 100j)
