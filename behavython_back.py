@@ -83,12 +83,10 @@ class experiment_class:
         # TODO create check to verify that the csv file have the correct number of data columns  
         quadrant_data = np.array(self.data[[2,3,4,5,6]])                                           # Extract the quadrant data from csv file
         colDif = np.abs(quadrant_data[:,0] - np.sum(quadrant_data[:][0:],axis=1))                  # ver porque no valor 205 (animal 2) já tem um "2" (off by one?)
-          # full_entry_indexes = colDif[colDif==1]
-
-          pass
-        else:
-          print("Your CSV file has and incorrect number of data columns.")
-          quit()
+        full_entry_indexes = colDif == 1                                                           # Create a logical array where there is "full entry"
+        full_entry_indexes = np.int32(full_entry_indexes)                                          # Convert from logical to int
+        c = np.array([(1-x) for x in full_entry_indexes])
+        timespent = np.delete(quadrant_data, c, 0)
 
         # Alternative method using a function found here:
         # https://stackoverflow.com/questions/41577705/how-does-2d-kernel-density-estimation-in-python-sklearn-work
