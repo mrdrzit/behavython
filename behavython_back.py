@@ -80,9 +80,9 @@ class experiment_class:
         ax.autoscale_view()
         # plt.show()
 
-        if (len(self.data.columns) == 7) or (len(self.data.columns) == 4):                           # The number of columns must be 7. Two for "x" and "y", the other 5 to each arm in the PLus maze. For the Open Field the number is 4 for some reason i'm gonna find out later.  
-          quadrant_data = np.array(self.data[[2,3,4,5,6]])                                           # Extract the quadrant data from csv file
-          colDif = np.abs(quadrant_data[:,0] - np.sum(quadrant_data[:][0:],axis=1))                  # ver porque no valor 205 (animal 2) já tem um "2" (off by one?)
+        # TODO create check to verify that the csv file have the correct number of data columns  
+        quadrant_data = np.array(self.data[[2,3,4,5,6]])                                           # Extract the quadrant data from csv file
+        colDif = np.abs(quadrant_data[:,0] - np.sum(quadrant_data[:][0:],axis=1))                  # ver porque no valor 205 (animal 2) já tem um "2" (off by one?)
           # full_entry_indexes = colDif[colDif==1]
 
           pass
