@@ -87,7 +87,7 @@ class experiment_class:
         timespent = np.delete(quadrant_data, full_entry_indexes, 0)                                # True crossings over time (full crossings only) 
         number_of_quadrant_crossing = abs(np.diff(timespent, axis=0))
         total_time_in_quadrant = np.sum(np.divide(timespent,frames_per_second),0)                  # Total time spent in each quadrant
-        total_number_of_entries = np.sum(number_of_quadrant_crossing > 0, 0)                       # Total number of entries in each quadrant
+        total_number_of_entries = np.sum(number_of_quadrant_crossing > 0, 0)                       # Total # of entries in each quadrant
 
         # Alternative method using a function found here:
         # https://stackoverflow.com/questions/41577705/how-does-2d-kernel-density-estimation-in-python-sklearn-work
