@@ -82,11 +82,9 @@ class experiment_class:
 
         # TODO create check to verify that the csv file have the correct number of data columns  
         quadrant_data = np.array(self.data[[2,3,4,5,6]])                                           # Extract the quadrant data from csv file
-        colDif = np.abs(quadrant_data[:,0] - np.sum(quadrant_data[:][0:],axis=1))                  # Here, the values will be off-by-one because MATLAB starts at 1
-        full_entry_indexes = colDif == 1                                                           # Create a logical array where there is "full entry"
-        full_entry_indexes = np.int32(full_entry_indexes)                                          # Convert from logical to int
-        c = np.array([(1-x) for x in full_entry_indexes])
-        timespent = np.delete(quadrant_data, c, 0)
+        colDif = np.abs(quadrant_data[:,0] - np.sum(quadrant_data[:][:,1:],axis=1))                # Here, the values will be off-by-one because MATLAB starts at 1
+        full_entry_indexes = colDif != 1                                                           # Create a logical array where there is "full entry"
+        timespent = np.delete(quadrant_data, full_entry_indexes, 0)                                # True crossings over time (full crossings only) 
 
         # Alternative method using a function found here:
         # https://stackoverflow.com/questions/41577705/how-does-2d-kernel-density-estimation-in-python-sklearn-work
