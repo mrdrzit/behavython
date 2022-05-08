@@ -85,9 +85,9 @@ class experiment_class:
         colDif = np.abs(quadrant_data[:,0] - np.sum(quadrant_data[:][:,1:],axis=1))                # Here, the values will be off-by-one because MATLAB starts at 1
         full_entry_indexes = colDif != 1                                                           # Create a logical array where there is "full entry"
         timespent = np.delete(quadrant_data, full_entry_indexes, 0)                                # True crossings over time (full crossings only) 
-        number_of_quadrant_crossing = abs(np.diff(timespent, axis=0))
+        number_of_quadrant_crossings = abs(np.diff(timespent, axis=0))
         total_time_in_quadrant = np.sum(np.divide(timespent,frames_per_second),0)                  # Total time spent in each quadrant
-        total_number_of_entries = np.sum(number_of_quadrant_crossing > 0, 0)                       # Total # of entries in each quadrant
+        total_number_of_entries = np.sum(number_of_quadrant_crossings > 0, 0)                      # Total # of entries in each quadrant
 
         # Alternative method using a function found here:
         # https://stackoverflow.com/questions/41577705/how-does-2d-kernel-density-estimation-in-python-sklearn-work
@@ -117,7 +117,9 @@ class experiment_class:
                            'aceleration'         : aceleration,
                            'moviments'           : moviments,
                            'time_moviments'      : time_moviments,
-                           'time_resting'        : time_resting
+                           'time_resting'        : time_resting,
+                           'time_in_quadrant'    : total_time_in_quadrant,
+                           'number_of_entries'   : total_number_of_entries
                            }
                            
         return analyse_results
