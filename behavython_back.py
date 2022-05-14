@@ -62,7 +62,7 @@ class experiment_class:
         mean_velocity = np.nanmean(velocity)
         
         aceleration = np.divide(np.append(0, np.diff(velocity)), np.append(0, np.diff(time_vector)))
-        moviments = np.sum(displacement > 0)
+        movements = np.sum(displacement > 0)
         time_moviments = np.sum(displacement > 0)*(1/frames_per_second)
         time_resting = np.sum(displacement == 0)*(1/frames_per_second)
 
@@ -115,7 +115,7 @@ class experiment_class:
                            'velocity'            : velocity,
                            'mean_velocity'       : mean_velocity,
                            'aceleration'         : aceleration,
-                           'moviments'           : moviments,
+                           'movements'           : movements,
                            'time_moviments'      : time_moviments,
                            'time_resting'        : time_resting,
                            'time_in_quadrant'    : total_time_in_quadrant,
