@@ -158,10 +158,12 @@ class interface_functions:
             try:
                 raw_data = pd.read_csv(files.directory[index] + '.csv', sep = ',', na_values = ['no info', '.'], header = None)
                 experiments[index].data = raw_data.interpolate(method='spline', order=1, limit_direction = 'both', axis = 0)
+                print("Reading file " + experiments[index])
             except:
                 print("Não existe arquivo CSV com o nome " + files.name[index])
             try:
                 experiments[index].last_frame = rgb2gray(skimage.io.imread(files.directory[index] + '.png'))
+                print("Reading file " + experiments[index])
             except:
                 print("Não existe arquivo PNG com o nome " + files.name[index])
                 
