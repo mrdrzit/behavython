@@ -63,7 +63,7 @@ class experiment_class:
         
         aceleration = np.divide(np.append(0, np.diff(velocity)), np.append(0, np.diff(time_vector)))
         movements = np.sum(displacement > 0)
-        time_moviments = np.sum(displacement > 0)*(1/frames_per_second)
+        time_moving = np.sum(displacement > 0)*(1/frames_per_second)
         time_resting = np.sum(displacement == 0)*(1/frames_per_second)
 
         kde_space_coordinates = np.array([np.array(x_axe), np.array(y_axe)])
@@ -116,7 +116,7 @@ class experiment_class:
                            'mean_velocity'       : mean_velocity,
                            'aceleration'         : aceleration,
                            'movements'           : movements,
-                           'time_moviments'      : time_moviments,
+                           'time_moving'         : time_moving,
                            'time_resting'        : time_resting,
                            'time_in_quadrant'    : total_time_in_quadrant,
                            'number_of_entries'   : total_number_of_entries
@@ -158,12 +158,12 @@ class interface_functions:
             try:
                 raw_data = pd.read_csv(files.directory[index] + '.csv', sep = ',', na_values = ['no info', '.'], header = None)
                 experiments[index].data = raw_data.interpolate(method='spline', order=1, limit_direction = 'both', axis = 0)
-                print("Reading file " + experiments[index])
+                print("Trying to read file " + experiments[index].name + '.csv')
             except:
                 print("Não existe arquivo CSV com o nome " + files.name[index])
             try:
                 experiments[index].last_frame = rgb2gray(skimage.io.imread(files.directory[index] + '.png'))
-                print("Reading file " + experiments[index])
+                print("Trying to read file " + experiments[index].name + '.png')
             except:
                 print("Não existe arquivo PNG com o nome " + files.name[index])
                 
