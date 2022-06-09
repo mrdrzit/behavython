@@ -126,7 +126,7 @@ class experiment_class:
         return self.analyse_results    
 
     def plot_analyse(self):
-        # Figure 1 - Animal movement across the arena
+        # Figure 1 - 
         figure_0, axe_0 = plt.subplots()
         movement_points = np.array([self.analyse_results["x_axe"], self.analyse_results["y_axe"]]).T.reshape(-1, 1, 2) 
         movement_segments = np.concatenate([movement_points[:-1], movement_points[1:]], axis=1)                         # Creates a 2D array containing the line segments coordinates
