@@ -126,9 +126,29 @@ class experiment_class:
                                 'color_limits'        : color_limits
                                 }
         
-        return self.analyse_results    
+        
+        dict_to_excel = {'Total distance (cm)'          : total_distance,
+                         'Mean velocity (cm/s)'         : mean_velocity,
+                         'Movements'                    : movements,
+                         'Time moving (s)'              : time_moving,
+                         'Time resting(s)'              : time_resting,
+                         'Total time at upper arm (s)'  : total_time_in_quadrant[0],
+                         'Total time at lower arm (s)'  : total_time_in_quadrant[4],
+                         'Total time at left arm (s)'   : total_time_in_quadrant[1],
+                         'Total time at right arm (s)'  : total_time_in_quadrant[3],
+                         'Total time at center (s)'     : total_time_in_quadrant[2],
+                         'Crossings to the upper arm'   : total_number_of_entries[0],
+                         'Crossings to the lower arm'   : total_number_of_entries[4],
+                         'Crossings to the left arm'    : total_number_of_entries[1],
+                         'Crossings to the right arm'   : total_number_of_entries[3],
+                         'Crossings to the center'      : total_number_of_entries[2],
+                         }
+        
+        data_frame = pd.DataFrame(data = dict_to_excel, index=[self.name])
+        data_frame = (data_frame.T)
+        return self.analyse_results, data_frame    
 
-    def plot_analyse(self, plot_viewer):
+    def plot_analyse(self, plot_viewer, plot_number):
         # Figure 1 - 
         figure_0, axe_0 = plt.subplots()
         movement_points = np.array([self.analyse_results["x_axe"], self.analyse_results["y_axe"]]).T.reshape(-1, 1, 2) 
@@ -137,8 +157,13 @@ class experiment_class:
         movement_line_collection.set_array(self.analyse_results["color_limits"])                                                                # Set the line color to the normalized values of "color_limits"
         axe_0.add_collection(movement_line_collection)
         axe_0.autoscale_view()
-        plt.show()
-                
+        #plt.show()
+        plt.savefig(self.directory + '_1.png')
+        
+        plot_viewer.canvas.axes[plot_number].plot(self.analyse_results["x_axe"], self.analyse_results["y_axe"])
+        #plot_viewer.canvas.axes[plot_number].title('Experiment ' + str(plot_number+1), fontsize = 10, fontfamily="DejaVu Sans", color="white")
+        plot_viewer.canvas.draw_idle()
+        
         # Figure 1 - 
         #plt.rcParams["figure.figsize"] = [7.00, 3.50]
         #plt.rcParams["figure.autolayout"] = True
@@ -152,6 +177,7 @@ class experiment_class:
         # Figure 2 - Histogram
         figure_2, axe_2 = plt.subplots()
         axe_2.hist(self.analyse_results['displacement'], 400, density=True, facecolor='g', alpha=0.75)
+        plt.savefig(self.directory + '_2.png')
         
         # Figure 3 - Time spent on each arm over time
         figure_3, ((axe_11, axe_12, axe_13), (axe_21, axe_22, axe_23), (axe_31, axe_32, axe_33)) = plt.subplots(3,3)
@@ -159,61 +185,72 @@ class experiment_class:
         figure_3.delaxes(axe_13)
         figure_3.delaxes(axe_31)
         figure_3.delaxes(axe_33)
-          
-        axe_12.plot(self.analyse_results["time_spent"][:,0])
+        
+        axe_12.plot(self.analyse_results["time_spent"][:,0], color = '#2C53A1')
+        entries = np.array(self.analyse_results["quadrant_crossings"][:,0]) == 1
+        axe_12.plot(self.analyse_results["quadrant_crossings"][:,0], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
         axe_12.set_ylim((0, 1.5))
         axe_12.set_title('upper arm')
     
-        axe_21.plot(self.analyse_results["time_spent"][:,1])
+        axe_21.plot(self.analyse_results["time_spent"][:,1], color = '#2C53A1')
+        entries = np.array(self.analyse_results["quadrant_crossings"][:,1]) == 1
+        axe_21.plot(self.analyse_results["quadrant_crossings"][:,1], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
         axe_21.set_ylim((0, 1.5))
         axe_21.set_title('left  arm')
     
-        axe_22.plot(self.analyse_results["time_spent"][:,2])
+        axe_22.plot(self.analyse_results["time_spent"][:,2], color = '#2C53A1')
+        entries = np.array(self.analyse_results["quadrant_crossings"][:,2]) == 1
+        axe_22.plot(self.analyse_results["quadrant_crossings"][:,2], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
         axe_22.set_ylim((0, 1.5))
         axe_22.set_title('center')
     
-        axe_23.plot(self.analyse_results["time_spent"][:,3])
+        axe_23.plot(self.analyse_results["time_spent"][:,3], color = '#2C53A1')
+        entries = np.array(self.analyse_results["quadrant_crossings"][:,3]) == 1
+        axe_23.plot(self.analyse_results["quadrant_crossings"][:,3], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
         axe_23.set_ylim((0, 1.5))
         axe_23.set_title('right arm')
     
-        axe_32.plot(self.analyse_results["time_spent"][:,4])
+        axe_32.plot(self.analyse_results["time_spent"][:,4], color = '#2C53A1')
+        entries = np.array(self.analyse_results["quadrant_crossings"][:,4]) == 1
+        axe_32.plot(self.analyse_results["quadrant_crossings"][:,4], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
         axe_32.set_ylim((0, 1.5))
         axe_32.set_title('lower arm')
         
         figure_3.suptitle('Time spent on each arm over time')
         plt.tight_layout()
-        plt.show()
+        #plt.show()
+        plt.savefig(self.directory + '_3.png')
         
         # Figure 4 - Number of crossings
-        figure_4, ((axe_11, axe_12, axe_13), (axe_21, axe_22, axe_23), (axe_31, axe_32, axe_33)) = plt.subplots(3,3)
-        figure_4.delaxes(axe_11)
-        figure_4.delaxes(axe_13)
-        figure_4.delaxes(axe_31)
-        figure_4.delaxes(axe_33)
+        # figure_4, ((axe_11, axe_12, axe_13), (axe_21, axe_22, axe_23), (axe_31, axe_32, axe_33)) = plt.subplots(3,3)
+        # figure_4.delaxes(axe_11)
+        # figure_4.delaxes(axe_13)
+        # figure_4.delaxes(axe_31)
+        # figure_4.delaxes(axe_33)
           
-        axe_12.plot(self.analyse_results["quadrant_crossings"][:,0])
-        axe_12.set_ylim((0, 1.5))
-        axe_12.set_title('upper arm')
+        # axe_12.plot(self.analyse_results["quadrant_crossings"][:,0])
+        # axe_12.set_ylim((0, 1.5))
+        # axe_12.set_title('upper arm')
     
-        axe_21.plot(self.analyse_results["quadrant_crossings"][:,1])
-        axe_21.set_ylim((0, 1.5))
-        axe_21.set_title('left  arm')
+        # axe_21.plot(self.analyse_results["quadrant_crossings"][:,1])
+        # axe_21.set_ylim((0, 1.5))
+        # axe_21.set_title('left  arm')
     
-        axe_22.plot(self.analyse_results["quadrant_crossings"][:,2])
-        axe_22.set_ylim((0, 1.5))
-        axe_22.set_title('center')
+        # axe_22.plot(self.analyse_results["quadrant_crossings"][:,2])
+        # axe_22.set_ylim((0, 1.5))
+        # axe_22.set_title('center')
     
-        axe_23.plot(self.analyse_results["quadrant_crossings"][:,3])
-        axe_23.set_ylim((0, 1.5))
-        axe_23.set_title('right arm')
+        # axe_23.plot(self.analyse_results["quadrant_crossings"][:,3])
+        # axe_23.set_ylim((0, 1.5))
+        # axe_23.set_title('right arm')
     
-        axe_32.plot(self.analyse_results["quadrant_crossings"][:,4])
-        axe_32.set_ylim((0, 1.5))
-        axe_32.set_title('lower arm')
+        # axe_32.plot(self.analyse_results["quadrant_crossings"][:,4])
+        # axe_32.set_ylim((0, 1.5))
+        # axe_32.set_title('lower arm')
         
-        figure_4.suptitle('Number of crossings')
-        plt.tight_layout()
-        plt.show()
+        # figure_4.suptitle('Number of crossings')
+        # plt.tight_layout()
+        # plt.show()
     
 class files_class:
     def __init__(self):
@@ -230,7 +267,7 @@ class files_class:
                 self.directory.append(file[:-4])
 
 class interface_functions:
-    def get_experiments(self):
+    def get_experiments(self, line_edit):
         file_explorer = tk.Tk()
         file_explorer.withdraw()
         file_explorer.call('wm', 'attributes', '.', '-topmost', True)
@@ -245,25 +282,28 @@ class interface_functions:
             
             experiments.append(experiment_class())
             
-            experiments[index].name = files.name[index]  
-            experiments[index].directory = files.directory[index]
             try:
                 raw_data = pd.read_csv(files.directory[index] + '.csv', sep = ',', na_values = ['no info', '.'], header = None)
+                raw_image = rgb2gray(skimage.io.imread(files.directory[index] + '.png'))
+            except:
+                line_edit.append("Doesn't exists CSV or PNG file with name " + files.name[index])
+                experiments.pop()
+            else:
                 experiments[index].data = raw_data.interpolate(method='spline', order=1, limit_direction = 'both', axis = 0)
-                print("Trying to read file " + experiments[index].name + '.csv')
-            except:
-                print("Doesn't exists CSV file with name " + files.name[index])
-            try:
-                experiments[index].last_frame = rgb2gray(skimage.io.imread(files.directory[index] + '.png'))
-                print("Trying to read file " + experiments[index].name + '.png')
-            except:
-                print("Doesn't exists PNG file with name " + files.name[index])
-                
+                line_edit.append("File " + files.name[index] + '.csv was read')
+                experiments[index].last_frame = raw_image
+                line_edit.append("File " + files.name[index] + '.png was read')
+                experiments[index].name = files.name[index]  
+                experiments[index].directory = files.directory[index]
+                                
         return experiments
     
 class plot_viewer_function(QtWidgets.QWidget):
     '''
     This class modifies the interface's QWidget in order to insert a plot viewer.
+    
+    TODO: Analisar melhor forma de plotar o resumo de todos os resultados.
+    ex: botão de ir e voltar para navegar entre os plots
     '''    
     def __init__(self, parent = None):
         QtWidgets.QWidget.__init__(self, parent)                                   
@@ -283,12 +323,10 @@ class plot_viewer_function(QtWidgets.QWidget):
         vertical_layout = QtWidgets.QVBoxLayout()                                   # Creates a layout
         vertical_layout.addWidget(self.canvas)                                      # Inserts the figure on the layout
         self.canvas.figure.subplots_adjust(left=0, bottom=0, right=1, 
-                                           top=1, wspace=0, hspace=0)            # Sets the plot margins 
+                                           top=1, wspace=0, hspace=0)               # Sets the plot margins 
         self.setLayout(vertical_layout)                                             # Sets the layout
         
-          
-    def plot_on_grid(self, number, data):
-        self.canvas.axes[number-1].plot(data)
+         
     
     
     
