@@ -3,6 +3,9 @@ import skimage.io
 import tkinter as tk
 import pandas as pd
 import numpy as np
+from PyQt5 import QtWidgets
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 from matplotlib.collections import LineCollection 
 from matplotlib import pyplot as plt 
 from tkinter import filedialog
@@ -125,7 +128,7 @@ class experiment_class:
         
         return self.analyse_results    
 
-    def plot_analyse(self):
+    def plot_analyse(self, plot_viewer):
         # Figure 1 - 
         figure_0, axe_0 = plt.subplots()
         movement_points = np.array([self.analyse_results["x_axe"], self.analyse_results["y_axe"]]).T.reshape(-1, 1, 2) 
@@ -135,7 +138,7 @@ class experiment_class:
         axe_0.add_collection(movement_line_collection)
         axe_0.autoscale_view()
         plt.show()
-        
+                
         # Figure 1 - 
         #plt.rcParams["figure.figsize"] = [7.00, 3.50]
         #plt.rcParams["figure.autolayout"] = True
@@ -249,18 +252,43 @@ class interface_functions:
                 experiments[index].data = raw_data.interpolate(method='spline', order=1, limit_direction = 'both', axis = 0)
                 print("Trying to read file " + experiments[index].name + '.csv')
             except:
-                print("Não existe arquivo CSV com o nome " + files.name[index])
+                print("Doesn't exists CSV file with name " + files.name[index])
             try:
                 experiments[index].last_frame = rgb2gray(skimage.io.imread(files.directory[index] + '.png'))
                 print("Trying to read file " + experiments[index].name + '.png')
             except:
-                print("Não existe arquivo PNG com o nome " + files.name[index])
+                print("Doesn't exists PNG file with name " + files.name[index])
                 
         return experiments
     
-    
-    
-    
+class plot_viewer_function(QtWidgets.QWidget):
+    '''
+    This class modifies the interface's QWidget in order to insert a plot viewer.
+    '''    
+    def __init__(self, parent = None):
+        QtWidgets.QWidget.__init__(self, parent)                                   
+        self.canvas = FigureCanvas(Figure(facecolor = "#353535", dpi=100, tight_layout=True))          # Create a figure object 
+        
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, 
+                                           QtWidgets.QSizePolicy.Policy.Expanding)  # Creates axes size policy
+        self.canvas.setSizePolicy(sizePolicy)                                       # Sets the size policy
+        
+        self.canvas.axes = []
+        for i in range(1,10):
+            self.canvas.axes.append(self.canvas.figure.add_subplot(3,3,i))          # Creates a empty plot
+            self.canvas.axes[i-1].set_facecolor("#252525")                          # Changes the plot face color
+            self.canvas.axes[i-1].get_xaxis().set_visible(False)
+            self.canvas.axes[i-1].get_yaxis().set_visible(False)
+        
+        vertical_layout = QtWidgets.QVBoxLayout()                                   # Creates a layout
+        vertical_layout.addWidget(self.canvas)                                      # Inserts the figure on the layout
+        self.canvas.figure.subplots_adjust(left=0, bottom=0, right=1, 
+                                           top=1, wspace=0, hspace=0)            # Sets the plot margins 
+        self.setLayout(vertical_layout)                                             # Sets the layout
+        
+          
+    def plot_on_grid(self, number, data):
+        self.canvas.axes[number-1].plot(data)
     
     
     

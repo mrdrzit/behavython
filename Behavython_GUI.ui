@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>262</width>
-    <height>252</height>
+    <width>928</width>
+    <height>524</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -37,17 +37,17 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>244</width>
-         <height>234</height>
+         <width>910</width>
+         <height>506</height>
         </rect>
        </property>
        <widget class="QFrame" name="interface_frame">
         <property name="geometry">
          <rect>
-          <x>0</x>
-          <y>0</y>
+          <x>20</x>
+          <y>20</y>
           <width>251</width>
-          <height>231</height>
+          <height>471</height>
          </rect>
         </property>
         <property name="styleSheet">
@@ -459,6 +459,52 @@
           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
          </property>
         </widget>
+        <widget class="QTextEdit" name="resume_lineedit">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>250</y>
+           <width>231</width>
+           <height>171</height>
+          </rect>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::NoFrame</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Plain</enum>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+        </widget>
+        <widget class="QProgressBar" name="progress_bar">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>440</y>
+           <width>251</width>
+           <height>23</height>
+          </rect>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QProgressBar { border: 2px solid #969696;border-radius:5px;text-align:center;color:#FFFFFF;font:10pt&quot;DejaVu Sans&quot;;font-weight:bold;}QProgressBar::chunk{background-color:#2C53A1;width:20px;}
+</string>
+         </property>
+         <property name="value">
+          <number>0</number>
+         </property>
+        </widget>
+       </widget>
+       <widget class="plot_viewer_function" name="plot_viewer" native="true">
+        <property name="geometry">
+         <rect>
+          <x>290</x>
+          <y>-10</y>
+          <width>601</width>
+          <height>521</height>
+         </rect>
+        </property>
        </widget>
       </widget>
      </widget>
@@ -466,6 +512,14 @@
    </layout>
   </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>plot_viewer_function</class>
+   <extends>QWidget</extends>
+   <header location="global">behavython_back.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

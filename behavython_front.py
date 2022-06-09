@@ -33,7 +33,7 @@ class behavython_gui(QMainWindow):
         
         self.analyse_results = self.experiments[0].video_analyse(self.options)
         print(self.analyse_results)
-        self.experiments[0].plot_analyse()
+        self.experiments[0].plot_analyse(self.plot_viewer)
           
     def clear_function(self):
         self.type_combobox.setCurrentIndex(1)
