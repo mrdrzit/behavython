@@ -53,7 +53,7 @@
         <property name="styleSheet">
          <string notr="true">QLabel{}QCheckBox{color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QCheckBox::indicator{width:15px;height:15px;background-color:#606060;border-radius:4px;}QCheckBox::indicator:checked{background-color:#A21F27;}</string>
         </property>
-        <widget class="QPushButton" name="analyze_button">
+        <widget class="QPushButton" name="analysis_button">
          <property name="geometry">
           <rect>
            <x>70</x>
@@ -177,19 +177,19 @@
           <string notr="true">QComboBox{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QListView{color:#FFFFFF;font:8pt&quot;Century Gothic&quot;;font-weight:bold;background-color:#969696;border:0px;}QListView{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QComboBox::drop-down{width:20px;border:5px;}QComboBox::down-arrow{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #FFFFFF;width:0.5px;height:1px;border-radius:2px;}QComboBox::down-arrow:hover{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #A21F27;width:0.5px;height:1px;border-radius:2px;}QAbstractItemView{border:2px solid #969696;selection-background-color:#2C53A1;}</string>
          </property>
          <property name="currentText">
-          <string notr="true">Open Field</string>
+          <string notr="true">   Open Field</string>
          </property>
          <property name="currentIndex">
           <number>0</number>
          </property>
          <item>
           <property name="text">
-           <string notr="true">Open Field</string>
+           <string notr="true">   Open Field</string>
           </property>
          </item>
          <item>
           <property name="text">
-           <string notr="true">Plus Maze</string>
+           <string notr="true">   Plus Maze</string>
           </property>
          </item>
         </widget>
@@ -430,6 +430,9 @@
            <height>171</height>
           </rect>
          </property>
+         <property name="styleSheet">
+          <string notr="true">QTextEdit{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold}</string>
+         </property>
          <property name="frameShape">
           <enum>QFrame::NoFrame</enum>
          </property>
@@ -473,19 +476,19 @@
           <string notr="true">QComboBox{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QListView{color:#FFFFFF;font:8pt&quot;Century Gothic&quot;;font-weight:bold;background-color:#969696;border:0px;}QListView{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QComboBox::drop-down{width:20px;border:5px;}QComboBox::down-arrow{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #FFFFFF;width:0.5px;height:1px;border-radius:2px;}QComboBox::down-arrow:hover{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #A21F27;width:0.5px;height:1px;border-radius:2px;}QAbstractItemView{border:2px solid #969696;selection-background-color:#2C53A1;}</string>
          </property>
          <property name="currentText">
-          <string notr="true">Mice</string>
+          <string notr="true">     Mouse</string>
          </property>
          <property name="currentIndex">
           <number>0</number>
          </property>
          <item>
           <property name="text">
-           <string notr="true">Mice</string>
+           <string notr="true">     Mouse</string>
           </property>
          </item>
          <item>
           <property name="text">
-           <string notr="true">Rat</string>
+           <string notr="true">        Rat</string>
           </property>
          </item>
         </widget>

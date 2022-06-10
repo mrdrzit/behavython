@@ -45,6 +45,7 @@ class experiment_class:
         self.directory = []                                                     # Experiment directory                    
         
     def video_analyse(self, options):       
+        self.experiment_type = options['experiment_type']
         arena_width = options['arena_width']                                    # Arena width seted by user 
         arena_height = options['arena_height']                                  # Arena height seted by user
         frames_per_second = options['frames_per_second']                        # Video frames per second seted by user
@@ -84,10 +85,10 @@ class experiment_class:
         color_limits = np.array([(x - np.min(point_density_function))/(np.max(point_density_function) - np.min(point_density_function)) for x in point_density_function])
         
         # TODO create check to verify that the csv file have the correct number of data columns  
-        quadrant_data = np.array(self.data[[2,3,4,5,6]])                                           # Extract the quadrant data from csv file
-        colDif = np.abs(quadrant_data[:,0] - np.sum(quadrant_data[:][:,1:],axis=1))                # Here, the values will be off-by-one because MATLAB starts at 1
-        full_entry_indexes = colDif != 1                                                           # Create a logical array where there is "full entry"
-        time_spent = np.delete(quadrant_data, full_entry_indexes, 0)                               # True crossings over time (full crossings only) 
+        quadrant_data = np.array(self.data[self.data.columns[2:]])                                  # Extract the quadrant data from csv file
+        colDif = np.abs(quadrant_data[:,0] - np.sum(quadrant_data[:][:,1:],axis=1))                 # Here, the values will be off-by-one because MATLAB starts at 1
+        full_entry_indexes = colDif != 1                                                            # Create a logical array where there is "full entry"
+        time_spent = np.delete(quadrant_data, full_entry_indexes, 0)                                # True crossings over time (full crossings only) 
         quadrant_crossings = abs(np.diff(time_spent, axis=0))
         total_time_in_quadrant = np.sum(np.divide(time_spent,frames_per_second),0)                  # Total time spent in each quadrant
         total_number_of_entries = np.sum(quadrant_crossings > 0, 0)                                 # Total # of entries in each quadrant
@@ -100,32 +101,34 @@ class experiment_class:
         # plt.scatter(x, y, s=0.01, facecolor='white')
         # plt.show()
         
-        self.analyse_results = {'video_width'         : video_width,
-                                'video_height'        : video_height,
-                                'number_of_frames'    : number_of_frames,
-                                'x_axe'               : x_axe,
-                                'y_axe'               : y_axe,
-                                'x_axe_cm'            : x_axe_cm,
-                                'y_axe_cm'            : y_axe_cm,
-                                'd_x_axe_cm'          : d_x_axe_cm,
-                                'd_y_axe_cm'          : d_y_axe_cm,
-                                'displacement'        : displacement,
-                                'accumulate_distance' : accumulate_distance,
-                                'total_distance'      : total_distance,
-                                'time_vector'         : time_vector,
-                                'velocity'            : velocity,
-                                'mean_velocity'       : mean_velocity,
-                                'aceleration'         : aceleration,
-                                'movements'           : movements,
-                                'time_spent'          : time_spent,
-                                'time_moving'         : time_moving,
-                                'time_resting'        : time_resting,
-                                'quadrant_crossings'  : quadrant_crossings,
-                                'time_in_quadrant'    : total_time_in_quadrant,
-                                'number_of_entries'   : total_number_of_entries,
-                                'color_limits'        : color_limits
-                                }
+        self.analysis_results = {'video_width'         : video_width,
+                                 'video_height'        : video_height,
+                                 'number_of_frames'    : number_of_frames,
+                                 'x_axe'               : x_axe,
+                                 'y_axe'               : y_axe,
+                                 'x_axe_cm'            : x_axe_cm,
+                                 'y_axe_cm'            : y_axe_cm,
+                                 'd_x_axe_cm'          : d_x_axe_cm,
+                                 'd_y_axe_cm'          : d_y_axe_cm,
+                                 'displacement'        : displacement,
+                                 'accumulate_distance' : accumulate_distance,
+                                 'total_distance'      : total_distance,
+                                 'time_vector'         : time_vector,
+                                 'velocity'            : velocity,
+                                 'mean_velocity'       : mean_velocity,
+                                 'aceleration'         : aceleration,
+                                 'movements'           : movements,
+                                 'time_spent'          : time_spent,
+                                 'time_moving'         : time_moving,
+                                 'time_resting'        : time_resting,
+                                 'quadrant_crossings'  : quadrant_crossings,
+                                 'time_in_quadrant'    : total_time_in_quadrant,
+                                 'number_of_entries'   : total_number_of_entries,
+                                 'color_limits'        : color_limits
+                                 }
         
+        
+        print(self.analysis_results)
         
         dict_to_excel = {'Total distance (cm)'          : total_distance,
                          'Mean velocity (cm/s)'         : mean_velocity,
@@ -146,112 +149,118 @@ class experiment_class:
         
         data_frame = pd.DataFrame(data = dict_to_excel, index=[self.name])
         data_frame = (data_frame.T)
-        return self.analyse_results, data_frame    
+        return self.analysis_results, data_frame    
 
-    def plot_analyse(self, plot_viewer, plot_number):
-        # Figure 1 - 
-        figure_0, axe_0 = plt.subplots()
-        movement_points = np.array([self.analyse_results["x_axe"], self.analyse_results["y_axe"]]).T.reshape(-1, 1, 2) 
-        movement_segments = np.concatenate([movement_points[:-1], movement_points[1:]], axis=1)                         # Creates a 2D array containing the line segments coordinates
-        movement_line_collection = LineCollection(movement_segments, cmap="CMRmap", linewidth=1.5)                      # TODO edit this line to customize the movement graph
-        movement_line_collection.set_array(self.analyse_results["color_limits"])                                                                # Set the line color to the normalized values of "color_limits"
-        axe_0.add_collection(movement_line_collection)
-        axe_0.autoscale_view()
-        #plt.show()
-        plt.savefig(self.directory + '_1.png')
+    def plot_analysis(self, plot_viewer, plot_number):
+        if self.experiment_type == 'plus_maze':
+            # Figure 1 - 
+            figure_0, axe_0 = plt.subplots()
+            movement_points = np.array([self.analysis_results["x_axe"], self.analysis_results["y_axe"]]).T.reshape(-1, 1, 2) 
+            movement_segments = np.concatenate([movement_points[:-1], movement_points[1:]], axis=1)                         # Creates a 2D array containing the line segments coordinates
+            movement_line_collection = LineCollection(movement_segments, cmap="CMRmap", linewidth=1.5)                      # TODO edit this line to customize the movement graph
+            movement_line_collection.set_array(self.analysis_results["color_limits"])                                                                # Set the line color to the normalized values of "color_limits"
+            axe_0.add_collection(movement_line_collection)
+            axe_0.autoscale_view()
+            #plt.show()
+            plt.savefig(self.directory + '_0.png')
+            plt.close(figure_0)
+            
+            plot_viewer.canvas.axes[plot_number].plot(self.analysis_results["x_axe"], self.analysis_results["y_axe"])
+            #plot_viewer.canvas.axes[plot_number].title('Experiment ' + str(plot_number+1), fontsize = 10, fontfamily="DejaVu Sans", color="white")
+            plot_viewer.canvas.draw_idle()
+            
+            # Figure 1 - 
+            #plt.rcParams["figure.figsize"] = [7.00, 3.50]
+            #plt.rcParams["figure.autolayout"] = True
+            # im = plt.imread(self.directory + ".png")
+            # figure_1, axe_1 = plt.subplots()
+            # im = axe_1.imshow(im, extent=[0, self.analysis_results['video_width'], 0, self.analysis_results['video_height']])
+            # axe_1.add_collection(movement_line_collection)
+            # axe_1.autoscale_view()
+            # plt.show()
+            # plt.savefig(self.directory + '_1.png')
+            # plt.close(figure_1)
+            
+            # Figure 2 - Histogram
+            figure_2, axe_2 = plt.subplots()
+            axe_2.hist(self.analysis_results['displacement'], 400, density=True, facecolor='g', alpha=0.75)
+            plt.savefig(self.directory + '_2.png')
+            plt.close(figure_2)
+            
+            # Figure 3 - Time spent on each arm over time
+            figure_3, ((axe_11, axe_12, axe_13), (axe_21, axe_22, axe_23), (axe_31, axe_32, axe_33)) = plt.subplots(3,3)
+            figure_3.delaxes(axe_11)
+            figure_3.delaxes(axe_13)
+            figure_3.delaxes(axe_31)
+            figure_3.delaxes(axe_33)
+            
+            axe_12.plot(self.analysis_results["time_spent"][:,0], color = '#2C53A1')
+            entries = np.array(self.analysis_results["quadrant_crossings"][:,0]) == 1
+            axe_12.plot(self.analysis_results["quadrant_crossings"][:,0], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
+            axe_12.set_ylim((0, 1.5))
+            axe_12.set_title('upper arm')
         
-        plot_viewer.canvas.axes[plot_number].plot(self.analyse_results["x_axe"], self.analyse_results["y_axe"])
-        #plot_viewer.canvas.axes[plot_number].title('Experiment ' + str(plot_number+1), fontsize = 10, fontfamily="DejaVu Sans", color="white")
-        plot_viewer.canvas.draw_idle()
+            axe_21.plot(self.analysis_results["time_spent"][:,1], color = '#2C53A1')
+            entries = np.array(self.analysis_results["quadrant_crossings"][:,1]) == 1
+            axe_21.plot(self.analysis_results["quadrant_crossings"][:,1], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
+            axe_21.set_ylim((0, 1.5))
+            axe_21.set_title('left  arm')
         
-        # Figure 1 - 
-        #plt.rcParams["figure.figsize"] = [7.00, 3.50]
-        #plt.rcParams["figure.autolayout"] = True
-        # im = plt.imread(self.directory + ".png")
-        # figure_1, axe_1 = plt.subplots()
-        # im = axe_1.imshow(im, extent=[0, self.analyse_results['video_width'], 0, self.analyse_results['video_height']])
-        # axe_1.add_collection(movement_line_collection)
-        # axe_1.autoscale_view()
-        # plt.show()
+            axe_22.plot(self.analysis_results["time_spent"][:,2], color = '#2C53A1')
+            entries = np.array(self.analysis_results["quadrant_crossings"][:,2]) == 1
+            axe_22.plot(self.analysis_results["quadrant_crossings"][:,2], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
+            axe_22.set_ylim((0, 1.5))
+            axe_22.set_title('center')
         
-        # Figure 2 - Histogram
-        figure_2, axe_2 = plt.subplots()
-        axe_2.hist(self.analyse_results['displacement'], 400, density=True, facecolor='g', alpha=0.75)
-        plt.savefig(self.directory + '_2.png')
+            axe_23.plot(self.analysis_results["time_spent"][:,3], color = '#2C53A1')
+            entries = np.array(self.analysis_results["quadrant_crossings"][:,3]) == 1
+            axe_23.plot(self.analysis_results["quadrant_crossings"][:,3], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
+            axe_23.set_ylim((0, 1.5))
+            axe_23.set_title('right arm')
         
-        # Figure 3 - Time spent on each arm over time
-        figure_3, ((axe_11, axe_12, axe_13), (axe_21, axe_22, axe_23), (axe_31, axe_32, axe_33)) = plt.subplots(3,3)
-        figure_3.delaxes(axe_11)
-        figure_3.delaxes(axe_13)
-        figure_3.delaxes(axe_31)
-        figure_3.delaxes(axe_33)
+            axe_32.plot(self.analysis_results["time_spent"][:,4], color = '#2C53A1')
+            entries = np.array(self.analysis_results["quadrant_crossings"][:,4]) == 1
+            axe_32.plot(self.analysis_results["quadrant_crossings"][:,4], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
+            axe_32.set_ylim((0, 1.5))
+            axe_32.set_title('lower arm')
+            
+            figure_3.suptitle('Time spent on each arm over time')
+            plt.tight_layout()
+            #plt.show()
+            plt.savefig(self.directory + '_3.png')
+            plt.close(figure_3)
+            
+            # Figure 4 - Number of crossings
+            # figure_4, ((axe_11, axe_12, axe_13), (axe_21, axe_22, axe_23), (axe_31, axe_32, axe_33)) = plt.subplots(3,3)
+            # figure_4.delaxes(axe_11)
+            # figure_4.delaxes(axe_13)
+            # figure_4.delaxes(axe_31)
+            # figure_4.delaxes(axe_33)
+              
+            # axe_12.plot(self.analysis_results["quadrant_crossings"][:,0])
+            # axe_12.set_ylim((0, 1.5))
+            # axe_12.set_title('upper arm')
         
-        axe_12.plot(self.analyse_results["time_spent"][:,0], color = '#2C53A1')
-        entries = np.array(self.analyse_results["quadrant_crossings"][:,0]) == 1
-        axe_12.plot(self.analyse_results["quadrant_crossings"][:,0], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
-        axe_12.set_ylim((0, 1.5))
-        axe_12.set_title('upper arm')
-    
-        axe_21.plot(self.analyse_results["time_spent"][:,1], color = '#2C53A1')
-        entries = np.array(self.analyse_results["quadrant_crossings"][:,1]) == 1
-        axe_21.plot(self.analyse_results["quadrant_crossings"][:,1], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
-        axe_21.set_ylim((0, 1.5))
-        axe_21.set_title('left  arm')
-    
-        axe_22.plot(self.analyse_results["time_spent"][:,2], color = '#2C53A1')
-        entries = np.array(self.analyse_results["quadrant_crossings"][:,2]) == 1
-        axe_22.plot(self.analyse_results["quadrant_crossings"][:,2], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
-        axe_22.set_ylim((0, 1.5))
-        axe_22.set_title('center')
-    
-        axe_23.plot(self.analyse_results["time_spent"][:,3], color = '#2C53A1')
-        entries = np.array(self.analyse_results["quadrant_crossings"][:,3]) == 1
-        axe_23.plot(self.analyse_results["quadrant_crossings"][:,3], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
-        axe_23.set_ylim((0, 1.5))
-        axe_23.set_title('right arm')
-    
-        axe_32.plot(self.analyse_results["time_spent"][:,4], color = '#2C53A1')
-        entries = np.array(self.analyse_results["quadrant_crossings"][:,4]) == 1
-        axe_32.plot(self.analyse_results["quadrant_crossings"][:,4], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
-        axe_32.set_ylim((0, 1.5))
-        axe_32.set_title('lower arm')
+            # axe_21.plot(self.analysis_results["quadrant_crossings"][:,1])
+            # axe_21.set_ylim((0, 1.5))
+            # axe_21.set_title('left  arm')
         
-        figure_3.suptitle('Time spent on each arm over time')
-        plt.tight_layout()
-        #plt.show()
-        plt.savefig(self.directory + '_3.png')
+            # axe_22.plot(self.analysis_results["quadrant_crossings"][:,2])
+            # axe_22.set_ylim((0, 1.5))
+            # axe_22.set_title('center')
         
-        # Figure 4 - Number of crossings
-        # figure_4, ((axe_11, axe_12, axe_13), (axe_21, axe_22, axe_23), (axe_31, axe_32, axe_33)) = plt.subplots(3,3)
-        # figure_4.delaxes(axe_11)
-        # figure_4.delaxes(axe_13)
-        # figure_4.delaxes(axe_31)
-        # figure_4.delaxes(axe_33)
-          
-        # axe_12.plot(self.analyse_results["quadrant_crossings"][:,0])
-        # axe_12.set_ylim((0, 1.5))
-        # axe_12.set_title('upper arm')
-    
-        # axe_21.plot(self.analyse_results["quadrant_crossings"][:,1])
-        # axe_21.set_ylim((0, 1.5))
-        # axe_21.set_title('left  arm')
-    
-        # axe_22.plot(self.analyse_results["quadrant_crossings"][:,2])
-        # axe_22.set_ylim((0, 1.5))
-        # axe_22.set_title('center')
-    
-        # axe_23.plot(self.analyse_results["quadrant_crossings"][:,3])
-        # axe_23.set_ylim((0, 1.5))
-        # axe_23.set_title('right arm')
-    
-        # axe_32.plot(self.analyse_results["quadrant_crossings"][:,4])
-        # axe_32.set_ylim((0, 1.5))
-        # axe_32.set_title('lower arm')
+            # axe_23.plot(self.analysis_results["quadrant_crossings"][:,3])
+            # axe_23.set_ylim((0, 1.5))
+            # axe_23.set_title('right arm')
         
-        # figure_4.suptitle('Number of crossings')
-        # plt.tight_layout()
-        # plt.show()
-    
+            # axe_32.plot(self.analysis_results["quadrant_crossings"][:,4])
+            # axe_32.set_ylim((0, 1.5))
+            # axe_32.set_title('lower arm')
+            
+            # figure_4.suptitle('Number of crossings')
+            # plt.tight_layout()
+            # plt.show()            
+
 class files_class:
     def __init__(self):
         self.number = 0
@@ -267,7 +276,7 @@ class files_class:
                 self.directory.append(file[:-4])
 
 class interface_functions:
-    def get_experiments(self, line_edit):
+    def get_experiments(self, line_edit, experiment_type):
         file_explorer = tk.Tk()
         file_explorer.withdraw()
         file_explorer.call('wm', 'attributes', '.', '-topmost', True)
@@ -286,16 +295,26 @@ class interface_functions:
                 raw_data = pd.read_csv(files.directory[index] + '.csv', sep = ',', na_values = ['no info', '.'], header = None)
                 raw_image = rgb2gray(skimage.io.imread(files.directory[index] + '.png'))
             except:
-                line_edit.append("Doesn't exists CSV or PNG file with name " + files.name[index])
+                line_edit.append("- Doesn't exists CSV or PNG file with name " + files.name[index])
                 experiments.pop()
             else:
-                experiments[index].data = raw_data.interpolate(method='spline', order=1, limit_direction = 'both', axis = 0)
-                line_edit.append("File " + files.name[index] + '.csv was read')
-                experiments[index].last_frame = raw_image
-                line_edit.append("File " + files.name[index] + '.png was read')
-                experiments[index].name = files.name[index]  
-                experiments[index].directory = files.directory[index]
-                                
+                if raw_data.shape[1] == 7 and experiment_type == 'plus_maze':
+                    experiments[index].data = raw_data.interpolate(method='spline', order=1, limit_direction = 'both', axis = 0)
+                    line_edit.append("- File " + files.name[index] + '.csv was read')
+                    experiments[index].last_frame = raw_image
+                    line_edit.append("- File " + files.name[index] + '.png was read')
+                    experiments[index].name = files.name[index]  
+                    experiments[index].directory = files.directory[index]
+                elif experiment_type == 'open_field':
+                    experiments[index].data = raw_data.interpolate(method='spline', order=1, limit_direction = 'both', axis = 0)
+                    line_edit.append("- File " + files.name[index] + '.csv was read')
+                    experiments[index].last_frame = raw_image
+                    line_edit.append("- File " + files.name[index] + '.png was read')
+                    experiments[index].name = files.name[index]  
+                    experiments[index].directory = files.directory[index]
+                else:
+                    line_edit.append("- The " + files.name[index] + ".csv file had more columns than the elevated plus maze test allows")
+                    
         return experiments
  
 class plot_viewer_function(QtWidgets.QWidget):
