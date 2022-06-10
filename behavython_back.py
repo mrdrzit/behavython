@@ -297,7 +297,7 @@ class interface_functions:
                 experiments[index].directory = files.directory[index]
                                 
         return experiments
-    
+ 
 class plot_viewer_function(QtWidgets.QWidget):
     '''
     This class modifies the interface's QWidget in order to insert a plot viewer.

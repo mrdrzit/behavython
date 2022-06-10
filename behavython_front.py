@@ -2,7 +2,6 @@ import sys
 import behavython_back
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import QMainWindow
-import pandas as pd
 
 class behavython_gui(QMainWindow):
     '''
