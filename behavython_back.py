@@ -128,7 +128,7 @@ class experiment_class:
                                  }
         
         
-        print(self.analysis_results)
+        # print(self.analysis_results)
         
         dict_to_excel = {'Total distance (cm)'          : total_distance,
                          'Mean velocity (cm/s)'         : mean_velocity,
@@ -158,11 +158,11 @@ class experiment_class:
             movement_points = np.array([self.analysis_results["x_axe"], self.analysis_results["y_axe"]]).T.reshape(-1, 1, 2) 
             movement_segments = np.concatenate([movement_points[:-1], movement_points[1:]], axis=1)                         # Creates a 2D array containing the line segments coordinates
             movement_line_collection = LineCollection(movement_segments, cmap="CMRmap", linewidth=1.5)                      # TODO edit this line to customize the movement graph
-            movement_line_collection.set_array(self.analysis_results["color_limits"])                                                                # Set the line color to the normalized values of "color_limits"
+            movement_line_collection.set_array(self.analysis_results["color_limits"])                                       # Set the line color to the normalized values of "color_limits"
             axe_0.add_collection(movement_line_collection)
             axe_0.autoscale_view()
-            #plt.show()
-            plt.savefig(self.directory + '_0.png')
+            plt.show()
+            # plt.savefig(self.directory + '_0.png')
             plt.close(figure_0)
             
             plot_viewer.canvas.axes[plot_number].plot(self.analysis_results["x_axe"], self.analysis_results["y_axe"])
@@ -184,7 +184,7 @@ class experiment_class:
             # Figure 2 - Histogram
             figure_2, axe_2 = plt.subplots()
             axe_2.hist(self.analysis_results['displacement'], 400, density=True, facecolor='g', alpha=0.75)
-            plt.savefig(self.directory + '_2.png')
+            # plt.savefig(self.directory + '_2.png')
             plt.close(figure_2)
             
             # Figure 3 - Time spent on each arm over time
@@ -226,8 +226,8 @@ class experiment_class:
             
             figure_3.suptitle('Time spent on each arm over time')
             plt.tight_layout()
-            #plt.show()
-            plt.savefig(self.directory + '_3.png')
+            # plt.show()
+            # plt.savefig(self.directory + '_3.png')
             plt.close(figure_3)
             
             # Figure 4 - Number of crossings
