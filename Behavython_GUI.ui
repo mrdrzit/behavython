@@ -44,10 +44,10 @@
        <widget class="QFrame" name="interface_frame">
         <property name="geometry">
          <rect>
-          <x>20</x>
-          <y>20</y>
-          <width>251</width>
-          <height>471</height>
+          <x>10</x>
+          <y>0</y>
+          <width>261</width>
+          <height>473</height>
          </rect>
         </property>
         <property name="styleSheet">
@@ -56,8 +56,8 @@
         <widget class="QPushButton" name="analysis_button">
          <property name="geometry">
           <rect>
-           <x>70</x>
-           <y>180</y>
+           <x>80</x>
+           <y>220</y>
            <width>171</width>
            <height>21</height>
           </rect>
@@ -75,8 +75,8 @@
         <widget class="QLabel" name="label_1">
          <property name="geometry">
           <rect>
-           <x>10</x>
-           <y>40</y>
+           <x>20</x>
+           <y>80</y>
            <width>231</width>
            <height>16</height>
           </rect>
@@ -91,70 +91,13 @@
           <set>Qt::AlignCenter</set>
          </property>
         </widget>
-        <widget class="QLabel" name="label_0">
-         <property name="geometry">
-          <rect>
-           <x>10</x>
-           <y>0</y>
-           <width>231</width>
-           <height>21</height>
-          </rect>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QLabel{border:#969696;background-color:#A21F27;border-radius:8px;color:#FFFFFF;font:10pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
-         </property>
-         <property name="text">
-          <string notr="true">BEHAVYTHON </string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-        <widget class="QFrame" name="image">
-         <property name="geometry">
-          <rect>
-           <x>10</x>
-           <y>180</y>
-           <width>51</width>
-           <height>61</height>
-          </rect>
-         </property>
-         <property name="frameShape">
-          <enum>QFrame::StyledPanel</enum>
-         </property>
-         <property name="frameShadow">
-          <enum>QFrame::Raised</enum>
-         </property>
-         <widget class="QLabel" name="image_nnc">
-          <property name="geometry">
-           <rect>
-            <x>0</x>
-            <y>0</y>
-            <width>41</width>
-            <height>51</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string notr="true"/>
-          </property>
-          <property name="pixmap">
-           <pixmap>NNC_logo.png</pixmap>
-          </property>
-          <property name="scaledContents">
-           <bool>true</bool>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
-        </widget>
         <widget class="Line" name="line_0">
          <property name="geometry">
           <rect>
-           <x>10</x>
-           <y>30</y>
+           <x>20</x>
+           <y>60</y>
            <width>231</width>
-           <height>10</height>
+           <height>16</height>
           </rect>
          </property>
          <property name="orientation">
@@ -164,8 +107,8 @@
         <widget class="QComboBox" name="type_combobox">
          <property name="geometry">
           <rect>
-           <x>130</x>
-           <y>70</y>
+           <x>140</x>
+           <y>110</y>
            <width>111</width>
            <height>16</height>
           </rect>
@@ -196,8 +139,8 @@
         <widget class="QPushButton" name="clear_button">
          <property name="geometry">
           <rect>
-           <x>70</x>
-           <y>210</y>
+           <x>80</x>
+           <y>250</y>
            <width>171</width>
            <height>21</height>
           </rect>
@@ -215,8 +158,8 @@
         <widget class="QLineEdit" name="arena_width_lineedit">
          <property name="geometry">
           <rect>
-           <x>130</x>
-           <y>90</y>
+           <x>140</x>
+           <y>130</y>
            <width>71</width>
            <height>16</height>
           </rect>
@@ -234,8 +177,8 @@
         <widget class="QLineEdit" name="arena_height_lineedit">
          <property name="geometry">
           <rect>
-           <x>130</x>
-           <y>110</y>
+           <x>140</x>
+           <y>150</y>
            <width>71</width>
            <height>16</height>
           </rect>
@@ -253,8 +196,8 @@
         <widget class="QLineEdit" name="frames_per_second_lineedit">
          <property name="geometry">
           <rect>
-           <x>130</x>
-           <y>130</y>
+           <x>140</x>
+           <y>170</y>
            <width>71</width>
            <height>16</height>
           </rect>
@@ -272,8 +215,8 @@
         <widget class="QLabel" name="label_2">
          <property name="geometry">
           <rect>
-           <x>10</x>
-           <y>70</y>
+           <x>20</x>
+           <y>110</y>
            <width>91</width>
            <height>16</height>
           </rect>
@@ -291,8 +234,8 @@
         <widget class="QLabel" name="label_3">
          <property name="geometry">
           <rect>
-           <x>10</x>
-           <y>90</y>
+           <x>20</x>
+           <y>130</y>
            <width>81</width>
            <height>16</height>
           </rect>
@@ -310,8 +253,8 @@
         <widget class="QLabel" name="label_4">
          <property name="geometry">
           <rect>
-           <x>10</x>
-           <y>110</y>
+           <x>20</x>
+           <y>150</y>
            <width>81</width>
            <height>16</height>
           </rect>
@@ -329,8 +272,8 @@
         <widget class="QLabel" name="label_5">
          <property name="geometry">
           <rect>
-           <x>10</x>
-           <y>130</y>
+           <x>20</x>
+           <y>170</y>
            <width>101</width>
            <height>16</height>
           </rect>
@@ -348,8 +291,8 @@
         <widget class="QLabel" name="label_6">
          <property name="geometry">
           <rect>
-           <x>200</x>
-           <y>90</y>
+           <x>210</x>
+           <y>130</y>
            <width>41</width>
            <height>16</height>
           </rect>
@@ -367,8 +310,8 @@
         <widget class="QLabel" name="label_7">
          <property name="geometry">
           <rect>
-           <x>200</x>
-           <y>110</y>
+           <x>210</x>
+           <y>150</y>
            <width>41</width>
            <height>16</height>
           </rect>
@@ -386,8 +329,8 @@
         <widget class="QLabel" name="label_8">
          <property name="geometry">
           <rect>
-           <x>200</x>
-           <y>130</y>
+           <x>210</x>
+           <y>170</y>
            <width>41</width>
            <height>16</height>
           </rect>
@@ -405,8 +348,8 @@
         <widget class="QLabel" name="label_10">
          <property name="geometry">
           <rect>
-           <x>10</x>
-           <y>150</y>
+           <x>20</x>
+           <y>190</y>
            <width>101</width>
            <height>16</height>
           </rect>
@@ -425,9 +368,9 @@
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>250</y>
+           <y>290</y>
            <width>231</width>
-           <height>171</height>
+           <height>131</height>
           </rect>
          </property>
          <property name="styleSheet">
@@ -447,7 +390,7 @@
          <property name="geometry">
           <rect>
            <x>0</x>
-           <y>440</y>
+           <y>450</y>
            <width>251</width>
            <height>23</height>
           </rect>
@@ -463,8 +406,8 @@
         <widget class="QComboBox" name="animal_combobox">
          <property name="geometry">
           <rect>
-           <x>130</x>
-           <y>150</y>
+           <x>140</x>
+           <y>190</y>
            <width>111</width>
            <height>16</height>
           </rect>
@@ -492,13 +435,57 @@
           </property>
          </item>
         </widget>
+        <widget class="QLabel" name="image_nnc">
+         <property name="geometry">
+          <rect>
+           <x>20</x>
+           <y>220</y>
+           <width>41</width>
+           <height>51</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string notr="true"/>
+         </property>
+         <property name="pixmap">
+          <pixmap>NNC_logo.png</pixmap>
+         </property>
+         <property name="scaledContents">
+          <bool>true</bool>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label">
+         <property name="geometry">
+          <rect>
+           <x>20</x>
+           <y>10</y>
+           <width>231</width>
+           <height>51</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="pixmap">
+          <pixmap>logo/logo.png</pixmap>
+         </property>
+         <property name="scaledContents">
+          <bool>true</bool>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
        </widget>
        <widget class="plot_viewer_function" name="plot_viewer" native="true">
         <property name="geometry">
          <rect>
-          <x>290</x>
+          <x>270</x>
           <y>-10</y>
-          <width>601</width>
+          <width>621</width>
           <height>521</height>
          </rect>
         </property>
