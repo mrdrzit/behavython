@@ -170,16 +170,16 @@ class experiment_class:
             plot_viewer.canvas.draw_idle()
             
             # Figure 1 - 
-            #plt.rcParams["figure.figsize"] = [7.00, 3.50]
-            #plt.rcParams["figure.autolayout"] = True
-            # im = plt.imread(self.directory + ".png")
-            # figure_1, axe_1 = plt.subplots()
-            # im = axe_1.imshow(im, extent=[0, self.analysis_results['video_width'], 0, self.analysis_results['video_height']])
-            # axe_1.add_collection(movement_line_collection)
-            # axe_1.autoscale_view()
-            # plt.show()
+            plt.rcParams["figure.figsize"] = [7.00, 3.50]
+            plt.rcParams["figure.autolayout"] = True
+            im = plt.imread(self.directory + ".png")
+            figure_1, axe_1 = plt.subplots()
+            im = axe_1.imshow(im)
+            axe_1.add_collection(movement_line_collection)
+            plt.autoscale()
+            plt.show()
             # plt.savefig(self.directory + '_1.png')
-            # plt.close(figure_1)
+            plt.close(figure_1)
             
             # Figure 2 - Histogram
             figure_2, axe_2 = plt.subplots()
@@ -344,22 +344,4 @@ class plot_viewer_function(QtWidgets.QWidget):
         self.canvas.figure.subplots_adjust(left=0, bottom=0, right=1, 
                                            top=1, wspace=0, hspace=0)               # Sets the plot margins 
         self.setLayout(vertical_layout)                                             # Sets the layout
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
