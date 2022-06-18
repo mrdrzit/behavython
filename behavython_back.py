@@ -344,8 +344,6 @@ class plot_viewer_function(QtWidgets.QWidget):
         self.canvas.figure.subplots_adjust(left=0, bottom=0, right=1, 
                                            top=1, wspace=0, hspace=0)               # Sets the plot margins 
         self.setLayout(vertical_layout)                                             # Sets the layout
-        
-         
     
     
     
