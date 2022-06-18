@@ -46,10 +46,10 @@ class experiment_class:
         
     def video_analyse(self, options):       
         self.experiment_type = options['experiment_type']
-        arena_width = options['arena_width']                                    # Arena width seted by user 
-        arena_height = options['arena_height']                                  # Arena height seted by user
-        frames_per_second = options['frames_per_second']                        # Video frames per second seted by user
-        threshold = options['threshold']                                        # Motion threshold seted by user in Bonsai
+        arena_width = options['arena_width']                                    # Arena width set by user 
+        arena_height = options['arena_height']                                  # Arena height set by user
+        frames_per_second = options['frames_per_second']                        # Video frames per second set by user
+        threshold = options['threshold']                                        # Motion threshold set by user in Bonsai
             
         video_height, video_width = self.last_frame.shape                       # Gets the video height and width from the video last frame
         factor_width = arena_width/video_width                                  # Calculates the width scale factor of the video
