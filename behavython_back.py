@@ -154,16 +154,16 @@ class experiment_class:
     def plot_analysis(self, plot_viewer, plot_number):
         if self.experiment_type == 'plus_maze':
             # Figure 1 - 
-            figure_0, axe_0 = plt.subplots()
+            # figure_0, axe_0 = plt.subplots()
             movement_points = np.array([self.analysis_results["x_axe"], self.analysis_results["y_axe"]]).T.reshape(-1, 1, 2) 
             movement_segments = np.concatenate([movement_points[:-1], movement_points[1:]], axis=1)                         # Creates a 2D array containing the line segments coordinates
             movement_line_collection = LineCollection(movement_segments, cmap="CMRmap", linewidth=1.5)                      # TODO edit this line to customize the movement graph
             movement_line_collection.set_array(self.analysis_results["color_limits"])                                       # Set the line color to the normalized values of "color_limits"
-            axe_0.add_collection(movement_line_collection)
-            axe_0.autoscale_view()
-            plt.show()
+            # axe_0.add_collection(movement_line_collection)
+            # axe_0.autoscale_view()
+            # plt.show()
             # plt.savefig(self.directory + '_0.png')
-            plt.close(figure_0)
+            # plt.close(figure_0)
             
             plot_viewer.canvas.axes[plot_number].plot(self.analysis_results["x_axe"], self.analysis_results["y_axe"])
             #plot_viewer.canvas.axes[plot_number].title('Experiment ' + str(plot_number+1), fontsize = 10, fontfamily="DejaVu Sans", color="white")
