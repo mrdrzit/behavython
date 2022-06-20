@@ -321,8 +321,8 @@ class plot_viewer_function(QtWidgets.QWidget):
     '''
     This class modifies the interface's QWidget in order to insert a plot viewer.
     
-    TODO: Analisar melhor forma de plotar o resumo de todos os resultados.
-    ex: botão de ir e voltar para navegar entre os plots
+    TODO: Find the best way to plot a summary of the data.
+    E.g.: A button to advance or go back in the plots
     '''    
     def __init__(self, parent = None):
         QtWidgets.QWidget.__init__(self, parent)                                   
