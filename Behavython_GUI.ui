@@ -500,7 +500,7 @@
   <customwidget>
    <class>plot_viewer_function</class>
    <extends>QWidget</extends>
-   <header location="global">behavython_back.h</header>
+   <header location="global">behavython_front.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
