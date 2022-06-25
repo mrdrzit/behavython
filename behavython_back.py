@@ -80,8 +80,7 @@ class experiment_class:
         kde_instance = stats.gaussian_kde(kde_space_coordinates)
         point_density_function = kde_instance.evaluate(kde_space_coordinates)
         color_limits = np.array([(x - np.min(point_density_function))/(np.max(point_density_function) - np.min(point_density_function)) for x in point_density_function])
-        
-        # TODO create check to verify that the csv file have the correct number of data columns  
+          
         quadrant_data = np.array(self.data[self.data.columns[2:]])                                  # Extract the quadrant data from csv file
         colDif = np.abs(quadrant_data[:,0] - np.sum(quadrant_data[:][:,1:],axis=1))                 # Here, the values will be off-by-one because MATLAB starts at 1
         full_entry_indexes = colDif != 1                                                            # Create a logical array where there is "full entry"
@@ -154,7 +153,7 @@ class experiment_class:
             # figure_0, axe_0 = plt.subplots()
             movement_points = np.array([self.analysis_results["x_axe"], self.analysis_results["y_axe"]]).T.reshape(-1, 1, 2) 
             movement_segments = np.concatenate([movement_points[:-1], movement_points[1:]], axis=1)                         # Creates a 2D array containing the line segments coordinates
-            movement_line_collection = LineCollection(movement_segments, cmap="CMRmap", linewidth=1.5)                      # TODO edit this line to customize the movement graph
+            movement_line_collection = LineCollection(movement_segments, cmap="CMRmap", linewidth=1.5)                      # Creates a LineCollection object with custom color map
             movement_line_collection.set_array(self.analysis_results["color_limits"])                                       # Set the line color to the normalized values of "color_limits"
             # axe_0.add_collection(movement_line_collection)
             # axe_0.autoscale_view()
