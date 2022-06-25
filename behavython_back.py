@@ -8,23 +8,6 @@ from matplotlib import pyplot as plt
 from tkinter import filedialog
 from skimage.color import rgb2gray
 from scipy import stats
-# from sklearn.neighbors import KernelDensity
-
-# Alternative method using a function found here:
-# https://stackoverflow.com/questions/41577705/how-does-2d-kernel-density-estimation-in-python-sklearn-work
-
-# def kde2D(x, y, bandwidth, xbins=100j, ybins=100j, **kwargs): 
-#     """Build 2D kernel density estimate (KDE)."""
-#     # create grid of sample locations (default: 100x100)
-#     xx, yy = np.mgrid[x.min():x.max():xbins, 
-#                       y.min():y.max():ybins]
-#     xy_sample = np.vstack([yy.ravel(), xx.ravel()]).T
-#     xy_train  = np.vstack([y, x]).T
-#     kde_skl = KernelDensity(bandwidth=bandwidth, **kwargs)
-#     kde_skl.fit(xy_train)
-#     # score_samples() returns the log-likelihood of the samples
-#     z = np.exp(kde_skl.score_samples(xy_sample))
-#     return xx, yy, np.reshape(z, xx.shape)
 
 class experiment_class:
     '''
@@ -88,14 +71,6 @@ class experiment_class:
         quadrant_crossings = abs(np.diff(time_spent, axis=0))
         total_time_in_quadrant = np.sum(np.divide(time_spent,frames_per_second),0)                  # Total time spent in each quadrant
         total_number_of_entries = np.sum(quadrant_crossings > 0, 0)                                 # Total # of entries in each quadrant
-
-        # Alternative method using a function found here:
-        # https://stackoverflow.com/questions/41577705/how-does-2d-kernel-density-estimation-in-python-sklearn-work
-        # xx, yy, zz = kde2D(x, y, 1.0, 50j, 100j)
-        # fig1 = plt.figure()
-        # plt.pcolormesh(xx, yy, zz)
-        # plt.scatter(x, y, s=0.01, facecolor='white')
-        # plt.show()
         
         self.analysis_results = {'video_width'         : video_width,
                                  'video_height'        : video_height,
