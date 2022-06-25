@@ -10,7 +10,7 @@ class analysis_class(QObject):
     ''' 
 
     '''
-    finished = pyqtSignal()                                                                         # Signal that will be output to the interface when the function is complited
+    finished = pyqtSignal()                                                                         # Signal that will be output to the interface when the function is completed
     progress_bar = pyqtSignal(int)
     
     def __init__(self, experiments, options, plot_viewer):                                          # Initializes when the thread is started
@@ -81,7 +81,7 @@ class behavython_gui(QMainWindow):
         self.analysis_worker.finished.connect(self.analysis_thread.wait)                          # When the process is finished, this command waits the worker to finish completely
         self.analysis_worker.finished.connect(self.analysis_worker.deleteLater)                   # When the process is finished, this command deletes the worker
         self.analysis_worker.progress_bar.connect(self.progress_bar_function)
-        self.analysis_thread.finished.connect(self.analysis_thread.deleteLater)                   # When the process is finished, this command deletes the threadf.
+        self.analysis_thread.finished.connect(self.analysis_thread.deleteLater)                   # When the process is finished, this command deletes the thread.
         self.analysis_thread.start()                                                              # Starts the thread 
 
         self.analysis_worker.run_analyse()
@@ -123,7 +123,7 @@ class plot_viewer_function(QtWidgets.QWidget):
         
         self.canvas.axes = []
         for i in range(1,10):
-            self.canvas.axes.append(self.canvas.figure.add_subplot(3,3,i))          # Creates a empty plot
+            self.canvas.axes.append(self.canvas.figure.add_subplot(3,3,i))          # Creates an empty plot
             self.canvas.axes[i-1].set_facecolor("#252525")                          # Changes the plot face color
             self.canvas.axes[i-1].get_xaxis().set_visible(False)
             self.canvas.axes[i-1].get_yaxis().set_visible(False)

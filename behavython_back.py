@@ -48,7 +48,7 @@ class experiment_class:
         frames_per_second = options['frames_per_second']                        # Video frames per second set by user
         threshold = options['threshold']                                        # Motion threshold set by user in Bonsai
             
-        video_height, video_width = self.last_frame.shape                       # Gets the video height and width from the video last frame
+        video_height, video_width = self.last_frame.shape                       # Gets the video height and width from the video's last frame
         factor_width = arena_width/video_width                                  # Calculates the width scale factor of the video
         factor_height = arena_height/video_height                               # Calculates the height scale factor of the video
         number_of_frames = len(self.data)                                       # Gets the number of frames
@@ -57,8 +57,8 @@ class experiment_class:
         y_axe = self.data[1]                                                    # Gets the y position
         x_axe_cm = self.data[0]*factor_width                                    # Puts the x position on scale
         y_axe_cm = self.data[1]*factor_height                                   # Puts the y position on scale
-        d_x_axe_cm = np.append(0, np.diff(self.data[0]))*factor_width           # Calculates the step difference of position in x axe
-        d_y_axe_cm = np.append(0, np.diff(self.data[1]))*factor_height          # Calculates the step difference of position in y axe
+        d_x_axe_cm = np.append(0, np.diff(self.data[0]))*factor_width           # Calculates the step difference of position in x axis
+        d_y_axe_cm = np.append(0, np.diff(self.data[1]))*factor_height          # Calculates the step difference of position in y axis
                  
         displacement_raw = np.sqrt(np.square(d_x_axe_cm) + np.square(d_y_axe_cm))
         displacement = displacement_raw
@@ -71,7 +71,7 @@ class experiment_class:
         velocity = np.divide(displacement, np.transpose(np.append(0, np.diff(time_vector))))        # Calculates the first derivate and finds the animal's velocity per time
         mean_velocity = np.nanmean(velocity)                                                        # Calculates the mean velocity from the velocity vector
         
-        aceleration = np.divide(np.append(0, np.diff(velocity)), np.append(0, np.diff(time_vector)))    # Calculates the second derivate and finds the animal's acceleration per time
+        aceleration = np.divide(np.append(0, np.diff(velocity)), np.append(0, np.diff(time_vector)))    # Calculates the second derivative and finds the animal's acceleration per time
         movements = np.sum(displacement > 0)                                                            # Calculates the number of movements made by the animal
         time_moving = np.sum(displacement > 0)*(1/frames_per_second)                                    # Calculates the total time of movements made by the animal
         time_resting = np.sum(displacement == 0)*(1/frames_per_second)                                  # Calculates the total time of the animal without movimentations 
