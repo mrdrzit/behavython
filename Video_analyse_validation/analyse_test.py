@@ -9,6 +9,5 @@ matlab = pd.read_excel("Behavython/Video_analyse_validation/animal_2_MATLAB.xlsx
 python = pd.read_excel("Behavython/Video_analyse_validation/animal_2_PYTHON.xlsx", header=None)
 
 def test_analyse():
-  for i in range(0, len(matlab[1])):
-    e = matlab[0][i]
-    assert round(matlab[1][i], 10) == round(python[1][i], 10), "TEST FAILED for " + e
+  for i in range(0, len(matlab[1])): 
+    assert round(matlab[1][i], 10) == round(python[1][i], 10), "TEST FAILED for " + matlab[0][i]
