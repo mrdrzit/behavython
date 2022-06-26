@@ -1,4 +1,5 @@
 import sys
+import os
 import behavython_back
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import QMainWindow
@@ -34,6 +35,8 @@ class analysis_class(QObject):
             self.progress_bar.emit(round(((i+1)/len(self.experiments))*100))
         
         results_data_frame.to_excel(self.experiments[0].directory + '_rusults.xlsx')
+        True_path = os.path.dirname(__file__) + '\\Video_analyse_validation\\animal_2_PYTHON.xlsx'
+        results_data_frame.to_excel(True_path, header=False)
         self.finished.emit()
 
 class behavython_gui(QMainWindow):
