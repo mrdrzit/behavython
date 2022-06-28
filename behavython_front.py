@@ -101,14 +101,6 @@ class behavython_gui(QMainWindow):
         self.animal_combobox.setCurrentIndex(0)
         plot_viewer_function()
 
-# def main(): 
-#   app = QtWidgets.QApplication(sys.argv)   # Create an instance of QtWidgets.QApplication
-#   window = behavython_gui()                # Create an instance of our class
-#   app.exec_()                              # Start the application
- 
-# if __name__ == '__main__': 
-#   show = main()
-
 class plot_viewer_function(QtWidgets.QWidget):
     '''
     This class modifies the interface's QWidget in order to insert a plot viewer.
@@ -136,7 +128,17 @@ class plot_viewer_function(QtWidgets.QWidget):
         self.canvas.figure.subplots_adjust(left=0, bottom=0, right=1, 
                                            top=1, wspace=0, hspace=0)               # Sets the plot margins 
         self.setLayout(vertical_layout)                                             # Sets the layout
-        
+
+
+# def main(): 
+#   app = QtWidgets.QApplication(sys.argv)   # Create an instance of QtWidgets.QApplication
+#   window = behavython_gui()                # Create an instance of our class
+#   app.exec_()                              # Start the application
+ 
+# if __name__ == '__main__': 
+#   show = main()
+
+
 if __name__ == '__main__':   
     def main():
         if not QtWidgets.QApplication.instance():
@@ -146,7 +148,4 @@ if __name__ == '__main__':
             main = behavython_gui()
             main.show()
             return main  
-    show = main()       
-        
-        
-
+    show = main()
