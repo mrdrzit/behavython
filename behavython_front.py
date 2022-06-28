@@ -45,8 +45,8 @@ class analysis_class(QObject):
             self.progress_bar.emit(round(((i+1)/len(self.experiments))*100))
         
         results_data_frame.to_excel(self.experiments[0].directory + '_rusults.xlsx')
-        True_path = os.path.dirname(__file__) + '\\Video_analyse_validation\\animal_2_PYTHON.xlsx'
-        results_data_frame.to_excel(True_path, header=False)
+        true_path = os.path.dirname(__file__) + '\\Video_analyse_validation\\animal_2_PYTHON.xlsx'
+        results_data_frame.to_excel(true_path, header=False)
         self.finished.emit()
 
 class behavython_gui(QMainWindow):
@@ -60,7 +60,8 @@ class behavython_gui(QMainWindow):
         '''
 
         super(behavython_gui, self).__init__()              # Calls the inherited classes __init__ method
-        uic.loadUi("G:/Outros computadores/Meu computador/Faculdade/Mestrado/NNC/GitHub/Behavython/Behavython_GUI.ui", self)               # Loads the interface design archive (made in Qt Designer)
+        load_gui_path = os.path.dirname(__file__) + "\\Behavython_GUI.ui"
+        uic.loadUi(load_gui_path, self)               # Loads the interface design archive (made in Qt Designer)
         self.show()
 
         self.options = {}
