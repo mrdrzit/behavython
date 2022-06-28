@@ -50,7 +50,7 @@ class behavython_gui(QMainWindow):
         '''
 
         super(behavython_gui, self).__init__()              # Calls the inherited classes __init__ method
-        uic.loadUi("Behavython_GUI.ui", self)               # Loads the interface design archive (made in Qt Designer)
+        uic.loadUi("G:/Outros computadores/Meu computador/Faculdade/Mestrado/NNC/GitHub/Behavython/Behavython_GUI.ui", self)               # Loads the interface design archive (made in Qt Designer)
         self.show()
 
         self.options = {}
@@ -130,22 +130,22 @@ class plot_viewer_function(QtWidgets.QWidget):
         self.setLayout(vertical_layout)                                             # Sets the layout
 
 
-# def main(): 
-#   app = QtWidgets.QApplication(sys.argv)   # Create an instance of QtWidgets.QApplication
-#   window = behavython_gui()                # Create an instance of our class
-#   app.exec_()                              # Start the application
+def main(): 
+  app = QtWidgets.QApplication(sys.argv)   # Create an instance of QtWidgets.QApplication
+  window = behavython_gui()                # Create an instance of our class
+  app.exec_()                              # Start the application
  
-# if __name__ == '__main__': 
-#   show = main()
+if __name__ == '__main__': 
+  show = main()
 
 
-if __name__ == '__main__':   
-    def main():
-        if not QtWidgets.QApplication.instance():
-            QtWidgets.QApplication(sys.argv)
-        else:
-            QtWidgets.QApplication.instance()
-            main = behavython_gui()
-            main.show()
-            return main  
-    show = main()
+# if __name__ == '__main__':   
+#     def main():
+#         if not QtWidgets.QApplication.instance():
+#             QtWidgets.QApplication(sys.argv)
+#         else:
+#             QtWidgets.QApplication.instance()
+#             main = behavython_gui()
+#             main.show()
+#             return main  
+#     show = main()
