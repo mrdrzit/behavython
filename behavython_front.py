@@ -61,6 +61,7 @@ class behavython_gui(QMainWindow):
 
         super(behavython_gui, self).__init__()              # Calls the inherited classes __init__ method
         load_gui_path = os.path.dirname(__file__) + "\\Behavython_GUI.ui"
+        sys.path.append("./QtCustomWidgets/widgets")
         uic.loadUi(load_gui_path, self)               # Loads the interface design archive (made in Qt Designer)
         self.show()
 
@@ -73,7 +74,7 @@ class behavython_gui(QMainWindow):
         plot_viewer_function()
         self.resume_lineedit.clear()
         
-        if self.type_combobox.currentIndex() == 0:
+        if self.type_combobox.currentIndex() == 1:
             self.options['experiment_type'] = 'open_field'
         else:
             self.options['experiment_type'] = 'plus_maze'
