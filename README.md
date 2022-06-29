@@ -144,4 +144,4 @@ Brazil<br/>
 [closed-issues-shield]: https://img.shields.io/github/issues-closed/mrdrzit/Behavython?color=%2321e00b
 [closed-issues-url]: https://github.com/mrdrzit/Behavython/issues?q=is%3Aissue+is%3Aclosed
 [license-shield]: https://img.shields.io/github/license/mrdrzit/Behavython
-[license-url]: https://github.com/mrdrzit/Behavython/blob/main/LICENSE.txt
+[license-url]: https://github.com/mrdrzit/Behavython/blob/main/LICENSE
