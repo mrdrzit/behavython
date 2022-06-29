@@ -448,7 +448,7 @@
           <string notr="true"/>
          </property>
          <property name="pixmap">
-          <pixmap>NNC_logo.png</pixmap>
+          <pixmap>logo/NNC_logo.png</pixmap>
          </property>
          <property name="scaledContents">
           <bool>true</bool>
@@ -480,7 +480,7 @@
          </property>
         </widget>
        </widget>
-       <widget class="plot_viewer_function" name="plot_viewer" native="true">
+       <widget class="plot_viewer" name="plot_viewer" native="true">
         <property name="geometry">
          <rect>
           <x>270</x>
@@ -498,9 +498,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>plot_viewer_function</class>
+   <class>plot_viewer</class>
    <extends>QWidget</extends>
-   <header>behavython_front</header>
+   <header location="global">behavython_plot_widget</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
