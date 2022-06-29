@@ -41,7 +41,11 @@ class analysis_class(QObject):
                 results_data_frame = data_frame
             else:
                 results_data_frame = results_data_frame.join(data_frame, how='outer')
-            self.experiments[i].plot_analysis(self.plot_viewer, i)
+
+            if self.options['experiment_type'] == 'open_field':
+                self.experiments[i].plot_analysis_open_field(self.plot_viewer, i)
+            else:
+                self.experiments[i].plot_analysis_pluz_maze(self.plot_viewer, i)
             self.progress_bar.emit(round(((i+1)/len(self.experiments))*100))
         
         results_data_frame.to_excel(self.experiments[0].directory + '_rusults.xlsx')
@@ -59,9 +63,9 @@ class behavython_gui(QMainWindow):
         This private function calls the interface of a .ui file created in Qt Designer.
         '''
 
-        super(behavython_gui, self).__init__()              # Calls the inherited classes __init__ method
+        super(behavython_gui, self).__init__()                                      # Calls the inherited classes __init__ method
         load_gui_path = os.path.dirname(__file__) + "\\Behavython_GUI.ui"
-        uic.loadUi(load_gui_path, self, package='behavython_front')               # Loads the interface design archive (made in Qt Designer)
+        uic.loadUi(load_gui_path, self, package='behavython_front')                 # Loads the interface design archive (made in Qt Designer)
         self.show()
 
         self.options = {}
@@ -253,115 +257,223 @@ class experiment_class:
         data_frame = (data_frame.T)
         return self.analysis_results, data_frame    
 
-    def plot_analysis(self, plot_viewer, plot_number):
-        if self.experiment_type == 'plus_maze':
-            # Figure 1 - 
-            # figure_0, axe_0 = plt.subplots()
-            movement_points = np.array([self.analysis_results["x_axe"], self.analysis_results["y_axe"]]).T.reshape(-1, 1, 2) 
-            movement_segments = np.concatenate([movement_points[:-1], movement_points[1:]], axis=1)                         # Creates a 2D array containing the line segments coordinates
-            movement_line_collection = LineCollection(movement_segments, cmap="CMRmap", linewidth=1.5)                      # Creates a LineCollection object with custom color map
-            movement_line_collection.set_array(self.analysis_results["color_limits"])                                       # Set the line color to the normalized values of "color_limits"
-            # axe_0.add_collection(movement_line_collection)
-            # axe_0.autoscale_view()
-            # plt.show()
-            # plt.savefig(self.directory + '_0.png')
-            # plt.close(figure_0)
-            
-            plot_viewer.canvas.axes[plot_number].plot(self.analysis_results["x_axe"], self.analysis_results["y_axe"])
-            #plot_viewer.canvas.axes[plot_number].title('Experiment ' + str(plot_number+1), fontsize = 10, fontfamily="DejaVu Sans", color="white")
-            plot_viewer.canvas.draw_idle()
-            
-            # Figure 1 - 
-            plt.rcParams["figure.figsize"] = [7.00, 3.50]
-            plt.rcParams["figure.autolayout"] = True
-            im = plt.imread(self.directory + ".png")
-            figure_1, axe_1 = plt.subplots()
-            im = axe_1.imshow(im)
-            axe_1.add_collection(movement_line_collection)
-            plt.autoscale()
-            plt.show()
-            # plt.savefig(self.directory + '_1.png')
-            plt.close(figure_1)
-            
-            # Figure 2 - Histogram
-            figure_2, axe_2 = plt.subplots()
-            axe_2.hist(self.analysis_results['displacement'], 400, density=True, facecolor='g', alpha=0.75)
-            # plt.savefig(self.directory + '_2.png')
-            plt.close(figure_2)
-            
-            # Figure 3 - Time spent on each arm over time
-            figure_3, ((axe_11, axe_12, axe_13), (axe_21, axe_22, axe_23), (axe_31, axe_32, axe_33)) = plt.subplots(3,3)
-            figure_3.delaxes(axe_11)
-            figure_3.delaxes(axe_13)
-            figure_3.delaxes(axe_31)
-            figure_3.delaxes(axe_33)
-            
-            axe_12.plot(self.analysis_results["time_spent"][:,0], color = '#2C53A1')
-            entries = np.array(self.analysis_results["quadrant_crossings"][:,0]) == 1
-            axe_12.plot(self.analysis_results["quadrant_crossings"][:,0], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
-            axe_12.set_ylim((0, 1.5))
-            axe_12.set_title('upper arm')
+    def plot_analysis_pluz_maze(self, plot_viewer, plot_number):
+        # Figure 1 - 
+        movement_points = np.array([self.analysis_results["x_axe"], self.analysis_results["y_axe"]]).T.reshape(-1, 1, 2) 
+        movement_segments = np.concatenate([movement_points[:-1], movement_points[1:]], axis=1)                         # Creates a 2D array containing the line segments coordinates
+        movement_line_collection = LineCollection(movement_segments, cmap="CMRmap", linewidth=1.5)                      # Creates a LineCollection object with custom color map
+        movement_line_collection.set_array(self.analysis_results["color_limits"])                                       # Set the line color to the normalized values of "color_limits"
+        figure_1, axe_1 = plt.subplots()
+        #plt.rcParams["figure.figsize"] = [7.00, 3.50]
+        #plt.rcParams["figure.autolayout"] = True
+        im = plt.imread(self.directory + ".png")
+        axe_1.imshow(im)
+        axe_1.add_collection(movement_line_collection)
+        axe_1.axis('tight')
+        axe_1.axis('off')
+        figure_1.subplots_adjust(left=0,right=1,bottom=0,top=1)
+        plt.savefig('temp.png', frameon='false')
+        plt.autoscale()
+        plt.show()
+
+        # plt.savefig(self.directory + '_1.png')
+        # plt.close(figure_1)
         
-            axe_21.plot(self.analysis_results["time_spent"][:,1], color = '#2C53A1')
-            entries = np.array(self.analysis_results["quadrant_crossings"][:,1]) == 1
-            axe_21.plot(self.analysis_results["quadrant_crossings"][:,1], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
-            axe_21.set_ylim((0, 1.5))
-            axe_21.set_title('left  arm')
+        im = plt.imread("temp.png")
+        plot_viewer.canvas.axes[plot_number].imshow(im)
+        #plot_viewer.canvas.axes[plot_number].title('Experiment ' + str(plot_number+1), fontsize = 10, fontfamily="DejaVu Sans", color="white")
+        plot_viewer.canvas.draw_idle()
+                
+        # Figure 2 - Histogram
+        figure_2, axe_2 = plt.subplots()
+        axe_2.hist(self.analysis_results['displacement'], 400, density=True, facecolor='g', alpha=0.75)
+        plt.show()
+        # plt.savefig(self.directory + '_2.png')
+        # plt.close(figure_2)
         
-            axe_22.plot(self.analysis_results["time_spent"][:,2], color = '#2C53A1')
-            entries = np.array(self.analysis_results["quadrant_crossings"][:,2]) == 1
-            axe_22.plot(self.analysis_results["quadrant_crossings"][:,2], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
-            axe_22.set_ylim((0, 1.5))
-            axe_22.set_title('center')
+        # Figure 3 - Time spent on each arm over time
+        figure_3, ((axe_11, axe_12, axe_13), (axe_21, axe_22, axe_23), (axe_31, axe_32, axe_33)) = plt.subplots(3,3)
+        figure_3.delaxes(axe_11)
+        figure_3.delaxes(axe_13)
+        figure_3.delaxes(axe_31)
+        figure_3.delaxes(axe_33)
         
-            axe_23.plot(self.analysis_results["time_spent"][:,3], color = '#2C53A1')
-            entries = np.array(self.analysis_results["quadrant_crossings"][:,3]) == 1
-            axe_23.plot(self.analysis_results["quadrant_crossings"][:,3], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
-            axe_23.set_ylim((0, 1.5))
-            axe_23.set_title('right arm')
+        axe_12.plot(self.analysis_results["time_spent"][:,0], color = '#2C53A1')
+        entries = np.array(self.analysis_results["quadrant_crossings"][:,0]) == 1
+        axe_12.plot(self.analysis_results["quadrant_crossings"][:,0], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
+        axe_12.set_ylim((0, 1.5))
+        axe_12.set_title('upper arm')
+    
+        axe_21.plot(self.analysis_results["time_spent"][:,1], color = '#2C53A1')
+        entries = np.array(self.analysis_results["quadrant_crossings"][:,1]) == 1
+        axe_21.plot(self.analysis_results["quadrant_crossings"][:,1], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
+        axe_21.set_ylim((0, 1.5))
+        axe_21.set_title('left  arm')
+    
+        axe_22.plot(self.analysis_results["time_spent"][:,2], color = '#2C53A1')
+        entries = np.array(self.analysis_results["quadrant_crossings"][:,2]) == 1
+        axe_22.plot(self.analysis_results["quadrant_crossings"][:,2], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
+        axe_22.set_ylim((0, 1.5))
+        axe_22.set_title('center')
+    
+        axe_23.plot(self.analysis_results["time_spent"][:,3], color = '#2C53A1')
+        entries = np.array(self.analysis_results["quadrant_crossings"][:,3]) == 1
+        axe_23.plot(self.analysis_results["quadrant_crossings"][:,3], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
+        axe_23.set_ylim((0, 1.5))
+        axe_23.set_title('right arm')
+    
+        axe_32.plot(self.analysis_results["time_spent"][:,4], color = '#2C53A1')
+        entries = np.array(self.analysis_results["quadrant_crossings"][:,4]) == 1
+        axe_32.plot(self.analysis_results["quadrant_crossings"][:,4], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
+        axe_32.set_ylim((0, 1.5))
+        axe_32.set_title('lower arm')
         
-            axe_32.plot(self.analysis_results["time_spent"][:,4], color = '#2C53A1')
-            entries = np.array(self.analysis_results["quadrant_crossings"][:,4]) == 1
-            axe_32.plot(self.analysis_results["quadrant_crossings"][:,4], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
-            axe_32.set_ylim((0, 1.5))
-            axe_32.set_title('lower arm')
+        figure_3.suptitle('Time spent on each arm over time')
+        plt.tight_layout()
+        plt.show()
+        # plt.savefig(self.directory + '_3.png')
+        # plt.close(figure_3)
+        
+        # Figure 4 - Number of crossings
+        # figure_4, ((axe_11, axe_12, axe_13), (axe_21, axe_22, axe_23), (axe_31, axe_32, axe_33)) = plt.subplots(3,3)
+        # figure_4.delaxes(axe_11)
+        # figure_4.delaxes(axe_13)
+        # figure_4.delaxes(axe_31)
+        # figure_4.delaxes(axe_33)
             
-            figure_3.suptitle('Time spent on each arm over time')
-            plt.tight_layout()
-            # plt.show()
-            # plt.savefig(self.directory + '_3.png')
-            plt.close(figure_3)
+        # axe_12.plot(self.analysis_results["quadrant_crossings"][:,0])
+        # axe_12.set_ylim((0, 1.5))
+        # axe_12.set_title('upper arm')
+    
+        # axe_21.plot(self.analysis_results["quadrant_crossings"][:,1])
+        # axe_21.set_ylim((0, 1.5))
+        # axe_21.set_title('left  arm')
+    
+        # axe_22.plot(self.analysis_results["quadrant_crossings"][:,2])
+        # axe_22.set_ylim((0, 1.5))
+        # axe_22.set_title('center')
+    
+        # axe_23.plot(self.analysis_results["quadrant_crossings"][:,3])
+        # axe_23.set_ylim((0, 1.5))
+        # axe_23.set_title('right arm')
+    
+        # axe_32.plot(self.analysis_results["quadrant_crossings"][:,4])
+        # axe_32.set_ylim((0, 1.5))
+        # axe_32.set_title('lower arm')
+        
+        # figure_4.suptitle('Number of crossings')
+        # plt.tight_layout()
+        # plt.show()            
+
+def plot_analysis_open_field(self, plot_viewer, plot_number):
+        # Figure 1 - 
+        figure_0, axe_0 = plt.subplots()
+        movement_points = np.array([self.analysis_results["x_axe"], self.analysis_results["y_axe"]]).T.reshape(-1, 1, 2) 
+        movement_segments = np.concatenate([movement_points[:-1], movement_points[1:]], axis=1)                         # Creates a 2D array containing the line segments coordinates
+        movement_line_collection = LineCollection(movement_segments, cmap="CMRmap", linewidth=1.5)                      # Creates a LineCollection object with custom color map
+        movement_line_collection.set_array(self.analysis_results["color_limits"])                                       # Set the line color to the normalized values of "color_limits"
+        axe_0.add_collection(movement_line_collection)
+        axe_0.autoscale_view()
+        plt.show()
+        # plt.savefig(self.directory + '_0.png')
+        # plt.close(figure_0)
+        
+        plot_viewer.canvas.axes[plot_number].plot(self.analysis_results["x_axe"], self.analysis_results["y_axe"])
+        #plot_viewer.canvas.axes[plot_number].title('Experiment ' + str(plot_number+1), fontsize = 10, fontfamily="DejaVu Sans", color="white")
+        plot_viewer.canvas.draw_idle()
+        
+        # Figure 1 - 
+        plt.rcParams["figure.figsize"] = [7.00, 3.50]
+        plt.rcParams["figure.autolayout"] = True
+        im = plt.imread(self.directory + ".png")
+        figure_1, axe_1 = plt.subplots()
+        im = axe_1.imshow(im)
+        axe_1.add_collection(movement_line_collection)
+        plt.autoscale()
+        plt.show()
+        # plt.savefig(self.directory + '_1.png')
+        # plt.close(figure_1)
+        
+        # Figure 2 - Histogram
+        figure_2, axe_2 = plt.subplots()
+        axe_2.hist(self.analysis_results['displacement'], 400, density=True, facecolor='g', alpha=0.75)
+        plt.show(figure_2)
+        # plt.savefig(self.directory + '_2.png')
+        # plt.close(figure_2)
+        
+        # Figure 3 - Time spent on each arm over time
+        figure_3, ((axe_11, axe_12, axe_13), (axe_21, axe_22, axe_23), (axe_31, axe_32, axe_33)) = plt.subplots(3,3)
+        figure_3.delaxes(axe_11)
+        figure_3.delaxes(axe_13)
+        figure_3.delaxes(axe_31)
+        figure_3.delaxes(axe_33)
+        
+        axe_12.plot(self.analysis_results["time_spent"][:,0], color = '#2C53A1')
+        entries = np.array(self.analysis_results["quadrant_crossings"][:,0]) == 1
+        axe_12.plot(self.analysis_results["quadrant_crossings"][:,0], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
+        axe_12.set_ylim((0, 1.5))
+        axe_12.set_title('upper arm')
+    
+        axe_21.plot(self.analysis_results["time_spent"][:,1], color = '#2C53A1')
+        entries = np.array(self.analysis_results["quadrant_crossings"][:,1]) == 1
+        axe_21.plot(self.analysis_results["quadrant_crossings"][:,1], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
+        axe_21.set_ylim((0, 1.5))
+        axe_21.set_title('left  arm')
+    
+        axe_22.plot(self.analysis_results["time_spent"][:,2], color = '#2C53A1')
+        entries = np.array(self.analysis_results["quadrant_crossings"][:,2]) == 1
+        axe_22.plot(self.analysis_results["quadrant_crossings"][:,2], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
+        axe_22.set_ylim((0, 1.5))
+        axe_22.set_title('center')
+    
+        axe_23.plot(self.analysis_results["time_spent"][:,3], color = '#2C53A1')
+        entries = np.array(self.analysis_results["quadrant_crossings"][:,3]) == 1
+        axe_23.plot(self.analysis_results["quadrant_crossings"][:,3], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
+        axe_23.set_ylim((0, 1.5))
+        axe_23.set_title('right arm')
+    
+        axe_32.plot(self.analysis_results["time_spent"][:,4], color = '#2C53A1')
+        entries = np.array(self.analysis_results["quadrant_crossings"][:,4]) == 1
+        axe_32.plot(self.analysis_results["quadrant_crossings"][:,4], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
+        axe_32.set_ylim((0, 1.5))
+        axe_32.set_title('lower arm')
+        
+        figure_3.suptitle('Time spent on each arm over time')
+        plt.tight_layout()
+        plt.show()
+        # plt.savefig(self.directory + '_3.png')
+        # plt.close(figure_3)
+        
+        # Figure 4 - Number of crossings
+        # figure_4, ((axe_11, axe_12, axe_13), (axe_21, axe_22, axe_23), (axe_31, axe_32, axe_33)) = plt.subplots(3,3)
+        # figure_4.delaxes(axe_11)
+        # figure_4.delaxes(axe_13)
+        # figure_4.delaxes(axe_31)
+        # figure_4.delaxes(axe_33)
             
-            # Figure 4 - Number of crossings
-            # figure_4, ((axe_11, axe_12, axe_13), (axe_21, axe_22, axe_23), (axe_31, axe_32, axe_33)) = plt.subplots(3,3)
-            # figure_4.delaxes(axe_11)
-            # figure_4.delaxes(axe_13)
-            # figure_4.delaxes(axe_31)
-            # figure_4.delaxes(axe_33)
-              
-            # axe_12.plot(self.analysis_results["quadrant_crossings"][:,0])
-            # axe_12.set_ylim((0, 1.5))
-            # axe_12.set_title('upper arm')
+        # axe_12.plot(self.analysis_results["quadrant_crossings"][:,0])
+        # axe_12.set_ylim((0, 1.5))
+        # axe_12.set_title('upper arm')
+    
+        # axe_21.plot(self.analysis_results["quadrant_crossings"][:,1])
+        # axe_21.set_ylim((0, 1.5))
+        # axe_21.set_title('left  arm')
+    
+        # axe_22.plot(self.analysis_results["quadrant_crossings"][:,2])
+        # axe_22.set_ylim((0, 1.5))
+        # axe_22.set_title('center')
+    
+        # axe_23.plot(self.analysis_results["quadrant_crossings"][:,3])
+        # axe_23.set_ylim((0, 1.5))
+        # axe_23.set_title('right arm')
+    
+        # axe_32.plot(self.analysis_results["quadrant_crossings"][:,4])
+        # axe_32.set_ylim((0, 1.5))
+        # axe_32.set_title('lower arm')
         
-            # axe_21.plot(self.analysis_results["quadrant_crossings"][:,1])
-            # axe_21.set_ylim((0, 1.5))
-            # axe_21.set_title('left  arm')
-        
-            # axe_22.plot(self.analysis_results["quadrant_crossings"][:,2])
-            # axe_22.set_ylim((0, 1.5))
-            # axe_22.set_title('center')
-        
-            # axe_23.plot(self.analysis_results["quadrant_crossings"][:,3])
-            # axe_23.set_ylim((0, 1.5))
-            # axe_23.set_title('right arm')
-        
-            # axe_32.plot(self.analysis_results["quadrant_crossings"][:,4])
-            # axe_32.set_ylim((0, 1.5))
-            # axe_32.set_title('lower arm')
-            
-            # figure_4.suptitle('Number of crossings')
-            # plt.tight_layout()
-            # plt.show()            
+        # figure_4.suptitle('Number of crossings')
+        # plt.tight_layout()
+        # plt.show()
 
 class files_class:
     def __init__(self):
