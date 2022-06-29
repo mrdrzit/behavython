@@ -272,22 +272,21 @@ class experiment_class:
         axe_1.axis('tight')
         axe_1.axis('off')
         figure_1.subplots_adjust(left=0,right=1,bottom=0,top=1)
-        plt.savefig('temp.png', frameon='false')
+        plt.savefig(self.directory + '_1.png', frameon='false')
         plt.autoscale()
         plt.show()
-
-        # plt.savefig(self.directory + '_1.png')
-        # plt.close(figure_1)
+        plt.close(figure_1)
         
         im = plt.imread("temp.png")
         plot_viewer.canvas.axes[plot_number].imshow(im)
         #plot_viewer.canvas.axes[plot_number].title('Experiment ' + str(plot_number+1), fontsize = 10, fontfamily="DejaVu Sans", color="white")
         plot_viewer.canvas.draw_idle()
+        
                 
         # Figure 2 - Histogram
-        figure_2, axe_2 = plt.subplots()
-        axe_2.hist(self.analysis_results['displacement'], 400, density=True, facecolor='g', alpha=0.75)
-        plt.show()
+        #figure_2, axe_2 = plt.subplots()
+        #axe_2.hist(self.analysis_results['displacement'], 400, density=True, facecolor='g', alpha=0.75)
+        #plt.show()
         # plt.savefig(self.directory + '_2.png')
         # plt.close(figure_2)
         
@@ -332,7 +331,7 @@ class experiment_class:
         plt.tight_layout()
         plt.show()
         # plt.savefig(self.directory + '_3.png')
-        # plt.close(figure_3)
+        plt.close(figure_3)
         
         # Figure 4 - Number of crossings
         # figure_4, ((axe_11, axe_12, axe_13), (axe_21, axe_22, axe_23), (axe_31, axe_32, axe_33)) = plt.subplots(3,3)
