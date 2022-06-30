@@ -124,7 +124,7 @@ class experiment_class:
         return self.analysis_results, data_frame    
 
     def plot_analysis_pluz_maze(self, plot_viewer, plot_number):
-        # Figure 1 - 
+        # Figure 1 - Overall Activity in the maze
         movement_points = np.array([self.analysis_results["x_axe"], self.analysis_results["y_axe"]]).T.reshape(-1, 1, 2) 
         movement_segments = np.concatenate([movement_points[:-1], movement_points[1:]], axis=1)                         # Creates a 2D array containing the line segments coordinates
         movement_line_collection = LineCollection(movement_segments, cmap="CMRmap", linewidth=1.5)                      # Creates a LineCollection object with custom color map
@@ -149,11 +149,11 @@ class experiment_class:
         plot_viewer.canvas.draw_idle()
         
         # Figure 2 - Histogram
-        #figure_2, axe_2 = plt.subplots()
-        #axe_2.hist(self.analysis_results['displacement'], 400, density=True, facecolor='g', alpha=0.75)
-        #plt.show()
-        # plt.savefig(self.directory + '_2.png')
-        # plt.close(figure_2)
+        figure_2, axe_2 = plt.subplots()
+        axe_2.hist(self.analysis_results['displacement'], 400, density=True, facecolor='g', alpha=0.75)
+        plt.show()
+        plt.savefig(self.directory + '_2.png')
+        plt.close(figure_2)
         
         # Figure 3 - Time spent on each arm over time
         figure_3, ((axe_11, axe_12, axe_13), (axe_21, axe_22, axe_23), (axe_31, axe_32, axe_33)) = plt.subplots(3,3)
