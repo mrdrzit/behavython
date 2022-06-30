@@ -101,23 +101,34 @@ class experiment_class:
         
         
         # print(self.analysis_results)
-        
-        dict_to_excel = {'Total distance (cm)'          : total_distance,
-                         'Mean velocity (cm/s)'         : mean_velocity,
-                         'Movements'                    : movements,
-                         'Time moving (s)'              : time_moving,
-                         'Time resting(s)'              : time_resting,
-                         'Total time at upper arm (s)'  : total_time_in_quadrant[0],
-                         'Total time at lower arm (s)'  : total_time_in_quadrant[4],
-                         'Total time at left arm (s)'   : total_time_in_quadrant[1],
-                         'Total time at right arm (s)'  : total_time_in_quadrant[3],
-                         'Total time at center (s)'     : total_time_in_quadrant[2],
-                         'Crossings to the upper arm'   : total_number_of_entries[0],
-                         'Crossings to the lower arm'   : total_number_of_entries[4],
-                         'Crossings to the left arm'    : total_number_of_entries[1],
-                         'Crossings to the right arm'   : total_number_of_entries[3],
-                         'Crossings to the center'      : total_number_of_entries[2],
-                         }
+        if self.experiment_type == 'plus_maze':              # If the maze is a plus maze
+          dict_to_excel = {'Total distance (cm)'             : total_distance,
+                          'Mean velocity (cm/s)'             : mean_velocity,
+                          'Movements'                        : movements,
+                          'Time moving (s)'                  : time_moving,
+                          'Time resting(s)'                  : time_resting,
+                          'Total time at the upper arm (s)'  : total_time_in_quadrant[0],
+                          'Total time at the lower arm (s)'  : total_time_in_quadrant[4],
+                          'Total time at the left arm (s)'   : total_time_in_quadrant[1],
+                          'Total time at the right arm (s)'  : total_time_in_quadrant[3],
+                          'Total time at the center (s)'     : total_time_in_quadrant[2],
+                          'Crossings to the upper arm'       : total_number_of_entries[0],
+                          'Crossings to the lower arm'       : total_number_of_entries[4],
+                          'Crossings to the left arm'        : total_number_of_entries[1],
+                          'Crossings to the right arm'       : total_number_of_entries[3],
+                          'Crossings to the center'          : total_number_of_entries[2],
+                          }    
+        else:                                                # If the maze is an open field
+          dict_to_excel = {'Total distance (cm)'             : total_distance,
+                          'Mean velocity (cm/s)'             : mean_velocity,
+                          'Movements'                        : movements,
+                          'Time moving (s)'                  : time_moving,
+                          'Time resting(s)'                  : time_resting,
+                          'Total time at the center (s)'     : total_time_in_quadrant[0],
+                          'Total time at the edge (s)'       : total_time_in_quadrant[1],
+                          'Crossings to the center'          : total_number_of_entries[0],
+                          'Crossings to the edge'            : total_number_of_entries[1],
+                          }
         
         data_frame = pd.DataFrame(data = dict_to_excel, index=[self.name])
         data_frame = (data_frame.T)
@@ -130,8 +141,6 @@ class experiment_class:
         movement_line_collection = LineCollection(movement_segments, cmap="CMRmap", linewidth=1.5)                      # Creates a LineCollection object with custom color map
         movement_line_collection.set_array(self.analysis_results["color_limits"])                                       # Set the line color to the normalized values of "color_limits"
         figure_1, axe_1 = plt.subplots()
-        #plt.rcParams["figure.figsize"] = [7.00, 3.50]
-        #plt.rcParams["figure.autolayout"] = True
         im = plt.imread(self.directory + ".png")
         axe_1.imshow(im)
         axe_1.add_collection(movement_line_collection)
