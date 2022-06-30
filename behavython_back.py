@@ -51,6 +51,7 @@ class experiment_class:
         total_distance = max(accumulate_distance)                               # Gets the animal's total distance traveled 
         
         time_vector = np.linspace(0, len(self.data)/frames_per_second, len(self.data))              # Creates a time vector
+        np.seterr(divide='ignore', invalid='ignore')                                                # Ignores the division by zero at runtime (division by zero is not an error in this case as the are moments when the animal is not moving)
         velocity = np.divide(displacement, np.transpose(np.append(0, np.diff(time_vector))))        # Calculates the first derivate and finds the animal's velocity per time
         mean_velocity = np.nanmean(velocity)                                                        # Calculates the mean velocity from the velocity vector
         
