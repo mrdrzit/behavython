@@ -1,0 +1,3 @@
+include behavython\logo\*.png
+include behavython\*.ui
+include behavython\*.py
