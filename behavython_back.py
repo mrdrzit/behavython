@@ -8,6 +8,7 @@ from matplotlib import pyplot as plt
 from tkinter import filedialog
 from skimage.color import rgb2gray
 from scipy import stats
+from copy import copy
 
 class experiment_class:
     '''
@@ -140,10 +141,11 @@ class experiment_class:
         movement_segments = np.concatenate([movement_points[:-1], movement_points[1:]], axis=1)                         # Creates a 2D array containing the line segments coordinates
         movement_line_collection = LineCollection(movement_segments, cmap="CMRmap", linewidth=1.5)                      # Creates a LineCollection object with custom color map
         movement_line_collection.set_array(self.analysis_results["color_limits"])                                       # Set the line color to the normalized values of "color_limits"
+        line_collection_copy = copy(movement_line_collection)                                                           # Create a copy of the line collection object
         figure_1, axe_1 = plt.subplots()
         im = plt.imread(self.directory + ".png")
         axe_1.imshow(im)
-        axe_1.add_collection(movement_line_collection)
+        axe_1.add_collection(line_collection_copy)
         axe_1.axis('tight')
         axe_1.axis('off')
         figure_1.subplots_adjust(left=0,right=1,bottom=0,top=1)
