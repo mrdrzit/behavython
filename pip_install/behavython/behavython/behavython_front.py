@@ -1,5 +1,4 @@
 import behavython.behavython_back as behavython_back
-import behavython.behavython_plot_widget
 import sys
 import os
 from PyQt5 import QtWidgets, uic
@@ -88,9 +87,9 @@ class behavython_gui(QMainWindow):
         self.options['arena_height'] = int(self.arena_height_lineedit.text())
         self.options['frames_per_second'] = float(self.frames_per_second_lineedit.text())
         if self.animal_combobox.currentIndex() == 0:
-            self.options['threshold'] = 0.0267
+            self.options['threshold'] = 0.0267  # Motion detection threshold (mice)
         else:
-            self.options['threshold'] = 0.0267
+            self.options['threshold'] = 0.0667  # Motion detection threshold (rats)
         
         functions = behavython_back.interface_functions()
         self.experiments = functions.get_experiments(self.resume_lineedit, self.options['experiment_type'])
