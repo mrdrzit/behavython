@@ -1,3 +1,4 @@
+import fractions
 import os
 import skimage.io
 import tkinter as tk
@@ -9,6 +10,7 @@ from tkinter import filedialog
 from skimage.color import rgb2gray
 from scipy import stats
 from copy import copy
+from fractions import Fraction
 
 class experiment_class:
     '''
@@ -150,8 +152,16 @@ class experiment_class:
         axe_1.axis('tight')
         axe_1.axis('off')
         
+        image_height = self.analysis_results["video_height"]
+        image_width = self.analysis_results["video_width"]
+        max_height = 1920                                                                                               # Maximum height of desired figure
+        max_width = 1080                                                                                                # Maximum width of desired figure                         
+        ratio = min(max_height / image_width, max_width / image_height)                                                 # Calculate the ratio to be used for image resizing without losing the aspect ratio
+        new_resolution_in_inches = (image_width*ratio/100, image_height*ratio/100)                                      # Calculate the new resolution in inches based on the dpi set 
+
         figure_1.subplots_adjust(left=0,right=1,bottom=0,top=1)
-        plt.savefig(self.directory + '_1.png', frameon='false')
+        figure_1.set_size_inches(new_resolution_in_inches)
+        plt.savefig(self.directory + '_1.png', frameon='false', dpi=100)
         plt.autoscale()
         plt.show()
         plt.close(figure_1)
@@ -257,6 +267,7 @@ class experiment_class:
         axe_1.axis('off')
         
         figure_1.subplots_adjust(left=0,right=1,bottom=0,top=1)
+        figure_1.set_size_inches(self.analysis_results["video_width"]/50, self.analysis_results["video_height"]/50)
         plt.savefig(self.directory + '_2.png', frameon='false')
         plt.autoscale()
         plt.show()
