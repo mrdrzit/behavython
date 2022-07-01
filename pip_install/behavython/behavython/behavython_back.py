@@ -8,6 +8,7 @@ from matplotlib import pyplot as plt
 from tkinter import filedialog
 from skimage.color import rgb2gray
 from scipy import stats
+from copy import copy
 
 class experiment_class:
     '''
@@ -51,6 +52,7 @@ class experiment_class:
         total_distance = max(accumulate_distance)                               # Gets the animal's total distance traveled 
         
         time_vector = np.linspace(0, len(self.data)/frames_per_second, len(self.data))              # Creates a time vector
+        np.seterr(divide='ignore', invalid='ignore')                                                # Ignores the division by zero at runtime (division by zero is not an error in this case as the are moments when the animal is not moving)
         velocity = np.divide(displacement, np.transpose(np.append(0, np.diff(time_vector))))        # Calculates the first derivate and finds the animal's velocity per time
         mean_velocity = np.nanmean(velocity)                                                        # Calculates the mean velocity from the velocity vector
         
@@ -100,40 +102,50 @@ class experiment_class:
         
         
         # print(self.analysis_results)
-        
-        dict_to_excel = {'Total distance (cm)'          : total_distance,
-                         'Mean velocity (cm/s)'         : mean_velocity,
-                         'Movements'                    : movements,
-                         'Time moving (s)'              : time_moving,
-                         'Time resting(s)'              : time_resting,
-                         'Total time at upper arm (s)'  : total_time_in_quadrant[0],
-                         'Total time at lower arm (s)'  : total_time_in_quadrant[4],
-                         'Total time at left arm (s)'   : total_time_in_quadrant[1],
-                         'Total time at right arm (s)'  : total_time_in_quadrant[3],
-                         'Total time at center (s)'     : total_time_in_quadrant[2],
-                         'Crossings to the upper arm'   : total_number_of_entries[0],
-                         'Crossings to the lower arm'   : total_number_of_entries[4],
-                         'Crossings to the left arm'    : total_number_of_entries[1],
-                         'Crossings to the right arm'   : total_number_of_entries[3],
-                         'Crossings to the center'      : total_number_of_entries[2],
-                         }
+        if self.experiment_type == 'plus_maze':              # If the maze is a plus maze
+          dict_to_excel = {'Total distance (cm)'             : total_distance,
+                          'Mean velocity (cm/s)'             : mean_velocity,
+                          'Movements'                        : movements,
+                          'Time moving (s)'                  : time_moving,
+                          'Time resting(s)'                  : time_resting,
+                          'Total time at the upper arm (s)'  : total_time_in_quadrant[0],
+                          'Total time at the lower arm (s)'  : total_time_in_quadrant[4],
+                          'Total time at the left arm (s)'   : total_time_in_quadrant[1],
+                          'Total time at the right arm (s)'  : total_time_in_quadrant[3],
+                          'Total time at the center (s)'     : total_time_in_quadrant[2],
+                          'Crossings to the upper arm'       : total_number_of_entries[0],
+                          'Crossings to the lower arm'       : total_number_of_entries[4],
+                          'Crossings to the left arm'        : total_number_of_entries[1],
+                          'Crossings to the right arm'       : total_number_of_entries[3],
+                          'Crossings to the center'          : total_number_of_entries[2],
+                          }    
+        else:                                                # If the maze is an open field
+          dict_to_excel = {'Total distance (cm)'             : total_distance,
+                          'Mean velocity (cm/s)'             : mean_velocity,
+                          'Movements'                        : movements,
+                          'Time moving (s)'                  : time_moving,
+                          'Time resting(s)'                  : time_resting,
+                          'Total time at the center (s)'     : total_time_in_quadrant[0],
+                          'Total time at the edge (s)'       : total_time_in_quadrant[1],
+                          'Crossings to the center'          : total_number_of_entries[0],
+                          'Crossings to the edge'            : total_number_of_entries[1],
+                          }
         
         data_frame = pd.DataFrame(data = dict_to_excel, index=[self.name])
         data_frame = (data_frame.T)
         return self.analysis_results, data_frame    
 
     def plot_analysis_pluz_maze(self, plot_viewer, plot_number):
-        # Figure 1 - 
+        # Figure 1 - Overall Activity in the maze
         movement_points = np.array([self.analysis_results["x_axe"], self.analysis_results["y_axe"]]).T.reshape(-1, 1, 2) 
         movement_segments = np.concatenate([movement_points[:-1], movement_points[1:]], axis=1)                         # Creates a 2D array containing the line segments coordinates
         movement_line_collection = LineCollection(movement_segments, cmap="CMRmap", linewidth=1.5)                      # Creates a LineCollection object with custom color map
         movement_line_collection.set_array(self.analysis_results["color_limits"])                                       # Set the line color to the normalized values of "color_limits"
+        line_collection_copy = copy(movement_line_collection)                                                           # Create a copy of the line collection object
         figure_1, axe_1 = plt.subplots()
-        #plt.rcParams["figure.figsize"] = [7.00, 3.50]
-        #plt.rcParams["figure.autolayout"] = True
         im = plt.imread(self.directory + ".png")
         axe_1.imshow(im)
-        axe_1.add_collection(movement_line_collection)
+        axe_1.add_collection(line_collection_copy)
         axe_1.axis('tight')
         axe_1.axis('off')
         figure_1.subplots_adjust(left=0,right=1,bottom=0,top=1)
@@ -144,13 +156,12 @@ class experiment_class:
         
         im = plt.imread(self.directory + '_1.png')
         plot_viewer.canvas.axes[plot_number].imshow(im)
-        #plot_viewer.canvas.axes[plot_number].title('Experiment ' + str(plot_number+1), fontsize = 10, fontfamily="DejaVu Sans", color="white")
         plot_viewer.canvas.draw_idle()
         
         # Figure 2 - Histogram
-        #figure_2, axe_2 = plt.subplots()
-        #axe_2.hist(self.analysis_results['displacement'], 400, density=True, facecolor='g', alpha=0.75)
-        #plt.show()
+        # figure_2, axe_2 = plt.subplots()
+        # axe_2.hist(self.analysis_results['displacement'], 400, density=True, facecolor='g', alpha=0.75)
+        # plt.show()
         # plt.savefig(self.directory + '_2.png')
         # plt.close(figure_2)
         
@@ -228,39 +239,35 @@ class experiment_class:
         # plt.tight_layout()
         # plt.show()            
 
-def plot_analysis_open_field(self, plot_viewer, plot_number):
-        # Figure 1 - 
+    def plot_analysis_open_field(self, plot_viewer, plot_number):
+        # Figure 1 - Overall Activity in the maze
         figure_0, axe_0 = plt.subplots()
         movement_points = np.array([self.analysis_results["x_axe"], self.analysis_results["y_axe"]]).T.reshape(-1, 1, 2) 
         movement_segments = np.concatenate([movement_points[:-1], movement_points[1:]], axis=1)                         # Creates a 2D array containing the line segments coordinates
         movement_line_collection = LineCollection(movement_segments, cmap="CMRmap", linewidth=1.5)                      # Creates a LineCollection object with custom color map
         movement_line_collection.set_array(self.analysis_results["color_limits"])                                       # Set the line color to the normalized values of "color_limits"
-        axe_0.add_collection(movement_line_collection)
+        line_collection_copy = copy(movement_line_collection)                                                           # Create a copy of the line collection object
+        axe_0.add_collection(line_collection_copy)                                                                      # Add the line collection to the axe
         axe_0.autoscale_view()
-        plt.show()
-        # plt.savefig(self.directory + '_0.png')
-        # plt.close(figure_0)
         
-        plot_viewer.canvas.axes[plot_number].plot(self.analysis_results["x_axe"], self.analysis_results["y_axe"])
-        #plot_viewer.canvas.axes[plot_number].title('Experiment ' + str(plot_number+1), fontsize = 10, fontfamily="DejaVu Sans", color="white")
-        plot_viewer.canvas.draw_idle()
-        
-        # Figure 1 - 
-        plt.rcParams["figure.figsize"] = [7.00, 3.50]
-        plt.rcParams["figure.autolayout"] = True
         im = plt.imread(self.directory + ".png")
-        figure_1, axe_1 = plt.subplots()
-        im = axe_1.imshow(im)
-        axe_1.add_collection(movement_line_collection)
+        axe_0.imshow(im)
+        axe_0.axis('tight')
+        axe_0.axis('off')
+        figure_0.subplots_adjust(left=0,right=1,bottom=0,top=1)
+        plt.savefig(self.directory + '_2.png', frameon='false')
         plt.autoscale()
         plt.show()
-        # plt.savefig(self.directory + '_1.png')
-        # plt.close(figure_1)
+        plt.close(figure_0)
+
+        im = plt.imread(self.directory + '_2.png')
+        plot_viewer.canvas.axes[plot_number].imshow(im)
+        plot_viewer.canvas.draw_idle()
         
         # Figure 2 - Histogram
-        figure_2, axe_2 = plt.subplots()
-        axe_2.hist(self.analysis_results['displacement'], 400, density=True, facecolor='g', alpha=0.75)
-        plt.show(figure_2)
+        # figure_2, axe_2 = plt.subplots()
+        # axe_2.hist(self.analysis_results['displacement'], 400, density=True, facecolor='g', alpha=0.75)
+        # plt.show(figure_2)
         # plt.savefig(self.directory + '_2.png')
         # plt.close(figure_2)
         
@@ -393,6 +400,3 @@ class interface_functions:
                     line_edit.append("- The " + files.name[index] + ".csv file had more columns than the elevated plus maze test allows")
                     
         return experiments
- 
-
-
