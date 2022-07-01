@@ -160,11 +160,11 @@ class experiment_class:
         plot_viewer.canvas.draw_idle()
         
         # Figure 2 - Histogram
-        figure_2, axe_2 = plt.subplots()
-        axe_2.hist(self.analysis_results['displacement'], 400, density=True, facecolor='g', alpha=0.75)
-        plt.show()
-        plt.savefig(self.directory + '_2.png')
-        plt.close(figure_2)
+        # figure_2, axe_2 = plt.subplots()
+        # axe_2.hist(self.analysis_results['displacement'], 400, density=True, facecolor='g', alpha=0.75)
+        # plt.show()
+        # plt.savefig(self.directory + '_2.png')
+        # plt.close(figure_2)
         
         # Figure 3 - Time spent on each arm over time
         figure_3, ((axe_11, axe_12, axe_13), (axe_21, axe_22, axe_23), (axe_31, axe_32, axe_33)) = plt.subplots(3,3)
@@ -240,39 +240,36 @@ class experiment_class:
         # plt.tight_layout()
         # plt.show()            
 
-def plot_analysis_open_field(self, plot_viewer, plot_number):
-        # Figure 1 - 
+    def plot_analysis_open_field(self, plot_viewer, plot_number):
+        # Figure 1 - Overall Activity in the maze
         figure_0, axe_0 = plt.subplots()
         movement_points = np.array([self.analysis_results["x_axe"], self.analysis_results["y_axe"]]).T.reshape(-1, 1, 2) 
         movement_segments = np.concatenate([movement_points[:-1], movement_points[1:]], axis=1)                         # Creates a 2D array containing the line segments coordinates
         movement_line_collection = LineCollection(movement_segments, cmap="CMRmap", linewidth=1.5)                      # Creates a LineCollection object with custom color map
         movement_line_collection.set_array(self.analysis_results["color_limits"])                                       # Set the line color to the normalized values of "color_limits"
-        axe_0.add_collection(movement_line_collection)
+        line_collection_copy = copy(movement_line_collection)                                                           # Create a copy of the line collection object
+        axe_0.add_collection(line_collection_copy)                                                                      # Add the line collection to the axe
         axe_0.autoscale_view()
-        plt.show()
-        # plt.savefig(self.directory + '_0.png')
-        # plt.close(figure_0)
         
-        plot_viewer.canvas.axes[plot_number].plot(self.analysis_results["x_axe"], self.analysis_results["y_axe"])
-        #plot_viewer.canvas.axes[plot_number].title('Experiment ' + str(plot_number+1), fontsize = 10, fontfamily="DejaVu Sans", color="white")
-        plot_viewer.canvas.draw_idle()
-        
-        # Figure 1 - 
-        plt.rcParams["figure.figsize"] = [7.00, 3.50]
-        plt.rcParams["figure.autolayout"] = True
         im = plt.imread(self.directory + ".png")
-        figure_1, axe_1 = plt.subplots()
-        im = axe_1.imshow(im)
-        axe_1.add_collection(movement_line_collection)
+        axe_0.imshow(im)
+        axe_0.axis('tight')
+        axe_0.axis('off')
+        figure_0.subplots_adjust(left=0,right=1,bottom=0,top=1)
+        plt.savefig(self.directory + '_2.png', frameon='false')
         plt.autoscale()
         plt.show()
-        # plt.savefig(self.directory + '_1.png')
-        # plt.close(figure_1)
+        plt.close(figure_0)
+
+        im = plt.imread(self.directory + '_2.png')
+        plot_viewer.canvas.axes[plot_number].imshow(im)
+        plot_viewer.canvas.draw_idle()
+        
         
         # Figure 2 - Histogram
-        figure_2, axe_2 = plt.subplots()
-        axe_2.hist(self.analysis_results['displacement'], 400, density=True, facecolor='g', alpha=0.75)
-        plt.show(figure_2)
+        # figure_2, axe_2 = plt.subplots()
+        # axe_2.hist(self.analysis_results['displacement'], 400, density=True, facecolor='g', alpha=0.75)
+        # plt.show(figure_2)
         # plt.savefig(self.directory + '_2.png')
         # plt.close(figure_2)
         
@@ -405,6 +402,3 @@ class interface_functions:
                     line_edit.append("- The " + files.name[index] + ".csv file had more columns than the elevated plus maze test allows")
                     
         return experiments
- 
-
-
