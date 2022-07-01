@@ -53,21 +53,6 @@ class behavython_gui(QMainWindow):
         '''
         super(behavython_gui, self).__init__()                                      # Calls the inherited classes __init__ method
         load_gui_path = os.path.dirname(__file__) + "\\Behavython_GUI.ui"
-        '''       
-        Issue: when the program try to run the ui file, it throws an error. Because modules are not founded in sys.path.
-        
-        
-        Accordingly Python documentation: When a module named spam is imported, the interpreter first searches for a built-in 
-        module with that name. These module names are listed in sys.builtin_module_names. If not found, it then searches for 
-        a file named spam.py in a list of directories given by the variable sys.path. sys.path is initialized from these locations:
-        - The directory containing the input script (or the current directory when no file is specified).
-        - PYTHONPATH (a list of directory names, with the same syntax as the shell variable PATH).
-        - The installation-dependent default (by convention including a site-packages directory, handled by the site module).
-
-        Solution: To arround this error, I added the directory that contains the behavythn_back and behavython_plot_widget 
-        modules.
-        '''
-        #sys.path.append(os.path.dirname(__file__))
         uic.loadUi(load_gui_path, self)                                             # Loads the interface design archive (made in Qt Designer)
         self.show()
 
