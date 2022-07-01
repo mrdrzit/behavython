@@ -305,6 +305,7 @@ class experiment_class:
         figure_4.suptitle('Number of crossings')
         plt.tight_layout()
         plt.show()
+        plt.close(figure_4)
 
 class files_class:
     def __init__(self):
