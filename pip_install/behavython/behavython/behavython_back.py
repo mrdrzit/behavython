@@ -241,24 +241,28 @@ class experiment_class:
 
     def plot_analysis_open_field(self, plot_viewer, plot_number):
         # Figure 1 - Overall Activity in the maze
-        figure_0, axe_0 = plt.subplots()
+        figure_1, axe_1 = plt.subplots()
         movement_points = np.array([self.analysis_results["x_axe"], self.analysis_results["y_axe"]]).T.reshape(-1, 1, 2) 
         movement_segments = np.concatenate([movement_points[:-1], movement_points[1:]], axis=1)                         # Creates a 2D array containing the line segments coordinates
         movement_line_collection = LineCollection(movement_segments, cmap="CMRmap", linewidth=1.5)                      # Creates a LineCollection object with custom color map
         movement_line_collection.set_array(self.analysis_results["color_limits"])                                       # Set the line color to the normalized values of "color_limits"
         line_collection_copy = copy(movement_line_collection)                                                           # Create a copy of the line collection object
-        axe_0.add_collection(line_collection_copy)                                                                      # Add the line collection to the axe
-        axe_0.autoscale_view()
+        axe_1.add_collection(line_collection_copy)                                                                      # Add the line collection to the axe
+        axe_1.autoscale_view()
         
         im = plt.imread(self.directory + ".png")
-        axe_0.imshow(im)
-        axe_0.axis('tight')
-        axe_0.axis('off')
-        figure_0.subplots_adjust(left=0,right=1,bottom=0,top=1)
+        axe_1.imshow(im)
+        axe_1.axis('tight')
+        axe_1.axis('off')
+        figure_1.subplots_adjust(left=0,right=1,bottom=0,top=1)
         plt.savefig(self.directory + '_2.png', frameon='false')
         plt.autoscale()
         plt.show()
-        plt.close(figure_0)
+        plt.close(figure_1)
+
+        im = plt.imread(self.directory + '_2.png')
+        plot_viewer.canvas.axes[plot_number].imshow(im)
+        plot_viewer.canvas.draw_idle()
 
         im = plt.imread(self.directory + '_2.png')
         plot_viewer.canvas.axes[plot_number].imshow(im)
