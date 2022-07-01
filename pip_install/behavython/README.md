@@ -8,7 +8,7 @@
 <div align="center">
   <a href="https://github.com/mrdrzit/Behavython">
     <img
-     src="logo/logo.png"
+     src="https://raw.githubusercontent.com/mrdrzit/Behavython/main/logo/logo.png"
      style="max-width: 100%; height: 100%;"
      alt="Behavython software"
   </a>
@@ -80,13 +80,27 @@
 
 ### Prerequisites
 
-- Coming in the near future...
+ - pyqt5
+ - scikit-image
+ - pandas
+ - numpy
+ - matplotlib
+ - tk
+ - scipy
 
-### Installation
-                                
-- Coming in the near future...
+***For a simple way to keep up to date with requirements, reference the requirements.txt file***
+
+### Installation as a pip package 
+For the installation you need a simple command that you can get by one of two ways: 
+
+ 1. Copying and pasting from here:
+	 - "pip install -i https://test.pypi.org/project/behavython behavython"
+	 - (without quotation[""] marks)
 <br/>
+ 2. Going to the TestPypi site and copying from there:
+   - https://test.pypi.org/project/behavython
 
+_At the moment, Behavython was mainly tested on Windows_
 
 <!-- USAGE EXAMPLES -->
 ## Usage
