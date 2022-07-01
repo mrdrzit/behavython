@@ -263,10 +263,6 @@ class experiment_class:
         im = plt.imread(self.directory + '_2.png')
         plot_viewer.canvas.axes[plot_number].imshow(im)
         plot_viewer.canvas.draw_idle()
-
-        im = plt.imread(self.directory + '_2.png')
-        plot_viewer.canvas.axes[plot_number].imshow(im)
-        plot_viewer.canvas.draw_idle()
         
         # Figure 2 - Histogram
         # figure_2, axe_2 = plt.subplots()
@@ -276,19 +272,19 @@ class experiment_class:
         # plt.close(figure_2)
         
         # Figure 3 - Time spent on each area over time
-        figure_3, (axe_1, axe_2) = plt.subplots(1,2)
+        figure_3, (axe_31, axe_32) = plt.subplots(1,2)
         
-        axe_1.plot(self.analysis_results["time_spent"][:,0], color = '#2C53A1')
+        axe_31.plot(self.analysis_results["time_spent"][:,0], color = '#2C53A1')
         entries = np.array(self.analysis_results["quadrant_crossings"][:,0]) == 1
-        axe_1.plot(self.analysis_results["quadrant_crossings"][:,0], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
-        axe_1.set_ylim((0, 1.5))
-        axe_1.set_title('center')
+        axe_31.plot(self.analysis_results["quadrant_crossings"][:,0], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
+        axe_31.set_ylim((0, 1.5))
+        axe_31.set_title('center')
     
-        axe_2.plot(self.analysis_results["time_spent"][:,1], color = '#2C53A1')
+        axe_32.plot(self.analysis_results["time_spent"][:,1], color = '#2C53A1')
         entries = np.array(self.analysis_results["quadrant_crossings"][:,1]) == 1
-        axe_2.plot(self.analysis_results["quadrant_crossings"][:,1], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
-        axe_2.set_ylim((0, 1.5))
-        axe_2.set_title('edge')
+        axe_32.plot(self.analysis_results["quadrant_crossings"][:,1], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
+        axe_32.set_ylim((0, 1.5))
+        axe_32.set_title('edge')
         
         figure_3.suptitle('Time spent on each area over time')
         plt.tight_layout()
@@ -296,15 +292,15 @@ class experiment_class:
         plt.close(figure_3)
         
         # Figure 4 - Number of crossings
-        figure_4, (axe_1, axe_2) = plt.subplots(1,2)
+        figure_4, (axe_41, axe_42) = plt.subplots(1,2)
             
-        axe_1.plot(self.analysis_results["quadrant_crossings"][:,0])
-        axe_1.set_ylim((0, 1.5))
-        axe_1.set_title('center')
+        axe_41.plot(self.analysis_results["quadrant_crossings"][:,0])
+        axe_41.set_ylim((0, 1.5))
+        axe_41.set_title('center')
     
-        axe_2.plot(self.analysis_results["quadrant_crossings"][:,1])
-        axe_2.set_ylim((0, 1.5))
-        axe_2.set_title('edge')
+        axe_42.plot(self.analysis_results["quadrant_crossings"][:,1])
+        axe_42.set_ylim((0, 1.5))
+        axe_42.set_title('edge')
         
         figure_4.suptitle('Number of crossings')
         plt.tight_layout()
