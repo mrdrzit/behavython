@@ -156,7 +156,6 @@ class experiment_class:
         
         im = plt.imread(self.directory + '_1.png')
         plot_viewer.canvas.axes[plot_number].imshow(im)
-        #plot_viewer.canvas.axes[plot_number].title('Experiment ' + str(plot_number+1), fontsize = 10, fontfamily="DejaVu Sans", color="white")
         plot_viewer.canvas.draw_idle()
         
         # Figure 2 - Histogram
@@ -264,7 +263,6 @@ class experiment_class:
         im = plt.imread(self.directory + '_2.png')
         plot_viewer.canvas.axes[plot_number].imshow(im)
         plot_viewer.canvas.draw_idle()
-        
         
         # Figure 2 - Histogram
         # figure_2, axe_2 = plt.subplots()
