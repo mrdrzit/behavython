@@ -4,6 +4,8 @@ import tkinter as tk
 import pandas as pd
 import numpy as np
 from matplotlib.collections import LineCollection 
+from matplotlib import use
+use('TkAgg') # Set the backend to TkAgg. This backend permits the figure displaying to block code execution as to make use of the plotting options set in the GUI. Must be done before importing pyplot
 from matplotlib import pyplot as plt 
 from tkinter import filedialog
 from skimage.color import rgb2gray
@@ -31,6 +33,10 @@ class experiment_class:
         arena_height = options['arena_height']                                  # Arena height set by user
         frames_per_second = options['frames_per_second']                        # Video frames per second set by user
         threshold = options['threshold']                                        # Motion threshold set by user in Bonsai
+        max_video_height = int(options['max_fig_res'][0])                       # Maximum video height set by user (height is stored in the first element of the list and is converted to int beacuse it comes as a string)
+        max_video_width = int(options['max_fig_res'][1])                        # Maximum video width set by user (width is stored in the second element of the list and is converted to int beacuse it comes as a string)
+        plot_options = options['plot_options']                                  # Plot options set by user
+        figure_dpi = options['figure_dpi']                                      # Figure dpi set by user
             
         video_height, video_width = self.last_frame.shape                       # Gets the video height and width from the video's last frame
         factor_width = arena_width/video_width                                  # Calculates the width scale factor of the video
@@ -97,7 +103,11 @@ class experiment_class:
                                  'quadrant_crossings'  : quadrant_crossings,
                                  'time_in_quadrant'    : total_time_in_quadrant,
                                  'number_of_entries'   : total_number_of_entries,
-                                 'color_limits'        : color_limits
+                                 'color_limits'        : color_limits,
+                                 'max_video_height'    : max_video_height,
+                                 'max_video_width'     : max_video_width,
+                                 'plot_options'        : plot_options,
+                                 'figure_dpi'          : figure_dpi
                                  }
         
         
@@ -152,14 +162,15 @@ class experiment_class:
         
         image_height = self.analysis_results["video_height"]
         image_width = self.analysis_results["video_width"]
-        max_height = 1920                                                                                               # Maximum height of desired figure
-        max_width = 1080                                                                                                # Maximum width of desired figure                         
+        max_height = self.analysis_results['max_video_height']                                                          # Maximum height of desired figure
+        max_width = self.analysis_results['max_video_width']                                                            # Maximum width of desired figure                         
+        figure_dpi = self.analysis_results['figure_dpi']                                                                # DPI of the figure
         ratio = min(max_height / image_width, max_width / image_height)                                                 # Calculate the ratio to be used for image resizing without losing the aspect ratio
-        new_resolution_in_inches = (image_width*ratio/100, image_height*ratio/100)                                      # Calculate the new resolution in inches based on the dpi set 
+        new_resolution_in_inches = (image_width*ratio/figure_dpi, image_height*ratio/figure_dpi)                        # Calculate the new resolution in inches based on the dpi set 
 
         figure_1.subplots_adjust(left=0,right=1,bottom=0,top=1)
         figure_1.set_size_inches(new_resolution_in_inches)
-        plt.savefig(self.directory + '_1.png', frameon='false', dpi=100)
+        plt.savefig(self.directory + '_1.png', frameon='false', dpi=figure_dpi)
         plt.autoscale()
         plt.show()
         plt.close(figure_1)
@@ -266,10 +277,11 @@ class experiment_class:
         
         image_height = self.analysis_results["video_height"]
         image_width = self.analysis_results["video_width"]
-        max_height = 1920                                                                                               # Maximum height of desired figure
-        max_width = 1080                                                                                                # Maximum width of desired figure                         
+        max_height = self.analysis_results['max_video_height']                                                          # Maximum height of desired figure
+        max_width = self.analysis_results['max_video_width']                                                            # Maximum width of desired figure                         
+        figure_dpi = self.analysis_results['figure_dpi']                                                                # DPI of the figure
         ratio = min(max_height / image_width, max_width / image_height)                                                 # Calculate the ratio to be used for image resizing without losing the aspect ratio
-        new_resolution_in_inches = (image_width*ratio/100, image_height*ratio/100)                                      # Calculate the new resolution in inches based on the dpi set 
+        new_resolution_in_inches = (image_width*ratio/figure_dpi, image_height*ratio/figure_dpi)                        # Calculate the new resolution in inches based on the dpi set 
 
         figure_1.subplots_adjust(left=0,right=1,bottom=0,top=1)
         figure_1.set_size_inches(new_resolution_in_inches)
