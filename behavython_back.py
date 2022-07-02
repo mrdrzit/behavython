@@ -1,4 +1,3 @@
-import fractions
 import os
 import skimage.io
 import tkinter as tk
@@ -10,7 +9,6 @@ from tkinter import filedialog
 from skimage.color import rgb2gray
 from scipy import stats
 from copy import copy
-from fractions import Fraction
 
 class experiment_class:
     '''
