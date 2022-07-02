@@ -64,11 +64,6 @@ class behavython_gui(QMainWindow):
     def analysis_function(self):
         self.clear_plot()
         self.resume_lineedit.clear()
-        
-        if self.type_combobox.currentIndex() == 1:
-            self.options['experiment_type'] = 'open_field'
-        else:
-            self.options['experiment_type'] = 'plus_maze'
         self.options['arena_width'] = int(self.arena_width_lineedit.text())
         self.options['arena_height'] = int(self.arena_height_lineedit.text())
         self.options['frames_per_second'] = float(self.frames_per_second_lineedit.text())
