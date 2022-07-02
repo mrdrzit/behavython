@@ -66,8 +66,8 @@ class behavython_gui(QMainWindow):
         self.options['arena_width'] = int(self.arena_width_lineedit.text())
         self.options['arena_height'] = int(self.arena_height_lineedit.text())
         self.options['frames_per_second'] = float(self.frames_per_second_lineedit.text())
-        self.options['experiment_type'] = self.type_combobox.currentText().lower().strip().replace(' ', '_') # Set the experiment type. Convert to lowercase, remove spaces and replace with underscores to match the naming convention
-        self.options['plot_options'] = str(self.plotting_options.currentText()).replace(' ', '')                # Remove all spaces from the string
+        self.options['experiment_type'] = self.type_combobox.currentText().lower().strip().replace(' ', '_')             # Set the experiment type. Convert to lowercase, remove spaces and replace with underscores to match the naming convention
+        self.options['plot_options'] = str(self.plotting_options.currentText()).strip().lower()                          # Remove all spaces from the string
         self.options['max_fig_res' ] = str(self.fig_max_size.currentText()).replace(' ','').replace('x',',').split(',')  # Remove trailing spaces and replace x with comma and split the values at the comma to make a list
         self.options['figure_dpi'] = int(self.figure_dpi.currentText())
 
