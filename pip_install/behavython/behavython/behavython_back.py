@@ -224,16 +224,16 @@ class experiment_class:
         axe_32.set_title('lower arm')
         
         if plot_option == 'only save':
-          plt.savefig(self.directory + '_3.png', frameon='false', dpi=figure_dpi)
+          plt.savefig(self.directory + '_3.png', frameon='false', dpi=600)
         elif plot_option == 'only plot':
           with tempfile.TemporaryDirectory() as tmpdir: # Found no way to plot de figure directly so I save it to a temporary directory and then load it
-            plt.savefig(tmpdir + '/tmp_3.png', frameon='false', dpi=figure_dpi)
+            plt.savefig(tmpdir + '/tmp_3.png', frameon='false', dpi=600)
             im2 = plt.imread(tmpdir + '/tmp_3.png')
             plot_viewer.canvas.axes[plot_number % 9].imshow(im2)
             plot_number += 1 
             plot_viewer.canvas.draw_idle()
         else:
-          plt.savefig(self.directory + '_3.png', frameon='false', dpi=figure_dpi)
+          plt.savefig(self.directory + '_3.png', frameon='false', dpi=600)
           im = plt.imread(self.directory + "_3.png")
           plot_viewer.canvas.axes[plot_number % 9].imshow(im)
           plot_number += 1
