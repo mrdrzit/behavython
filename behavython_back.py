@@ -186,13 +186,6 @@ class experiment_class:
           plot_number += 1
           plot_viewer.canvas.draw_idle()
 
-        # Figure 2 - Histogram
-        # figure_2, axe_2 = plt.subplots()
-        # axe_2.hist(self.analysis_results['displacement'], 400, density=True, facecolor='g', alpha=0.75)
-        # plt.show()
-        # plt.savefig(self.directory + '_2.png')
-        # plt.close(figure_2)
-        
         # Figure 3 - Time spent on each arm over time
         figure_3, ((axe_11, axe_12, axe_13), (axe_21, axe_22, axe_23), (axe_31, axe_32, axe_33)) = plt.subplots(3,3)
         figure_3.delaxes(axe_11)
@@ -248,16 +241,18 @@ class experiment_class:
 
     def plot_analysis_open_field(self, plot_viewer, plot_number):
         # Figure 1 - Overall Activity in the maze
+        plot_option = self.analysis_results['plot_options']
         movement_points = np.array([self.analysis_results["x_axe"], self.analysis_results["y_axe"]]).T.reshape(-1, 1, 2) 
         movement_segments = np.concatenate([movement_points[:-1], movement_points[1:]], axis=1)                         # Creates a 2D array containing the line segments coordinates
         movement_line_collection = LineCollection(movement_segments, cmap="CMRmap", linewidth=1.5)                      # Creates a LineCollection object with custom color map
         movement_line_collection.set_array(self.analysis_results["color_limits"])                                       # Set the line color to the normalized values of "color_limits"
-        line_collection_copy = copy(movement_line_collection)                                                           # Create a copy of the line collection object
+        line_collection_fig_1 = copy(movement_line_collection)
+        line_collection_window = copy(movement_line_collection)                                                         # Create a copy of the line collection object
         
         figure_1, axe_1 = plt.subplots()
         im = plt.imread(self.directory + ".png")
         axe_1.imshow(im)
-        axe_1.add_collection(line_collection_copy)                                                                      # Add the line collection to the axe
+        axe_1.add_collection(line_collection_fig_1)                                                                      # Add the line collection to the axe
         axe_1.axis('tight')
         axe_1.axis('off')
         
@@ -271,21 +266,20 @@ class experiment_class:
 
         figure_1.subplots_adjust(left=0,right=1,bottom=0,top=1)
         figure_1.set_size_inches(new_resolution_in_inches)
-        plt.savefig(self.directory + '_2.png', frameon='false', dpi=100)
-        plt.autoscale()
-        plt.show()
-        plt.close(figure_1)
-    
-        im = plt.imread(self.directory + '_2.png')
-        plot_viewer.canvas.axes[plot_number].imshow(im)
-        plot_viewer.canvas.draw_idle()
         
-        # Figure 2 - Histogram
-        # figure_2, axe_2 = plt.subplots()
-        # axe_2.hist(self.analysis_results['displacement'], 400, density=True, facecolor='g', alpha=0.75)
-        # plt.show(figure_2)
-        # plt.savefig(self.directory + '_2.png')
-        # plt.close(figure_2)
+        if plot_option == 'only save':
+          plt.savefig(self.directory + '_1.png', frameon='false', dpi=figure_dpi)
+        elif plot_option == 'only plot':
+          plot_viewer.canvas.axes[plot_number % 9].imshow(im) # Modulo 9 to make sure the plot number is not out of bounds
+          plot_viewer.canvas.axes[plot_number % 9].add_collection(line_collection_window)
+          plot_number += 1  # Increment the plot number to be used in the next plot (advance in window)
+          plot_viewer.canvas.draw_idle()
+        else:
+          plt.savefig(self.directory + '_1.png', frameon='false', dpi=figure_dpi)
+          plot_viewer.canvas.axes[plot_number % 9].imshow(im)
+          plot_viewer.canvas.axes[plot_number % 9].add_collection(line_collection_window)
+          plot_number += 1
+          plot_viewer.canvas.draw_idle()
         
         # Figure 3 - Time spent on each area over time
         figure_3, (axe_31, axe_32) = plt.subplots(1,2)
@@ -301,11 +295,22 @@ class experiment_class:
         axe_32.plot(self.analysis_results["quadrant_crossings"][:,1], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
         axe_32.set_ylim((0, 1.5))
         axe_32.set_title('edge')
-        
-        figure_3.suptitle('Time spent on each area over time')
-        plt.tight_layout()
-        plt.show()
-        plt.close(figure_3)
+
+        if plot_option == 'only save':
+          plt.savefig(self.directory + '_3.png', frameon='false', dpi=600)
+        elif plot_option == 'only plot':
+          with tempfile.TemporaryDirectory() as tmpdir: # Found no way to plot de figure directly so I save it to a temporary directory and then load it
+            plt.savefig(tmpdir + '/tmp_3.png', frameon='false', dpi=600)
+            im2 = plt.imread(tmpdir + '/tmp_3.png')
+            plot_viewer.canvas.axes[plot_number % 9].imshow(im2)
+            plot_number += 1 
+            plot_viewer.canvas.draw_idle()
+        else:
+          plt.savefig(self.directory + '_3.png', frameon='false', dpi=600)
+          im = plt.imread(self.directory + "_3.png")
+          plot_viewer.canvas.axes[plot_number % 9].imshow(im)
+          plot_number += 1
+          plot_viewer.canvas.draw_idle()
         
         # Figure 4 - Number of crossings
         figure_4, (axe_41, axe_42) = plt.subplots(1,2)
@@ -317,11 +322,22 @@ class experiment_class:
         axe_42.plot(self.analysis_results["quadrant_crossings"][:,1])
         axe_42.set_ylim((0, 1.5))
         axe_42.set_title('edge')
-        
-        figure_4.suptitle('Number of crossings')
-        plt.tight_layout()
-        plt.show()
-        plt.close(figure_4)
+
+        if plot_option == 'only save':
+          plt.savefig(self.directory + '_4.png', frameon='false', dpi=600)
+        elif plot_option == 'only plot':
+          with tempfile.TemporaryDirectory() as tmpdir: # Found no way to plot de figure directly so I save it to a temporary directory and then load it
+            plt.savefig(tmpdir + '/tmp_4.png', frameon='false', dpi=600)
+            im2 = plt.imread(tmpdir + '/tmp_4.png')
+            plot_viewer.canvas.axes[plot_number % 9].imshow(im2)
+            plot_number += 1 
+            plot_viewer.canvas.draw_idle()
+        else:
+          plt.savefig(self.directory + '_4.png', frameon='false', dpi=600)
+          im = plt.imread(self.directory + "_4.png")
+          plot_viewer.canvas.axes[plot_number % 9].imshow(im)
+          plot_number += 1
+          plot_viewer.canvas.draw_idle()
 
 class files_class:
     def __init__(self):
