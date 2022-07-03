@@ -36,9 +36,10 @@ class analysis_class(QObject):
                 self.experiments[i].plot_analysis_pluz_maze(self.plot_viewer, i)
             self.progress_bar.emit(round(((i+1)/len(self.experiments))*100))
         
-        results_data_frame.to_excel(self.experiments[0].directory + '_rusults.xlsx')
-        true_path = os.path.dirname(__file__) + '\\Video_analyse_validation\\animal_2_PYTHON.xlsx'
-        results_data_frame.to_excel(true_path, header=False)
+        if self.options['plot_options'] == 'only save' or self.options['plot_options'] == 'plot & save':
+          results_data_frame.to_excel(self.experiments[0].directory + '_rusults.xlsx')
+          true_path = os.path.dirname(__file__) + '\\Video_analyse_validation\\animal_2_PYTHON.xlsx'
+          results_data_frame.to_excel(true_path, header=False)
         self.finished.emit()
 
 class behavython_gui(QMainWindow):
@@ -61,16 +62,15 @@ class behavython_gui(QMainWindow):
         self.analysis_button.clicked.connect(self.analysis_function)
         
     def analysis_function(self):
-        self.clear_plot()
         self.resume_lineedit.clear()
-        
-        if self.type_combobox.currentIndex() == 1:
-            self.options['experiment_type'] = 'open_field'
-        else:
-            self.options['experiment_type'] = 'plus_maze'
         self.options['arena_width'] = int(self.arena_width_lineedit.text())
         self.options['arena_height'] = int(self.arena_height_lineedit.text())
         self.options['frames_per_second'] = float(self.frames_per_second_lineedit.text())
+        self.options['experiment_type'] = self.type_combobox.currentText().lower().strip().replace(' ', '_')             # Set the experiment type. Convert to lowercase, remove spaces and replace with underscores to match the naming convention
+        self.options['plot_options'] = str(self.plotting_options.currentText()).strip().lower()                          # Remove all spaces from the string
+        self.options['max_fig_res' ] = str(self.fig_max_size.currentText()).replace(' ','').replace('x',',').split(',')  # Remove trailing spaces and replace x with comma and split the values at the comma to make a list
+        self.options['figure_dpi'] = int(self.figure_dpi.currentText())
+
         if self.animal_combobox.currentIndex() == 0:
             self.options['threshold'] = 0.0267  # Motion detection threshold (mice)
         else:
@@ -101,6 +101,9 @@ class behavython_gui(QMainWindow):
         self.arena_width_lineedit.setText('65')
         self.arena_height_lineedit.setText('65')
         self.animal_combobox.setCurrentIndex(0)
+        self.plotting_options.setCurrentIndex(0)
+        self.fig_max_size.setCurrentIndex(0)
+        self.figure_dpi.setCurrentIndex(0)
         self.clear_plot()
 
     def clear_plot(self):
