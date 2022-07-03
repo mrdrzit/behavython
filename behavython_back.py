@@ -3,9 +3,8 @@ import skimage.io
 import tkinter as tk
 import pandas as pd
 import numpy as np
+import tempfile
 from matplotlib.collections import LineCollection 
-from matplotlib import use
-use('TkAgg') # Set the backend to TkAgg. This backend permits the figure displaying to block code execution as to make use of the plotting options set in the GUI. Must be done before importing pyplot
 from matplotlib import pyplot as plt 
 from tkinter import filedialog
 from skimage.color import rgb2gray
@@ -147,16 +146,18 @@ class experiment_class:
 
     def plot_analysis_pluz_maze(self, plot_viewer, plot_number):
         # Figure 1 - Overall Activity in the maze
+        plot_option = self.analysis_results['plot_options']
         movement_points = np.array([self.analysis_results["x_axe"], self.analysis_results["y_axe"]]).T.reshape(-1, 1, 2) 
         movement_segments = np.concatenate([movement_points[:-1], movement_points[1:]], axis=1)                         # Creates a 2D array containing the line segments coordinates
         movement_line_collection = LineCollection(movement_segments, cmap="CMRmap", linewidth=1.5)                      # Creates a LineCollection object with custom color map
         movement_line_collection.set_array(self.analysis_results["color_limits"])                                       # Set the line color to the normalized values of "color_limits"
-        line_collection_copy = copy(movement_line_collection)                                                           # Create a copy of the line collection object
-        
+        line_collection_fig_1 = copy(movement_line_collection)
+        line_collection_window = copy(movement_line_collection)                                                           # Create a copy of the line collection object
+
         figure_1, axe_1 = plt.subplots()
         im = plt.imread(self.directory + ".png")
         axe_1.imshow(im)
-        axe_1.add_collection(line_collection_copy)
+        axe_1.add_collection(line_collection_fig_1)
         axe_1.axis('tight')
         axe_1.axis('off')
         
@@ -170,15 +171,21 @@ class experiment_class:
 
         figure_1.subplots_adjust(left=0,right=1,bottom=0,top=1)
         figure_1.set_size_inches(new_resolution_in_inches)
-        plt.savefig(self.directory + '_1.png', frameon='false', dpi=figure_dpi)
-        plt.autoscale()
-        plt.show()
-        plt.close(figure_1)
-        
-        im = plt.imread(self.directory + '_1.png')
-        plot_viewer.canvas.axes[plot_number].imshow(im)
-        plot_viewer.canvas.draw_idle()
-        
+
+        if plot_option == 'only save':
+          plt.savefig(self.directory + '_1.png', frameon='false', dpi=figure_dpi)
+        elif plot_option == 'only plot':
+          plot_viewer.canvas.axes[plot_number % 9].imshow(im) # Modulo 9 to make sure the plot number is not out of bounds
+          plot_viewer.canvas.axes[plot_number % 9].add_collection(line_collection_window)
+          plot_number += 1  # Increment the plot number to be used in the next plot (advance in window)
+          plot_viewer.canvas.draw_idle()
+        else:
+          plt.savefig(self.directory + '_1.png', frameon='false', dpi=figure_dpi)
+          plot_viewer.canvas.axes[plot_number % 9].imshow(im)
+          plot_viewer.canvas.axes[plot_number % 9].add_collection(line_collection_window)
+          plot_number += 1
+          plot_viewer.canvas.draw_idle()
+
         # Figure 2 - Histogram
         # figure_2, axe_2 = plt.subplots()
         # axe_2.hist(self.analysis_results['displacement'], 400, density=True, facecolor='g', alpha=0.75)
@@ -223,42 +230,21 @@ class experiment_class:
         axe_32.set_ylim((0, 1.5))
         axe_32.set_title('lower arm')
         
-        figure_3.suptitle('Time spent on each arm over time')
-        plt.tight_layout()
-        plt.show()
-        # plt.savefig(self.directory + '_3.png')
-        plt.close(figure_3)
-        
-        # Figure 4 - Number of crossings
-        # figure_4, ((axe_11, axe_12, axe_13), (axe_21, axe_22, axe_23), (axe_31, axe_32, axe_33)) = plt.subplots(3,3)
-        # figure_4.delaxes(axe_11)
-        # figure_4.delaxes(axe_13)
-        # figure_4.delaxes(axe_31)
-        # figure_4.delaxes(axe_33)
-            
-        # axe_12.plot(self.analysis_results["quadrant_crossings"][:,0])
-        # axe_12.set_ylim((0, 1.5))
-        # axe_12.set_title('upper arm')
-    
-        # axe_21.plot(self.analysis_results["quadrant_crossings"][:,1])
-        # axe_21.set_ylim((0, 1.5))
-        # axe_21.set_title('left  arm')
-    
-        # axe_22.plot(self.analysis_results["quadrant_crossings"][:,2])
-        # axe_22.set_ylim((0, 1.5))
-        # axe_22.set_title('center')
-    
-        # axe_23.plot(self.analysis_results["quadrant_crossings"][:,3])
-        # axe_23.set_ylim((0, 1.5))
-        # axe_23.set_title('right arm')
-    
-        # axe_32.plot(self.analysis_results["quadrant_crossings"][:,4])
-        # axe_32.set_ylim((0, 1.5))
-        # axe_32.set_title('lower arm')
-        
-        # figure_4.suptitle('Number of crossings')
-        # plt.tight_layout()
-        # plt.show()            
+        if plot_option == 'only save':
+          plt.savefig(self.directory + '_3.png', frameon='false', dpi=figure_dpi)
+        elif plot_option == 'only plot':
+          with tempfile.TemporaryDirectory() as tmpdir: # Found no way to plot de figure directly so I save it to a temporary directory and then load it
+            plt.savefig(tmpdir + '/tmp_3.png', frameon='false', dpi=figure_dpi)
+            im2 = plt.imread(tmpdir + '/tmp_3.png')
+            plot_viewer.canvas.axes[plot_number % 9].imshow(im2)
+            plot_number += 1 
+            plot_viewer.canvas.draw_idle()
+        else:
+          plt.savefig(self.directory + '_3.png', frameon='false', dpi=figure_dpi)
+          im = plt.imread(self.directory + "_3.png")
+          plot_viewer.canvas.axes[plot_number % 9].imshow(im)
+          plot_number += 1
+          plot_viewer.canvas.draw_idle()     
 
     def plot_analysis_open_field(self, plot_viewer, plot_number):
         # Figure 1 - Overall Activity in the maze
