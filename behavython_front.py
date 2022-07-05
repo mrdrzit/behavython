@@ -37,7 +37,7 @@ class analysis_class(QObject):
                 self.experiments[i].plot_analysis_pluz_maze(self.plot_viewer, i)
             self.progress_bar.emit(round(((i+1)/len(self.experiments))*100))
         
-        if self.options['plot_options'] == 'only save' or self.options['plot_options'] == 'plot & save':
+        if self.options['plot_options'] == 1:
           results_data_frame.to_excel(self.experiments[0].directory + '_rusults.xlsx')
           true_path = os.path.dirname(__file__) + '\\Video_analyse_validation\\animal_2_PYTHON.xlsx'
           results_data_frame.to_excel(true_path, header=False)
@@ -68,7 +68,7 @@ class behavython_gui(QMainWindow):
         self.options['arena_height'] = int(self.arena_height_lineedit.text())
         self.options['frames_per_second'] = float(self.frames_per_second_lineedit.text())
         self.options['experiment_type'] = self.type_combobox.currentText().lower().strip().replace(' ', '_')             # Set the experiment type. Convert to lowercase, remove spaces and replace with underscores to match the naming convention
-        self.options['plot_options'] = str(self.plotting_options.currentText()).strip().lower()                          # Remove all spaces from the string
+        self.options['plot_options'] = self.save_button.isChecked()                                                      # Remove all spaces from the string
         self.options['max_fig_res' ] = str(self.fig_max_size.currentText()).replace(' ','').replace('x',',').split(',')  # Remove trailing spaces and replace x with comma and split the values at the comma to make a list
         self.options['figure_dpi'] = int(self.figure_dpi.currentText())
 
