@@ -172,7 +172,7 @@ class experiment_class:
         figure_1.subplots_adjust(left=0,right=1,bottom=0,top=1)
         figure_1.set_size_inches(new_resolution_in_inches)
 
-        if plot_option == 1:
+        if plot_option == 0:
           plot_viewer.canvas.axes[plot_number % 9].imshow(im) # Modulo 9 to make sure the plot number is not out of bounds
           plot_viewer.canvas.axes[plot_number % 9].add_collection(line_collection_window)
           plot_number += 1  # Increment the plot number to be used in the next plot (advance in window)
@@ -221,7 +221,7 @@ class experiment_class:
         axe_32.set_ylim((0, 1.5))
         axe_32.set_title('lower arm')
         
-        if plot_option == 1:
+        if plot_option == 0:
           with tempfile.TemporaryDirectory() as tmpdir: # Found no way to plot de figure directly so I save it to a temporary directory and then load it
             plt.savefig(tmpdir + '/tmp_3.png', frameon='false', dpi=600)
             im2 = plt.imread(tmpdir + '/tmp_3.png')

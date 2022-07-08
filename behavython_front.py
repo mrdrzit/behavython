@@ -38,7 +38,7 @@ class analysis_class(QObject):
             self.progress_bar.emit(round(((i+1)/len(self.experiments))*100))
         
         if self.options['plot_options'] == 1:
-          results_data_frame.to_excel(self.experiments[0].directory + '_rusults.xlsx')
+          results_data_frame.to_excel(self.experiments[0].directory + '_results.xlsx')
           true_path = os.path.dirname(__file__) + '\\Video_analyse_validation\\animal_2_PYTHON.xlsx'
           results_data_frame.to_excel(true_path, header=False)
         self.finished.emit()
