@@ -35,7 +35,7 @@ class experiment_class:
         max_video_height = int(options['max_fig_res'][0])                       # Maximum video height set by user (height is stored in the first element of the list and is converted to int beacuse it comes as a string)
         max_video_width = int(options['max_fig_res'][1])                        # Maximum video width set by user (width is stored in the second element of the list and is converted to int beacuse it comes as a string)
         plot_options = options['plot_options']                                  # Plot options set by user
-        figure_dpi = options['figure_dpi']                                      # Figure dpi set by user
+        figure_dpi = 200                                                        # DPI of the figure
             
         video_height, video_width = self.last_frame.shape                       # Gets the video height and width from the video's last frame
         factor_width = arena_width/video_width                                  # Calculates the width scale factor of the video
@@ -58,7 +58,7 @@ class experiment_class:
         
         time_vector = np.linspace(0, len(self.data)/frames_per_second, len(self.data))              # Creates a time vector
         np.seterr(divide='ignore', invalid='ignore')                                                # Ignores the division by zero at runtime (division by zero is not an error in this case as the are moments when the animal is not moving)
-        velocity = np.divide(displacement, np.transpose(np.append(0, np.diff(time_vector))))        # Calculates the first derivate and finds the animal's velocity per time
+        velocity = np.divide(displacement, np.transpose(np.append(0, np.diff(time_vector))))        # Calculates the first derivative and finds the animal's velocity per time
         mean_velocity = np.nanmean(velocity)                                                        # Calculates the mean velocity from the velocity vector
         
         aceleration = np.divide(np.append(0, np.diff(velocity)), np.append(0, np.diff(time_vector)))    # Calculates the second derivative and finds the animal's acceleration per time
@@ -73,7 +73,7 @@ class experiment_class:
           
         quadrant_data = np.array(self.data[self.data.columns[2:]])                                  # Extract the quadrant data from csv file
         colDif = np.abs(quadrant_data[:,0] - np.sum(quadrant_data[:][:,1:],axis=1))                 # Here, the values will be off-by-one because MATLAB starts at 1
-        full_entry_indexes = colDif != 1                                                            # Create a logical array where there is "full entry"
+        full_entry_indexes = colDif != 1                                                            # Create a logical array where there is a "full entry"
         time_spent = np.delete(quadrant_data, full_entry_indexes, 0)                                # True crossings over time (full crossings only) 
         quadrant_crossings = abs(np.diff(time_spent, axis=0))
         total_time_in_quadrant = np.sum(np.divide(time_spent,frames_per_second),0)                  # Total time spent in each quadrant
@@ -106,7 +106,6 @@ class experiment_class:
                                  'max_video_height'    : max_video_height,
                                  'max_video_width'     : max_video_width,
                                  'plot_options'        : plot_options,
-                                 'figure_dpi'          : figure_dpi
                                  }
         
         
@@ -165,7 +164,7 @@ class experiment_class:
         image_width = self.analysis_results["video_width"]
         max_height = self.analysis_results['max_video_height']                                                          # Maximum height of desired figure
         max_width = self.analysis_results['max_video_width']                                                            # Maximum width of desired figure                         
-        figure_dpi = self.analysis_results['figure_dpi']                                                                # DPI of the figure
+        figure_dpi = 100                                                                                                # DPI of the figure
         ratio = min(max_height / image_width, max_width / image_height)                                                 # Calculate the ratio to be used for image resizing without losing the aspect ratio
         new_resolution_in_inches = (image_width*ratio/figure_dpi, image_height*ratio/figure_dpi)                        # Calculate the new resolution in inches based on the dpi set 
 
@@ -348,7 +347,8 @@ class interface_functions:
         file_explorer = tk.Tk()
         file_explorer.withdraw()
         file_explorer.call('wm', 'attributes', '.', '-topmost', True)
-        selected_files = filedialog.askopenfilename(title = "Select the files", multiple = True) 
+        selected_files = filedialog.askopenfilename(title = "Select the files to analyze", multiple = True)
+        selected_folder_to_save = filedialog.askdirectory(title = "Select the folder to save the plots", mustexist = True)
     
         files = files_class()
         files.add_files(selected_files)
@@ -383,4 +383,4 @@ class interface_functions:
                 else:
                     line_edit.append("- The " + files.name[index] + ".csv file had more columns than the elevated plus maze test allows")
                     
-        return experiments
+        return experiments, selected_folder_to_save
