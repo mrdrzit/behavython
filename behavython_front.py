@@ -76,7 +76,10 @@ class behavython_gui(QMainWindow):
             self.options['threshold'] = 0.0667  # Motion detection threshold (rats)
         
         functions = behavython_back.interface_functions()
-        [self.experiments, save_folder] = functions.get_experiments(self.resume_lineedit, self.options['experiment_type'])
+        while True:
+          [self.experiments, save_folder, error_flag] = functions.get_experiments(self.resume_lineedit, self.options['experiment_type'])
+          if error_flag == 0:
+            break
         self.options['save_folder'] = save_folder
             
         self.analysis_thread = QThread()                                                          # Creates a QThread object to plot the received data
@@ -101,9 +104,7 @@ class behavython_gui(QMainWindow):
         self.arena_width_lineedit.setText('65')
         self.arena_height_lineedit.setText('65')
         self.animal_combobox.setCurrentIndex(0)
-        self.plotting_options.setCurrentIndex(0)
         self.fig_max_size.setCurrentIndex(0)
-        self.figure_dpi.setCurrentIndex(0)
         self.clear_plot()
 
     def clear_plot(self):

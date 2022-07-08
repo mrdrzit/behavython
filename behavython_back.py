@@ -10,6 +10,7 @@ from tkinter import filedialog
 from skimage.color import rgb2gray
 from scipy import stats
 from copy import copy
+plt.ioff()
 
 class experiment_class:
     '''
@@ -220,19 +221,21 @@ class experiment_class:
         axe_32.set_ylim((0, 1.5))
         axe_32.set_title('lower arm')
         
-        if plot_option == 0:
-          with tempfile.TemporaryDirectory() as tmpdir: # Found no way to plot de figure directly so I save it to a temporary directory and then load it
-            plt.savefig(tmpdir + '/tmp_3.png', frameon='false', dpi=600)
-            im2 = plt.imread(tmpdir + '/tmp_3.png')
-            plot_viewer.canvas.axes[plot_number % 9].imshow(im2)
-            plot_number += 1 
-            plot_viewer.canvas.draw_idle()
-        else:
+        # if plot_option == 0:
+        #   with tempfile.TemporaryDirectory() as tmpdir: # Found no way to plot de figure directly so I save it to a temporary directory and then load it
+        #     plt.savefig(tmpdir + '/tmp_3.png', frameon='false', dpi=600)
+        #     im2 = plt.imread(tmpdir + '/tmp_3.png')
+        #     plot_viewer.canvas.axes[plot_number % 9].imshow(im2)
+        #     plot_number += 1 
+        #     plot_viewer.canvas.draw_idle()
+        if plot_option == 1:
           plt.savefig(self.directory + '_3.png', frameon='false', dpi=600)
           im = plt.imread(self.directory + "_3.png")
           plot_viewer.canvas.axes[plot_number % 9].imshow(im)
           plot_number += 1
-          plot_viewer.canvas.draw_idle()     
+          plot_viewer.canvas.draw_idle()
+
+        plt.close('all')      
 
     def plot_analysis_open_field(self, plot_viewer, plot_number):
         # Figure 1 - Overall Activity in the maze
@@ -267,12 +270,14 @@ class experiment_class:
           plot_viewer.canvas.axes[plot_number % 9].add_collection(line_collection_window)
           plot_number += 1  # Increment the plot number to be used in the next plot (advance in window)
           plot_viewer.canvas.draw_idle()
+          # plt.close()
         else:
           plt.savefig(self.directory + '_1.png', frameon='false', dpi=figure_dpi)
           plot_viewer.canvas.axes[plot_number % 9].imshow(im)
           plot_viewer.canvas.axes[plot_number % 9].add_collection(line_collection_window)
           plot_number += 1
           plot_viewer.canvas.draw_idle()
+          # plt.close()
         
         # Figure 3 - Time spent on each area over time
         figure_3, (axe_31, axe_32) = plt.subplots(1,2)
@@ -289,19 +294,20 @@ class experiment_class:
         axe_32.set_ylim((0, 1.5))
         axe_32.set_title('edge')
 
+        # if plot_option == 0:
+        #   with tempfile.TemporaryDirectory() as tmpdir: # Found no way to plot de figure directly so I save it to a temporary directory and then load it
+        #     plt.savefig(tmpdir + '/tmp_3.png', frameon='false', dpi=600)
+        #     im2 = plt.imread(tmpdir + '/tmp_3.png')
+        #     plot_viewer.canvas.axes[plot_number % 9].imshow(im2)
+        #     plot_number += 1 
+        #     plot_viewer.canvas.draw_idle()
         if plot_option == 1:
-          with tempfile.TemporaryDirectory() as tmpdir: # Found no way to plot de figure directly so I save it to a temporary directory and then load it
-            plt.savefig(tmpdir + '/tmp_3.png', frameon='false', dpi=600)
-            im2 = plt.imread(tmpdir + '/tmp_3.png')
-            plot_viewer.canvas.axes[plot_number % 9].imshow(im2)
-            plot_number += 1 
-            plot_viewer.canvas.draw_idle()
-        else:
           plt.savefig(self.directory + '_3.png', frameon='false', dpi=600)
           im = plt.imread(self.directory + "_3.png")
           plot_viewer.canvas.axes[plot_number % 9].imshow(im)
           plot_number += 1
           plot_viewer.canvas.draw_idle()
+          # plt.close()
         
         # Figure 4 - Number of crossings
         figure_4, (axe_41, axe_42) = plt.subplots(1,2)
@@ -314,19 +320,20 @@ class experiment_class:
         axe_42.set_ylim((0, 1.5))
         axe_42.set_title('edge')
 
+        # if plot_option == 0:
+        #   with tempfile.TemporaryDirectory() as tmpdir: # Found no way to plot de figure directly so I save it to a temporary directory and then load it
+        #     plt.savefig(tmpdir + '/tmp_4.png', frameon='false', dpi=600)
+        #     im2 = plt.imread(tmpdir + '/tmp_4.png')
+        #     plot_viewer.canvas.axes[plot_number % 9].imshow(im2)
+        #     plot_number += 1 
+        #     plot_viewer.canvas.draw_idle()
         if plot_option == 1:
-          with tempfile.TemporaryDirectory() as tmpdir: # Found no way to plot de figure directly so I save it to a temporary directory and then load it
-            plt.savefig(tmpdir + '/tmp_4.png', frameon='false', dpi=600)
-            im2 = plt.imread(tmpdir + '/tmp_4.png')
-            plot_viewer.canvas.axes[plot_number % 9].imshow(im2)
-            plot_number += 1 
-            plot_viewer.canvas.draw_idle()
-        else:
           plt.savefig(self.directory + '_4.png', frameon='false', dpi=600)
           im = plt.imread(self.directory + "_4.png")
           plot_viewer.canvas.axes[plot_number % 9].imshow(im)
           plot_number += 1
           plot_viewer.canvas.draw_idle()
+          plt.close('all')
 
 class files_class:
     def __init__(self):
@@ -349,11 +356,21 @@ class interface_functions:
         file_explorer.call('wm', 'attributes', '.', '-topmost', True)
         selected_files = filedialog.askopenfilename(title = "Select the files to analyze", multiple = True)
         selected_folder_to_save = filedialog.askdirectory(title = "Select the folder to save the plots", mustexist = True)
-    
+        experiments = []
+        
+        try:
+          assert len(selected_files) > 0 or assert len(selected_folder_to_save) > 0
+        except AssertionError:
+          if len(selected_files) == 0:
+            line_edit.append(" ERROR: No files selected")
+          else:
+            line_edit.append(" ERROR: No files selected")
+          error = 1
+          return experiments, selected_folder_to_save, error
+
         files = files_class()
         files.add_files(selected_files)
     
-        experiments = []
     
         for index in range(0, files.number):
             
@@ -363,8 +380,10 @@ class interface_functions:
                 raw_data = pd.read_csv(files.directory[index] + '.csv', sep = ',', na_values = ['no info', '.'], header = None)
                 raw_image = rgb2gray(skimage.io.imread(files.directory[index] + '.png'))
             except:
-                line_edit.append("- Doesn't exists CSV or PNG file with name " + files.name[index])
+                line_edit.append("ERROR: Doesn't exist CSV or PNG file with name " + files.name[index])
                 experiments.pop()
+                error = 1
+                return experiments, selected_folder_to_save, error
             else:
                 if raw_data.shape[1] == 7 and experiment_type == 'plus_maze':
                     experiments[index].data = raw_data.interpolate(method='spline', order=1, limit_direction = 'both', axis = 0)
@@ -383,4 +402,4 @@ class interface_functions:
                 else:
                     line_edit.append("- The " + files.name[index] + ".csv file had more columns than the elevated plus maze test allows")
                     
-        return experiments, selected_folder_to_save
+        return experiments, selected_folder_to_save, error
