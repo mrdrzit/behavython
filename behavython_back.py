@@ -351,6 +351,7 @@ class files_class:
 
 class interface_functions:
     def get_experiments(self, line_edit, experiment_type):
+        error = 0
         file_explorer = tk.Tk()
         file_explorer.withdraw()
         file_explorer.call('wm', 'attributes', '.', '-topmost', True)
@@ -358,8 +359,10 @@ class interface_functions:
         selected_folder_to_save = filedialog.askdirectory(title = "Select the folder to save the plots", mustexist = True)
         experiments = []
         
+        # a = len(selected_folder_to_save)
+        # b = len(selected_files)
         try:
-          assert len(selected_files) > 0 or assert len(selected_folder_to_save) > 0
+          assert len(selected_folder_to_save) > 0 or len(selected_files) > 0
         except AssertionError:
           if len(selected_files) == 0:
             line_edit.append(" ERROR: No files selected")
