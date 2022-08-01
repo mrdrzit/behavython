@@ -6,17 +6,13 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/mrdrzit/Behavython">
     <img
      src="https://raw.githubusercontent.com/mrdrzit/Behavython/main/logo/logo.png"
      style="max-width: 100%; height: 100%;"
      alt="Behavython software"
-  </a>
-
-<h1 align="center">Behavython </h1>
 
   <p align="center">
-    A port to Python of the MATLAB script created by Flávio Mourão in NNC
+    <span style="font-size:30px">Based on the original code by </span><a href=https://github.com/fgmourao>Flávio Mourão</a>
     <br />
     <br />
     ·
