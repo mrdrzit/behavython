@@ -56,7 +56,7 @@
 
 ### About
 
-- A port to Python of the MATLAB script created by Flávio Mourão in NNC
+- <span style="font-size:30px">Based on the original code by </span><a href=https://github.com/fgmourao>Flávio Mourão</a>
 
 
 
