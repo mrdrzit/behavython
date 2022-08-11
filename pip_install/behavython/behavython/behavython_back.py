@@ -10,6 +10,7 @@ from tkinter import filedialog
 from skimage.color import rgb2gray
 from scipy import stats
 from copy import copy
+plt.ioff()
 
 class experiment_class:
     '''
@@ -35,7 +36,7 @@ class experiment_class:
         max_video_height = int(options['max_fig_res'][0])                       # Maximum video height set by user (height is stored in the first element of the list and is converted to int beacuse it comes as a string)
         max_video_width = int(options['max_fig_res'][1])                        # Maximum video width set by user (width is stored in the second element of the list and is converted to int beacuse it comes as a string)
         plot_options = options['plot_options']                                  # Plot options set by user
-        figure_dpi = options['figure_dpi']                                      # Figure dpi set by user
+        figure_dpi = 200                                                        # DPI of the figure
             
         video_height, video_width = self.last_frame.shape                       # Gets the video height and width from the video's last frame
         factor_width = arena_width/video_width                                  # Calculates the width scale factor of the video
@@ -58,7 +59,7 @@ class experiment_class:
         
         time_vector = np.linspace(0, len(self.data)/frames_per_second, len(self.data))              # Creates a time vector
         np.seterr(divide='ignore', invalid='ignore')                                                # Ignores the division by zero at runtime (division by zero is not an error in this case as the are moments when the animal is not moving)
-        velocity = np.divide(displacement, np.transpose(np.append(0, np.diff(time_vector))))        # Calculates the first derivate and finds the animal's velocity per time
+        velocity = np.divide(displacement, np.transpose(np.append(0, np.diff(time_vector))))        # Calculates the first derivative and finds the animal's velocity per time
         mean_velocity = np.nanmean(velocity)                                                        # Calculates the mean velocity from the velocity vector
         
         aceleration = np.divide(np.append(0, np.diff(velocity)), np.append(0, np.diff(time_vector)))    # Calculates the second derivative and finds the animal's acceleration per time
@@ -73,7 +74,7 @@ class experiment_class:
           
         quadrant_data = np.array(self.data[self.data.columns[2:]])                                  # Extract the quadrant data from csv file
         colDif = np.abs(quadrant_data[:,0] - np.sum(quadrant_data[:][:,1:],axis=1))                 # Here, the values will be off-by-one because MATLAB starts at 1
-        full_entry_indexes = colDif != 1                                                            # Create a logical array where there is "full entry"
+        full_entry_indexes = colDif != 1                                                            # Create a logical array where there is a "full entry"
         time_spent = np.delete(quadrant_data, full_entry_indexes, 0)                                # True crossings over time (full crossings only) 
         quadrant_crossings = abs(np.diff(time_spent, axis=0))
         total_time_in_quadrant = np.sum(np.divide(time_spent,frames_per_second),0)                  # Total time spent in each quadrant
@@ -106,7 +107,6 @@ class experiment_class:
                                  'max_video_height'    : max_video_height,
                                  'max_video_width'     : max_video_width,
                                  'plot_options'        : plot_options,
-                                 'figure_dpi'          : figure_dpi
                                  }
         
         
@@ -165,16 +165,14 @@ class experiment_class:
         image_width = self.analysis_results["video_width"]
         max_height = self.analysis_results['max_video_height']                                                          # Maximum height of desired figure
         max_width = self.analysis_results['max_video_width']                                                            # Maximum width of desired figure                         
-        figure_dpi = self.analysis_results['figure_dpi']                                                                # DPI of the figure
+        figure_dpi = 100                                                                                                # DPI of the figure
         ratio = min(max_height / image_width, max_width / image_height)                                                 # Calculate the ratio to be used for image resizing without losing the aspect ratio
         new_resolution_in_inches = (image_width*ratio/figure_dpi, image_height*ratio/figure_dpi)                        # Calculate the new resolution in inches based on the dpi set 
 
         figure_1.subplots_adjust(left=0,right=1,bottom=0,top=1)
         figure_1.set_size_inches(new_resolution_in_inches)
 
-        if plot_option == 'only save':
-          plt.savefig(self.directory + '_1.png', frameon='false', dpi=figure_dpi)
-        elif plot_option == 'only plot':
+        if plot_option == 0:
           plot_viewer.canvas.axes[plot_number % 9].imshow(im) # Modulo 9 to make sure the plot number is not out of bounds
           plot_viewer.canvas.axes[plot_number % 9].add_collection(line_collection_window)
           plot_number += 1  # Increment the plot number to be used in the next plot (advance in window)
@@ -223,21 +221,21 @@ class experiment_class:
         axe_32.set_ylim((0, 1.5))
         axe_32.set_title('lower arm')
         
-        if plot_option == 'only save':
-          plt.savefig(self.directory + '_3.png', frameon='false', dpi=600)
-        elif plot_option == 'only plot':
-          with tempfile.TemporaryDirectory() as tmpdir: # Found no way to plot de figure directly so I save it to a temporary directory and then load it
-            plt.savefig(tmpdir + '/tmp_3.png', frameon='false', dpi=600)
-            im2 = plt.imread(tmpdir + '/tmp_3.png')
-            plot_viewer.canvas.axes[plot_number % 9].imshow(im2)
-            plot_number += 1 
-            plot_viewer.canvas.draw_idle()
-        else:
+        # if plot_option == 0:
+        #   with tempfile.TemporaryDirectory() as tmpdir: # Found no way to plot de figure directly so I save it to a temporary directory and then load it
+        #     plt.savefig(tmpdir + '/tmp_3.png', frameon='false', dpi=600)
+        #     im2 = plt.imread(tmpdir + '/tmp_3.png')
+        #     plot_viewer.canvas.axes[plot_number % 9].imshow(im2)
+        #     plot_number += 1 
+        #     plot_viewer.canvas.draw_idle()
+        if plot_option == 1:
           plt.savefig(self.directory + '_3.png', frameon='false', dpi=600)
           im = plt.imread(self.directory + "_3.png")
           plot_viewer.canvas.axes[plot_number % 9].imshow(im)
           plot_number += 1
-          plot_viewer.canvas.draw_idle()     
+          plot_viewer.canvas.draw_idle()
+
+        plt.close('all')      
 
     def plot_analysis_open_field(self, plot_viewer, plot_number):
         # Figure 1 - Overall Activity in the maze
@@ -267,19 +265,19 @@ class experiment_class:
         figure_1.subplots_adjust(left=0,right=1,bottom=0,top=1)
         figure_1.set_size_inches(new_resolution_in_inches)
         
-        if plot_option == 'only save':
-          plt.savefig(self.directory + '_1.png', frameon='false', dpi=figure_dpi)
-        elif plot_option == 'only plot':
+        if plot_option == 1:
           plot_viewer.canvas.axes[plot_number % 9].imshow(im) # Modulo 9 to make sure the plot number is not out of bounds
           plot_viewer.canvas.axes[plot_number % 9].add_collection(line_collection_window)
           plot_number += 1  # Increment the plot number to be used in the next plot (advance in window)
           plot_viewer.canvas.draw_idle()
+          # plt.close()
         else:
           plt.savefig(self.directory + '_1.png', frameon='false', dpi=figure_dpi)
           plot_viewer.canvas.axes[plot_number % 9].imshow(im)
           plot_viewer.canvas.axes[plot_number % 9].add_collection(line_collection_window)
           plot_number += 1
           plot_viewer.canvas.draw_idle()
+          # plt.close()
         
         # Figure 3 - Time spent on each area over time
         figure_3, (axe_31, axe_32) = plt.subplots(1,2)
@@ -296,21 +294,20 @@ class experiment_class:
         axe_32.set_ylim((0, 1.5))
         axe_32.set_title('edge')
 
-        if plot_option == 'only save':
-          plt.savefig(self.directory + '_3.png', frameon='false', dpi=600)
-        elif plot_option == 'only plot':
-          with tempfile.TemporaryDirectory() as tmpdir: # Found no way to plot de figure directly so I save it to a temporary directory and then load it
-            plt.savefig(tmpdir + '/tmp_3.png', frameon='false', dpi=600)
-            im2 = plt.imread(tmpdir + '/tmp_3.png')
-            plot_viewer.canvas.axes[plot_number % 9].imshow(im2)
-            plot_number += 1 
-            plot_viewer.canvas.draw_idle()
-        else:
+        # if plot_option == 0:
+        #   with tempfile.TemporaryDirectory() as tmpdir: # Found no way to plot de figure directly so I save it to a temporary directory and then load it
+        #     plt.savefig(tmpdir + '/tmp_3.png', frameon='false', dpi=600)
+        #     im2 = plt.imread(tmpdir + '/tmp_3.png')
+        #     plot_viewer.canvas.axes[plot_number % 9].imshow(im2)
+        #     plot_number += 1 
+        #     plot_viewer.canvas.draw_idle()
+        if plot_option == 1:
           plt.savefig(self.directory + '_3.png', frameon='false', dpi=600)
           im = plt.imread(self.directory + "_3.png")
           plot_viewer.canvas.axes[plot_number % 9].imshow(im)
           plot_number += 1
           plot_viewer.canvas.draw_idle()
+          # plt.close()
         
         # Figure 4 - Number of crossings
         figure_4, (axe_41, axe_42) = plt.subplots(1,2)
@@ -323,21 +320,20 @@ class experiment_class:
         axe_42.set_ylim((0, 1.5))
         axe_42.set_title('edge')
 
-        if plot_option == 'only save':
-          plt.savefig(self.directory + '_4.png', frameon='false', dpi=600)
-        elif plot_option == 'only plot':
-          with tempfile.TemporaryDirectory() as tmpdir: # Found no way to plot de figure directly so I save it to a temporary directory and then load it
-            plt.savefig(tmpdir + '/tmp_4.png', frameon='false', dpi=600)
-            im2 = plt.imread(tmpdir + '/tmp_4.png')
-            plot_viewer.canvas.axes[plot_number % 9].imshow(im2)
-            plot_number += 1 
-            plot_viewer.canvas.draw_idle()
-        else:
+        # if plot_option == 0:
+        #   with tempfile.TemporaryDirectory() as tmpdir: # Found no way to plot de figure directly so I save it to a temporary directory and then load it
+        #     plt.savefig(tmpdir + '/tmp_4.png', frameon='false', dpi=600)
+        #     im2 = plt.imread(tmpdir + '/tmp_4.png')
+        #     plot_viewer.canvas.axes[plot_number % 9].imshow(im2)
+        #     plot_number += 1 
+        #     plot_viewer.canvas.draw_idle()
+        if plot_option == 1:
           plt.savefig(self.directory + '_4.png', frameon='false', dpi=600)
           im = plt.imread(self.directory + "_4.png")
           plot_viewer.canvas.axes[plot_number % 9].imshow(im)
           plot_number += 1
           plot_viewer.canvas.draw_idle()
+          plt.close('all')
 
 class files_class:
     def __init__(self):
@@ -355,15 +351,27 @@ class files_class:
 
 class interface_functions:
     def get_experiments(self, line_edit, experiment_type):
+        error = 0
         file_explorer = tk.Tk()
         file_explorer.withdraw()
         file_explorer.call('wm', 'attributes', '.', '-topmost', True)
-        selected_files = filedialog.askopenfilename(title = "Select the files", multiple = True) 
-    
+        selected_files = filedialog.askopenfilename(title = "Select the files to analyze", multiple = True)
+        selected_folder_to_save = filedialog.askdirectory(title = "Select the folder to save the plots", mustexist = True)
+        experiments = []
+        
+        try:
+          assert len(selected_folder_to_save) > 0 or len(selected_files) > 0
+        except AssertionError:
+          if len(selected_files) == 0:
+            line_edit.append(" ERROR: No files selected")
+          else:
+            line_edit.append(" ERROR: No files selected")
+          error = 1
+          return experiments, selected_folder_to_save, error
+
         files = files_class()
         files.add_files(selected_files)
     
-        experiments = []
     
         for index in range(0, files.number):
             
@@ -373,8 +381,10 @@ class interface_functions:
                 raw_data = pd.read_csv(files.directory[index] + '.csv', sep = ',', na_values = ['no info', '.'], header = None)
                 raw_image = rgb2gray(skimage.io.imread(files.directory[index] + '.png'))
             except:
-                line_edit.append("- Doesn't exists CSV or PNG file with name " + files.name[index])
+                line_edit.append("ERROR: Doesn't exist CSV or PNG file with name " + files.name[index])
                 experiments.pop()
+                error = 1
+                return experiments, selected_folder_to_save, error
             else:
                 if raw_data.shape[1] == 7 and experiment_type == 'plus_maze':
                     experiments[index].data = raw_data.interpolate(method='spline', order=1, limit_direction = 'both', axis = 0)
@@ -393,4 +403,4 @@ class interface_functions:
                 else:
                     line_edit.append("- The " + files.name[index] + ".csv file had more columns than the elevated plus maze test allows")
                     
-        return experiments
+        return experiments, selected_folder_to_save, error
