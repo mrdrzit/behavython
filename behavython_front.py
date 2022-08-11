@@ -53,7 +53,7 @@ class behavython_gui(QMainWindow):
         This private function calls the interface of a .ui file created in Qt Designer.
         '''
         super(behavython_gui, self).__init__()                                      # Calls the inherited classes __init__ method
-        load_gui_path = os.path.dirname(__file__) + "\\behavython_GUI.ui"
+        load_gui_path = os.path.dirname(__file__) + "\\behavython_gui.ui"
         uic.loadUi(load_gui_path, self)                                             # Loads the interface design archive (made in Qt Designer)
         self.show()
 
