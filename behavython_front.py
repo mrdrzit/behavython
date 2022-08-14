@@ -73,18 +73,14 @@ class behavython_gui(QMainWindow):
             self.options['threshold'] = 0.0667  # Motion detection threshold (rats)
         
         functions = behavython_back.interface_functions()
-        [self.experiments, save_folder, error_flag] = functions.get_experiments(self.resume_lineedit, self.options['experiment_type'], self.options['plot_options'])
+        [self.experiments, save_folder, error_flag, inexistent_file] = functions.get_experiments(self.resume_lineedit, self.options['experiment_type'], self.options['plot_options'])
         if error_flag != 0:
-          # If the user cancels the file selection, the program will exit with a warning message
-          msg_box_name = QMessageBox()                                                          # Creates a message box
-          msg_box_name.setIcon(QMessageBox.Warning)                                             # Sets the icon of the message box
-          msg_box_name.setStandardButtons(QMessageBox.Ok)                                       # Sets the buttons of the message box
-          msg_box_name.setWindowTitle("File selection problem")                                 # Sets the title of the message box
           if error_flag == 1:  
-            msg_box_name.setText("WARNING!! No files were selected. Please select a file and try again.")                      # Sets the text of the message box
-          else:
-            msg_box_name.setText("WARNING!! No destination folder were selected. Please select a valid folder and try again.") # Sets the text of the message box
-          msg_box_name.exec_()                                                                  # Executes the message box
+            warning_message_function("File selection problem", "WARNING!! No files were selected. Please select a file and try again.")
+          elif error_flag == 2:
+            warning_message_function("File selection problem", "WARNING!! No destination folder was selected. Please select a valid folder and try again.") # Sets the text of the message box
+          elif error_flag == 3:
+            warning_message_function("File selection problem", "WARNING!! Doesn't exist a CSV or PNG file with the name " + inexistent_file)
           sys.exit(4)
         self.options['save_folder'] = save_folder                                                 
             
@@ -116,6 +112,19 @@ class behavython_gui(QMainWindow):
     def clear_plot(self):
         for i in range(1,10):
             self.plot_viewer.canvas.axes[i-1].cla()                                             # Changes the plot face color
+    
+def warning_message_function(title, text):
+    warning = QMessageBox()                                                                                 # Create the message box
+    warning.setWindowTitle(title)                                                                           # Message box title
+    warning.setText(text)                                                                                   # Message box text
+    warning.setIcon(QMessageBox.Warning)                                                                    # Message box icon
+    warning.setStyleSheet("QMessageBox{background:#353535;}QLabel{font:10pt/DejaVu Sans/;" +
+                "font-weight:bold;color:#FFFFFF;}QPushButton{width:52px; border:2px solid #A21F27;border-radius:8px;" +
+                "background-color:#2C53A1;color:#FFFFFF;font:10pt/DejaVu Sans/;" +
+                "font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;" +
+                "border-radius:8px;background-color:#A21F27;color:#FFFFFF;}")
+    warning.setStandardButtons(QMessageBox.Ok)                                                              # Message box buttons
+    warning.exec_()
 
 
 def main(): 

@@ -382,10 +382,11 @@ class interface_functions:
                 raw_data = pd.read_csv(files.directory[index] + '.csv', sep = ',', na_values = ['no info', '.'], header = None)
                 raw_image = rgb2gray(skimage.io.imread(files.directory[index] + '.png'))
             except:
-                line_edit.append("ERROR: Doesn't exist CSV or PNG file with name " + files.name[index])
+                line_edit.append("WARNING!! Doesn't exist a CSV or PNG file with the name " + files.name[index])
                 experiments.pop()
-                error = 1
-                return experiments, selected_folder_to_save, error
+                error = 3
+                inexistent_file = files.name[index]
+                return experiments, selected_folder_to_save, error, inexistent_file
             else:
                 if raw_data.shape[1] == 7 and experiment_type == 'plus_maze':
                     experiments[index].data = raw_data.interpolate(method='spline', order=1, limit_direction = 'both', axis = 0)
@@ -402,6 +403,6 @@ class interface_functions:
                     experiments[index].name = files.name[index]  
                     experiments[index].directory = files.directory[index]
                 else:
-                    line_edit.append("- The " + files.name[index] + ".csv file had more columns than the elevated plus maze test allows")
+                    line_edit.append("WARNING!! The " + files.name[index] + ".csv file had more columns than the elevated plus maze test allows")
                     
         return experiments, selected_folder_to_save, error
