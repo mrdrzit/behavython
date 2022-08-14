@@ -3,7 +3,6 @@ import skimage.io
 import tkinter as tk
 import pandas as pd
 import numpy as np
-import tempfile
 from matplotlib.collections import LineCollection 
 from matplotlib import pyplot as plt 
 from tkinter import filedialog
@@ -359,8 +358,6 @@ class interface_functions:
         selected_folder_to_save = filedialog.askdirectory(title = "Select the folder to save the plots", mustexist = True)
         experiments = []
         
-        # a = len(selected_folder_to_save)
-        # b = len(selected_files)
         try:
           assert len(selected_folder_to_save) > 0 or len(selected_files) > 0
         except AssertionError:
