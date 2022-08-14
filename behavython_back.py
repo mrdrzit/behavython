@@ -350,6 +350,7 @@ class files_class:
 
 class interface_functions:
     def get_experiments(self, line_edit, experiment_type, save_plots):
+        inexistent_file = 0
         selected_folder_to_save = 0
         error = 0
         file_explorer = tk.Tk()
@@ -369,7 +370,7 @@ class interface_functions:
           else:
             line_edit.append(" ERROR: No destination folder selected")
             error = 2
-          return experiments, selected_folder_to_save, error
+          return experiments, selected_folder_to_save, error, inexistent_file
 
         files = files_class()
         files.add_files(selected_files)
@@ -405,4 +406,4 @@ class interface_functions:
                 else:
                     line_edit.append("WARNING!! The " + files.name[index] + ".csv file had more columns than the elevated plus maze test allows")
                     
-        return experiments, selected_folder_to_save, error
+        return experiments, selected_folder_to_save, error, inexistent_file
