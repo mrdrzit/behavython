@@ -89,7 +89,7 @@
 For the installation you need a simple command that you can get by one of two ways: 
 
  1. Copying and pasting from here:
-	- "pip install -i https://test.pypi.org/project/behavython behavython" (without quotation[""] marks)
+	- "pip install -i https://test.pypi.org/simple/ behavython" (without quotation[""] marks)
  2. Going to the TestPypi site and copying from there:
    	- [TestPyPi frontpage](https://test.pypi.org/project/behavython/)
 

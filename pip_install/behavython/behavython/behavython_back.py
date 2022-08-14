@@ -3,7 +3,6 @@ import skimage.io
 import tkinter as tk
 import pandas as pd
 import numpy as np
-import tempfile
 from matplotlib.collections import LineCollection 
 from matplotlib import pyplot as plt 
 from tkinter import filedialog

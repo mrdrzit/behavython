@@ -1,8 +1,9 @@
 import behavython.behavython_back as behavython_back
+import behavython.behavython_plot_widget as behavython_plot_widget
 import sys
 import os
 from PyQt5 import QtWidgets, uic
-from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtWidgets import QMainWindow, QMessageBox
 from PyQt5.QtCore import QObject, QThread, pyqtSignal
 
 class analysis_class(QObject):
@@ -37,8 +38,8 @@ class analysis_class(QObject):
             self.progress_bar.emit(round(((i+1)/len(self.experiments))*100))
         
         if self.options['plot_options'] == 1:
-          results_data_frame.to_excel(self.options['save_folder'] + '/Analysis_results.xlsx')
-          true_path = os.path.dirname(__file__) + '\\Video_analyse_validation\\animal_2_PYTHON.xlsx'
+          results_data_frame.to_excel(self.options['save_folder'] + '/analysis_results.xlsx')
+          true_path = os.path.dirname(__file__) + '\\video_analyse_validation\\animal_2_python.xlsx'
           results_data_frame.to_excel(true_path, header=False)
         self.finished.emit()
 
@@ -52,7 +53,7 @@ class behavython_gui(QMainWindow):
         This private function calls the interface of a .ui file created in Qt Designer.
         '''
         super(behavython_gui, self).__init__()                                      # Calls the inherited classes __init__ method
-        load_gui_path = os.path.dirname(__file__) + "\\behavython_GUI.ui"
+        load_gui_path = os.path.dirname(__file__) + "\\behavython_gui.ui"
         uic.loadUi(load_gui_path, self)                                             # Loads the interface design archive (made in Qt Designer)
         self.show()
 
@@ -79,7 +80,16 @@ class behavython_gui(QMainWindow):
           [self.experiments, save_folder, error_flag] = functions.get_experiments(self.resume_lineedit, self.options['experiment_type'])
           if error_flag == 0:
             break
-        self.options['save_folder'] = save_folder
+          else:
+            # If the user cancels the file selection, the program will exit with a warning message
+            msg_box_name = QMessageBox()                                                          # Creates a message box
+            msg_box_name.setIcon(QMessageBox.Warning)                                             # Sets the icon of the message box
+            msg_box_name.setStandardButtons(QMessageBox.Ok)                                       # Sets the buttons of the message box
+            msg_box_name.setWindowTitle("No Files Selected")                                               # Sets the title of the message box
+            msg_box_name.setText("WARNING. No files were selected. Please select a file and try again.") # Sets the text of the message box
+            msg_box_name.exec_()                                                                  # Executes the message box
+            sys.exit(1)
+        self.options['save_folder'] = save_folder                                                 
             
         self.analysis_thread = QThread()                                                          # Creates a QThread object to plot the received data
         self.analysis_worker = analysis_class(self.experiments, self.options, self.plot_viewer)   # Creates a worker object named plot_data_class

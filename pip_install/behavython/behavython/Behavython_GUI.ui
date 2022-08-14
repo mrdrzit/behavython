@@ -746,7 +746,7 @@ to see the help text</string>
   <customwidget>
    <class>plot_viewer</class>
    <extends>QWidget</extends>
-   <header location="global">behavython_plot_widget</header>
+   <header location="global">behavython.behavython_plot_widget</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

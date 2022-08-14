@@ -4,19 +4,15 @@
 
 
 <!-- PROJECT LOGO -->
-<br />
+<br/>
 <div align="center">
-  <a href="https://github.com/mrdrzit/Behavython">
     <img
      src="https://raw.githubusercontent.com/mrdrzit/Behavython/main/logo/logo.png"
      style="max-width: 100%; height: 100%;"
      alt="Behavython software"
-  </a>
-
-<h1 align="center">Behavython </h1>
 
   <p align="center">
-    A port to Python of the MATLAB script created by Flávio Mourão in NNC
+    <span style="font-size:30px">Based on the original code by </span><a href=https://github.com/fgmourao>Flávio Mourão</a>
     <br />
     <br />
     ·
@@ -60,7 +56,7 @@
 
 ### About
 
-- A port to Python of the MATLAB script created by Flávio Mourão in NNC
+- <span style="font-size:30px">Based on the original code by </span><a href=https://github.com/fgmourao>Flávio Mourão</a>
 
 
 
@@ -89,34 +85,54 @@
  - scipy
 
 ***For a simple way to keep up to date with requirements, reference the requirements.txt file***
-
 ### Installation as a pip package 
 For the installation you need a simple command that you can get by one of two ways: 
 
  1. Copying and pasting from here:
-	 - "pip install -i https://test.pypi.org/project/behavython behavython"
-	 - (without quotation[""] marks)
-<br/>
+	- "pip install -i https://test.pypi.org/simple/ behavython" (without quotation[""] marks)
  2. Going to the TestPypi site and copying from there:
-   - https://test.pypi.org/project/behavython
+   	- [TestPyPi frontpage](https://test.pypi.org/project/behavython/)
 
 _At the moment, Behavython was mainly tested on Windows_
-
+<br/>
 <!-- USAGE EXAMPLES -->
 ## Usage
                                 
-- Coming in the near future...
+- Windows
 
-<br/>
-                                
+ 1. Open the interface (_We'll update this readmen with the apropriate ways to do so, either via CLI or with an executable_)
+ 	
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/83073576/184265356-f986cfba-65bf-4e18-a297-75e0f956e2dc.png" width="600" heigth="600" title="With this you'll be almost set">
+</p>
+
+ 2. Select all the photo-data pairs that you want to analyze
+ 	- In this step is important that you don't forget to verify that you got all the bonsai files, including the data and a image of the arena that you are analyzing
+ 	
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/83073576/184265915-4ed017de-3b79-4bbe-9d36-5b2c449317ad.png" width="600" heigth="600" title="Don't forget tha data files in the csv format">
+</p>
+
+3. Wait for the program to finish the analysis
+ 	- Currently the program looks like it freezed when running. It is expected behavior but we are looking into it. Right now you only need to wait a little bit.
+ 	
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/83073576/184266129-8221c85a-a2cc-4024-9301-49e721d4477f.png" width="600" heigth="600" title="Don't forget tha data files in the csv format">
+</p>
+
+4. When finished the progress bar will show 100% and a preview of the results will be available on the right
+ 	
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/83073576/184266218-3f14f4d6-f979-478e-9b36-1fe4f0631635.png" width="600" heigth="600" title="You just need to wait now:)">
+</p>
+             
 See the [open issues](https://github.com/mrdrzit/Behavython/issues) for a full list of proposed features (and known issues).
-
 <br/>
 
 <!-- CONTRIBUTING -->
 ## Contributing
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue explaining what is the problem. Also, you can reach us by mail (listed at the end :])
 
 <br/>
                                 
