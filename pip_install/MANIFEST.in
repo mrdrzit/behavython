@@ -1,0 +1,2 @@
+include behavython/behavython/logo/*.png
+include behavython/behavython/*.ui
