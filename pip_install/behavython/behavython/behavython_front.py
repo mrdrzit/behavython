@@ -39,8 +39,6 @@ class analysis_class(QObject):
         
         if self.options['plot_options'] == 1:
           results_data_frame.to_excel(self.options['save_folder'] + '/analysis_results.xlsx')
-          true_path = os.path.dirname(__file__) + '\\video_analyse_validation\\animal_2_python.xlsx'
-          results_data_frame.to_excel(true_path, header=False)
         self.finished.emit()
 
 class behavython_gui(QMainWindow):
@@ -76,19 +74,19 @@ class behavython_gui(QMainWindow):
             self.options['threshold'] = 0.0667  # Motion detection threshold (rats)
         
         functions = behavython_back.interface_functions()
-        while True:
-          [self.experiments, save_folder, error_flag] = functions.get_experiments(self.resume_lineedit, self.options['experiment_type'])
-          if error_flag == 0:
-            break
+        [self.experiments, save_folder, error_flag] = functions.get_experiments(self.resume_lineedit, self.options['experiment_type'], self.options['plot_options'])
+        if error_flag != 0:
+          # If the user cancels the file selection, the program will exit with a warning message
+          msg_box_name = QMessageBox()                                                          # Creates a message box
+          msg_box_name.setIcon(QMessageBox.Warning)                                             # Sets the icon of the message box
+          msg_box_name.setStandardButtons(QMessageBox.Ok)                                       # Sets the buttons of the message box
+          msg_box_name.setWindowTitle("File selection problem")                                 # Sets the title of the message box
+          if error_flag == 1:  
+            msg_box_name.setText("WARNING!! No files were selected. Please select a file and try again.")                      # Sets the text of the message box
           else:
-            # If the user cancels the file selection, the program will exit with a warning message
-            msg_box_name = QMessageBox()                                                          # Creates a message box
-            msg_box_name.setIcon(QMessageBox.Warning)                                             # Sets the icon of the message box
-            msg_box_name.setStandardButtons(QMessageBox.Ok)                                       # Sets the buttons of the message box
-            msg_box_name.setWindowTitle("No Files Selected")                                               # Sets the title of the message box
-            msg_box_name.setText("WARNING. No files were selected. Please select a file and try again.") # Sets the text of the message box
-            msg_box_name.exec_()                                                                  # Executes the message box
-            sys.exit(1)
+            msg_box_name.setText("WARNING!! No destination folder were selected. Please select a valid folder and try again.") # Sets the text of the message box
+          msg_box_name.exec_()                                                                  # Executes the message box
+          sys.exit(4)
         self.options['save_folder'] = save_folder                                                 
             
         self.analysis_thread = QThread()                                                          # Creates a QThread object to plot the received data
