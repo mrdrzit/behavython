@@ -41,7 +41,7 @@ class experiment_class:
         factor_width = arena_width/video_width                                  # Calculates the width scale factor of the video
         factor_height = arena_height/video_height                               # Calculates the height scale factor of the video
         number_of_frames = len(self.data)                                       # Gets the number of frames
-        
+
         x_axe = self.data[0]                                                    # Gets the x position 
         y_axe = self.data[1]                                                    # Gets the y position
         x_axe_cm = self.data[0]*factor_width                                    # Puts the x position on scale
@@ -143,7 +143,7 @@ class experiment_class:
         data_frame = (data_frame.T)
         return self.analysis_results, data_frame    
 
-    def plot_analysis_pluz_maze(self, plot_viewer, plot_number):
+    def plot_analysis_pluz_maze(self, plot_viewer, plot_number, save_folder):
         # Figure 1 - Overall Activity in the maze
         plot_option = self.analysis_results['plot_options']
         movement_points = np.array([self.analysis_results["x_axe"], self.analysis_results["y_axe"]]).T.reshape(-1, 1, 2) 
@@ -177,8 +177,8 @@ class experiment_class:
           plot_number += 1  # Increment the plot number to be used in the next plot (advance in window)
           plot_viewer.canvas.draw_idle()
         else:
-          plt.savefig(self.directory + '_1.png', frameon='false', dpi=figure_dpi)
-          plot_viewer.canvas.axes[plot_number % 9].imshow(im)
+          plt.savefig(save_folder + '/' + self.name +  '_Overall Activity in the maze.png', frameon='false', dpi=figure_dpi)
+          plot_viewer.canvas.axes[plot_number % 9].imshow(im, interpolation = 'bicubic')
           plot_viewer.canvas.axes[plot_number % 9].add_collection(line_collection_window)
           plot_number += 1
           plot_viewer.canvas.draw_idle()
@@ -228,15 +228,12 @@ class experiment_class:
         #     plot_number += 1 
         #     plot_viewer.canvas.draw_idle()
         if plot_option == 1:
-          plt.savefig(self.directory + '_3.png', frameon='false', dpi=600)
-          im = plt.imread(self.directory + "_3.png")
-          plot_viewer.canvas.axes[plot_number % 9].imshow(im)
-          plot_number += 1
-          plot_viewer.canvas.draw_idle()
+          plt.subplots_adjust(hspace=0.8, wspace=0.8)
+          plt.savefig(save_folder + '/' + self.name + '_Time spent on each area over time.png', frameon='false', dpi=600)
 
         plt.close('all')      
 
-    def plot_analysis_open_field(self, plot_viewer, plot_number):
+    def plot_analysis_open_field(self, plot_viewer, plot_number,save_folder):
         # Figure 1 - Overall Activity in the maze
         plot_option = self.analysis_results['plot_options']
         movement_points = np.array([self.analysis_results["x_axe"], self.analysis_results["y_axe"]]).T.reshape(-1, 1, 2) 
@@ -271,8 +268,8 @@ class experiment_class:
           plot_viewer.canvas.draw_idle()
           # plt.close()
         else:
-          plt.savefig(self.directory + '_1.png', frameon='false', dpi=figure_dpi)
-          plot_viewer.canvas.axes[plot_number % 9].imshow(im)
+          plt.savefig(save_folder + '/' + self.name + '_Overall Activity in the maze.png', frameon='false', dpi=200)
+          plot_viewer.canvas.axes[plot_number % 9].imshow(im, interpolation = 'bicubic')
           plot_viewer.canvas.axes[plot_number % 9].add_collection(line_collection_window)
           plot_number += 1
           plot_viewer.canvas.draw_idle()
@@ -301,12 +298,8 @@ class experiment_class:
         #     plot_number += 1 
         #     plot_viewer.canvas.draw_idle()
         if plot_option == 1:
-          plt.savefig(self.directory + '_3.png', frameon='false', dpi=600)
-          im = plt.imread(self.directory + "_3.png")
-          plot_viewer.canvas.axes[plot_number % 9].imshow(im)
-          plot_number += 1
-          plot_viewer.canvas.draw_idle()
-          # plt.close()
+          plt.subplots_adjust(hspace=0.8, wspace=0.8)
+          plt.savefig(save_folder + '/' + self.name + '_Time spent on each area over time.png', frameon='false', dpi=600)
         
         # Figure 4 - Number of crossings
         figure_4, (axe_41, axe_42) = plt.subplots(1,2)
@@ -319,20 +312,11 @@ class experiment_class:
         axe_42.set_ylim((0, 1.5))
         axe_42.set_title('edge')
 
-        # if plot_option == 0:
-        #   with tempfile.TemporaryDirectory() as tmpdir: # Found no way to plot de figure directly so I save it to a temporary directory and then load it
-        #     plt.savefig(tmpdir + '/tmp_4.png', frameon='false', dpi=600)
-        #     im2 = plt.imread(tmpdir + '/tmp_4.png')
-        #     plot_viewer.canvas.axes[plot_number % 9].imshow(im2)
-        #     plot_number += 1 
-        #     plot_viewer.canvas.draw_idle()
         if plot_option == 1:
-          plt.savefig(self.directory + '_4.png', frameon='false', dpi=600)
-          im = plt.imread(self.directory + "_4.png")
-          plot_viewer.canvas.axes[plot_number % 9].imshow(im)
-          plot_number += 1
-          plot_viewer.canvas.draw_idle()
-          plt.close('all')
+          plt.subplots_adjust(hspace=0.8, wspace=0.8)
+          plt.savefig(save_folder + '/' + self.name + '_Number of crossings.png', frameon='false', dpi=600)
+        
+        plt.close('all')
 
 class files_class:
     def __init__(self):
