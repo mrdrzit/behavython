@@ -34,9 +34,7 @@ class experiment_class:
         threshold = options['threshold']                                        # Motion threshold set by user in Bonsai
         max_video_height = int(options['max_fig_res'][0])                       # Maximum video height set by user (height is stored in the first element of the list and is converted to int beacuse it comes as a string)
         max_video_width = int(options['max_fig_res'][1])                        # Maximum video width set by user (width is stored in the second element of the list and is converted to int beacuse it comes as a string)
-        plot_options = options['plot_options']                                  # Plot options set by user
-        figure_dpi = 200                                                        # DPI of the figure
-            
+        plot_options = options['plot_options']                                  # Plot options set by user            
         video_height, video_width = self.last_frame.shape                       # Gets the video height and width from the video's last frame
         factor_width = arena_width/video_width                                  # Calculates the width scale factor of the video
         factor_height = arena_height/video_height                               # Calculates the height scale factor of the video
@@ -194,39 +192,32 @@ class experiment_class:
         entries = np.array(self.analysis_results["quadrant_crossings"][:,0]) == 1
         axe_12.plot(self.analysis_results["quadrant_crossings"][:,0], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
         axe_12.set_ylim((0, 1.5))
-        axe_12.set_title('upper arm')
+        axe_12.set_title('Upper arm')
     
         axe_21.plot(self.analysis_results["time_spent"][:,1], color = '#2C53A1')
         entries = np.array(self.analysis_results["quadrant_crossings"][:,1]) == 1
         axe_21.plot(self.analysis_results["quadrant_crossings"][:,1], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
         axe_21.set_ylim((0, 1.5))
-        axe_21.set_title('left  arm')
+        axe_21.set_title('Left  arm')
     
         axe_22.plot(self.analysis_results["time_spent"][:,2], color = '#2C53A1')
         entries = np.array(self.analysis_results["quadrant_crossings"][:,2]) == 1
         axe_22.plot(self.analysis_results["quadrant_crossings"][:,2], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
         axe_22.set_ylim((0, 1.5))
-        axe_22.set_title('center')
+        axe_22.set_title('Center')
     
         axe_23.plot(self.analysis_results["time_spent"][:,3], color = '#2C53A1')
         entries = np.array(self.analysis_results["quadrant_crossings"][:,3]) == 1
         axe_23.plot(self.analysis_results["quadrant_crossings"][:,3], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
         axe_23.set_ylim((0, 1.5))
-        axe_23.set_title('right arm')
+        axe_23.set_title('Right arm')
     
         axe_32.plot(self.analysis_results["time_spent"][:,4], color = '#2C53A1')
         entries = np.array(self.analysis_results["quadrant_crossings"][:,4]) == 1
         axe_32.plot(self.analysis_results["quadrant_crossings"][:,4], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
         axe_32.set_ylim((0, 1.5))
-        axe_32.set_title('lower arm')
-        
-        # if plot_option == 0:
-        #   with tempfile.TemporaryDirectory() as tmpdir: # Found no way to plot de figure directly so I save it to a temporary directory and then load it
-        #     plt.savefig(tmpdir + '/tmp_3.png', frameon='false', dpi=600)
-        #     im2 = plt.imread(tmpdir + '/tmp_3.png')
-        #     plot_viewer.canvas.axes[plot_number % 9].imshow(im2)
-        #     plot_number += 1 
-        #     plot_viewer.canvas.draw_idle()
+        axe_32.set_title('Lower arm')
+      
         if plot_option == 1:
           plt.subplots_adjust(hspace=0.8, wspace=0.8)
           plt.savefig(save_folder + '/' + self.name + '_Time spent on each area over time.png', frameon='false', dpi=600)
