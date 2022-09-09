@@ -155,7 +155,7 @@ class experiment_class:
 
         figure_1, axe_1 = plt.subplots()
         im = plt.imread(self.directory + ".png")
-        axe_1.imshow(im)
+        axe_1.imshow(im, interpolation = 'bicubic')
         axe_1.add_collection(line_collection_fig_1)
         axe_1.axis('tight')
         axe_1.axis('off')
@@ -164,7 +164,7 @@ class experiment_class:
         image_width = self.analysis_results["video_width"]
         max_height = self.analysis_results['max_video_height']                                                          # Maximum height of desired figure
         max_width = self.analysis_results['max_video_width']                                                            # Maximum width of desired figure                         
-        figure_dpi = 100                                                                                                # DPI of the figure
+        figure_dpi = 200                                                                                                # DPI of the figure
         ratio = min(max_height / image_width, max_width / image_height)                                                 # Calculate the ratio to be used for image resizing without losing the aspect ratio
         new_resolution_in_inches = (image_width*ratio/figure_dpi, image_height*ratio/figure_dpi)                        # Calculate the new resolution in inches based on the dpi set 
 
@@ -172,7 +172,7 @@ class experiment_class:
         figure_1.set_size_inches(new_resolution_in_inches)
 
         if plot_option == 0:
-          plot_viewer.canvas.axes[plot_number % 9].imshow(im) # Modulo 9 to make sure the plot number is not out of bounds
+          plot_viewer.canvas.axes[plot_number % 9].imshow(im, interpolation = 'bicubic') # Modulo 9 to make sure the plot number is not out of bounds
           plot_viewer.canvas.axes[plot_number % 9].add_collection(line_collection_window)
           plot_number += 1  # Increment the plot number to be used in the next plot (advance in window)
           plot_viewer.canvas.draw_idle()
@@ -245,7 +245,7 @@ class experiment_class:
         
         figure_1, axe_1 = plt.subplots()
         im = plt.imread(self.directory + ".png")
-        axe_1.imshow(im)
+        axe_1.imshow(im, interpolation = 'bicubic')
         axe_1.add_collection(line_collection_fig_1)                                                                      # Add the line collection to the axe
         axe_1.axis('tight')
         axe_1.axis('off')
@@ -254,26 +254,23 @@ class experiment_class:
         image_width = self.analysis_results["video_width"]
         max_height = self.analysis_results['max_video_height']                                                          # Maximum height of desired figure
         max_width = self.analysis_results['max_video_width']                                                            # Maximum width of desired figure                         
-        figure_dpi = self.analysis_results['figure_dpi']                                                                # DPI of the figure
         ratio = min(max_height / image_width, max_width / image_height)                                                 # Calculate the ratio to be used for image resizing without losing the aspect ratio
-        new_resolution_in_inches = (image_width*ratio/figure_dpi, image_height*ratio/figure_dpi)                        # Calculate the new resolution in inches based on the dpi set 
+        new_resolution_in_inches = (image_width*ratio/200, image_height*ratio/200)                        # Calculate the new resolution in inches based on the dpi set 
 
         figure_1.subplots_adjust(left=0,right=1,bottom=0,top=1)
         figure_1.set_size_inches(new_resolution_in_inches)
         
         if plot_option == 1:
-          plot_viewer.canvas.axes[plot_number % 9].imshow(im) # Modulo 9 to make sure the plot number is not out of bounds
+          plot_viewer.canvas.axes[plot_number % 9].imshow(im, interpolation = 'bicubic') # Modulo 9 to make sure the plot number is not out of bounds
           plot_viewer.canvas.axes[plot_number % 9].add_collection(line_collection_window)
           plot_number += 1  # Increment the plot number to be used in the next plot (advance in window)
           plot_viewer.canvas.draw_idle()
-          # plt.close()
         else:
           plt.savefig(save_folder + '/' + self.name + '_Overall Activity in the maze.png', frameon='false', dpi=200)
           plot_viewer.canvas.axes[plot_number % 9].imshow(im, interpolation = 'bicubic')
           plot_viewer.canvas.axes[plot_number % 9].add_collection(line_collection_window)
           plot_number += 1
           plot_viewer.canvas.draw_idle()
-          # plt.close()
         
         # Figure 3 - Time spent on each area over time
         figure_3, (axe_31, axe_32) = plt.subplots(1,2)
@@ -290,13 +287,6 @@ class experiment_class:
         axe_32.set_ylim((0, 1.5))
         axe_32.set_title('edge')
 
-        # if plot_option == 0:
-        #   with tempfile.TemporaryDirectory() as tmpdir: # Found no way to plot de figure directly so I save it to a temporary directory and then load it
-        #     plt.savefig(tmpdir + '/tmp_3.png', frameon='false', dpi=600)
-        #     im2 = plt.imread(tmpdir + '/tmp_3.png')
-        #     plot_viewer.canvas.axes[plot_number % 9].imshow(im2)
-        #     plot_number += 1 
-        #     plot_viewer.canvas.draw_idle()
         if plot_option == 1:
           plt.subplots_adjust(hspace=0.8, wspace=0.8)
           plt.savefig(save_folder + '/' + self.name + '_Time spent on each area over time.png', frameon='false', dpi=600)
