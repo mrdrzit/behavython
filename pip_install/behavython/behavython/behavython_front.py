@@ -32,9 +32,9 @@ class analysis_class(QObject):
                 results_data_frame = results_data_frame.join(data_frame, how='outer')
 
             if self.options['experiment_type'] == 'open_field':
-                self.experiments[i].plot_analysis_open_field(self.plot_viewer, i)
+                self.experiments[i].plot_analysis_open_field(self.plot_viewer, i, self.options['save_folder'])
             else:
-                self.experiments[i].plot_analysis_pluz_maze(self.plot_viewer, i)
+                self.experiments[i].plot_analysis_pluz_maze(self.plot_viewer, i, self.options['save_folder'])
             self.progress_bar.emit(round(((i+1)/len(self.experiments))*100))
         
         if self.options['plot_options'] == 1:

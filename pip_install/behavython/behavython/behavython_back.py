@@ -34,14 +34,12 @@ class experiment_class:
         threshold = options['threshold']                                        # Motion threshold set by user in Bonsai
         max_video_height = int(options['max_fig_res'][0])                       # Maximum video height set by user (height is stored in the first element of the list and is converted to int beacuse it comes as a string)
         max_video_width = int(options['max_fig_res'][1])                        # Maximum video width set by user (width is stored in the second element of the list and is converted to int beacuse it comes as a string)
-        plot_options = options['plot_options']                                  # Plot options set by user
-        figure_dpi = 200                                                        # DPI of the figure
-            
+        plot_options = options['plot_options']                                  # Plot options set by user            
         video_height, video_width = self.last_frame.shape                       # Gets the video height and width from the video's last frame
         factor_width = arena_width/video_width                                  # Calculates the width scale factor of the video
         factor_height = arena_height/video_height                               # Calculates the height scale factor of the video
         number_of_frames = len(self.data)                                       # Gets the number of frames
-        
+
         x_axe = self.data[0]                                                    # Gets the x position 
         y_axe = self.data[1]                                                    # Gets the y position
         x_axe_cm = self.data[0]*factor_width                                    # Puts the x position on scale
@@ -117,15 +115,15 @@ class experiment_class:
                           'Time moving (s)'                  : time_moving,
                           'Time resting(s)'                  : time_resting,
                           'Total time at the upper arm (s)'  : total_time_in_quadrant[0],
-                          'Total time at the lower arm (s)'  : total_time_in_quadrant[4],
-                          'Total time at the left arm (s)'   : total_time_in_quadrant[1],
+                          'Total time at the lower arm (s)'  : total_time_in_quadrant[1],
+                          'Total time at the left arm (s)'   : total_time_in_quadrant[2],
                           'Total time at the right arm (s)'  : total_time_in_quadrant[3],
-                          'Total time at the center (s)'     : total_time_in_quadrant[2],
+                          'Total time at the center (s)'     : total_time_in_quadrant[4],
                           'Crossings to the upper arm'       : total_number_of_entries[0],
-                          'Crossings to the lower arm'       : total_number_of_entries[4],
-                          'Crossings to the left arm'        : total_number_of_entries[1],
+                          'Crossings to the lower arm'       : total_number_of_entries[1],
+                          'Crossings to the left arm'        : total_number_of_entries[2],
                           'Crossings to the right arm'       : total_number_of_entries[3],
-                          'Crossings to the center'          : total_number_of_entries[2],
+                          'Crossings to the center'          : total_number_of_entries[4],
                           }    
         else:                                                # If the maze is an open field
           dict_to_excel = {'Total distance (cm)'             : total_distance,
@@ -143,7 +141,7 @@ class experiment_class:
         data_frame = (data_frame.T)
         return self.analysis_results, data_frame    
 
-    def plot_analysis_pluz_maze(self, plot_viewer, plot_number):
+    def plot_analysis_pluz_maze(self, plot_viewer, plot_number, save_folder):
         # Figure 1 - Overall Activity in the maze
         plot_option = self.analysis_results['plot_options']
         movement_points = np.array([self.analysis_results["x_axe"], self.analysis_results["y_axe"]]).T.reshape(-1, 1, 2) 
@@ -155,7 +153,7 @@ class experiment_class:
 
         figure_1, axe_1 = plt.subplots()
         im = plt.imread(self.directory + ".png")
-        axe_1.imshow(im)
+        axe_1.imshow(im, interpolation = 'bicubic')
         axe_1.add_collection(line_collection_fig_1)
         axe_1.axis('tight')
         axe_1.axis('off')
@@ -164,7 +162,7 @@ class experiment_class:
         image_width = self.analysis_results["video_width"]
         max_height = self.analysis_results['max_video_height']                                                          # Maximum height of desired figure
         max_width = self.analysis_results['max_video_width']                                                            # Maximum width of desired figure                         
-        figure_dpi = 100                                                                                                # DPI of the figure
+        figure_dpi = 200                                                                                                # DPI of the figure
         ratio = min(max_height / image_width, max_width / image_height)                                                 # Calculate the ratio to be used for image resizing without losing the aspect ratio
         new_resolution_in_inches = (image_width*ratio/figure_dpi, image_height*ratio/figure_dpi)                        # Calculate the new resolution in inches based on the dpi set 
 
@@ -172,13 +170,13 @@ class experiment_class:
         figure_1.set_size_inches(new_resolution_in_inches)
 
         if plot_option == 0:
-          plot_viewer.canvas.axes[plot_number % 9].imshow(im) # Modulo 9 to make sure the plot number is not out of bounds
+          plot_viewer.canvas.axes[plot_number % 9].imshow(im, interpolation = 'bicubic') # Modulo 9 to make sure the plot number is not out of bounds
           plot_viewer.canvas.axes[plot_number % 9].add_collection(line_collection_window)
           plot_number += 1  # Increment the plot number to be used in the next plot (advance in window)
           plot_viewer.canvas.draw_idle()
         else:
-          plt.savefig(self.directory + '_1.png', frameon='false', dpi=figure_dpi)
-          plot_viewer.canvas.axes[plot_number % 9].imshow(im)
+          plt.savefig(save_folder + '/' + self.name +  '_Overall Activity in the maze.png', frameon='false', dpi=figure_dpi)
+          plot_viewer.canvas.axes[plot_number % 9].imshow(im, interpolation = 'bicubic')
           plot_viewer.canvas.axes[plot_number % 9].add_collection(line_collection_window)
           plot_number += 1
           plot_viewer.canvas.draw_idle()
@@ -194,49 +192,39 @@ class experiment_class:
         entries = np.array(self.analysis_results["quadrant_crossings"][:,0]) == 1
         axe_12.plot(self.analysis_results["quadrant_crossings"][:,0], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
         axe_12.set_ylim((0, 1.5))
-        axe_12.set_title('upper arm')
+        axe_12.set_title('Upper arm')
     
         axe_21.plot(self.analysis_results["time_spent"][:,1], color = '#2C53A1')
         entries = np.array(self.analysis_results["quadrant_crossings"][:,1]) == 1
         axe_21.plot(self.analysis_results["quadrant_crossings"][:,1], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
         axe_21.set_ylim((0, 1.5))
-        axe_21.set_title('left  arm')
+        axe_21.set_title('Left  arm')
     
         axe_22.plot(self.analysis_results["time_spent"][:,2], color = '#2C53A1')
         entries = np.array(self.analysis_results["quadrant_crossings"][:,2]) == 1
         axe_22.plot(self.analysis_results["quadrant_crossings"][:,2], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
         axe_22.set_ylim((0, 1.5))
-        axe_22.set_title('center')
+        axe_22.set_title('Center')
     
         axe_23.plot(self.analysis_results["time_spent"][:,3], color = '#2C53A1')
         entries = np.array(self.analysis_results["quadrant_crossings"][:,3]) == 1
         axe_23.plot(self.analysis_results["quadrant_crossings"][:,3], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
         axe_23.set_ylim((0, 1.5))
-        axe_23.set_title('right arm')
+        axe_23.set_title('Right arm')
     
         axe_32.plot(self.analysis_results["time_spent"][:,4], color = '#2C53A1')
         entries = np.array(self.analysis_results["quadrant_crossings"][:,4]) == 1
         axe_32.plot(self.analysis_results["quadrant_crossings"][:,4], 'o', ms = 2, markevery=entries, markerfacecolor='#A21F27', markeredgecolor='#A21F27')
         axe_32.set_ylim((0, 1.5))
-        axe_32.set_title('lower arm')
-        
-        # if plot_option == 0:
-        #   with tempfile.TemporaryDirectory() as tmpdir: # Found no way to plot de figure directly so I save it to a temporary directory and then load it
-        #     plt.savefig(tmpdir + '/tmp_3.png', frameon='false', dpi=600)
-        #     im2 = plt.imread(tmpdir + '/tmp_3.png')
-        #     plot_viewer.canvas.axes[plot_number % 9].imshow(im2)
-        #     plot_number += 1 
-        #     plot_viewer.canvas.draw_idle()
+        axe_32.set_title('Lower arm')
+      
         if plot_option == 1:
-          plt.savefig(self.directory + '_3.png', frameon='false', dpi=600)
-          im = plt.imread(self.directory + "_3.png")
-          plot_viewer.canvas.axes[plot_number % 9].imshow(im)
-          plot_number += 1
-          plot_viewer.canvas.draw_idle()
+          plt.subplots_adjust(hspace=0.8, wspace=0.8)
+          plt.savefig(save_folder + '/' + self.name + '_Time spent on each area over time.png', frameon='false', dpi=600)
 
         plt.close('all')      
 
-    def plot_analysis_open_field(self, plot_viewer, plot_number):
+    def plot_analysis_open_field(self, plot_viewer, plot_number,save_folder):
         # Figure 1 - Overall Activity in the maze
         plot_option = self.analysis_results['plot_options']
         movement_points = np.array([self.analysis_results["x_axe"], self.analysis_results["y_axe"]]).T.reshape(-1, 1, 2) 
@@ -248,7 +236,7 @@ class experiment_class:
         
         figure_1, axe_1 = plt.subplots()
         im = plt.imread(self.directory + ".png")
-        axe_1.imshow(im)
+        axe_1.imshow(im, interpolation = 'bicubic')
         axe_1.add_collection(line_collection_fig_1)                                                                      # Add the line collection to the axe
         axe_1.axis('tight')
         axe_1.axis('off')
@@ -257,26 +245,23 @@ class experiment_class:
         image_width = self.analysis_results["video_width"]
         max_height = self.analysis_results['max_video_height']                                                          # Maximum height of desired figure
         max_width = self.analysis_results['max_video_width']                                                            # Maximum width of desired figure                         
-        figure_dpi = self.analysis_results['figure_dpi']                                                                # DPI of the figure
         ratio = min(max_height / image_width, max_width / image_height)                                                 # Calculate the ratio to be used for image resizing without losing the aspect ratio
-        new_resolution_in_inches = (image_width*ratio/figure_dpi, image_height*ratio/figure_dpi)                        # Calculate the new resolution in inches based on the dpi set 
+        new_resolution_in_inches = (image_width*ratio/200, image_height*ratio/200)                        # Calculate the new resolution in inches based on the dpi set 
 
         figure_1.subplots_adjust(left=0,right=1,bottom=0,top=1)
         figure_1.set_size_inches(new_resolution_in_inches)
         
         if plot_option == 1:
-          plot_viewer.canvas.axes[plot_number % 9].imshow(im) # Modulo 9 to make sure the plot number is not out of bounds
+          plot_viewer.canvas.axes[plot_number % 9].imshow(im, interpolation = 'bicubic') # Modulo 9 to make sure the plot number is not out of bounds
           plot_viewer.canvas.axes[plot_number % 9].add_collection(line_collection_window)
           plot_number += 1  # Increment the plot number to be used in the next plot (advance in window)
           plot_viewer.canvas.draw_idle()
-          # plt.close()
         else:
-          plt.savefig(self.directory + '_1.png', frameon='false', dpi=figure_dpi)
-          plot_viewer.canvas.axes[plot_number % 9].imshow(im)
+          plt.savefig(save_folder + '/' + self.name + '_Overall Activity in the maze.png', frameon='false', dpi=200)
+          plot_viewer.canvas.axes[plot_number % 9].imshow(im, interpolation = 'bicubic')
           plot_viewer.canvas.axes[plot_number % 9].add_collection(line_collection_window)
           plot_number += 1
           plot_viewer.canvas.draw_idle()
-          # plt.close()
         
         # Figure 3 - Time spent on each area over time
         figure_3, (axe_31, axe_32) = plt.subplots(1,2)
@@ -293,20 +278,9 @@ class experiment_class:
         axe_32.set_ylim((0, 1.5))
         axe_32.set_title('edge')
 
-        # if plot_option == 0:
-        #   with tempfile.TemporaryDirectory() as tmpdir: # Found no way to plot de figure directly so I save it to a temporary directory and then load it
-        #     plt.savefig(tmpdir + '/tmp_3.png', frameon='false', dpi=600)
-        #     im2 = plt.imread(tmpdir + '/tmp_3.png')
-        #     plot_viewer.canvas.axes[plot_number % 9].imshow(im2)
-        #     plot_number += 1 
-        #     plot_viewer.canvas.draw_idle()
         if plot_option == 1:
-          plt.savefig(self.directory + '_3.png', frameon='false', dpi=600)
-          im = plt.imread(self.directory + "_3.png")
-          plot_viewer.canvas.axes[plot_number % 9].imshow(im)
-          plot_number += 1
-          plot_viewer.canvas.draw_idle()
-          # plt.close()
+          plt.subplots_adjust(hspace=0.8, wspace=0.8)
+          plt.savefig(save_folder + '/' + self.name + '_Time spent on each area over time.png', frameon='false', dpi=600)
         
         # Figure 4 - Number of crossings
         figure_4, (axe_41, axe_42) = plt.subplots(1,2)
@@ -319,20 +293,11 @@ class experiment_class:
         axe_42.set_ylim((0, 1.5))
         axe_42.set_title('edge')
 
-        # if plot_option == 0:
-        #   with tempfile.TemporaryDirectory() as tmpdir: # Found no way to plot de figure directly so I save it to a temporary directory and then load it
-        #     plt.savefig(tmpdir + '/tmp_4.png', frameon='false', dpi=600)
-        #     im2 = plt.imread(tmpdir + '/tmp_4.png')
-        #     plot_viewer.canvas.axes[plot_number % 9].imshow(im2)
-        #     plot_number += 1 
-        #     plot_viewer.canvas.draw_idle()
         if plot_option == 1:
-          plt.savefig(self.directory + '_4.png', frameon='false', dpi=600)
-          im = plt.imread(self.directory + "_4.png")
-          plot_viewer.canvas.axes[plot_number % 9].imshow(im)
-          plot_number += 1
-          plot_viewer.canvas.draw_idle()
-          plt.close('all')
+          plt.subplots_adjust(hspace=0.8, wspace=0.8)
+          plt.savefig(save_folder + '/' + self.name + '_Number of crossings.png', frameon='false', dpi=600)
+        
+        plt.close('all')
 
 class files_class:
     def __init__(self):
