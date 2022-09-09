@@ -12,7 +12,7 @@
      alt="Behavython software"
 
   <p align="center">
-    <span style="font-size:30px">Based on the original code by </span><a href=https://github.com/fgmourao>Flávio Mourão</a>
+    <span style="font-size:14px">Based on the original code by </span><a href=https://github.com/fgmourao>Flávio Mourão</a>
     <br />
     <br />
     ·
@@ -56,7 +56,7 @@
 
 ### About
 
-- <span style="font-size:30px">Based on the original code by </span><a href=https://github.com/fgmourao>Flávio Mourão</a>
+- <span style="font-size:14px">Based on the original code by </span><a href=https://github.com/fgmourao>Flávio Mourão</a>
 
 
 
@@ -132,7 +132,7 @@ See the [open issues](https://github.com/mrdrzit/Behavython/issues) for a full l
 <!-- CONTRIBUTING -->
 ## Contributing
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue explaining what is the problem. Also, you can reach us by mail (listed at the end :])
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated.** If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue explaining what is the problem. Also, you can reach us by mail - listed at the end :)
 
 <br/>
                                 
