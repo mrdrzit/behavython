@@ -135,15 +135,3 @@ def main():
  
 if __name__ == '__main__': 
   show = main()
-
-
-# if __name__ == '__main__':   
-#     def main():
-#         if not QtWidgets.QApplication.instance():
-#             QtWidgets.QApplication(sys.argv)
-#         else:
-#             QtWidgets.QApplication.instance()
-#             main = behavython_gui()
-#             main.show()
-#             return main  
-#     show = main()
