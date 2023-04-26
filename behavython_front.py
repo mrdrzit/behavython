@@ -67,13 +67,14 @@ class behavython_gui(QMainWindow):
         self.options['experiment_type'] = self.type_combobox.currentText().lower().strip().replace(' ', '_')             # Set the experiment type. Convert to lowercase, remove spaces and replace with underscores to match the naming convention
         self.options['plot_options'] = self.save_button.isChecked()                                                      
         self.options['max_fig_res' ] = str(self.fig_max_size.currentText()).replace(' ','').replace('x',',').split(',')  # Remove trailing spaces and replace x with comma and split the values at the comma to make a list
+        self.options['algo_type'] = "deeplabcut" #self.type_combobox.currentText().lower().strip().replace(' ', '_')           # Set the analysis type. Convert to lowercase, remove spaces and replace with underscores to match the naming convention
         if self.animal_combobox.currentIndex() == 0:
             self.options['threshold'] = 0.0267  # Motion detection threshold (mice)
         else:
             self.options['threshold'] = 0.0667  # Motion detection threshold (rats)
         
         functions = behavython_back.interface_functions()
-        [self.experiments, save_folder, error_flag, inexistent_file] = functions.get_experiments(self.resume_lineedit, self.options['experiment_type'], self.options['plot_options'])
+        [self.experiments, save_folder, error_flag, inexistent_file] = functions.get_experiments(self.resume_lineedit, self.options['experiment_type'], self.options['plot_options'], self.options['algo_type'])
         if error_flag != 0:
           if error_flag == 1:  
             warning_message_function("File selection problem", "WARNING!! No files were selected. Please select a file and try again.")

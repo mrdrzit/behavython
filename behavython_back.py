@@ -1,6 +1,7 @@
 import os
 import skimage.io
 import tkinter as tk
+import tkinter.messagebox
 import pandas as pd
 import numpy as np
 from matplotlib.collections import LineCollection 
@@ -314,61 +315,119 @@ class files_class:
                 self.directory.append(file[:-4])
 
 class interface_functions:
-    def get_experiments(self, line_edit, experiment_type, save_plots):
-        inexistent_file = 0
-        selected_folder_to_save = 0
-        error = 0
-        file_explorer = tk.Tk()
-        file_explorer.withdraw()
-        file_explorer.call('wm', 'attributes', '.', '-topmost', True)
-        selected_files = filedialog.askopenfilename(title = "Select the files to analyze", multiple = True)
-        if save_plots == 1:
-          selected_folder_to_save = filedialog.askdirectory(title = "Select the folder to save the plots", mustexist = True)
-        experiments = []
-        
-        try:
-          assert selected_folder_to_save != ''; assert len(selected_files) > 0
-        except AssertionError:
-          if len(selected_files) == 0:
-            line_edit.append(" ERROR: No files selected")
-            error = 1
-          else:
-            line_edit.append(" ERROR: No destination folder selected")
-            error = 2
-          return experiments, selected_folder_to_save, error, inexistent_file
-
-        files = files_class()
-        files.add_files(selected_files)
-    
-        for index in range(0, files.number):
-            
-            experiments.append(experiment_class())
-            
-            try:
-                raw_data = pd.read_csv(files.directory[index] + '.csv', sep = ',', na_values = ['no info', '.'], header = None)
-                raw_image = rgb2gray(skimage.io.imread(files.directory[index] + '.png'))
-            except:
-                line_edit.append("WARNING!! Doesn't exist a CSV or PNG file with the name " + files.name[index])
-                experiments.pop()
-                error = 3
-                inexistent_file = files.name[index]
-                return experiments, selected_folder_to_save, error, inexistent_file
+    def get_experiments(self, line_edit, experiment_type, save_plots, algo_type="bonsai"):
+        if algo_type == "bonsai":
+          inexistent_file = 0
+          selected_folder_to_save = 0
+          error = 0
+          file_explorer = tk.Tk()
+          file_explorer.withdraw()
+          file_explorer.call('wm', 'attributes', '.', '-topmost', True)
+          selected_files = filedialog.askopenfilename(title = "Select the files to analyze", multiple = True)
+          if save_plots == 1:
+            selected_folder_to_save = filedialog.askdirectory(title = "Select the folder to save the plots", mustexist = True)
+          experiments = []
+          
+          try:
+            assert selected_folder_to_save != ''; assert len(selected_files) > 0
+          except AssertionError:
+            if len(selected_files) == 0:
+              line_edit.append(" ERROR: No files selected")
+              error = 1
             else:
-                if raw_data.shape[1] == 7 and experiment_type == 'plus_maze':
-                    experiments[index].data = raw_data.interpolate(method='spline', order=1, limit_direction = 'both', axis = 0)
-                    line_edit.append("- File " + files.name[index] + '.csv was read')
-                    experiments[index].last_frame = raw_image
-                    line_edit.append("- File " + files.name[index] + '.png was read')
-                    experiments[index].name = files.name[index]  
-                    experiments[index].directory = files.directory[index]
-                elif experiment_type == 'open_field':
-                    experiments[index].data = raw_data.interpolate(method='spline', order=1, limit_direction = 'both', axis = 0)
-                    line_edit.append("- File " + files.name[index] + '.csv was read')
-                    experiments[index].last_frame = raw_image
-                    line_edit.append("- File " + files.name[index] + '.png was read')
-                    experiments[index].name = files.name[index]  
-                    experiments[index].directory = files.directory[index]
-                else:
-                    line_edit.append("WARNING!! The " + files.name[index] + ".csv file had more columns than the elevated plus maze test allows")
-                    
+              line_edit.append(" ERROR: No destination folder selected")
+              error = 2
+            return experiments, selected_folder_to_save, error, inexistent_file
+
+          files = files_class()
+          files.add_files(selected_files)
+      
+          for index in range(0, files.number):
+              
+              experiments.append(experiment_class())
+              
+              try:
+                  raw_data = pd.read_csv(files.directory[index] + '.csv', sep = ',', na_values = ['no info', '.'], header = None)
+                  raw_image = rgb2gray(skimage.io.imread(files.directory[index] + '.png'))
+              except:
+                  line_edit.append("WARNING!! Doesn't exist a CSV or PNG file with the name " + files.name[index])
+                  experiments.pop()
+                  error = 3
+                  inexistent_file = files.name[index]
+                  return experiments, selected_folder_to_save, error, inexistent_file
+              else:
+                  if raw_data.shape[1] == 7 and experiment_type == 'plus_maze':
+                      experiments[index].data = raw_data.interpolate(method='spline', order=1, limit_direction = 'both', axis = 0)
+                      line_edit.append("- File " + files.name[index] + '.csv was read')
+                      experiments[index].last_frame = raw_image
+                      line_edit.append("- File " + files.name[index] + '.png was read')
+                      experiments[index].name = files.name[index]  
+                      experiments[index].directory = files.directory[index]
+                  elif experiment_type == 'open_field':
+                      experiments[index].data = raw_data.interpolate(method='spline', order=1, limit_direction = 'both', axis = 0)
+                      line_edit.append("- File " + files.name[index] + '.csv was read')
+                      experiments[index].last_frame = raw_image
+                      line_edit.append("- File " + files.name[index] + '.png was read')
+                      experiments[index].name = files.name[index]  
+                      experiments[index].directory = files.directory[index]
+                  else:
+                      line_edit.append("WARNING!! The " + files.name[index] + ".csv file had more columns than the elevated plus maze test allows")
+        elif algo_type == "deeplabcut":
+          message = "Be careful to select only the files that are relevante to the analysis.\nThat being\n - Skeleton file (csv)\n - Filtered data file (csv)\n - Experiment image (png)\n - Roi file for the are that the mice is supposed to investigate"
+          tkinter.messagebox.showwarning(title="The correct files to select when opening the data to analyze", message=message)
+          inexistent_file = 0
+          selected_folder_to_save = 0
+          error = 0
+          file_explorer = tk.Tk()
+          file_explorer.withdraw()
+          file_explorer.call('wm', 'attributes', '.', '-topmost', True)
+          selected_files = filedialog.askopenfilename(title = "Select the files to analyze", multiple = True)
+          if save_plots == 1:
+            selected_folder_to_save = filedialog.askdirectory(title = "Select the folder to save the plots", mustexist = True)
+          experiments = []
+          
+          try:
+            assert selected_folder_to_save != ''; assert len(selected_files) > 0
+          except AssertionError:
+            if len(selected_files) == 0:
+              line_edit.append(" ERROR: No files selected")
+              error = 1
+            else:
+              line_edit.append(" ERROR: No destination folder selected")
+              error = 2
+            return experiments, selected_folder_to_save, error, inexistent_file
+
+          files = files_class()
+          files.add_files(selected_files)
+      
+          for index in range(0, files.number):
+              
+              experiments.append(experiment_class())
+              
+              try:
+                  raw_data = pd.read_csv(files.directory[index] + '.csv', sep = ',', na_values = ['no info', '.'], header = None)
+                  raw_image = rgb2gray(skimage.io.imread(files.directory[index] + '.png'))
+              except:
+                  line_edit.append("WARNING!! Doesn't exist a CSV or PNG file with the name " + files.name[index])
+                  experiments.pop()
+                  error = 3
+                  inexistent_file = files.name[index]
+                  return experiments, selected_folder_to_save, error, inexistent_file
+              else:
+                  if raw_data.shape[1] == 7 and experiment_type == 'plus_maze':
+                      experiments[index].data = raw_data.interpolate(method='spline', order=1, limit_direction = 'both', axis = 0)
+                      line_edit.append("- File " + files.name[index] + '.csv was read')
+                      experiments[index].last_frame = raw_image
+                      line_edit.append("- File " + files.name[index] + '.png was read')
+                      experiments[index].name = files.name[index]  
+                      experiments[index].directory = files.directory[index]
+                  elif experiment_type == 'open_field':
+                      experiments[index].data = raw_data.interpolate(method='spline', order=1, limit_direction = 'both', axis = 0)
+                      line_edit.append("- File " + files.name[index] + '.csv was read')
+                      experiments[index].last_frame = raw_image
+                      line_edit.append("- File " + files.name[index] + '.png was read')
+                      experiments[index].name = files.name[index]  
+                      experiments[index].directory = files.directory[index]
+                  else:
+                      line_edit.append("WARNING!! The " + files.name[index] + ".csv file had more columns than the elevated plus maze test allows")
         return experiments, selected_folder_to_save, error, inexistent_file
