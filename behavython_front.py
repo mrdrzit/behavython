@@ -7,18 +7,18 @@ from PyQt5.QtCore import QObject, QThread, pyqtSignal
 
 
 class analysis_class(QObject):
-    """ """
+    """This class is a wrapper for the analysis function. It is used to run the analysis after the data is loaded."""
 
     finished = pyqtSignal()  # Signal that will be output to the interface when the function is completed
     progress_bar = pyqtSignal(int)
 
-    def __init__(self, experiments, options, plot_viewer):  # Initializes when the thread is started
+    def __init__(self, experiments, options, plot_viewer):
         """
         This private function is executed when the class is called, and all parameters are
         defined here
         """
-        super(analysis_class, self).__init__()  # Super declaration
-        self.experiments = experiments  # Sets the the interface plot widget as self variable
+        super(analysis_class, self).__init__()
+        self.experiments = experiments
         self.options = options
         self.plot_viewer = plot_viewer
 
@@ -55,9 +55,7 @@ class behavython_gui(QMainWindow):
         load_gui_path = os.path.dirname(__file__) + "\\behavython_gui.ui"
         uic.loadUi(load_gui_path, self)  # Loads the interface design archive (made in Qt Designer)
         self.show()
-
         self.options = {}
-
         self.clear_button.clicked.connect(self.clear_function)
         self.analysis_button.clicked.connect(self.analysis_function)
 
@@ -66,25 +64,36 @@ class behavython_gui(QMainWindow):
         self.options["arena_width"] = int(self.arena_width_lineedit.text())
         self.options["arena_height"] = int(self.arena_height_lineedit.text())
         self.options["frames_per_second"] = float(self.frames_per_second_lineedit.text())
-        self.options["experiment_type"] = (
-            self.type_combobox.currentText().lower().strip().replace(" ", "_")
-        )  # Set the experiment type. Convert to lowercase, remove spaces and replace with underscores to match the naming convention
+        self.options["experiment_type"] = self.type_combobox.currentText().lower().strip().replace(" ", "_")
         self.options["plot_options"] = self.save_button.isChecked()
-        self.options["max_fig_res"] = (
-            str(self.fig_max_size.currentText()).replace(" ", "").replace("x", ",").split(",")
-        )  # Remove trailing spaces and replace x with comma and split the values at the comma to make a list
-        self.options[
-            "algo_type"
-        ] = "deeplabcut"  # self.type_combobox.currentText().lower().strip().replace(' ', '_')           # Set the analysis type. Convert to lowercase, remove spaces and replace with underscores to match the naming convention
+        # Remove trailing spaces and replace x with comma and split the values at the comma to make a list
+        self.options["max_fig_res"] = str(self.fig_max_size.currentText()).replace(" ", "").replace("x", ",").split(",")
+        self.options["algo_type"] = self.algo_type_combobox.currentText().lower().strip()
         if self.animal_combobox.currentIndex() == 0:
-            self.options["threshold"] = 0.0267  # Motion detection threshold (mice)
+            self.options["threshold"] = 0.0267
         else:
-            self.options["threshold"] = 0.0667  # Motion detection threshold (rats)
+            self.options["threshold"] = 0.0667
 
         functions = behavython_back.interface_functions()
+        if self.options["algo_type"] == "deeplabcut":
+            message = "\nBe careful to select only the files that are relevant to the analysis.\
+                \n\nThat being:\n - Skeleton file (csv)\n - Filtered data file (csv)\n - Experiment image (png)\
+                \n - Roi file for the area that the mice is supposed to investigate"
+            title = "The correct files to select when opening the data to analyze"
+            warning_message_function(title, message)
         [self.experiments, save_folder, error_flag, inexistent_file] = functions.get_experiments(
-            self.resume_lineedit, self.options["experiment_type"], self.options["plot_options"], self.options["algo_type"]
-        )
+                self.resume_lineedit,
+                self.options["experiment_type"],
+                self.options["plot_options"],
+                self.options["algo_type"],
+            )
+        else:
+            [self.experiments, save_folder, error_flag, inexistent_file] = functions.get_experiments(
+                self.resume_lineedit,
+                self.options["experiment_type"],
+                self.options["plot_options"],
+                self.options["algo_type"],
+            )
         if error_flag != 0:
             if error_flag == 1:
                 warning_message_function(
@@ -94,7 +103,7 @@ class behavython_gui(QMainWindow):
                 warning_message_function(
                     "File selection problem",
                     "WARNING!! No destination folder was selected. Please select a valid folder and try again.",
-                )  # Sets the text of the message box
+                )
             elif error_flag == 3:
                 warning_message_function(
                     "File selection problem", "WARNING!! Doesn't exist a CSV or PNG file with the name " + inexistent_file
@@ -102,27 +111,26 @@ class behavython_gui(QMainWindow):
             sys.exit(4)
         self.options["save_folder"] = save_folder
 
-        self.analysis_thread = QThread()  # Creates a QThread object to plot the received data
-        self.analysis_worker = analysis_class(
-            self.experiments, self.options, self.plot_viewer
-        )  # Creates a worker object named plot_data_class
-        self.analysis_worker.moveToThread(self.analysis_thread)  # Moves the class to the thread
-        self.analysis_worker.finished.connect(
-            self.analysis_thread.quit
-        )  # When the process is finished, this command quits the worker
-        self.analysis_worker.finished.connect(
-            self.analysis_thread.wait
-        )  # When the process is finished, this command waits the worker to finish completely
-        self.analysis_worker.finished.connect(
-            self.analysis_worker.deleteLater
-        )  # When the process is finished, this command deletes the worker
+        # Creates a QThread object to plot the received data
+        self.analysis_thread = QThread()
+        # Creates a worker object named plot_data_class
+        self.analysis_worker = analysis_class(self.experiments, self.options, self.plot_viewer)
+        # Moves the class to the thread
+        self.analysis_worker.moveToThread(self.analysis_thread)
+        # When the process is finished, this command quits the worker
+        self.analysis_worker.finished.connect(self.analysis_thread.quit)
+        # When the process is finished, this command waits the worker to finish completely
+        self.analysis_worker.finished.connect(self.analysis_thread.wait)
+        # When the process is finished, this command deletes the worker
+        self.analysis_worker.finished.connect(self.analysis_worker.deleteLater)
+        # Updates the progress bar
         self.analysis_worker.progress_bar.connect(self.progress_bar_function)
-        self.analysis_thread.finished.connect(
-            self.analysis_thread.deleteLater
-        )  # When the process is finished, this command deletes the thread.
-        self.analysis_thread.start()  # Starts the thread
-
-        self.analysis_worker.run_analyse()
+        # When the process is finished, this command deletes the thread.
+        self.analysis_thread.finished.connect(self.analysis_thread.deleteLater)
+        # Starts the thread
+        self.analysis_thread.start()
+        # Runs the analysis to be executed in the thread
+        self.analysis_worker.run_analyse(self.options)
 
     def progress_bar_function(self, value):
         self.progress_bar.setValue(value)
@@ -135,6 +143,7 @@ class behavython_gui(QMainWindow):
         self.arena_height_lineedit.setText("65")
         self.animal_combobox.setCurrentIndex(0)
         self.fig_max_size.setCurrentIndex(0)
+        self.algo_type_combobox.setCurrentIndex(0)
         self.clear_plot()
 
     def clear_plot(self):
