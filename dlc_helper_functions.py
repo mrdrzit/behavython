@@ -29,6 +29,7 @@ class DataFiles:
         self.position_files = {}
         self.skeleton_files = {}
         self.experiment_images = {}
+        self.roi_files = {}
 
     def add_pos_file(self, key, file):
         self.position_files[key] = file
@@ -38,6 +39,9 @@ class DataFiles:
 
     def add_image_file(self, key, file):
         self.experiment_images[key] = file
+
+    def add_roi_file(self, key, file):
+        self.roi_files[key] = file
 
 
 """
@@ -71,6 +75,9 @@ class Animal:
 
         self.name = None
         self.animal_jpg = []
+        self.position_file = []
+        self.skeleton_file = []
+        self.roi = []
         self.bodyparts = {
             "focinho": [],
             "orelhad": [],
@@ -114,7 +121,11 @@ class Animal:
 
         return len(self.bodyparts["focinho"]["x"])
 
-    def add_bodypart(self, bodypart, data: DataFiles, animal_name):
+    def add_roi(self, roi_file):
+        for file in roi_file:
+            self.roi = roi_file
+
+    def add_bodypart(self, bodypart):
         """
         add_bodypart gets the data from the csv file and stores it in the bodyparts dictionary.
         Remember that, to extract the data from this csv file, as it has a header with 3 rows,
@@ -126,7 +137,7 @@ class Animal:
             animal_name (str): A string containing the name of the animal to be analyzed
         """
         extracted_data = pd.read_csv(
-            data.position_files[animal_name],
+            self.position_file,
             sep=",",
             header=[1, 2],
             index_col=0,
@@ -143,7 +154,7 @@ class Animal:
             "likelihood": extracted_data[bodypart, "likelihood"],
         }
 
-    def add_skeleton(self, bone, data: DataFiles, animal_name):
+    def add_skeleton(self, bone):
         """
         add_skeleton gets the data from the csv file and stores it in the skeleton dictionary.
         Remember that, to extract the data from this csv file, as it has a header with 3 rows,
@@ -156,7 +167,7 @@ class Animal:
             animal_name (str): A string containing the name of the animal to be analyzed
         """
         extracted_data = pd.read_csv(
-            data.skeleton_files[animal_name],
+            self.skeleton_file,
             sep=",",
             header=[0, 1],
             index_col=0,
@@ -174,13 +185,13 @@ class Animal:
                 "likelihood": extracted_data[bone, "likelihood"],
             }
         except KeyError:
-            print(f"\nBone {bone} not found in the skeleton file for the animal {animal_name}")
+            print(f"\nBone {bone} not found in the skeleton file for the animal {self.name}")
             print("Please check the name of the bone in the skeleton file\n")
             print("The following bones are available:")
             print("focinho_orelhae\nfocinho_orelhad\norelhad_orelhae\norelhae_orelhad\norelhae_rabo\norelhad_rabo\n")
             return
 
-    def add_experiment_jpg(self, data: DataFiles, animal_name):
+    def add_experiment_jpg(self, image_file):
         """
         add_experiment_jpg gets the data from the jpg file and stores it in the experiment_jpg attribute.
 
@@ -189,13 +200,29 @@ class Animal:
             animal_name (str): A string containing the name of the animal to be analyzed
         """
         try:
-            raw_image = rgb2gray(skimage.io.imread(data.experiment_images[animal_name]))
+            raw_image = rgb2gray(skimage.io.imread(image_file))
             self.animal_jpg = raw_image
         except KeyError:
-            print(
-                f"\nJPG file for the animal {animal_name} not found.\nPlease, check if the name of the file is correct.\n"
-            )
+            print(f"\nJPG file for the animal {self.name} not found.\nPlease, check if the name of the file is correct.\n")
         return
+
+    def add_position_file(self, position_file):
+        """This function adds a reference to the position file to the animal object
+
+        Args:
+            position_file (csv): A csv file containing the position data for each bodypart of the animal
+        """
+
+        self.position_file = position_file
+
+    def add_skeleton_file(self, skeleton_file):
+        """This function adds a reference to the skeleton file to the animal object
+
+        Args:
+            skeleton_file (csv): A csv file containing the skeleton data for each bone created for the animal
+        """
+
+        self.skeleton_file = skeleton_file
 
     def get_jpg_dimensions(self):
         """
@@ -258,6 +285,7 @@ def get_files(line_edit, data: DataFiles, animal_list: list):
     data_files = filedialog.askopenfilename(title="Select the files to analyze", multiple=True)
 
     get_name = re.compile(r"^.*?(?=DLC)|^.*?(?=(\.jpg|\.png|\.bmp|\.jpeg|\.svg))")
+    get_roi = re.compile(r"(?i)\b\w*roi\w*\b\.csv$")
     unique_animals = get_unique_names(data_files, get_name)
 
     for animal in unique_animals:
@@ -271,21 +299,28 @@ def get_files(line_edit, data: DataFiles, animal_list: list):
                     line_edit.append("Position file found for " + animal)
                     data.add_pos_file(animal, file)
                     continue
-                if (
-                    file.endswith(".jpg") or file.endswith(".png") or file.endswith(".jpeg")
-                ) and not data.experiment_images.get(animal):
+                if (file.endswith(".jpg") or file.endswith(".png") or file.endswith(".jpeg")) and not data.experiment_images.get(
+                    animal
+                ):
                     line_edit.append("Image file found for " + animal)
                     data.add_image_file(animal, file)
+                    continue
+                if get_roi.search(file).group(0) in file and not data.roi_files.get(animal):
+                    line_edit.append("ROI file found for " + animal)
+                    data.add_roi_file(animal, file)
                     continue
     for exp_number, animal in enumerate(unique_animals):
         animal_list.append(Animal())
         animal_list[exp_number].name = animal
-        animal_list[exp_number].add_experiment_jpg(data, animal)
+        animal_list[exp_number].add_experiment_jpg(data.experiment_images[animal])
+        animal_list[exp_number].add_position_file(data.position_files[animal])
+        animal_list[exp_number].add_skeleton_file(data.skeleton_files[animal])
+        animal_list[exp_number].add_roi(data.roi_files[animal])
 
         for bodypart in animal_list[exp_number].bodyparts:
-            animal_list[exp_number].add_bodypart(bodypart, data, animal)
+            animal_list[exp_number].add_bodypart(bodypart)
         for bone in animal_list[exp_number].skeleton:
-            animal_list[exp_number].add_skeleton(bone, data, animal)
+            animal_list[exp_number].add_skeleton(bone)
 
     return data_files
 
@@ -377,9 +412,7 @@ def detect_collision(line_segment_start, line_segment_end, circle_center, circle
     line_segment_delta_x = line_end_x_relative_to_circle - line_start_x_relative_to_circle
     line_segment_delta_y = line_end_y_relative_to_circle - line_start_y_relative_to_circle
 
-    line_segment_length = math.sqrt(
-        line_segment_delta_x * line_segment_delta_x + line_segment_delta_y * line_segment_delta_y
-    )
+    line_segment_length = math.sqrt(line_segment_delta_x * line_segment_delta_x + line_segment_delta_y * line_segment_delta_y)
     discriminant_numerator = (
         line_start_x_relative_to_circle * line_end_y_relative_to_circle
         - line_end_x_relative_to_circle * line_start_y_relative_to_circle
@@ -391,12 +424,8 @@ def detect_collision(line_segment_start, line_segment_end, circle_center, circle
     if discriminant < 0:
         return []
     if discriminant == 0:
-        intersection_point_1_x = (discriminant_numerator * line_segment_delta_y) / (
-            line_segment_length * line_segment_length
-        )
-        intersection_point_1_y = (-discriminant_numerator * line_segment_delta_x) / (
-            line_segment_length * line_segment_length
-        )
+        intersection_point_1_x = (discriminant_numerator * line_segment_delta_y) / (line_segment_length * line_segment_length)
+        intersection_point_1_y = (-discriminant_numerator * line_segment_delta_x) / (line_segment_length * line_segment_length)
         parameterization_a = (
             intersection_point_1_x - line_start_x_relative_to_circle
         ) * line_segment_delta_x / line_segment_length + (
