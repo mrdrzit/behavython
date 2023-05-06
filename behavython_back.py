@@ -10,6 +10,7 @@ from tkinter import filedialog
 from skimage.color import rgb2gray
 from scipy import stats
 from copy import copy
+from dlc_helper_functions import *
 
 plt.ioff()
 
@@ -29,142 +30,176 @@ class experiment_class:
         self.last_frame = []  # Experiment last behavior video frame
         self.directory = []  # Experiment directory
 
-    def video_analyse(self, options):
-        self.experiment_type = options["experiment_type"]
-        arena_width = options["arena_width"]
-        arena_height = options["arena_height"]
-        frames_per_second = options["frames_per_second"]
-        threshold = options["threshold"]
-        # Maximum video height set by user
-        # (height is stored in the first element of the list and is converted to int beacuse it comes as a string)
-        max_video_height = int(options["max_fig_res"][0])
-        max_video_width = int(options["max_fig_res"][1])
-        plot_options = options["plot_options"]
-        video_height, video_width = self.last_frame.shape
-        factor_width = arena_width / video_width
-        factor_height = arena_height / video_height
-        number_of_frames = len(self.data)
+    def video_analyse(self, options, animal=None, roi=None):
+        if options["algo_type"] == "deeplabcut":
+            collision_data = []
+            dimensions = animal.exp_dimensions()
+            focinho_x = animal.bodyparts["focinho"]["x"]
+            focinho_y = animal.bodyparts["focinho"]["y"]
+            orelha_esq_x = animal.bodyparts["orelhae"]["x"]
+            orelha_esq_y = animal.bodyparts["orelhae"]["y"]
+            orelha_dir_x = animal.bodyparts["orelhad"]["x"]
+            orelha_dir_y = animal.bodyparts["orelhad"]["y"]
 
-        x_axe = self.data[0]  # Gets the x position
-        y_axe = self.data[1]  # Gets the y position
-        x_axe_cm = self.data[0] * factor_width  # Puts the x position on scale
-        y_axe_cm = self.data[1] * factor_height  # Puts the y position on scale
-        d_x_axe_cm = np.append(0, np.diff(self.data[0])) * factor_width  # Calculates the step difference of position in x axis
-        d_y_axe_cm = np.append(0, np.diff(self.data[1])) * factor_height  # Calculates the step difference of position in y axis
+            # for i in range(animal.exp_length()):
+            #     A = np.array([focinho_x[i], focinho_y[i]])
+            #     B = np.array([orelha_esq_x[i], orelha_esq_y[i]])
+            #     C = np.array([orelha_dir_x[i], orelha_dir_y[i]])
+            #     P, Q = line_trough_triangle_vertex(A, B, C)
 
-        displacement_raw = np.sqrt(np.square(d_x_axe_cm) + np.square(d_y_axe_cm))
-        displacement = displacement_raw
-        displacement[displacement < threshold] = 0
+            #     # collision = detect_collision([Q[0], Q[1]], [P[0], P[1]], [roi_X[0], roi_Y[0]], roi_D[0] / 2)
+            #     if collision:
+            #         collision_data.append(f"The mice is exploring at {collision}")
+            #     else:
+            #         collision_data.append("The mice is not exploring the container yet.")
 
-        # Sums all the animal's movements and calculates the accumulated distance traveled
-        accumulate_distance = np.cumsum(displacement)
-        # Gets the animal's total distance traveled
-        total_distance = max(accumulate_distance)
-        time_vector = np.linspace(0, len(self.data) / frames_per_second, len(self.data))  # Creates a time vector
+            collisions = pd.DataFrame(collision_data)
+            collisions.to_csv(
+                os.path.dirname(__file__) + r"\collisions.csv",
+                index=False,
+                header=False,
+            )
 
-        # Ignores the division by zero at runtime
-        # (division by zero is not an error in this case as the are moments when the animal is not moving)
-        np.seterr(divide="ignore", invalid="ignore")
-        # Calculates the first derivative and finds the animal's velocity per time
-        velocity = np.divide(displacement, np.transpose(np.append(0, np.diff(time_vector))))
-        mean_velocity = np.nanmean(velocity)
-
-        # Calculates the animal's acceleration
-        aceleration = np.divide(np.append(0, np.diff(velocity)), np.append(0, np.diff(time_vector)))
-        # Calculates the number of movements made by the animal
-        movements = np.sum(displacement > 0)
-        # Calculates the total time of movements made by the animal
-        time_moving = np.sum(displacement > 0) * (1 / frames_per_second)
-        # Calculates the total time of the animal without movimentations
-        time_resting = np.sum(displacement == 0) * (1 / frames_per_second)
-
-        kde_space_coordinates = np.array([np.array(x_axe), np.array(y_axe)])
-        kde_instance = stats.gaussian_kde(kde_space_coordinates)
-        point_density_function = kde_instance.evaluate(kde_space_coordinates)
-        color_limits = np.array(
-            [
-                (x - np.min(point_density_function)) / (np.max(point_density_function) - np.min(point_density_function))
-                for x in point_density_function
-            ]
-        )
-
-        quadrant_data = np.array(self.data[self.data.columns[2:]])  # Extract the quadrant data from csv file
-        # Here, the values will be off-by-one because MATLAB starts at 1
-        colDif = np.abs(quadrant_data[:, 0] - np.sum(quadrant_data[:][:, 1:], axis=1))
-        # Create a logical array where there is a "full entry"
-        full_entry_indexes = colDif != 1
-        # True crossings over time (full crossings only)
-        time_spent = np.delete(quadrant_data, full_entry_indexes, 0)
-        quadrant_crossings = abs(np.diff(time_spent, axis=0))
-        # Total time spent in each quadrant
-        total_time_in_quadrant = np.sum(np.divide(time_spent, frames_per_second), 0)
-        # Total # of entries in each quadrant
-        total_number_of_entries = np.sum(quadrant_crossings > 0, 0)
-
-        self.analysis_results = {
-            "video_width": video_width,
-            "video_height": video_height,
-            "number_of_frames": number_of_frames,
-            "x_axe": x_axe,
-            "y_axe": y_axe,
-            "x_axe_cm": x_axe_cm,
-            "y_axe_cm": y_axe_cm,
-            "d_x_axe_cm": d_x_axe_cm,
-            "d_y_axe_cm": d_y_axe_cm,
-            "displacement": displacement,
-            "accumulate_distance": accumulate_distance,
-            "total_distance": total_distance,
-            "time_vector": time_vector,
-            "velocity": velocity,
-            "mean_velocity": mean_velocity,
-            "aceleration": aceleration,
-            "movements": movements,
-            "time_spent": time_spent,
-            "time_moving": time_moving,
-            "time_resting": time_resting,
-            "quadrant_crossings": quadrant_crossings,
-            "time_in_quadrant": total_time_in_quadrant,
-            "number_of_entries": total_number_of_entries,
-            "color_limits": color_limits,
-            "max_video_height": max_video_height,
-            "max_video_width": max_video_width,
-            "plot_options": plot_options,
-        }
-
-        if self.experiment_type == "plus_maze":
-            dict_to_excel = {
-                "Total distance (cm)": total_distance,
-                "Mean velocity (cm/s)": mean_velocity,
-                "Movements": movements,
-                "Time moving (s)": time_moving,
-                "Time resting(s)": time_resting,
-                "Total time at the upper arm (s)": total_time_in_quadrant[0],
-                "Total time at the lower arm (s)": total_time_in_quadrant[1],
-                "Total time at the left arm (s)": total_time_in_quadrant[2],
-                "Total time at the right arm (s)": total_time_in_quadrant[3],
-                "Total time at the center (s)": total_time_in_quadrant[4],
-                "Crossings to the upper arm": total_number_of_entries[0],
-                "Crossings to the lower arm": total_number_of_entries[1],
-                "Crossings to the left arm": total_number_of_entries[2],
-                "Crossings to the right arm": total_number_of_entries[3],
-                "Crossings to the center": total_number_of_entries[4],
-            }
+            pass
+            return self.analysis_results, data_frame
         else:
-            dict_to_excel = {
-                "Total distance (cm)": total_distance,
-                "Mean velocity (cm/s)": mean_velocity,
-                "Movements": movements,
-                "Time moving (s)": time_moving,
-                "Time resting(s)": time_resting,
-                "Total time at the center (s)": total_time_in_quadrant[0],
-                "Total time at the edge (s)": total_time_in_quadrant[1],
-                "Crossings to the center": total_number_of_entries[0],
-                "Crossings to the edge": total_number_of_entries[1],
+            self.experiment_type = options["experiment_type"]
+            arena_width = options["arena_width"]
+            arena_height = options["arena_height"]
+            frames_per_second = options["frames_per_second"]
+            threshold = options["threshold"]
+            # Maximum video height set by user
+            # (height is stored in the first element of the list and is converted to int beacuse it comes as a string)
+            max_video_height = int(options["max_fig_res"][0])
+            max_video_width = int(options["max_fig_res"][1])
+            plot_options = options["plot_options"]
+            video_height, video_width = self.last_frame.shape
+            factor_width = arena_width / video_width
+            factor_height = arena_height / video_height
+            number_of_frames = len(self.data)
+
+            x_axe = self.data[0]  # Gets the x position
+            y_axe = self.data[1]  # Gets the y position
+            x_axe_cm = self.data[0] * factor_width  # Puts the x position on scale
+            y_axe_cm = self.data[1] * factor_height  # Puts the y position on scale
+            # Calculates the step difference of position in x axis
+            d_x_axe_cm = np.append(0, np.diff(self.data[0])) * factor_width
+            # Calculates the step difference of position in y axis
+            d_y_axe_cm = np.append(0, np.diff(self.data[1])) * factor_height
+
+            displacement_raw = np.sqrt(np.square(d_x_axe_cm) + np.square(d_y_axe_cm))
+            displacement = displacement_raw
+            displacement[displacement < threshold] = 0
+
+            # Sums all the animal's movements and calculates the accumulated distance traveled
+            accumulate_distance = np.cumsum(displacement)
+            # Gets the animal's total distance traveled
+            total_distance = max(accumulate_distance)
+            time_vector = np.linspace(0, len(self.data) / frames_per_second, len(self.data))  # Creates a time vector
+
+            # Ignores the division by zero at runtime
+            # (division by zero is not an error in this case as the are moments when the animal is not moving)
+            np.seterr(divide="ignore", invalid="ignore")
+            # Calculates the first derivative and finds the animal's velocity per time
+            velocity = np.divide(displacement, np.transpose(np.append(0, np.diff(time_vector))))
+            mean_velocity = np.nanmean(velocity)
+
+            # Calculates the animal's acceleration
+            aceleration = np.divide(np.append(0, np.diff(velocity)), np.append(0, np.diff(time_vector)))
+            # Calculates the number of movements made by the animal
+            movements = np.sum(displacement > 0)
+            # Calculates the total time of movements made by the animal
+            time_moving = np.sum(displacement > 0) * (1 / frames_per_second)
+            # Calculates the total time of the animal without movimentations
+            time_resting = np.sum(displacement == 0) * (1 / frames_per_second)
+
+            kde_space_coordinates = np.array([np.array(x_axe), np.array(y_axe)])
+            kde_instance = stats.gaussian_kde(kde_space_coordinates)
+            point_density_function = kde_instance.evaluate(kde_space_coordinates)
+            color_limits = np.array(
+                [
+                    (x - np.min(point_density_function)) / (np.max(point_density_function) - np.min(point_density_function))
+                    for x in point_density_function
+                ]
+            )
+
+            quadrant_data = np.array(self.data[self.data.columns[2:]])  # Extract the quadrant data from csv file
+            # Here, the values will be off-by-one because MATLAB starts at 1
+            colDif = np.abs(quadrant_data[:, 0] - np.sum(quadrant_data[:][:, 1:], axis=1))
+            # Create a logical array where there is a "full entry"
+            full_entry_indexes = colDif != 1
+            # True crossings over time (full crossings only)
+            time_spent = np.delete(quadrant_data, full_entry_indexes, 0)
+            quadrant_crossings = abs(np.diff(time_spent, axis=0))
+            # Total time spent in each quadrant
+            total_time_in_quadrant = np.sum(np.divide(time_spent, frames_per_second), 0)
+            # Total # of entries in each quadrant
+            total_number_of_entries = np.sum(quadrant_crossings > 0, 0)
+
+            self.analysis_results = {
+                "video_width": video_width,
+                "video_height": video_height,
+                "number_of_frames": number_of_frames,
+                "x_axe": x_axe,
+                "y_axe": y_axe,
+                "x_axe_cm": x_axe_cm,
+                "y_axe_cm": y_axe_cm,
+                "d_x_axe_cm": d_x_axe_cm,
+                "d_y_axe_cm": d_y_axe_cm,
+                "displacement": displacement,
+                "accumulate_distance": accumulate_distance,
+                "total_distance": total_distance,
+                "time_vector": time_vector,
+                "velocity": velocity,
+                "mean_velocity": mean_velocity,
+                "aceleration": aceleration,
+                "movements": movements,
+                "time_spent": time_spent,
+                "time_moving": time_moving,
+                "time_resting": time_resting,
+                "quadrant_crossings": quadrant_crossings,
+                "time_in_quadrant": total_time_in_quadrant,
+                "number_of_entries": total_number_of_entries,
+                "color_limits": color_limits,
+                "max_video_height": max_video_height,
+                "max_video_width": max_video_width,
+                "plot_options": plot_options,
             }
 
-        data_frame = pd.DataFrame(data=dict_to_excel, index=[self.name])
-        data_frame = data_frame.T
-        return self.analysis_results, data_frame
+            if self.experiment_type == "plus_maze":
+                dict_to_excel = {
+                    "Total distance (cm)": total_distance,
+                    "Mean velocity (cm/s)": mean_velocity,
+                    "Movements": movements,
+                    "Time moving (s)": time_moving,
+                    "Time resting(s)": time_resting,
+                    "Total time at the upper arm (s)": total_time_in_quadrant[0],
+                    "Total time at the lower arm (s)": total_time_in_quadrant[1],
+                    "Total time at the left arm (s)": total_time_in_quadrant[2],
+                    "Total time at the right arm (s)": total_time_in_quadrant[3],
+                    "Total time at the center (s)": total_time_in_quadrant[4],
+                    "Crossings to the upper arm": total_number_of_entries[0],
+                    "Crossings to the lower arm": total_number_of_entries[1],
+                    "Crossings to the left arm": total_number_of_entries[2],
+                    "Crossings to the right arm": total_number_of_entries[3],
+                    "Crossings to the center": total_number_of_entries[4],
+                }
+            else:
+                dict_to_excel = {
+                    "Total distance (cm)": total_distance,
+                    "Mean velocity (cm/s)": mean_velocity,
+                    "Movements": movements,
+                    "Time moving (s)": time_moving,
+                    "Time resting(s)": time_resting,
+                    "Total time at the center (s)": total_time_in_quadrant[0],
+                    "Total time at the edge (s)": total_time_in_quadrant[1],
+                    "Crossings to the center": total_number_of_entries[0],
+                    "Crossings to the edge": total_number_of_entries[1],
+                }
+
+            data_frame = pd.DataFrame(data=dict_to_excel, index=[self.name])
+            data_frame = data_frame.T
+            return self.analysis_results, data_frame
 
     def plot_analysis_pluz_maze(self, plot_viewer, plot_number, save_folder):
         # Figure 1 - Overall Activity in the maze
@@ -388,6 +423,9 @@ class experiment_class:
             plt.savefig(save_folder + "/" + self.name + "_Number of crossings.png", frameon="false", dpi=600)
 
         plt.close("all")
+
+    def plot_analysis_social_behavior(self, plot_viewer, plot_number, save_folder):
+        pass
 
 
 class files_class:
