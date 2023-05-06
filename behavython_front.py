@@ -22,9 +22,13 @@ class analysis_class(QObject):
         self.options = options
         self.plot_viewer = plot_viewer
 
-    def run_analyse(self):
+    def run_analyse(self, options):
         for i in range(0, len(self.experiments)):
-            analyse_results, data_frame = self.experiments[i].video_analyse(self.options)
+            if options["algo_type"] == "deeplabcut":
+                analyse_results, data_frame = behavython_back.experiment_class.video_analyse(self.options, self.experiments[i])
+                pass
+            else:
+                analyse_results, data_frame = self.experiments[i].video_analyse(self.options)
             if i == 0:
                 results_data_frame = data_frame
             else:
@@ -32,8 +36,10 @@ class analysis_class(QObject):
 
             if self.options["experiment_type"] == "open_field":
                 self.experiments[i].plot_analysis_open_field(self.plot_viewer, i, self.options["save_folder"])
-            else:
+            elif self.options["experiment_type"] == "elevated_plus_maze":
                 self.experiments[i].plot_analysis_pluz_maze(self.plot_viewer, i, self.options["save_folder"])
+            elif self.options["experiment_type"] == "social_behavior":
+                self.experiments[i].plot_analysis_social_behavior(self.plot_viewer, i, self.options["save_folder"])
             self.progress_bar.emit(round(((i + 1) / len(self.experiments)) * 100))
 
         if self.options["plot_options"] == 1:
@@ -80,8 +86,8 @@ class behavython_gui(QMainWindow):
                 \n\nThat being:\n - Skeleton file (csv)\n - Filtered data file (csv)\n - Experiment image (png)\
                 \n - Roi file for the area that the mice is supposed to investigate"
             title = "The correct files to select when opening the data to analyze"
-            warning_message_function(title, message)
-        [self.experiments, save_folder, error_flag, inexistent_file] = functions.get_experiments(
+            # warning_message_function(title, message)
+            [self.experiments, save_folder, error_flag, inexistent_file] = functions.get_experiments(
                 self.resume_lineedit,
                 self.options["experiment_type"],
                 self.options["plot_options"],

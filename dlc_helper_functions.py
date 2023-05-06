@@ -77,7 +77,27 @@ class Animal:
         self.animal_jpg = []
         self.position_file = []
         self.skeleton_file = []
-        self.roi = []
+        self.roi_1 = {
+            "file": [],
+            "x": [],
+            "y": [],
+            "width": [],
+            "height": [],
+        }
+        self.roi_2 = {
+            "file": [],
+            "x": [],
+            "y": [],
+            "width": [],
+            "height": [],
+        }
+        self.roi_3 = {
+            "file": [],
+            "x": [],
+            "y": [],
+            "width": [],
+            "height": [],
+        }
         self.bodyparts = {
             "focinho": [],
             "orelhad": [],
@@ -122,8 +142,12 @@ class Animal:
         return len(self.bodyparts["focinho"]["x"])
 
     def add_roi(self, roi_file):
-        for file in roi_file:
-            self.roi = roi_file
+        # for file in roi_file:
+        #     data = pd.read_csv(
+        #         roi_file,
+        #         sep=",",
+        #     )
+        self.roi = roi_file
 
     def add_bodypart(self, bodypart):
         """
