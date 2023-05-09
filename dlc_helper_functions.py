@@ -152,11 +152,11 @@ class Animal:
                 roi_path,
                 sep=",",
             )
-            self.rois[i]["file"].append(roi_path)
-            self.rois[i]["x"].append(roi_data["X"][0])
-            self.rois[i]["y"].append(roi_data["Y"][0])
-            self.rois[i]["width"].append(roi_data["Width"][0])
-            self.rois[i]["height"].append(roi_data["Height"][0])
+            self.rois[i]["file"] = roi_path
+            self.rois[i]["x"] = roi_data["X"][0]
+            self.rois[i]["y"] = roi_data["Y"][0]
+            self.rois[i]["width"] = roi_data["Width"][0]
+            self.rois[i]["height"] = roi_data["Height"][0]
         pass
 
     def add_bodypart(self, bodypart):

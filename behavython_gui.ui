@@ -778,7 +778,7 @@ to see the help text</string>
       <string>Save data</string>
      </property>
      <property name="checked">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
      <property name="autoExclusive">
       <bool>true</bool>
@@ -798,6 +798,9 @@ to see the help text</string>
      </property>
      <property name="text">
       <string>Only plot</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
      </property>
     </widget>
     <widget class="QLabel" name="label_14">

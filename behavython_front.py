@@ -25,7 +25,9 @@ class analysis_class(QObject):
     def run_analyse(self, options):
         for i in range(0, len(self.experiments)):
             if options["algo_type"] == "deeplabcut":
-                analyse_results, data_frame = behavython_back.experiment_class.video_analyse(self.options, self.experiments[i])
+                analyse_results, data_frame = behavython_back.experiment_class.video_analyse(
+                    self, self.options, self.experiments[i]
+                )
                 pass
             else:
                 analyse_results, data_frame = self.experiments[i].video_analyse(self.options)

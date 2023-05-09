@@ -30,8 +30,8 @@ class experiment_class:
         self.last_frame = []  # Experiment last behavior video frame
         self.directory = []  # Experiment directory
 
-    def video_analyse(self, options, animal=None, roi=None):
-        if options["algo_type"] == "deeplabcut":
+    def video_analyse(self, options, animal=None):
+        if self.options["algo_type"] == "deeplabcut":
             collision_data = []
             dimensions = animal.exp_dimensions()
             focinho_x = animal.bodyparts["focinho"]["x"]
@@ -40,28 +40,29 @@ class experiment_class:
             orelha_esq_y = animal.bodyparts["orelhae"]["y"]
             orelha_dir_x = animal.bodyparts["orelhad"]["x"]
             orelha_dir_y = animal.bodyparts["orelhad"]["y"]
+            roi_X = animal.rois[0]["x"]
+            roi_Y = animal.rois[0]["y"]
+            roi_D = (animal.rois[0]["width"] + animal.rois[0]["height"]) / 2
 
-            # for i in range(animal.exp_length()):
-            #     A = np.array([focinho_x[i], focinho_y[i]])
-            #     B = np.array([orelha_esq_x[i], orelha_esq_y[i]])
-            #     C = np.array([orelha_dir_x[i], orelha_dir_y[i]])
-            #     P, Q = line_trough_triangle_vertex(A, B, C)
+            for i in range(animal.exp_length()):
+                A = np.array([focinho_x[i], focinho_y[i]])
+                B = np.array([orelha_esq_x[i], orelha_esq_y[i]])
+                C = np.array([orelha_dir_x[i], orelha_dir_y[i]])
+                P, Q = line_trough_triangle_vertex(A, B, C)
 
-            #     # collision = detect_collision([Q[0], Q[1]], [P[0], P[1]], [roi_X[0], roi_Y[0]], roi_D[0] / 2)
-            #     if collision:
-            #         collision_data.append(f"The mice is exploring at {collision}")
-            #     else:
-            #         collision_data.append("The mice is not exploring the container yet.")
+                collision = detect_collision([Q[0], Q[1]], [P[0], P[1]], [roi_X, roi_Y], roi_D / 2)
+                if collision:
+                    collision_data.append(collision)
+                else:
+                    collision_data.append(None)
 
             collisions = pd.DataFrame(collision_data)
-            collisions.to_csv(
-                os.path.dirname(__file__) + r"\collisions.csv",
-                index=False,
-                header=False,
-            )
-
-            pass
-            return self.analysis_results, data_frame
+            # collisions.to_csv(
+            #     os.path.dirname(__file__) + r"\collisions_behavython.csv",
+            #     index=False,
+            #     header=False,
+            # )
+            return self.analysis_results, collisions
         else:
             self.experiment_type = options["experiment_type"]
             arena_width = options["arena_width"]
