@@ -2,6 +2,7 @@ import math
 import os
 import re
 import tkinter as tk
+import itertools as it
 from tkinter import filedialog
 
 import pandas as pd
@@ -77,27 +78,29 @@ class Animal:
         self.animal_jpg = []
         self.position_file = []
         self.skeleton_file = []
-        self.roi_1 = {
-            "file": [],
-            "x": [],
-            "y": [],
-            "width": [],
-            "height": [],
-        }
-        self.roi_2 = {
-            "file": [],
-            "x": [],
-            "y": [],
-            "width": [],
-            "height": [],
-        }
-        self.roi_3 = {
-            "file": [],
-            "x": [],
-            "y": [],
-            "width": [],
-            "height": [],
-        }
+        self.rois = [
+            {
+                "file": [],
+                "x": [],
+                "y": [],
+                "width": [],
+                "height": [],
+            },
+            {
+                "file": [],
+                "x": [],
+                "y": [],
+                "width": [],
+                "height": [],
+            },
+            {
+                "file": [],
+                "x": [],
+                "y": [],
+                "width": [],
+                "height": [],
+            },
+        ]
         self.bodyparts = {
             "focinho": [],
             "orelhad": [],
@@ -142,12 +145,19 @@ class Animal:
         return len(self.bodyparts["focinho"]["x"])
 
     def add_roi(self, roi_file):
-        # for file in roi_file:
-        #     data = pd.read_csv(
-        #         roi_file,
-        #         sep=",",
-        #     )
-        self.roi = roi_file
+        rois = []
+        [rois.append(key) for key in roi_file]
+        for i, roi_path in enumerate(rois):
+            roi_data = pd.read_csv(
+                roi_path,
+                sep=",",
+            )
+            self.rois[i]["file"].append(roi_path)
+            self.rois[i]["x"].append(roi_data["X"][0])
+            self.rois[i]["y"].append(roi_data["Y"][0])
+            self.rois[i]["width"].append(roi_data["Width"][0])
+            self.rois[i]["height"].append(roi_data["Height"][0])
+        pass
 
     def add_bodypart(self, bodypart):
         """
@@ -309,8 +319,13 @@ def get_files(line_edit, data: DataFiles, animal_list: list):
     data_files = filedialog.askopenfilename(title="Select the files to analyze", multiple=True)
 
     get_name = re.compile(r"^.*?(?=DLC)|^.*?(?=(\.jpg|\.png|\.bmp|\.jpeg|\.svg))")
+    # TODO #38 - Remove this regex and use the list created below to get the roi files4
+    # Currently the regex is not working properly
     get_roi = re.compile(r"(?i)\b\w*roi\w*\b\.csv$")
     unique_animals = get_unique_names(data_files, get_name)
+    roi_iter_obejct = it.filterfalse(lambda x: not (re.search("roi", x)), data_files)
+    rois = []
+    [rois.append(roi) for roi in roi_iter_obejct]
 
     for animal in unique_animals:
         for file in data_files:
@@ -339,7 +354,8 @@ def get_files(line_edit, data: DataFiles, animal_list: list):
         animal_list[exp_number].add_experiment_jpg(data.experiment_images[animal])
         animal_list[exp_number].add_position_file(data.position_files[animal])
         animal_list[exp_number].add_skeleton_file(data.skeleton_files[animal])
-        animal_list[exp_number].add_roi(data.roi_files[animal])
+        tmp = it.filterfalse(lambda roi: not (re.search(animal, roi)), rois)
+        animal_list[exp_number].add_roi(tmp)
 
         for bodypart in animal_list[exp_number].bodyparts:
             animal_list[exp_number].add_bodypart(bodypart)
