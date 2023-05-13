@@ -34,14 +34,16 @@ class analysis_class(QObject):
             if i == 0:
                 results_data_frame = data_frame
             else:
-                results_data_frame = results_data_frame.join(data_frame, how="outer")
+                results_data_frame = results_data_frame.join(data_frame)
 
             if self.options["experiment_type"] == "open_field":
                 self.experiments[i].plot_analysis_open_field(self.plot_viewer, i, self.options["save_folder"])
-            elif self.options["experiment_type"] == "elevated_plus_maze":
+            elif self.options["experiment_type"] == "plus_maze":
                 self.experiments[i].plot_analysis_pluz_maze(self.plot_viewer, i, self.options["save_folder"])
             elif self.options["experiment_type"] == "social_behavior":
-                self.experiments[i].plot_analysis_social_behavior(self.plot_viewer, i, self.options["save_folder"])
+                behavython_back.experiment_class.plot_analysis_social_behavior(
+                    self, self.plot_viewer, i, self.options["save_folder"]
+                )
             self.progress_bar.emit(round(((i + 1) / len(self.experiments)) * 100))
 
         if self.options["plot_options"] == 1:
