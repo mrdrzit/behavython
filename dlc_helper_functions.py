@@ -3,8 +3,8 @@ import os
 import re
 import tkinter as tk
 import itertools as it
+import matplotlib.image as mpimg
 from tkinter import filedialog
-
 import pandas as pd
 import skimage
 from skimage.color import rgb2gray
@@ -234,7 +234,7 @@ class Animal:
             animal_name (str): A string containing the name of the animal to be analyzed
         """
         try:
-            raw_image = rgb2gray(skimage.io.imread(image_file))
+            raw_image = mpimg.imread(image_file)
             self.animal_jpg = raw_image
         except KeyError:
             print(f"\nJPG file for the animal {self.name} not found.\nPlease, check if the name of the file is correct.\n")
@@ -317,6 +317,14 @@ def get_files(line_edit, data: DataFiles, animal_list: list):
     file_explorer.withdraw()
     file_explorer.call("wm", "attributes", ".", "-topmost", True)
     data_files = filedialog.askopenfilename(title="Select the files to analyze", multiple=True)
+
+    ## Uncomment the following lines to test the code without the GUI
+    # data_files = [
+    #     r"C:\\Users\\uzuna\Documents\\GITHUB\\My_projects\\tests\\Deeplabcut\\data\\C57\\C57_1_downsampled_roi.csv",
+    #     r"C:\\Users\\uzuna\Documents\\GITHUB\\My_projects\\tests\\Deeplabcut\\data\\C57\\C57_1_downsampledDLC_resnet50_C57Feb17shuffle1_145000_filtered.csv",
+    #     r"C:\\Users\\uzuna\Documents\\GITHUB\\My_projects\\tests\\Deeplabcut\\data\\C57\\C57_1_downsampledDLC_resnet50_C57Feb17shuffle1_145000_filtered.png",
+    #     r"C:\\Users\\uzuna\Documents\\GITHUB\\My_projects\\tests\\Deeplabcut\\data\\C57\\C57_1_downsampledDLC_resnet50_C57Feb17shuffle1_145000_filtered_skeleton.csv",
+    # ]
 
     get_name = re.compile(r"^.*?(?=DLC)|^.*?(?=(\.jpg|\.png|\.bmp|\.jpeg|\.svg))")
     # TODO #38 - Remove this regex and use the list created below to get the roi files4
