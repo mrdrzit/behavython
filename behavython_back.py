@@ -4,6 +4,8 @@ import tkinter as tk
 import tkinter.messagebox
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 from matplotlib.collections import LineCollection
 from matplotlib import pyplot as plt
 from tkinter import filedialog
@@ -17,7 +19,7 @@ plt.ioff()
 
 class experiment_class:
     """
-    This class declares each experiment and makes the necessary calculations to
+    This class declares each experiment and makes the necessary  calculations to
     analyze the movement of the animal in the experimental box.
 
     For each experiment one object of this class will be created and added in
@@ -31,7 +33,8 @@ class experiment_class:
         self.directory = []  # Experiment directory
 
     def video_analyse(self, options, animal=None):
-        if self.options["algo_type"] == "deeplabcut":
+        if options["algo_type"] == "deeplabcut":
+            # Deeplabcut data
             collision_data = []
             dimensions = animal.exp_dimensions()
             focinho_x = animal.bodyparts["focinho"]["x"]
@@ -43,26 +46,76 @@ class experiment_class:
             roi_X = animal.rois[0]["x"]
             roi_Y = animal.rois[0]["y"]
             roi_D = (animal.rois[0]["width"] + animal.rois[0]["height"]) / 2
+            # ---------------------------------------------------------------
+
+            # General data
+            arena_width = options["arena_width"]
+            arena_height = options["arena_height"]
+            frames_per_second = options["frames_per_second"]
+            threshold = options["threshold"]
+            # Maximum video height set by user
+            # (height is stored in the first element of the list and is converted to int beacuse it comes as a string)
+            max_video_height = int(options["max_fig_res"][0])
+            max_video_width = int(options["max_fig_res"][1])
+            plot_options = options["plot_options"]
+            video_height, video_width, _ = dimensions
+            factor_width = arena_width / video_width
+            factor_height = arena_height / video_height
+            number_of_frames = animal.exp_length()
+            # ---------------------------------------------------------------
 
             for i in range(animal.exp_length()):
+                # Calculate the area of the mice's head
+                Side1 = np.sqrt(((orelha_esq_x[i] - focinho_x[i]) ** 2) + ((orelha_esq_y[i] - focinho_y[i]) ** 2))
+                Side2 = np.sqrt(((orelha_dir_x[i] - orelha_esq_x[i]) ** 2) + ((orelha_dir_y[i] - orelha_esq_y[i]) ** 2))
+                Side3 = np.sqrt(((focinho_x[i] - orelha_dir_x[i]) ** 2) + ((focinho_y[i] - orelha_dir_y[i]) ** 2))
+                S = (Side1 + Side2 + Side3) / 2
+                mice_head_area = np.sqrt(S * (S - Side1) * (S - Side2) * (S - Side3))
+                # ------------------------------------------------------------------------------------------------------
+
+                # Calculate the exploration threshold in front of the mice's nose
                 A = np.array([focinho_x[i], focinho_y[i]])
                 B = np.array([orelha_esq_x[i], orelha_esq_y[i]])
                 C = np.array([orelha_dir_x[i], orelha_dir_y[i]])
                 P, Q = line_trough_triangle_vertex(A, B, C)
+                # ------------------------------------------------------------------------------------------------------
 
+                # Calculate the collisions between the ROI and the mice's nose
                 collision = detect_collision([Q[0], Q[1]], [P[0], P[1]], [roi_X, roi_Y], roi_D / 2)
                 if collision:
-                    collision_data.append(collision)
+                    collision_data.append([1, collision, mice_head_area])
                 else:
-                    collision_data.append(None)
+                    collision_data.append([0, None, mice_head_area])
 
             collisions = pd.DataFrame(collision_data)
-            # collisions.to_csv(
-            #     os.path.dirname(__file__) + r"\collisions_behavython.csv",
-            #     index=False,
-            #     header=False,
-            # )
-            return self.analysis_results, collisions
+            xy_data = collisions[1].dropna()
+
+            # The following line substitutes these lines:
+            #   t = xy_data.to_list()
+            #   t = [item for sublist in t for item in sublist]
+            #   x, y = zip(*t)
+            # Meaning that it flattens the list and then separates the x and y coordinates
+            x, y = zip(*[item for sublist in xy_data.to_list() for item in sublist])
+
+            exploration_mask = collisions[0] > 0
+            exploration_mask = exploration_mask.replace({True: 1, False: 0})
+            exploration_time = np.sum(exploration_mask) * (1 / frames_per_second)
+            self.analysis_results = {
+                "x_data": x,
+                "y_data": y,
+                "exploration_time": exploration_time,
+                "video_width": video_width,
+                "video_height": video_height,
+                "max_video_height": max_video_height,
+                "max_video_width": max_video_width,
+                "plot_options": plot_options,
+            }
+            dict_to_excel = {"exploration_time": exploration_time}
+            data_frame = pd.DataFrame(data=dict_to_excel, index=[animal.name])
+            data_frame = data_frame.T
+
+            return self.analysis_results, data_frame
+
         else:
             self.experiment_type = options["experiment_type"]
             arena_width = options["arena_width"]
@@ -426,6 +479,52 @@ class experiment_class:
         plt.close("all")
 
     def plot_analysis_social_behavior(self, plot_viewer, plot_number, save_folder):
+        # figure_1, axe_1 = plt.subplots()
+        plot_option = self.analysis_results["plot_options"]
+
+        fig, axe_1 = plt.subplots()
+
+        image_height = self.analysis_results["video_height"]
+        image_width = self.analysis_results["video_width"]
+        max_height = self.analysis_results["max_video_height"]
+        max_width = self.analysis_results["max_video_width"]
+        # Calculate the ratio to be used for image resizing without losing the aspect ratio
+
+        if plot_option == 0:
+            plot_viewer.canvas.axes[plot_number % 9].imshow(self.experiments[plot_number].animal_jpg, cmap="gray", aspect="auto")
+            sns.kdeplot(
+                x=self.analysis_results["x_data"],
+                y=self.analysis_results["y_data"],
+                fill=True,
+                ax=plot_viewer.canvas.axes[plot_number % 9],
+                cmap="inferno",
+                alpha=0.5,
+            )
+            plt.show()
+            axe_1.axis("tight")
+            axe_1.axis("off")
+            plot_number += 1
+            plot_viewer.canvas.draw_idle()
+        else:
+            plot_viewer.canvas.axes[plot_number % 9].imshow(self.experiments[plot_number].animal_jpg, cmap="gray", aspect="auto")
+            sns.kdeplot(
+                x=self.analysis_results["x_data"],
+                y=self.analysis_results["y_data"],
+                fill=True,
+                ax=plot_viewer.canvas.axes[plot_number % 9],
+                cmap="inferno",
+                alpha=0.5,
+            )
+            plt.show()
+            axe_1.axis("tight")
+            axe_1.axis("off")
+            axe_1.set_title("Exploration", loc="center")
+            plt.savefig(
+                save_folder + "/" + self.experiments[plot_number].name + "Overall exploration by ROI.png",
+                dpi=200,
+            )
+            plot_number += 1
+            plot_viewer.canvas.draw_idle()
         pass
 
 
