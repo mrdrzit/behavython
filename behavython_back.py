@@ -14,8 +14,6 @@ from scipy import stats
 from copy import copy
 from dlc_helper_functions import *
 
-plt.ioff()
-
 
 class experiment_class:
     """
@@ -500,13 +498,15 @@ class experiment_class:
                 cmap="inferno",
                 alpha=0.5,
             )
-            plt.show()
             axe_1.axis("tight")
             axe_1.axis("off")
             plot_number += 1
             plot_viewer.canvas.draw_idle()
         else:
+            plt.ioff()
+            fig1, axe1 = plt.subplots()
             plot_viewer.canvas.axes[plot_number % 9].imshow(self.experiments[plot_number].animal_jpg, cmap="gray", aspect="auto")
+            axe1.imshow(self.experiments[plot_number].animal_jpg, aspect="auto")
             sns.kdeplot(
                 x=self.analysis_results["x_data"],
                 y=self.analysis_results["y_data"],
@@ -515,16 +515,25 @@ class experiment_class:
                 cmap="inferno",
                 alpha=0.5,
             )
-            plt.show()
-            axe_1.axis("tight")
-            axe_1.axis("off")
-            axe_1.set_title("Exploration", loc="center")
-            plt.savefig(
+            # Do i really need to plot this twice?
+            sns.kdeplot(
+                x=self.analysis_results["x_data"],
+                y=self.analysis_results["y_data"],
+                fill=True,
+                ax=axe1,
+                cmap="inferno",
+                alpha=0.5,
+            )
+            axe1.axis("tight")
+            axe1.axis("off")
+            axe1.set_title("Exploration map", loc="center")
+            fig1.savefig(
                 save_folder + "/" + self.experiments[plot_number].name + "Overall exploration by ROI.png",
                 dpi=200,
             )
             plot_number += 1
             plot_viewer.canvas.draw_idle()
+        plt.close("all")
         pass
 
 
