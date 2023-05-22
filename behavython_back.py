@@ -60,7 +60,7 @@ class experiment_class:
             factor_width = arena_width / video_width
             factor_height = arena_height / video_height
             number_of_frames = animal.exp_length()
-            # ---------------------------------------------------------------
+            # ----------------------------------------------------------------------------------------------------------
 
             for i in range(animal.exp_length()):
                 # Calculate the area of the mice's head
@@ -95,6 +95,36 @@ class experiment_class:
             # Meaning that it flattens the list and then separates the x and y coordinates
             x, y = zip(*[item for sublist in xy_data.to_list() for item in sublist])
 
+            # Calculate a gridmap with a exploration heatmap -----------------------------------------------------------
+            xy_values = [(int(focinho_x[i]), int(focinho_y[i])) for i in range(number_of_frames)]
+            # Extract x and y values from the list
+            x_values = [int(value) for value in focinho_x]
+            y_values = [int(value) for value in focinho_y]
+
+            # Find the minimum and maximum values of x and y
+            min_x = min(x_values)
+            max_x = max(x_values)
+            min_y = min(y_values)
+            max_y = max(y_values)
+
+            bin_size = 10
+
+            # Calculate the number of bins in each dimension
+            num_bins_x = int((max_x - min_x) / bin_size) + 1
+            num_bins_y = int((max_y - min_y) / bin_size) + 1
+
+            # Create a grid to store the frequencies
+            grid = np.zeros((num_bins_y, num_bins_x), dtype=int)
+
+            # Assign the values to their corresponding bins in the grid
+            for xy in xy_values:
+                xi, yi = xy
+                bin_x = (xi - min_x) // bin_size
+                bin_y = (yi - min_y) // bin_size
+                grid[bin_y, bin_x] += 1  # Increment the frequency of the corresponding bin
+
+            # ----------------------------------------------------------------------------------------------------------
+
             exploration_mask = collisions[0] > 0
             exploration_mask = exploration_mask.replace({True: 1, False: 0})
             exploration_time = np.sum(exploration_mask) * (1 / frames_per_second)
@@ -102,11 +132,23 @@ class experiment_class:
                 "x_data": x,
                 "y_data": y,
                 "exploration_time": exploration_time,
+                "grid": grid,
                 "video_width": video_width,
                 "video_height": video_height,
                 "max_video_height": max_video_height,
                 "max_video_width": max_video_width,
                 "plot_options": plot_options,
+                "dimensions": animal.exp_dimensions(),
+                "focinho_x": animal.bodyparts["focinho"]["x"],
+                "focinho_y": animal.bodyparts["focinho"]["y"],
+                "orelha_esq_x": animal.bodyparts["orelhae"]["x"],
+                "orelha_esq_y": animal.bodyparts["orelhae"]["y"],
+                "orelha_dir_x": animal.bodyparts["orelhad"]["x"],
+                "orelha_dir_y": animal.bodyparts["orelhad"]["y"],
+                "roi_X": animal.rois[0]["x"],
+                "roi_Y": animal.rois[0]["y"],
+                "roi_D": (animal.rois[0]["width"] + animal.rois[0]["height"]) / 2,
+                "collision_data": collision_data,
             }
             dict_to_excel = {"exploration_time": exploration_time}
             data_frame = pd.DataFrame(data=dict_to_excel, index=[animal.name])
@@ -477,39 +519,54 @@ class experiment_class:
         plt.close("all")
 
     def plot_analysis_social_behavior(self, plot_viewer, plot_number, save_folder):
-        # figure_1, axe_1 = plt.subplots()
         plot_option = self.analysis_results["plot_options"]
-
-        fig, axe_1 = plt.subplots()
-
         image_height = self.analysis_results["video_height"]
         image_width = self.analysis_results["video_width"]
         max_height = self.analysis_results["max_video_height"]
         max_width = self.analysis_results["max_video_width"]
-        # Calculate the ratio to be used for image resizing without losing the aspect ratio
+        x_collisions = self.analysis_results["x_data"]
+        y_collisions = self.analysis_results["y_data"]
+        grid = self.analysis_results["grid"]
+
+        fig_1, axe_1 = plt.subplots()
+        axe_1.set_title("Overall heatmap of the mice's nose position", loc="center")
+        axe_1.set_xlabel("X (pixels)")
+        axe_1.set_ylabel("Y (pixels)")
+        axe_1.set_xticks([])
+        axe_1.set_yticks([])
+        ratio = min(max_height / image_width, max_width / image_height)
+        # Calculate the new resolution in inches based on the dpi set
+
+        new_resolution_in_inches = (image_width * ratio / 100, image_height * ratio / 100)
+        fig_1.set_size_inches(new_resolution_in_inches)
+        fig_1.savefig(
+            save_folder + "/" + self.experiments[plot_number].name + "Overall heatmap of the mice's nose position", dpi=600
+        )
+        temp = np.multiply(np.sort(sum(self.analysis_results["grid"])), 1 / 30)
+        range_time_each_bin = np.sort(temp).round(decimals=1)
+        # ----------------------------------------------------------------------------------------------------------
 
         if plot_option == 0:
+            fig_2, axe_2 = plt.subplots()
             plot_viewer.canvas.axes[plot_number % 9].imshow(self.experiments[plot_number].animal_jpg, cmap="gray", aspect="auto")
             sns.kdeplot(
-                x=self.analysis_results["x_data"],
-                y=self.analysis_results["y_data"],
+                x=x_collisions,
+                y=y_collisions,
                 fill=True,
                 ax=plot_viewer.canvas.axes[plot_number % 9],
                 cmap="inferno",
                 alpha=0.5,
             )
-            axe_1.axis("tight")
-            axe_1.axis("off")
+            axe_2.axis("tight")
+            axe_2.axis("off")
             plot_number += 1
             plot_viewer.canvas.draw_idle()
         else:
-            plt.ioff()
-            fig1, axe1 = plt.subplots()
+            fig_3, axe_3 = plt.subplots()
             plot_viewer.canvas.axes[plot_number % 9].imshow(self.experiments[plot_number].animal_jpg, cmap="gray", aspect="auto")
-            axe1.imshow(self.experiments[plot_number].animal_jpg, aspect="auto")
             sns.kdeplot(
-                x=self.analysis_results["x_data"],
-                y=self.analysis_results["y_data"],
+                x=x_collisions,
+                y=y_collisions,
                 fill=True,
                 ax=plot_viewer.canvas.axes[plot_number % 9],
                 cmap="inferno",
@@ -517,23 +574,52 @@ class experiment_class:
             )
             # Do i really need to plot this twice?
             sns.kdeplot(
-                x=self.analysis_results["x_data"],
-                y=self.analysis_results["y_data"],
+                x=x_collisions,
+                y=y_collisions,
                 fill=True,
-                ax=axe1,
+                ax=axe_3,
+                cbar=False,
                 cmap="inferno",
+                cbar_kws={
+                    "label": "Permanence time (s)",
+                    "location": "right",
+                    "cbar": True,
+                },
                 alpha=0.5,
             )
-            axe1.axis("tight")
-            axe1.axis("off")
-            axe1.set_title("Exploration map", loc="center")
-            fig1.savefig(
-                save_folder + "/" + self.experiments[plot_number].name + "Overall exploration by ROI.png",
-                dpi=200,
-            )
+            # Calculate the ratio to be used for image resizing without losing the aspect ratio
+            ratio = min(max_height / image_width, max_width / image_height)
+            # Calculate the new resolution in inches based on the dpi set
+            new_resolution_in_inches = (image_width * ratio / 100, image_height * ratio / 100)
+            axe_3.imshow(self.experiments[plot_number].animal_jpg, aspect="auto", interpolation="bicubic")
+            axe_3.set_title("Exploration map by ROI", loc="center", fontdict={"fontsize": "xx-large", "fontweight": "normal"})
+            fig_3.set_size_inches(new_resolution_in_inches)
+            axe_3.axis("off")
+            axe_3.axis("tight")
+            plt.show()
+            fig_3.savefig(save_folder + "/" + self.experiments[plot_number].name + "Overall exploration by ROI.png", dpi=600)
             plot_number += 1
             plot_viewer.canvas.draw_idle()
-        plt.close("all")
+
+            fig_4, axe_4 = plt.subplots()
+            axe_4.imshow(grid, cmap="inferno", interpolation="bessel")
+            fig_4.show()
+            fig_4.set_size_inches(new_resolution_in_inches)
+            axe_4.axis("tight")
+            axe_4.axis("off")
+            axe_4.set_title("Overall heatmap of the mice's nose position", loc="center")
+            axe_4.set_xlabel("X (pixels)")
+            axe_4.set_ylabel("Y (pixels)")
+            axe_4.set_xticks([])
+            axe_4.set_yticks([])
+            fig_4.savefig(
+                save_folder + "/" + self.experiments[plot_number].name + "Overall heatmap of the mice's nose position", dpi=600
+            )
+            plot_viewer.canvas.axes[plot_number % 9].imshow(self.analysis_results["grid"], cmap="inferno", interpolation="bessel")
+            plot_number += 1
+            plot_viewer.canvas.draw_idle()
+            pass
+
         pass
 
 

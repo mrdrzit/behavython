@@ -560,10 +560,10 @@ QScrollBar::sub-page:vertical {
       <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
-      <string notr="true">Maximum figure size</string>
+      <string notr="true">Desired figure size</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      <set>Qt::AlignCenter</set>
      </property>
     </widget>
     <widget class="QComboBox" name="fig_max_size">
