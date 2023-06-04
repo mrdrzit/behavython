@@ -100,6 +100,13 @@ class Animal:
                 "width": [],
                 "height": [],
             },
+            {
+                "file": [],
+                "x": [],
+                "y": [],
+                "width": [],
+                "height": [],
+            },
         ]
         self.bodyparts = {
             "focinho": [],
@@ -237,7 +244,9 @@ class Animal:
             raw_image = mpimg.imread(image_file)
             self.animal_jpg = raw_image
         except KeyError:
-            print(f"\nJPG file for the animal {self.name} not found.\nPlease, check if the name of the file is correct.\n")
+            print(
+                f"\nJPG file for the animal {self.name} not found.\nPlease, check if the name of the file is correct.\n"
+            )
         return
 
     def add_position_file(self, position_file):
@@ -293,7 +302,6 @@ def get_unique_names(file_list, regex):
             try:
                 unique_names.append(regex.search(file_name).group(0))
             except AttributeError:
-                print(f"'{file_name}' not recognized")
                 pass
 
     names = list(dict.fromkeys(unique_names))
@@ -313,23 +321,22 @@ def get_files(line_edit, data: DataFiles, animal_list: list):
     Returns:
         None: The function does not return anything, but it fills the data and animal_list objects
     """
-    # file_explorer = tk.Tk()
-    # file_explorer.withdraw()
-    # file_explorer.call("wm", "attributes", ".", "-topmost", True)
-    # data_files = filedialog.askopenfilename(title="Select the files to analyze", multiple=True)
+    file_explorer = tk.Tk()
+    file_explorer.withdraw()
+    file_explorer.call("wm", "attributes", ".", "-topmost", True)
+    data_files = filedialog.askopenfilename(title="Select the files to analyze", multiple=True)
 
     ## Uncomment the following lines to test the code without the GUI
-    data_files = [
-        r"C:\\Users\\uzuna\Documents\\GITHUB\\My_projects\\tests\\Deeplabcut\\data\\C57\\C57_1_downsampled_roi.csv",
-        r"C:\\Users\\uzuna\Documents\\GITHUB\\My_projects\\tests\\Deeplabcut\\data\\C57\\C57_1_downsampledDLC_resnet50_C57Feb17shuffle1_145000_filtered.csv",
-        r"C:\\Users\\uzuna\Documents\\GITHUB\\My_projects\\tests\\Deeplabcut\\data\\C57\\C57_1_downsampledDLC_resnet50_C57Feb17shuffle1_145000_filtered.png",
-        r"C:\\Users\\uzuna\Documents\\GITHUB\\My_projects\\tests\\Deeplabcut\\data\\C57\\C57_1_downsampledDLC_resnet50_C57Feb17shuffle1_145000_filtered_skeleton.csv",
-    ]
+    # data_files = [
+    #     r"C:\\Users\\uzuna\Documents\\GITHUB\\My_projects\\tests\\Deeplabcut\\data\\C57\\C57_1_downsampled_roi.csv",
+    #     r"C:\\Users\\uzuna\Documents\\GITHUB\\My_projects\\tests\\Deeplabcut\\data\\C57\\C57_1_downsampledDLC_resnet50_C57Feb17shuffle1_145000_filtered.csv",
+    #     r"C:\\Users\\uzuna\Documents\\GITHUB\\My_projects\\tests\\Deeplabcut\\data\\C57\\C57_1_downsampledDLC_resnet50_C57Feb17shuffle1_145000_filtered.png",
+    #     r"C:\\Users\\uzuna\Documents\\GITHUB\\My_projects\\tests\\Deeplabcut\\data\\C57\\C57_1_downsampledDLC_resnet50_C57Feb17shuffle1_145000_filtered_skeleton.csv",
+    # ]
 
     get_name = re.compile(r"^.*?(?=DLC)|^.*?(?=(\.jpg|\.png|\.bmp|\.jpeg|\.svg))")
     # TODO #38 - Remove this regex and use the list created below to get the roi files4
-    # Currently the regex is not working properly
-    get_roi = re.compile(r"(?i)\b\w*roi\w*\b\.csv$")
+    get_roi = re.compile(r"\b\w*roi[\w -~]*\.csv$")
     unique_animals = get_unique_names(data_files, get_name)
     roi_iter_obejct = it.filterfalse(lambda x: not (re.search("roi", x)), data_files)
     rois = []
@@ -346,9 +353,9 @@ def get_files(line_edit, data: DataFiles, animal_list: list):
                     line_edit.append("Position file found for " + animal)
                     data.add_pos_file(animal, file)
                     continue
-                if (file.endswith(".jpg") or file.endswith(".png") or file.endswith(".jpeg")) and not data.experiment_images.get(
-                    animal
-                ):
+                if (
+                    file.endswith(".jpg") or file.endswith(".png") or file.endswith(".jpeg")
+                ) and not data.experiment_images.get(animal):
                     line_edit.append("Image file found for " + animal)
                     data.add_image_file(animal, file)
                     continue
@@ -460,7 +467,9 @@ def detect_collision(line_segment_start, line_segment_end, circle_center, circle
     line_segment_delta_x = line_end_x_relative_to_circle - line_start_x_relative_to_circle
     line_segment_delta_y = line_end_y_relative_to_circle - line_start_y_relative_to_circle
 
-    line_segment_length = math.sqrt(line_segment_delta_x * line_segment_delta_x + line_segment_delta_y * line_segment_delta_y)
+    line_segment_length = math.sqrt(
+        line_segment_delta_x * line_segment_delta_x + line_segment_delta_y * line_segment_delta_y
+    )
     discriminant_numerator = (
         line_start_x_relative_to_circle * line_end_y_relative_to_circle
         - line_end_x_relative_to_circle * line_start_y_relative_to_circle
@@ -472,8 +481,12 @@ def detect_collision(line_segment_start, line_segment_end, circle_center, circle
     if discriminant < 0:
         return []
     if discriminant == 0:
-        intersection_point_1_x = (discriminant_numerator * line_segment_delta_y) / (line_segment_length * line_segment_length)
-        intersection_point_1_y = (-discriminant_numerator * line_segment_delta_x) / (line_segment_length * line_segment_length)
+        intersection_point_1_x = (discriminant_numerator * line_segment_delta_y) / (
+            line_segment_length * line_segment_length
+        )
+        intersection_point_1_y = (-discriminant_numerator * line_segment_delta_x) / (
+            line_segment_length * line_segment_length
+        )
         parameterization_a = (
             intersection_point_1_x - line_start_x_relative_to_circle
         ) * line_segment_delta_x / line_segment_length + (
