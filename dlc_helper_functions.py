@@ -112,6 +112,7 @@ class Animal:
             "focinho": [],
             "orelhad": [],
             "orelhae": [],
+            "centro": [],
             "rabo": [],
         }
         self.skeleton = {
@@ -119,8 +120,9 @@ class Animal:
             "focinho_orelhad": [],
             "orelhad_orelhae": [],
             "orelhae_orelhad": [],
-            "orelhae_rabo": [],
-            "orelhad_rabo": [],
+            "orelhad_centro": [],
+            "orelhae_centro": [],
+            "centro_rabo": [],
         }
 
     def exp_dimensions(self):
