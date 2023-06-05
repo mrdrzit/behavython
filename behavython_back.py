@@ -14,6 +14,8 @@ from scipy import stats
 from copy import copy
 from dlc_helper_functions import *
 
+plt.ioff()
+
 
 class experiment_class:
     """
@@ -550,12 +552,7 @@ class experiment_class:
         ratio = min(max_height / image_width, max_width / image_height)
         # Calculate the new resolution in inches based on the dpi set
 
-        new_resolution_in_inches = (image_width * ratio / 100, image_height * ratio / 100)
-        fig_1.set_size_inches(new_resolution_in_inches)
-        fig_1.savefig(
-            save_folder + "/" + self.experiments[plot_number].name + "Overall heatmap of the mice's nose position",
-            dpi=600,
-        )
+        new_resolution_in_inches = (int(image_width * ratio / 100), int(image_height * ratio / 100))
         temp = np.multiply(np.sort(sum(self.analysis_results["grid"])), 1 / 30)
         range_time_each_bin = np.sort(temp).round(decimals=1)
         # ----------------------------------------------------------------------------------------------------------
@@ -608,24 +605,19 @@ class experiment_class:
             # Calculate the ratio to be used for image resizing without losing the aspect ratio
             ratio = min(max_height / image_width, max_width / image_height)
             # Calculate the new resolution in inches based on the dpi set
-            new_resolution_in_inches = (image_width * ratio / 100, image_height * ratio / 100)
             axe_3.imshow(self.experiments[plot_number].animal_jpg, aspect="auto", interpolation="bicubic")
             axe_3.set_title(
-                "Exploration map by ROI", loc="center", fontdict={"fontsize": "xx-large", "fontweight": "normal"}
+                "Exploration map by ROI", loc="center", fontdict={"fontsize": "large", "fontweight": "normal"}
             )
             fig_3.set_size_inches(new_resolution_in_inches)
             axe_3.axis("off")
             axe_3.axis("tight")
-            plt.show()
             fig_3.savefig(
-                save_folder + "/" + self.experiments[plot_number].name + "Overall exploration by ROI.png", dpi=600
+                save_folder + "/" + self.experiments[plot_number].name + "Overall exploration by ROI.png", dpi=100
             )
-            plot_number += 1
-            plot_viewer.canvas.draw_idle()
 
             fig_4, axe_4 = plt.subplots()
             axe_4.imshow(grid, cmap="inferno", interpolation="bessel")
-            fig_4.show()
             fig_4.set_size_inches(new_resolution_in_inches)
             axe_4.axis("tight")
             axe_4.axis("off")
@@ -636,13 +628,10 @@ class experiment_class:
             axe_4.set_yticks([])
             fig_4.savefig(
                 save_folder + "/" + self.experiments[plot_number].name + "Overall heatmap of the mice's nose position",
-                dpi=600,
             )
             plot_viewer.canvas.axes[plot_number % 9].imshow(
                 self.analysis_results["grid"], cmap="inferno", interpolation="bessel"
             )
-            plot_number += 1
-            plot_viewer.canvas.draw_idle()
             pass
 
         pass
