@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import re
 from matplotlib.collections import LineCollection
 from matplotlib import pyplot as plt
 from tkinter import filedialog
@@ -46,8 +47,12 @@ class experiment_class:
             roi_X = []
             roi_Y = []
             roi_D = []
+            roi_NAME = []
+            roi_regex = re.compile(r"\/([^\/]+)\.")
             number_of_filled_rois = sum(1 for roi in animal.rois if roi["x"])
             for i in range(number_of_filled_rois):
+                # Finds the name of the roi in the file name
+                roi_NAME.append(roi_regex.search(animal.rois[i]["file"]).group(1))
                 roi_X.append(animal.rois[i]["x"])
                 roi_Y.append(animal.rois[i]["y"])
                 roi_D.append((animal.rois[i]["width"] + animal.rois[i]["height"]) / 2)
@@ -89,9 +94,9 @@ class experiment_class:
                 for i in range(number_of_filled_rois):
                     collision = detect_collision([Q[0], Q[1]], [P[0], P[1]], [roi_X[i], roi_Y[i]], roi_D[i] / 2)
                     if collision:
-                        collision_data.append([1, collision, mice_head_area, "roi" + str(i)])
+                        collision_data.append([1, collision, mice_head_area, roi_NAME[i]])
                     else:
-                        collision_data.append([0, None, mice_head_area, "roi" + str(i)])
+                        collision_data.append([0, None, mice_head_area, None])
 
             collisions = pd.DataFrame(collision_data)
             xy_data = collisions[1].dropna()
@@ -133,13 +138,25 @@ class experiment_class:
 
             # ----------------------------------------------------------------------------------------------------------
 
+            # Calculate the total exploration time
             exploration_mask = collisions[0] > 0
             exploration_mask = exploration_mask.replace({True: 1, False: 0})
             exploration_time = np.sum(exploration_mask) * (1 / frames_per_second)
+
+            # Calculate the total exploration time in each ROI
+            filtered_mask_right = collisions[collisions.iloc[:, -1].fillna("").str.contains("roiD")]
+            filtered_mask_left = collisions[collisions.iloc[:, -1].fillna("").str.contains("roiE")]
+            count_right = len(filtered_mask_right)
+            count_left = len(filtered_mask_left)
+            exploration_time_right = count_right * (1 / frames_per_second)
+            exploration_time_left = count_left * (1 / frames_per_second)
+
             self.analysis_results = {
                 "x_data": x,
                 "y_data": y,
                 "exploration_time": exploration_time,
+                "exploration_time_right": exploration_time_right,
+                "exploration_time_left": exploration_time_left,
                 "grid": grid,
                 "video_width": video_width,
                 "video_height": video_height,
@@ -158,7 +175,11 @@ class experiment_class:
                 "roi_D": (animal.rois[0]["width"] + animal.rois[0]["height"]) / 2,
                 "collision_data": collision_data,
             }
-            dict_to_excel = {"exploration_time": exploration_time}
+            dict_to_excel = {
+                "exploration_time": exploration_time,
+                "exploration_time_right": exploration_time_right,
+                "exploration_time_left": exploration_time_left,
+            }
             data_frame = pd.DataFrame(data=dict_to_excel, index=[animal.name])
             data_frame = data_frame.T
 
@@ -634,6 +655,7 @@ class experiment_class:
             )
             pass
 
+        plt.close("all")
         pass
 
 
