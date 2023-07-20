@@ -3,11 +3,14 @@ import os
 import re
 import tkinter as tk
 import itertools as it
+import matplotlib
 import matplotlib.image as mpimg
 from tkinter import filedialog
 import pandas as pd
 import skimage
 from skimage.color import rgb2gray
+
+matplotlib.use("qtagg")
 
 
 class DataFiles:
