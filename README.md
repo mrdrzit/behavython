@@ -12,8 +12,6 @@
      alt="Behavython software"
 
   <p align="center">
-    <span style="font-size:14px">Based on the original code by </span><a href=https://github.com/fgmourao>Flávio Mourão</a>
-    <br />
     <br />
     ·
     <a href="https://github.com/mrdrzit/Behavython/issues">Report Bug</a>
