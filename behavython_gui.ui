@@ -548,7 +548,7 @@ QScrollBar::sub-page:vertical {
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>280</y>
+       <y>300</y>
        <width>131</width>
        <height>16</height>
       </rect>
@@ -570,7 +570,7 @@ QScrollBar::sub-page:vertical {
      <property name="geometry">
       <rect>
        <x>160</x>
-       <y>280</y>
+       <y>300</y>
        <width>121</width>
        <height>16</height>
       </rect>
@@ -766,7 +766,7 @@ to see the help text</string>
      <property name="geometry">
       <rect>
        <x>50</x>
-       <y>310</y>
+       <y>320</y>
        <width>91</width>
        <height>17</height>
       </rect>
@@ -788,7 +788,7 @@ to see the help text</string>
      <property name="geometry">
       <rect>
        <x>170</x>
-       <y>310</y>
+       <y>320</y>
        <width>81</width>
        <height>17</height>
       </rect>
@@ -807,7 +807,7 @@ to see the help text</string>
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>260</y>
+       <y>280</y>
        <width>261</width>
        <height>16</height>
       </rect>
@@ -927,13 +927,57 @@ to see the help text</string>
      <property name="geometry">
       <rect>
        <x>110</x>
-       <y>330</y>
+       <y>340</y>
        <width>88</width>
        <height>17</height>
       </rect>
      </property>
      <property name="text">
       <string>Crop video</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="crop_video_time_lineedit">
+     <property name="geometry">
+      <rect>
+       <x>160</x>
+       <y>250</y>
+       <width>121</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+     </property>
+     <property name="text">
+      <string notr="true">15</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_15">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>250</y>
+       <width>114</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>114</width>
+       <height>16</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+     </property>
+     <property name="text">
+      <string notr="true">How much to trim</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
      </property>
     </widget>
    </widget>

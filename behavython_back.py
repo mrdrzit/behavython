@@ -71,13 +71,14 @@ class experiment_class:
             max_video_height = int(options["max_fig_res"][0])
             max_video_width = int(options["max_fig_res"][1])
             plot_options = options["plot_options"]
+            trim_amount = int(options["trim_amount"] * frames_per_second)
             video_height, video_width, _ = dimensions
             factor_width = arena_width / video_width
             factor_height = arena_height / video_height
             number_of_frames = animal.exp_length()
             # ----------------------------------------------------------------------------------------------------------
             if self.options["crop_video"]:
-                runtime = range(360, int((max_analysis_time * frames_per_second)) - 1)
+                runtime = range(trim_amount, int((max_analysis_time * frames_per_second) + trim_amount) - 1)
             else:
                 runtime = max_analysis_time * frames_per_second
             for i in runtime:

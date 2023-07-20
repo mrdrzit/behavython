@@ -62,7 +62,7 @@ class behavython_gui(QMainWindow):
         This private function calls the interface of a .ui file created in Qt Designer.
         """
         super(behavython_gui, self).__init__()  # Calls the inherited classes __init__ method
-        load_gui_path = os.path.dirname(__file__) + "\\behavython_gui.ui"
+        load_gui_path = os.path.join(os.path.dirname(__file__), "behavython_gui.ui")
         uic.loadUi(load_gui_path, self)  # Loads the interface design archive (made in Qt Designer)
         self.show()
         self.options = {}
@@ -84,6 +84,7 @@ class behavython_gui(QMainWindow):
         else:
             self.options["threshold"] = 0.0667
         self.options["task_duration"] = int(self.crop_video_lineedit.text())
+        self.options["trim_amount"] = int(self.crop_video_time_lineedit.text())
         self.options["crop_video"] = self.crop_video_checkbox.isChecked()
 
         functions = behavython_back.interface_functions()
