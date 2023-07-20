@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import re
+import matplotlib
 from matplotlib.collections import LineCollection
 from matplotlib import pyplot as plt
 from tkinter import filedialog
@@ -15,6 +16,7 @@ from scipy import stats
 from copy import copy
 from dlc_helper_functions import *
 
+matplotlib.use("Qt5Agg")
 plt.ioff()
 
 
@@ -62,6 +64,7 @@ class experiment_class:
             arena_width = options["arena_width"]
             arena_height = options["arena_height"]
             frames_per_second = options["frames_per_second"]
+            max_analysis_time = options["task_duration"]
             threshold = options["threshold"]
             # Maximum video height set by user
             # (height is stored in the first element of the list and is converted to int beacuse it comes as a string)
@@ -73,8 +76,11 @@ class experiment_class:
             factor_height = arena_height / video_height
             number_of_frames = animal.exp_length()
             # ----------------------------------------------------------------------------------------------------------
-
-            for i in range(animal.exp_length()):
+            if self.options["crop_video"]:
+                runtime = range(360, int((max_analysis_time * frames_per_second)) - 1)
+            else:
+                runtime = max_analysis_time * frames_per_second
+            for i in runtime:
                 # Calculate the area of the mice's head
                 Side1 = np.sqrt(((orelha_esq_x[i] - focinho_x[i]) ** 2) + ((orelha_esq_y[i] - focinho_y[i]) ** 2))
                 Side2 = np.sqrt(((orelha_dir_x[i] - orelha_esq_x[i]) ** 2) + ((orelha_dir_y[i] - orelha_esq_y[i]) ** 2))
