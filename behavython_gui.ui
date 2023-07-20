@@ -99,7 +99,7 @@ QScrollBar::sub-page:vertical {
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>360</y>
+       <y>400</y>
        <width>261</width>
        <height>21</height>
       </rect>
@@ -174,7 +174,7 @@ QScrollBar::sub-page:vertical {
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>390</y>
+       <y>430</y>
        <width>261</width>
        <height>21</height>
       </rect>
@@ -423,9 +423,9 @@ QScrollBar::sub-page:vertical {
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>430</y>
+       <y>470</y>
        <width>261</width>
-       <height>121</height>
+       <height>81</height>
       </rect>
      </property>
      <property name="styleSheet">
@@ -548,7 +548,7 @@ QScrollBar::sub-page:vertical {
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>260</y>
+       <y>280</y>
        <width>131</width>
        <height>16</height>
       </rect>
@@ -570,7 +570,7 @@ QScrollBar::sub-page:vertical {
      <property name="geometry">
       <rect>
        <x>160</x>
-       <y>260</y>
+       <y>280</y>
        <width>121</width>
        <height>16</height>
       </rect>
@@ -627,7 +627,7 @@ QScrollBar::sub-page:vertical {
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>320</y>
+       <y>360</y>
        <width>261</width>
        <height>31</height>
       </rect>
@@ -766,7 +766,7 @@ to see the help text</string>
      <property name="geometry">
       <rect>
        <x>50</x>
-       <y>290</y>
+       <y>310</y>
        <width>91</width>
        <height>17</height>
       </rect>
@@ -788,8 +788,8 @@ to see the help text</string>
      <property name="geometry">
       <rect>
        <x>170</x>
-       <y>290</y>
-       <width>82</width>
+       <y>310</y>
+       <width>81</width>
        <height>17</height>
       </rect>
      </property>
@@ -800,14 +800,14 @@ to see the help text</string>
       <string>Only plot</string>
      </property>
      <property name="checked">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
     </widget>
     <widget class="QLabel" name="label_14">
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>240</y>
+       <y>260</y>
        <width>261</width>
        <height>16</height>
       </rect>
@@ -877,6 +877,63 @@ to see the help text</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_11">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>230</y>
+       <width>114</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>114</width>
+       <height>16</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+     </property>
+     <property name="text">
+      <string notr="true">Task duration (sec)</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="crop_video_lineedit">
+     <property name="geometry">
+      <rect>
+       <x>160</x>
+       <y>230</y>
+       <width>121</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+     </property>
+     <property name="text">
+      <string notr="true">300</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="crop_video_checkbox">
+     <property name="geometry">
+      <rect>
+       <x>110</x>
+       <y>330</y>
+       <width>88</width>
+       <height>17</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Crop video</string>
      </property>
     </widget>
    </widget>
