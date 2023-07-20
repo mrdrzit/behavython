@@ -83,6 +83,8 @@ class behavython_gui(QMainWindow):
             self.options["threshold"] = 0.0267
         else:
             self.options["threshold"] = 0.0667
+        self.options["task_duration"] = int(self.crop_video_lineedit.text())
+        self.options["crop_video"] = self.crop_video_checkbox.isChecked()
 
         functions = behavython_back.interface_functions()
         if self.options["algo_type"] == "deeplabcut":
@@ -180,6 +182,18 @@ def warning_message_function(title, text):
 def main():
     app = QtWidgets.QApplication(sys.argv)  # Create an instance of QtWidgets.QApplication
     window = behavython_gui()  # Create an instance of our class
+
+    # -----------------------------------------------------------------------------------------
+    ## This block of code is to be used when the interface is going to be compiled into an exe
+    ## It serves the function of removing the splash when the program finishes loading
+    # try:
+    #     import pyi_splash
+
+    #     pyi_splash.close()
+    # except:
+    #     pass
+    # -----------------------------------------------------------------------------------------
+
     app.exec_()  # Start the application
 
 
