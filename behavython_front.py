@@ -2,6 +2,8 @@ import behavython_back
 import sys
 import os
 import tkinter as tk
+import deeplabcut
+from pathlib import Path
 from tkinter import filedialog
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import QMainWindow, QMessageBox
@@ -236,7 +238,30 @@ class behavython_gui(QMainWindow):
         return True
 
     def dlc_video_analyze_function(self):
-        pass
+        self.clear_unused_files_lineedit.clear()
+        self.clear_unused_files_lineedit.append(f"Using DeepLabCut version{deeplabcut.__version__}")
+        config_path = self.config_path_lineedit.text().replace('"', "").replace("'", "")
+        videos = self.video_folder_lineedit.text().replace('"', "").replace("'", "")
+        _, _, file_list = [entry for entry in os.walk(videos)][0]
+        file_extension = file_list[0].split(".")[-1]
+
+        all_has_same_extension = all([file.split(".")[-1] == file_extension for file in file_list])
+        if not all_has_same_extension:
+            title = "Video extension error"
+            message = "All videos must have the same extension.\n Please, check the videos folder and try again."
+            warning_message_function(title, message)
+            return False
+
+        deeplabcut.analyze_videos(
+            config_path,
+            videos,
+            videotype=file_extension,
+            shuffle=1,
+            trainingsetindex=0,
+            gputouse=0,
+            allow_growth=True,
+            save_as_csv=True,
+        )
 
     def get_data_files_function(self):
         pass
@@ -252,13 +277,13 @@ class behavython_gui(QMainWindow):
             file_explorer = tk.Tk()
             file_explorer.withdraw()
             file_explorer.call("wm", "attributes", ".", "-topmost", True)
-            config_file = filedialog.askopenfilename(title="Select the config.yaml file", multiple=False)
+            config_file = str(Path(filedialog.askopenfilename(title="Select the config.yaml file", multiple=False)))
             self.config_path_lineedit.setText(config_file)
         elif lineedit_name == "videos_path":
             file_explorer = tk.Tk()
             file_explorer.withdraw()
             file_explorer.call("wm", "attributes", ".", "-topmost", True)
-            folder = filedialog.askdirectory(title="Select the folder", mustexist=True)
+            folder = str(Path(filedialog.askdirectory(title="Select the folder", mustexist=True)))
             self.video_folder_lineedit.setText(folder)
 
 

@@ -965,6 +965,9 @@ to see the help text</string>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
        </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
        <property name="placeholderText">
         <string>%USERPROFILE%\path\to\project_folder\network_name_date\config.yaml</string>
        </property>
