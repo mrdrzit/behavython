@@ -298,7 +298,90 @@ class behavython_gui(QMainWindow):
         self.clear_unused_files_lineedit.append("Done extracting skeleton.")
 
     def clear_unused_files_function(self):
-        pass
+        self.clear_unused_files_lineedit.clear()
+        config_path = self.config_path_lineedit.text().replace('"', "").replace("'", "")
+        videos = self.video_folder_lineedit.text().replace('"', "").replace("'", "")
+        _, _, file_list = [entry for entry in os.walk(videos)][0]
+        file_extension = file_list[0].split(".")[-1]
+
+        for file in file_list:
+            if (
+                file.endswith(file_extension)
+                or file.endswith(".png")
+                or file.endswith(".jpg")
+                or file.endswith(".tiff")
+                or "roi" in file
+            ):
+                continue
+            if file.endswith(".h5") or file.endswith(".pickle") or "filtered" not in file:
+                os.remove(os.path.join(videos, file))
+                self.clear_unused_files_lineedit.append(f"Removed {file}")
+        _, _, file_list = [entry for entry in os.walk(videos)][0]
+
+        has_filtered_csv = False
+        has_skeleton_filtered_csv = False
+        has_roi_file = False
+        has_left_roi_file = False
+        has_right_roi_file = False
+        has_image_file = False
+        missing_files = []
+        task_type = self.type_combobox.currentText().lower().strip().replace(" ", "_")
+
+        for file in file_list:
+            if file.endswith("filtered.csv"):
+                has_filtered_csv = True
+                continue
+            elif file.endswith("filtered_skeleton.csv"):
+                has_skeleton_filtered_csv = True
+                continue
+            elif file.endswith(".png") or file.endswith(".jpg") or file.endswith(".tiff"):
+                has_image_file = True
+                continue
+            if task_type == "njr":
+                if file.endswith("roiD"):
+                    has_right_roi_file = True
+                    continue
+                elif file.endswith("roiE"):
+                    has_left_roi_file = True
+                    continue
+            elif task_type == "social_recognition":
+                if file.endswith("roi.csv"):
+                    has_roi_file = True
+                    continue
+        if any(
+            [
+                not has_filtered_csv,
+                not has_skeleton_filtered_csv,
+                not has_left_roi_file,
+                not has_right_roi_file,
+                not has_roi_file,
+                not has_image_file,
+            ]
+        ):
+            self.clear_unused_files_lineedit.append("There are missing files in the folder")
+        else:
+            self.clear_unused_files_lineedit.append("All required files are present.")
+            return
+        if not has_filtered_csv:
+            missing_files.append(" - filtered.csv")
+        if not has_skeleton_filtered_csv:
+            missing_files.append(" - skeleton_filtered.csv")
+        if not has_image_file:
+            missing_files.append(" - screenshot of the video")
+        if task_type == "njr":
+            if not has_left_roi_file:
+                missing_files.append(" - roiD.csv")
+            if not has_right_roi_file:
+                missing_files.append(" - roiE.csv")
+        if task_type == "social_recognition" and not has_roi_file:
+            missing_files.append(" - roi.csv")
+
+        title = "Missing files"
+        message = "The following files are missing:\n\n" + "\n".join(
+            missing_files
+            + ["\nPlease, these files are essential for the analysis to work.\nCheck the analysis folder and try again."]
+        )
+        warning_message_function(title, message)
 
     def get_folder_path_function(self, lineedit_name):
         if lineedit_name == "config_path":
