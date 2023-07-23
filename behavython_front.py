@@ -252,6 +252,7 @@ class behavython_gui(QMainWindow):
             warning_message_function(title, message)
             return False
 
+        self.clear_unused_files_lineedit.append("Analyzing videos...")
         deeplabcut.analyze_videos(
             config_path,
             videos,
@@ -262,6 +263,24 @@ class behavython_gui(QMainWindow):
             allow_growth=True,
             save_as_csv=True,
         )
+        self.clear_unused_files_lineedit.append("Done analyzing videos.")
+
+        self.clear_unused_files_lineedit.append("Filtering data files and saving as CSV...")
+        deeplabcut.filterpredictions(
+            config_path,
+            videos,
+            videotype=file_extension,
+            shuffle=1,
+            trainingsetindex=0,
+            filtertype="median",
+            windowlength=5,
+            p_bound=0.001,
+            ARdegree=3,
+            MAdegree=1,
+            alpha=0.01,
+            save_as_csv=True,
+        )
+        self.clear_unused_files_lineedit.append("Done filtering data files")
 
     def get_data_files_function(self):
         pass
