@@ -4,7 +4,7 @@ import os
 import tkinter as tk
 import subprocess
 
-# import deeplabcut
+import deeplabcut
 from pathlib import Path
 from tkinter import filedialog
 from PyQt5 import QtWidgets, uic
@@ -69,7 +69,7 @@ class behavython_gui(QMainWindow):
         """
         super(behavython_gui, self).__init__()  # Calls the inherited classes __init__ method
         load_gui_path = os.path.join(os.path.dirname(__file__), "behavython_gui.ui")
-        uic.loadUi(load_gui_path, self)  # Loads the interface design archive (made in Qt Designer)
+        self.interface = uic.loadUi(load_gui_path, self)  # Loads the interface design archive (made in Qt Designer)
         self.show()
         self.options = {}
         self.clear_button.clicked.connect(self.clear_function)
@@ -254,6 +254,11 @@ class behavython_gui(QMainWindow):
             warning_message_function(title, message)
             return False
 
+        continue_analysis = self.resume_message_function(file_list)
+        if not continue_analysis:
+            self.clear_unused_files_lineedit.clear()
+            self.clear_unused_files_lineedit.append("Analysis canceled.")
+            return
         self.clear_unused_files_lineedit.append("Analyzing videos...")
         deeplabcut.analyze_videos(
             config_path,
@@ -295,7 +300,17 @@ class behavython_gui(QMainWindow):
                 output_path = os.path.splitext(video_path)[0] + ".jpg"
                 self.clear_unused_files_lineedit.append(f"Getting last frame of {filename}")
                 if not os.path.isfile(output_path):
-                    subprocess.run("ffmpeg -sseof -100 -i " + video_path + " -update 1 -q:v 1 " + output_path, shell=True)
+                    subprocess.run(
+                        "ffmpeg -sseof -100 -i "
+                        + '"'
+                        + video_path
+                        + '"'
+                        + " -update 1 -q:v 1 "
+                        + '"'
+                        + output_path
+                        + '"',
+                        shell=True,
+                    )
                 else:
                     self.clear_unused_files_lineedit.append(f"Last frame of {filename} already exists.")
         pass
@@ -419,6 +434,42 @@ class behavython_gui(QMainWindow):
             file_explorer.call("wm", "attributes", ".", "-topmost", True)
             folder = str(Path(filedialog.askdirectory(title="Select the folder", mustexist=True)))
             self.video_folder_lineedit.setText(folder)
+
+    def resume_message_function(self, file_list):
+        text = "Check the videos to be analyzed: "
+        message = "The following files are going to be used for pose inference using DeepLabCut:\n\n" + "\n".join(
+            file_list + ["\nIs this correct?\n"] + ["If so, click 'Yes' to continue or 'No' to cancel the analysis.\n"]
+        )
+        answer = self.option_message_function(text, message)
+        if answer == "yes":
+            return True
+        else:
+            return False
+        return answer
+
+    def option_message_function(self, text, info_text):
+        warning = QMessageBox(self.interface)  # Create the message box
+        warning.setWindowTitle("Warning")  # Message box title
+        warning.setText(text)  # Message box text
+        warning.setInformativeText(info_text)  # Message box text
+        warning.setIcon(QMessageBox.Warning)  # Message box icon
+        warning.setStyleSheet(
+            "QMessageBox{background:#353535;}QLabel{font:10pt/DejaVu Sans/;"
+            + "font-weight:bold;color:#FFFFFF;}QPushButton{width:52px; border:2px solid #A21F27;border-radius:8px;"
+            + "background-color:#2C53A1;color:#FFFFFF;font:10pt/DejaVu Sans/;"
+            + "font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;"
+            + "border-radius:8px;background-color:#A21F27;color:#FFFFFF;}"
+        )
+        warning.setStandardButtons(QMessageBox.Yes | QMessageBox.No)  # Message box buttons
+        answer_yes = warning.button(QMessageBox.Yes)  # Set the button "yes"
+        answer_yes.setText("    YES    ")  # Rename the button "yes"
+        answer_no = warning.button(QMessageBox.No)  # Set the button "no"
+        answer_no.setText("     NO      ")  # Rename the button "no"
+        warning.exec_()  # Execute the message box
+        if warning.clickedButton() == answer_yes:  # If the button "yes" is clicked
+            return "yes"  # Return "yes"
+        else:  # If the button "no" is clicked
+            return "no"
 
 
 def warning_message_function(title, text):

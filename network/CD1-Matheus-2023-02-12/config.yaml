@@ -1,0 +1,97 @@
+    # Project definitions (do not edit)
+Task: CD1
+scorer: Matheus
+date: Feb12
+multianimalproject: false
+identity:
+
+    # Project path (change when moving around)
+project_path: C:\Users\uzuna\Desktop\training_ground\network\CD1-Matheus-2023-02-12
+
+    # Annotation data set configuration (and individual video cropping parameters)
+video_sets:
+  D:\DLC_test\CD1-Matheus-2023-02-12\videos\above_occluded_reflex_croppeddownsampled.mp4:
+    crop: 0, 622, 0, 600
+  D:\DLC_test\CD1-Matheus-2023-02-12\videos\slanted_4_croppeddownsampled.mp4:
+    crop: 0, 570, 0, 512
+  D:\DLC_test\CD1-Matheus-2023-02-12\videos\slanted_far_croppeddownsampled.mp4:
+    crop: 0, 578, 0, 512
+  D:\DLC_test\CD1-Matheus-2023-02-12\videos\slanted_open_1_croppeddownsampled.mp4:
+    crop: 0, 610, 0, 512
+  D:\DLC_test\CD1-Matheus-2023-02-12\videos\slanted_reflex_2_croppeddownsampled.mp4:
+    crop: 0, 648, 0, 600
+  D:\DLC_test\CD1-Matheus-2023-02-12\videos\straight_above_croppeddownsampled.mp4:
+    crop: 0, 512, 0, 512
+bodyparts:
+- Focinho
+- OrelhaE
+- OrelhaD
+- Rabo
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+start: 0
+stop: 1
+numframes2pick: 50
+
+    # Plotting configuration
+skeleton:
+- - Focinho
+  - OrelhaE
+- - Focinho
+  - OrelhaD
+- - OrelhaD
+  - OrelhaE
+- - OrelhaE
+  - Rabo
+- - OrelhaD
+  - Rabo
+skeleton_color: White
+pcutoff: 0.7
+dotsize: 6
+alphavalue: 0.7
+colormap: autumn
+
+    # Training,Evaluation and Analysis configuration
+TrainingFraction:
+- 0.95
+iteration: 1
+default_net_type: mobilenet_v2_1.0
+default_augmenter: imgaug
+snapshotindex: -1
+batch_size: 16
+
+    # Cropping Parameters (for analysis and outlier frame detection)
+cropping: false
+    #if cropping is true for analysis, then set the values here:
+x1: 0
+x2: 640
+y1: 277
+y2: 624
+
+    # Refinement configuration (parameters from annotation dataset configuration also relevant in this stage)
+corner2move2:
+- 50
+- 50
+move2corner: true
