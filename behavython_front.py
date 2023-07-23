@@ -286,7 +286,16 @@ class behavython_gui(QMainWindow):
         pass
 
     def extract_skeleton_function(self):
-        pass
+        self.clear_unused_files_lineedit.clear()
+        self.clear_unused_files_lineedit.append(f"Using DeepLabCut version{deeplabcut.__version__}")
+        config_path = self.config_path_lineedit.text().replace('"', "").replace("'", "")
+        videos = self.video_folder_lineedit.text().replace('"', "").replace("'", "")
+        _, _, file_list = [entry for entry in os.walk(videos)][0]
+        file_extension = file_list[0].split(".")[-1]
+
+        self.clear_unused_files_lineedit.append("Extracting skeleton...")
+        deeplabcut.analyzeskeleton(config_path, videos, shuffle=1, trainingsetindex=0, filtered=True, save_as_csv=True)
+        self.clear_unused_files_lineedit.append("Done extracting skeleton.")
 
     def clear_unused_files_function(self):
         pass
