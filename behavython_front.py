@@ -2,7 +2,9 @@ import behavython_back
 import sys
 import os
 import tkinter as tk
-import deeplabcut
+import subprocess
+
+# import deeplabcut
 from pathlib import Path
 from tkinter import filedialog
 from PyQt5 import QtWidgets, uic
@@ -76,11 +78,11 @@ class behavython_gui(QMainWindow):
         ## This block handles the deeplabcut analysis
         self.folder_structure_check_button.clicked.connect(self.folder_structure_check_function)
         self.dlc_video_analyze_button.clicked.connect(self.dlc_video_analyze_function)
-        self.get_data_files_button.clicked.connect(self.get_data_files_function)
         self.extract_skeleton_button.clicked.connect(self.extract_skeleton_function)
         self.clear_unused_files_button.clicked.connect(self.clear_unused_files_function)
         self.get_config_path_button.clicked.connect(lambda: self.get_folder_path_function("config_path"))
         self.get_videos_path_button.clicked.connect(lambda: self.get_folder_path_function("videos_path"))
+        self.get_frames_button.clicked.connect(self.get_frames_function)
 
     def analysis_function(self):
         self.resume_lineedit.clear()
@@ -282,7 +284,20 @@ class behavython_gui(QMainWindow):
         )
         self.clear_unused_files_lineedit.append("Done filtering data files")
 
-    def get_data_files_function(self):
+    def get_frames_function(self):
+        self.clear_unused_files_lineedit.clear()
+        videos = self.video_folder_lineedit.text().replace('"', "").replace("'", "")
+        _, _, file_list = [entry for entry in os.walk(videos)][0]
+        video_extension = file_list[0].split(".")[-1]
+        for filename in file_list:
+            if filename.endswith(video_extension):
+                video_path = os.path.join(videos, filename)
+                output_path = os.path.splitext(video_path)[0] + ".jpg"
+                self.clear_unused_files_lineedit.append(f"Getting last frame of {filename}")
+                if not os.path.isfile(output_path):
+                    subprocess.run("ffmpeg -sseof -100 -i " + video_path + " -update 1 -q:v 1 " + output_path, shell=True)
+                else:
+                    self.clear_unused_files_lineedit.append(f"Last frame of {filename} already exists.")
         pass
 
     def extract_skeleton_function(self):

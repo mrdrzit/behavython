@@ -94,7 +94,7 @@ QScrollBar::sub-page:vertical {
      <string notr="true">QTabWidget::pane {border-top:2px solid #2C53A1;position: absolute;top: -0.5em;}QTabWidget::tab-bar{alignment: center;}QTabBar::tab{background:#606060;border:2px solid #606060;border-bottom-color: #606060;border-top-left-radius:8px;border-top-right-radius:8px;border-bottom-left-radius:8px;border-bottom-right-radius:8px;width: 45ex;height:7ex;padding:0px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;margin-left:2px;margin-right:2px;}QTabBar::tab:selected{background:#606060; border: 2px solid #2C53A1;border-bottom-color:#2C53A1;}</string>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <property name="tabBarAutoHide">
      <bool>false</bool>
@@ -1150,12 +1150,12 @@ to see the help text</string>
         <string notr="true">CHECK</string>
        </property>
       </widget>
-      <widget class="QLabel" name="get_data_files_label">
+      <widget class="QLabel" name="get_frames_label">
        <property name="geometry">
         <rect>
          <x>0</x>
          <y>295</y>
-         <width>105</width>
+         <width>161</width>
          <height>16</height>
         </rect>
        </property>
@@ -1181,13 +1181,13 @@ to see the help text</string>
         <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
        </property>
        <property name="text">
-        <string notr="true">Get the data files</string>
+        <string notr="true">Get a frame from every video</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
        </property>
       </widget>
-      <widget class="QPushButton" name="get_data_files_button">
+      <widget class="QPushButton" name="get_frames_button">
        <property name="geometry">
         <rect>
          <x>160</x>
@@ -1203,7 +1203,7 @@ to see the help text</string>
         <string notr="true">QPushButton{font:14pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:10pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
        </property>
        <property name="text">
-        <string notr="true">FIND FILES</string>
+        <string notr="true">GET FRAMES</string>
        </property>
       </widget>
       <widget class="QLabel" name="data_refining_title">
