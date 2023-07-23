@@ -363,13 +363,21 @@ class behavython_gui(QMainWindow):
                 if file.endswith("roi.csv"):
                     has_roi_file = True
                     continue
-        if any(
+        if task_type == "social_recognition" and any(
+            [
+                not has_filtered_csv,
+                not has_skeleton_filtered_csv,
+                not has_roi_file,
+                not has_image_file,
+            ]
+        ):
+            self.clear_unused_files_lineedit.append("There are missing files in the folder")
+        elif task_type == "njr" and any(
             [
                 not has_filtered_csv,
                 not has_skeleton_filtered_csv,
                 not has_left_roi_file,
                 not has_right_roi_file,
-                not has_roi_file,
                 not has_image_file,
             ]
         ):
