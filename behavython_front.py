@@ -1,6 +1,8 @@
 import behavython_back
 import sys
 import os
+import tkinter as tk
+from tkinter import filedialog
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import QMainWindow, QMessageBox
 from PyQt5.QtCore import QObject, QThread, pyqtSignal
@@ -69,6 +71,15 @@ class behavython_gui(QMainWindow):
         self.clear_button.clicked.connect(self.clear_function)
         self.analysis_button.clicked.connect(self.analysis_function)
 
+        ## This block handles the deeplabcut analysis
+        self.folder_structure_check_button.clicked.connect(self.folder_structure_check_function)
+        self.dlc_video_analyze_button.clicked.connect(self.dlc_video_analyze_function)
+        self.get_data_files_button.clicked.connect(self.get_data_files_function)
+        self.extract_skeleton_button.clicked.connect(self.extract_skeleton_function)
+        self.clear_unused_files_button.clicked.connect(self.clear_unused_files_function)
+        self.get_config_path_button.clicked.connect(lambda: self.get_folder_path_function("config_path"))
+        self.get_videos_path_button.clicked.connect(lambda: self.get_folder_path_function("videos_path"))
+
     def analysis_function(self):
         self.resume_lineedit.clear()
         self.options["arena_width"] = int(self.arena_width_lineedit.text())
@@ -89,11 +100,6 @@ class behavython_gui(QMainWindow):
 
         functions = behavython_back.interface_functions()
         if self.options["algo_type"] == "deeplabcut":
-            message = "\nBe careful to select only the files that are relevant to the analysis.\
-                \n\nThat being:\n - Skeleton file (csv)\n - Filtered data file (csv)\n - Experiment image (png)\
-                \n - Roi file for the area that the mice is supposed to investigate"
-            title = "The correct files to select when opening the data to analyze"
-            # warning_message_function(title, message)
             [self.experiments, save_folder, error_flag, inexistent_file] = functions.get_experiments(
                 self.resume_lineedit,
                 self.options["experiment_type"],
@@ -162,6 +168,98 @@ class behavython_gui(QMainWindow):
     def clear_plot(self):
         for i in range(1, 10):
             self.plot_viewer.canvas.axes[i - 1].cla()  # Changes the plot face color
+
+    def folder_structure_check_function(self):
+        self.clear_unused_files_lineedit.clear()
+        folder_path = os.path.dirname(self.config_path_lineedit.text().replace('"', "").replace("'", ""))
+        if folder_path == "":
+            message = "Please, select a path to the config.yaml file before checking the folder structure."
+            title = "Path to config file not selected"
+            warning_message_function(title, message)
+
+        required_folders = ["dlc-models", "evaluation-results", "labeled-data", "training-datasets", "videos"]
+        required_files = ["config.yaml"]
+
+        for folder in required_folders:
+            if not os.path.isdir(os.path.join(folder_path, folder)):
+                self.clear_unused_files_lineedit.append(f"The folder '{folder}' is NOT present")
+                return False
+            self.clear_unused_files_lineedit.append(f"The folder {folder} is OK")
+
+        for file in required_files:
+            if not os.path.isfile(os.path.join(folder_path, file)):
+                self.clear_unused_files_lineedit.append(f"The project's {file} is NOT present")
+                return False
+        # Check if dlc-models contains at least one iteration folder
+        dlc_models_path = os.path.join(folder_path, "dlc-models")
+        iteration_folders = [
+            f
+            for f in os.listdir(dlc_models_path)
+            if os.path.isdir(os.path.join(dlc_models_path, f)) and f.startswith("iteration-")
+        ]
+        if not iteration_folders:
+            self.clear_unused_files_lineedit.append("There are no iteration folders in dlc-models.")
+            return False
+
+        latest_iteration_folder = max(iteration_folders, key=lambda x: int(x.split("-")[1]))
+        shuffle_set = os.listdir(os.path.join(dlc_models_path, latest_iteration_folder))
+        if not shuffle_set:
+            self.clear_unused_files_lineedit.append("There are no shuffle sets in the latest iteration folder.")
+            return False
+        else:
+            for root, dirs, files in os.walk(os.path.join(dlc_models_path, latest_iteration_folder, shuffle_set[0])):
+                for dir in dirs:
+                    if dir.startswith("log"):
+                        continue
+                    if "train" not in dirs or "test" not in dirs:
+                        self.clear_unused_files_lineedit.append("The train or test folder is missing.")
+                        return False
+                    if dir.startswith("test") and not os.path.isfile(os.path.join(root, dir, "pose_cfg.yaml")):
+                        self.clear_unused_files_lineedit.append("The pose_cfg.yaml file is missing in test folder.")
+                        return False
+                    if dir.startswith("train"):
+                        if not os.path.isfile(os.path.join(root, dir, "pose_cfg.yaml")):
+                            self.clear_unused_files_lineedit.append("The pose_cfg.yaml file is missing in test folder.")
+                            return False
+                        elif not any("meta" in string for string in os.listdir(os.path.join(root, dir))):
+                            self.clear_unused_files_lineedit.append("The meta file is missing in train folder.")
+                            return False
+                        elif not any("data" in string for string in os.listdir(os.path.join(root, dir))):
+                            self.clear_unused_files_lineedit.append("The data file is missing in train folder.")
+                            return False
+                        elif not any("index" in string for string in os.listdir(os.path.join(root, dir))):
+                            self.clear_unused_files_lineedit.append("The index file is missing in train folder.")
+                            return False
+
+        # If all checks pass, the folder structure is correct
+        self.clear_unused_files_lineedit.append("The folder structure is correct.")
+        return True
+
+    def dlc_video_analyze_function(self):
+        pass
+
+    def get_data_files_function(self):
+        pass
+
+    def extract_skeleton_function(self):
+        pass
+
+    def clear_unused_files_function(self):
+        pass
+
+    def get_folder_path_function(self, lineedit_name):
+        if lineedit_name == "config_path":
+            file_explorer = tk.Tk()
+            file_explorer.withdraw()
+            file_explorer.call("wm", "attributes", ".", "-topmost", True)
+            config_file = filedialog.askopenfilename(title="Select the config.yaml file", multiple=False)
+            self.config_path_lineedit.setText(config_file)
+        elif lineedit_name == "videos_path":
+            file_explorer = tk.Tk()
+            file_explorer.withdraw()
+            file_explorer.call("wm", "attributes", ".", "-topmost", True)
+            folder = filedialog.askdirectory(title="Select the folder", mustexist=True)
+            self.video_folder_lineedit.setText(folder)
 
 
 def warning_message_function(title, text):

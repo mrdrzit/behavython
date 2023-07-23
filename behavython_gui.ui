@@ -1338,8 +1338,17 @@ to see the help text</string>
          <height>191</height>
         </rect>
        </property>
+       <property name="font">
+        <font>
+         <family>DejaVu Sans</family>
+         <pointsize>8</pointsize>
+         <weight>50</weight>
+         <italic>false</italic>
+         <bold>false</bold>
+        </font>
+       </property>
        <property name="styleSheet">
-        <string notr="true">QTextEdit{color:#FFFFFF;font:5pt&quot;DejaVu Sans&quot;;font-weight:bold}
+        <string notr="true">QTextEdit{color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:light}
 QScrollBar:horizontal {
     background-color: #353535;
     height: 10px;
@@ -1380,7 +1389,7 @@ QScrollBar::sub-page:vertical {
         <bool>true</bool>
        </property>
       </widget>
-      <widget class="QLabel" name="folder_structure_check_2">
+      <widget class="QLabel" name="dlc_video_analyze_title">
        <property name="geometry">
         <rect>
          <x>41</x>
@@ -1417,7 +1426,7 @@ QScrollBar::sub-page:vertical {
         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
        </property>
       </widget>
-      <widget class="QPushButton" name="folder_structure_check_button_2">
+      <widget class="QPushButton" name="dlc_video_analyze_button">
        <property name="geometry">
         <rect>
          <x>61</x>
@@ -1443,6 +1452,62 @@ QScrollBar::sub-page:vertical {
        </property>
        <property name="text">
         <string notr="true">ANALYZE</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="get_config_path_button">
+       <property name="geometry">
+        <rect>
+         <x>204</x>
+         <y>46</y>
+         <width>81</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>DejaVu Sans</family>
+         <pointsize>8</pointsize>
+         <weight>75</weight>
+         <italic>false</italic>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="cursor">
+        <cursorShape>PointingHandCursor</cursorShape>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton{font:10pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+       </property>
+       <property name="text">
+        <string notr="true">GET FILE</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="get_videos_path_button">
+       <property name="geometry">
+        <rect>
+         <x>205</x>
+         <y>96</y>
+         <width>81</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>DejaVu Sans</family>
+         <pointsize>8</pointsize>
+         <weight>75</weight>
+         <italic>false</italic>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="cursor">
+        <cursorShape>PointingHandCursor</cursorShape>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton{font:6pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+       </property>
+       <property name="text">
+        <string notr="true">GET FOLDER</string>
        </property>
       </widget>
      </widget>
