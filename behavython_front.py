@@ -3,8 +3,9 @@ import sys
 import os
 import tkinter as tk
 import subprocess
+import cv2
 
-import deeplabcut
+# import deeplabcut
 from pathlib import Path
 from tkinter import filedialog
 from PyQt5 import QtWidgets, uic
@@ -46,7 +47,7 @@ class analysis_class(QObject):
                 self.experiments[i].plot_analysis_open_field(self.plot_viewer, i, self.options["save_folder"])
             elif self.options["experiment_type"] == "plus_maze":
                 self.experiments[i].plot_analysis_pluz_maze(self.plot_viewer, i, self.options["save_folder"])
-            elif self.options["experiment_type"] == "social_behavior":
+            elif self.options["experiment_type"] == "njr" or self.options["experiment_type"] == "social_recognition":
                 behavython_back.experiment_class.plot_analysis_social_behavior(
                     self, self.plot_viewer, i, self.options["save_folder"]
                 )
@@ -241,11 +242,14 @@ class behavython_gui(QMainWindow):
 
     def dlc_video_analyze_function(self):
         self.clear_unused_files_lineedit.clear()
-        self.clear_unused_files_lineedit.append(f"Using DeepLabCut version{deeplabcut.__version__}")
+        # self.clear_unused_files_lineedit.append(f"Using DeepLabCut version{deeplabcut.__version__}")
         config_path = self.config_path_lineedit.text().replace('"', "").replace("'", "")
         videos = self.video_folder_lineedit.text().replace('"', "").replace("'", "")
         _, _, file_list = [entry for entry in os.walk(videos)][0]
-        file_extension = file_list[0].split(".")[-1]
+
+        for file in file_list:
+            if ".mp4" in file or ".avi" in file or ".mov" in file or ".mkv" in file or ".wmv" in file or ".flv" in file:
+                file_extension = file.split(".")[-1]
 
         all_has_same_extension = all([file.split(".")[-1] == file_extension for file in file_list])
         if not all_has_same_extension:
@@ -260,42 +264,45 @@ class behavython_gui(QMainWindow):
             self.clear_unused_files_lineedit.append("Analysis canceled.")
             return
         self.clear_unused_files_lineedit.append("Analyzing videos...")
-        deeplabcut.analyze_videos(
-            config_path,
-            videos,
-            videotype=file_extension,
-            shuffle=1,
-            trainingsetindex=0,
-            gputouse=0,
-            allow_growth=True,
-            save_as_csv=True,
-        )
-        self.clear_unused_files_lineedit.append("Done analyzing videos.")
+        # deeplabcut.analyze_videos(
+        #     config_path,
+        #     videos,
+        #     videotype=file_extension,
+        #     shuffle=1,
+        #     trainingsetindex=0,
+        #     gputouse=0,
+        #     allow_growth=True,
+        #     save_as_csv=True,
+        # )
+        # self.clear_unused_files_lineedit.append("Done analyzing videos.")
 
-        self.clear_unused_files_lineedit.append("Filtering data files and saving as CSV...")
-        deeplabcut.filterpredictions(
-            config_path,
-            videos,
-            videotype=file_extension,
-            shuffle=1,
-            trainingsetindex=0,
-            filtertype="median",
-            windowlength=5,
-            p_bound=0.001,
-            ARdegree=3,
-            MAdegree=1,
-            alpha=0.01,
-            save_as_csv=True,
-        )
-        self.clear_unused_files_lineedit.append("Done filtering data files")
+        # self.clear_unused_files_lineedit.append("Filtering data files and saving as CSV...")
+        # deeplabcut.filterpredictions(
+        #     config_path,
+        #     videos,
+        #     videotype=file_extension,
+        #     shuffle=1,
+        #     trainingsetindex=0,
+        #     filtertype="median",
+        #     windowlength=5,
+        #     p_bound=0.001,
+        #     ARdegree=3,
+        #     MAdegree=1,
+        #     alpha=0.01,
+        #     save_as_csv=True,
+        # )
+        # self.clear_unused_files_lineedit.append("Done filtering data files")
 
     def get_frames_function(self):
         self.clear_unused_files_lineedit.clear()
         videos = self.video_folder_lineedit.text().replace('"', "").replace("'", "")
         _, _, file_list = [entry for entry in os.walk(videos)][0]
-        video_extension = file_list[0].split(".")[-1]
+        for file in file_list:
+            if ".mp4" in file or ".avi" in file or ".mov" in file or ".mkv" in file or ".wmv" in file or ".flv" in file:
+                file_extension = file.split(".")[-1]
+
         for filename in file_list:
-            if filename.endswith(video_extension):
+            if filename.endswith(file_extension):
                 video_path = os.path.join(videos, filename)
                 output_path = os.path.splitext(video_path)[0] + ".jpg"
                 self.clear_unused_files_lineedit.append(f"Getting last frame of {filename}")
@@ -317,14 +324,16 @@ class behavython_gui(QMainWindow):
 
     def extract_skeleton_function(self):
         self.clear_unused_files_lineedit.clear()
-        self.clear_unused_files_lineedit.append(f"Using DeepLabCut version{deeplabcut.__version__}")
+        # self.clear_unused_files_lineedit.append(f"Using DeepLabCut version{deeplabcut.__version__}")
         config_path = self.config_path_lineedit.text().replace('"', "").replace("'", "")
         videos = self.video_folder_lineedit.text().replace('"', "").replace("'", "")
         _, _, file_list = [entry for entry in os.walk(videos)][0]
-        file_extension = file_list[0].split(".")[-1]
+        for file in file_list:
+            if ".mp4" in file or ".avi" in file or ".mov" in file or ".mkv" in file or ".wmv" in file or ".flv" in file:
+                file_extension = file.split(".")[-1]
 
         self.clear_unused_files_lineedit.append("Extracting skeleton...")
-        deeplabcut.analyzeskeleton(config_path, videos, shuffle=1, trainingsetindex=0, filtered=True, save_as_csv=True)
+        # deeplabcut.analyzeskeleton(config_path, videos, shuffle=1, trainingsetindex=0, filtered=True, save_as_csv=True)
         self.clear_unused_files_lineedit.append("Done extracting skeleton.")
 
     def clear_unused_files_function(self):
@@ -332,7 +341,9 @@ class behavython_gui(QMainWindow):
         config_path = self.config_path_lineedit.text().replace('"', "").replace("'", "")
         videos = self.video_folder_lineedit.text().replace('"', "").replace("'", "")
         _, _, file_list = [entry for entry in os.walk(videos)][0]
-        file_extension = file_list[0].split(".")[-1]
+        for file in file_list:
+            if ".mp4" in file or ".avi" in file or ".mov" in file or ".mkv" in file or ".wmv" in file or ".flv" in file:
+                file_extension = file.split(".")[-1]
 
         for file in file_list:
             if (
@@ -368,10 +379,10 @@ class behavython_gui(QMainWindow):
                 has_image_file = True
                 continue
             if task_type == "njr":
-                if file.endswith("roiD"):
+                if file.endswith("roiR.csv"):
                     has_right_roi_file = True
                     continue
-                elif file.endswith("roiE"):
+                elif file.endswith("roiL.csv"):
                     has_left_roi_file = True
                     continue
             elif task_type == "social_recognition":
@@ -408,9 +419,9 @@ class behavython_gui(QMainWindow):
             missing_files.append(" - screenshot of the video")
         if task_type == "njr":
             if not has_left_roi_file:
-                missing_files.append(" - roiD.csv")
+                missing_files.append(" - roiR.csv")
             if not has_right_roi_file:
-                missing_files.append(" - roiE.csv")
+                missing_files.append(" - roiL.csv")
         if task_type == "social_recognition" and not has_roi_file:
             missing_files.append(" - roi.csv")
 
@@ -434,6 +445,19 @@ class behavython_gui(QMainWindow):
             file_explorer.call("wm", "attributes", ".", "-topmost", True)
             folder = str(Path(filedialog.askdirectory(title="Select the folder", mustexist=True)))
             self.video_folder_lineedit.setText(folder)
+            self.video_length = self.get_video_length(folder)
+
+    def get_video_length(file_path):
+        try:
+            cap = cv2.VideoCapture(file_path)
+            frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            video_length = frame_count / fps
+            cap.release()
+            return video_length
+        except Exception as e:
+            print(f"Error occurred: {e}")
+            return None
 
     def resume_message_function(self, file_list):
         text = "Check the videos to be analyzed: "
@@ -445,7 +469,6 @@ class behavython_gui(QMainWindow):
             return True
         else:
             return False
-        return answer
 
     def option_message_function(self, text, info_text):
         warning = QMessageBox(self.interface)  # Create the message box

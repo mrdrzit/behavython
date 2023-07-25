@@ -803,7 +803,7 @@ to see the help text</string>
         <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
        </property>
        <property name="text">
-        <string notr="true">Task duration (sec)</string>
+        <string notr="true">Task duration</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -814,7 +814,7 @@ to see the help text</string>
         <rect>
          <x>160</x>
          <y>160</y>
-         <width>121</width>
+         <width>91</width>
          <height>16</height>
         </rect>
        </property>
@@ -846,7 +846,7 @@ to see the help text</string>
         <rect>
          <x>160</x>
          <y>180</y>
-         <width>121</width>
+         <width>91</width>
          <height>16</height>
         </rect>
        </property>
@@ -883,6 +883,44 @@ to see the help text</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_16">
+       <property name="geometry">
+        <rect>
+         <x>240</x>
+         <y>180</y>
+         <width>41</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QLabel{border:#969696;background-color:#606060;border-bottom-right-radius:6px;border-top-right-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+       </property>
+       <property name="text">
+        <string notr="true">sec</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_17">
+       <property name="geometry">
+        <rect>
+         <x>240</x>
+         <y>160</y>
+         <width>41</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QLabel{border:#969696;background-color:#606060;border-bottom-right-radius:6px;border-top-right-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+       </property>
+       <property name="text">
+        <string notr="true">sec</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </widget>
@@ -1154,7 +1192,7 @@ to see the help text</string>
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>295</y>
+         <y>326</y>
          <width>161</width>
          <height>16</height>
         </rect>
@@ -1191,7 +1229,7 @@ to see the help text</string>
        <property name="geometry">
         <rect>
          <x>160</x>
-         <y>288</y>
+         <y>319</y>
          <width>131</width>
          <height>31</height>
         </rect>
@@ -1203,7 +1241,7 @@ to see the help text</string>
         <string notr="true">QPushButton{font:14pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:10pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
        </property>
        <property name="text">
-        <string notr="true">GET FRAMES</string>
+        <string notr="true">GET FRAME</string>
        </property>
       </widget>
       <widget class="QLabel" name="data_refining_title">
@@ -1229,7 +1267,7 @@ to see the help text</string>
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>331</y>
+         <y>287</y>
          <width>151</width>
          <height>16</height>
         </rect>
@@ -1266,7 +1304,7 @@ to see the help text</string>
        <property name="geometry">
         <rect>
          <x>160</x>
-         <y>324</y>
+         <y>280</y>
          <width>131</width>
          <height>31</height>
         </rect>

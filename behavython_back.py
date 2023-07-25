@@ -78,9 +78,9 @@ class experiment_class:
             number_of_frames = animal.exp_length()
             # ----------------------------------------------------------------------------------------------------------
             if self.options["crop_video"]:
-                runtime = range(trim_amount, int((max_analysis_time * frames_per_second) + trim_amount) - 1)
+                runtime = range(trim_amount, int((max_analysis_time * frames_per_second) + trim_amount))
             else:
-                runtime = max_analysis_time * frames_per_second
+                runtime = range(int(max_analysis_time * frames_per_second))
             for i in runtime:
                 # Calculate the area of the mice's head
                 Side1 = np.sqrt(((orelha_esq_x[i] - focinho_x[i]) ** 2) + ((orelha_esq_y[i] - focinho_y[i]) ** 2))
