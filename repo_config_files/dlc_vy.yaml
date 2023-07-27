@@ -1,0 +1,22 @@
+# DEEPLABCUT.yaml
+# install: conda env create -f dlc_vy.yaml
+name: dlc_vy
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.8
+  - pip
+  - ipython
+  - jupyter
+  - ffmpeg
+  - cudnn
+  - pip:
+    - deeplabcut==2.2.3
+    - tensorflow<2.11
+    - scikit-image
+    - matplotlib
+    - pandas
+    - seaborn
+    - opencv-python
+    - pyqt5
