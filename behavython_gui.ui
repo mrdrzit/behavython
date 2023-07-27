@@ -951,7 +951,7 @@ to see the help text</string>
        </size>
       </property>
       <property name="styleSheet">
-       <string notr="true">QLabel{}QCheckBox{color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QCheckBox::indicator{width:15px;height:15px;background-color:#606060;border-radius:4px;}QCheckBox::indicator:checked{background-color:#A21F27;}</string>
+       <string notr="true">QLabel{}QCheckBox{color:#FFFFFF;font:6pt&quot;DejaVu Sans&quot;;font-weight:bold;}QCheckBox::indicator{width:15px;height:15px;background-color:#606060;border-radius:4px;}QCheckBox::indicator:checked{background-color:#A21F27;}</string>
       </property>
       <widget class="QLabel" name="network_tab_title">
        <property name="geometry">
@@ -1020,7 +1020,7 @@ to see the help text</string>
         <rect>
          <x>0</x>
          <y>50</y>
-         <width>240</width>
+         <width>200</width>
          <height>16</height>
         </rect>
        </property>
@@ -1032,18 +1032,18 @@ to see the help text</string>
        </property>
        <property name="minimumSize">
         <size>
-         <width>240</width>
+         <width>200</width>
          <height>16</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>240</width>
+         <width>200</width>
          <height>16</height>
         </size>
        </property>
        <property name="styleSheet">
-        <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+        <string notr="true">QLabel{color:#FFFFFF;font:6pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
        </property>
        <property name="text">
         <string notr="true">Path to the config.yaml file </string>
@@ -1099,8 +1099,8 @@ to see the help text</string>
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>100</y>
-         <width>240</width>
+         <y>97</y>
+         <width>195</width>
          <height>16</height>
         </rect>
        </property>
@@ -1112,18 +1112,27 @@ to see the help text</string>
        </property>
        <property name="minimumSize">
         <size>
-         <width>240</width>
+         <width>130</width>
          <height>16</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>240</width>
-         <height>16</height>
+         <width>200</width>
+         <height>42</height>
         </size>
        </property>
+       <property name="font">
+        <font>
+         <family>DejaVu Sans</family>
+         <pointsize>6</pointsize>
+         <weight>75</weight>
+         <italic>false</italic>
+         <bold>true</bold>
+        </font>
+       </property>
        <property name="styleSheet">
-        <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+        <string notr="true">QLabel{color:#FFFFFF;font:6pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
        </property>
        <property name="text">
         <string notr="true">Folder containing the videos to analyze</string>
@@ -1131,13 +1140,16 @@ to see the help text</string>
        <property name="alignment">
         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
        </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
       </widget>
       <widget class="QLabel" name="folder_structure_check">
        <property name="geometry">
         <rect>
-         <x>48</x>
-         <y>143</y>
-         <width>214</width>
+         <x>3</x>
+         <y>142</y>
+         <width>280</width>
          <height>16</height>
         </rect>
        </property>
@@ -1149,7 +1161,7 @@ to see the help text</string>
        </property>
        <property name="minimumSize">
         <size>
-         <width>210</width>
+         <width>280</width>
          <height>16</height>
         </size>
        </property>
@@ -1166,7 +1178,7 @@ to see the help text</string>
         <string notr="true">Check if the folder structure is correct</string>
        </property>
        <property name="alignment">
-        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
       <widget class="QPushButton" name="folder_structure_check_button">
@@ -1182,7 +1194,7 @@ to see the help text</string>
         <cursorShape>PointingHandCursor</cursorShape>
        </property>
        <property name="styleSheet">
-        <string notr="true">QPushButton{font:14pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:10pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+        <string notr="true">QPushButton{font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:9pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
        </property>
        <property name="text">
         <string notr="true">CHECK</string>
@@ -1192,9 +1204,9 @@ to see the help text</string>
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>326</y>
+         <y>319</y>
          <width>161</width>
-         <height>16</height>
+         <height>30</height>
         </rect>
        </property>
        <property name="sizePolicy">
@@ -1206,7 +1218,7 @@ to see the help text</string>
        <property name="minimumSize">
         <size>
          <width>100</width>
-         <height>16</height>
+         <height>30</height>
         </size>
        </property>
        <property name="maximumSize">
@@ -1224,6 +1236,9 @@ to see the help text</string>
        <property name="alignment">
         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
        </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
       </widget>
       <widget class="QPushButton" name="get_frames_button">
        <property name="geometry">
@@ -1238,7 +1253,7 @@ to see the help text</string>
         <cursorShape>PointingHandCursor</cursorShape>
        </property>
        <property name="styleSheet">
-        <string notr="true">QPushButton{font:14pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:10pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+        <string notr="true">QPushButton{font:14pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
        </property>
        <property name="text">
         <string notr="true">GET FRAME</string>
@@ -1313,7 +1328,7 @@ to see the help text</string>
         <cursorShape>PointingHandCursor</cursorShape>
        </property>
        <property name="styleSheet">
-        <string notr="true">QPushButton{font:14pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:10pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+        <string notr="true">QPushButton{font:14pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
        </property>
        <property name="text">
         <string notr="true">EXTRACT DATA</string>
@@ -1332,7 +1347,7 @@ to see the help text</string>
         <cursorShape>PointingHandCursor</cursorShape>
        </property>
        <property name="styleSheet">
-        <string notr="true">QPushButton{font:14pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:10pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+        <string notr="true">QPushButton{font:14pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
        </property>
        <property name="text">
         <string notr="true">CLEANUP FOLDER</string>
@@ -1438,9 +1453,9 @@ QScrollBar::sub-page:vertical {
       <widget class="QLabel" name="dlc_video_analyze_title">
        <property name="geometry">
         <rect>
-         <x>41</x>
+         <x>3</x>
          <y>197</y>
-         <width>214</width>
+         <width>280</width>
          <height>16</height>
         </rect>
        </property>
@@ -1452,7 +1467,7 @@ QScrollBar::sub-page:vertical {
        </property>
        <property name="minimumSize">
         <size>
-         <width>210</width>
+         <width>280</width>
          <height>16</height>
         </size>
        </property>
@@ -1469,7 +1484,7 @@ QScrollBar::sub-page:vertical {
         <string notr="true">Analyze videos using the network supplied</string>
        </property>
        <property name="alignment">
-        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
       <widget class="QPushButton" name="dlc_video_analyze_button">
@@ -1484,7 +1499,7 @@ QScrollBar::sub-page:vertical {
        <property name="font">
         <font>
          <family>DejaVu Sans</family>
-         <pointsize>8</pointsize>
+         <pointsize>9</pointsize>
          <weight>75</weight>
          <italic>false</italic>
          <bold>true</bold>
@@ -1494,7 +1509,7 @@ QScrollBar::sub-page:vertical {
         <cursorShape>PointingHandCursor</cursorShape>
        </property>
        <property name="styleSheet">
-        <string notr="true">QPushButton{font:14pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+        <string notr="true">QPushButton{font:14pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:9pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
        </property>
        <property name="text">
         <string notr="true">ANALYZE</string>
@@ -1504,7 +1519,7 @@ QScrollBar::sub-page:vertical {
        <property name="geometry">
         <rect>
          <x>204</x>
-         <y>46</y>
+         <y>44</y>
          <width>81</width>
          <height>20</height>
         </rect>
@@ -1532,7 +1547,7 @@ QScrollBar::sub-page:vertical {
        <property name="geometry">
         <rect>
          <x>205</x>
-         <y>96</y>
+         <y>94</y>
          <width>81</width>
          <height>20</height>
         </rect>
