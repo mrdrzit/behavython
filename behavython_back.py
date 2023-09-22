@@ -151,8 +151,8 @@ class experiment_class:
             exploration_time = np.sum(exploration_mask) * (1 / frames_per_second)
 
             # Calculate the total exploration time in each ROI
-            filtered_mask_right = collisions[collisions.iloc[:, -1].fillna("").str.contains("roiD")]
-            filtered_mask_left = collisions[collisions.iloc[:, -1].fillna("").str.contains("roiE")]
+            filtered_mask_right = collisions[collisions.iloc[:, -1].fillna("").str.contains("roiR")]
+            filtered_mask_left = collisions[collisions.iloc[:, -1].fillna("").str.contains("roiL")]
             count_right = len(filtered_mask_right)
             count_left = len(filtered_mask_left)
             exploration_time_right = count_right * (1 / frames_per_second)

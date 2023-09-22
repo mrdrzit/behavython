@@ -5,7 +5,7 @@ import tkinter as tk
 import subprocess
 import cv2
 
-# import deeplabcut
+import deeplabcut
 from pathlib import Path
 from tkinter import filedialog
 from PyQt5 import QtWidgets, uic
@@ -242,7 +242,7 @@ class behavython_gui(QMainWindow):
 
     def dlc_video_analyze_function(self):
         self.clear_unused_files_lineedit.clear()
-        # self.clear_unused_files_lineedit.append(f"Using DeepLabCut version{deeplabcut.__version__}")
+        self.clear_unused_files_lineedit.append(f"Using DeepLabCut version{deeplabcut.__version__}")
         config_path = self.config_path_lineedit.text().replace('"', "").replace("'", "")
         videos = self.video_folder_lineedit.text().replace('"', "").replace("'", "")
         _, _, file_list = [entry for entry in os.walk(videos)][0]
@@ -264,34 +264,34 @@ class behavython_gui(QMainWindow):
             self.clear_unused_files_lineedit.append("Analysis canceled.")
             return
         self.clear_unused_files_lineedit.append("Analyzing videos...")
-        # deeplabcut.analyze_videos(
-        #     config_path,
-        #     videos,
-        #     videotype=file_extension,
-        #     shuffle=1,
-        #     trainingsetindex=0,
-        #     gputouse=0,
-        #     allow_growth=True,
-        #     save_as_csv=True,
-        # )
-        # self.clear_unused_files_lineedit.append("Done analyzing videos.")
+        deeplabcut.analyze_videos(
+            config_path,
+            videos,
+            videotype=file_extension,
+            shuffle=1,
+            trainingsetindex=0,
+            gputouse=0,
+            allow_growth=True,
+            save_as_csv=True,
+        )
+        self.clear_unused_files_lineedit.append("Done analyzing videos.")
 
-        # self.clear_unused_files_lineedit.append("Filtering data files and saving as CSV...")
-        # deeplabcut.filterpredictions(
-        #     config_path,
-        #     videos,
-        #     videotype=file_extension,
-        #     shuffle=1,
-        #     trainingsetindex=0,
-        #     filtertype="median",
-        #     windowlength=5,
-        #     p_bound=0.001,
-        #     ARdegree=3,
-        #     MAdegree=1,
-        #     alpha=0.01,
-        #     save_as_csv=True,
-        # )
-        # self.clear_unused_files_lineedit.append("Done filtering data files")
+        self.clear_unused_files_lineedit.append("Filtering data files and saving as CSV...")
+        deeplabcut.filterpredictions(
+            config_path,
+            videos,
+            videotype=file_extension,
+            shuffle=1,
+            trainingsetindex=0,
+            filtertype="median",
+            windowlength=5,
+            p_bound=0.001,
+            ARdegree=3,
+            MAdegree=1,
+            alpha=0.01,
+            save_as_csv=True,
+        )
+        self.clear_unused_files_lineedit.append("Done filtering data files")
 
     def get_frames_function(self):
         self.clear_unused_files_lineedit.clear()
@@ -324,7 +324,7 @@ class behavython_gui(QMainWindow):
 
     def extract_skeleton_function(self):
         self.clear_unused_files_lineedit.clear()
-        # self.clear_unused_files_lineedit.append(f"Using DeepLabCut version{deeplabcut.__version__}")
+        self.clear_unused_files_lineedit.append(f"Using DeepLabCut version{deeplabcut.__version__}")
         config_path = self.config_path_lineedit.text().replace('"', "").replace("'", "")
         videos = self.video_folder_lineedit.text().replace('"', "").replace("'", "")
         _, _, file_list = [entry for entry in os.walk(videos)][0]
@@ -333,7 +333,7 @@ class behavython_gui(QMainWindow):
                 file_extension = file.split(".")[-1]
 
         self.clear_unused_files_lineedit.append("Extracting skeleton...")
-        # deeplabcut.analyzeskeleton(config_path, videos, shuffle=1, trainingsetindex=0, filtered=True, save_as_csv=True)
+        deeplabcut.analyzeskeleton(config_path, videos, shuffle=1, trainingsetindex=0, filtered=True, save_as_csv=True)
         self.clear_unused_files_lineedit.append("Done extracting skeleton.")
 
     def clear_unused_files_function(self):
@@ -342,6 +342,7 @@ class behavython_gui(QMainWindow):
         videos = self.video_folder_lineedit.text().replace('"', "").replace("'", "")
         _, _, file_list = [entry for entry in os.walk(videos)][0]
         for file in file_list:
+            file_extension = ".mp4"
             if ".mp4" in file or ".avi" in file or ".mov" in file or ".mkv" in file or ".wmv" in file or ".flv" in file:
                 file_extension = file.split(".")[-1]
 
@@ -445,7 +446,7 @@ class behavython_gui(QMainWindow):
             file_explorer.call("wm", "attributes", ".", "-topmost", True)
             folder = str(Path(filedialog.askdirectory(title="Select the folder", mustexist=True)))
             self.video_folder_lineedit.setText(folder)
-            self.video_length = self.get_video_length(folder)
+            # self.video_length = self.get_video_length(folder)
 
     def get_video_length(file_path):
         try:
@@ -518,12 +519,12 @@ def main():
     # -----------------------------------------------------------------------------------------
     ## This block of code is to be used when the interface is going to be compiled into an exe
     ## It serves the function of removing the splash when the program finishes loading
-    # try:
-    #     import pyi_splash
+    try:
+        import pyi_splash
 
-    #     pyi_splash.close()
-    # except:
-    #     pass
+        pyi_splash.close()
+    except:
+        pass
     # -----------------------------------------------------------------------------------------
 
     app.exec_()  # Start the application
