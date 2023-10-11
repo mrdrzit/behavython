@@ -3,7 +3,8 @@ import sys
 import os
 import tkinter as tk
 import subprocess
-import cv2
+
+# import cv2
 
 import deeplabcut
 from pathlib import Path
@@ -448,17 +449,17 @@ class behavython_gui(QMainWindow):
             self.video_folder_lineedit.setText(folder)
             # self.video_length = self.get_video_length(folder)
 
-    def get_video_length(file_path):
-        try:
-            cap = cv2.VideoCapture(file_path)
-            frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-            fps = cap.get(cv2.CAP_PROP_FPS)
-            video_length = frame_count / fps
-            cap.release()
-            return video_length
-        except Exception as e:
-            print(f"Error occurred: {e}")
-            return None
+    # def get_video_length(file_path):
+    #     try:
+    #         cap = cv2.VideoCapture(file_path)
+    #         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    #         fps = cap.get(cv2.CAP_PROP_FPS)
+    #         video_length = frame_count / fps
+    #         cap.release()
+    #         return video_length
+    #     except Exception as e:
+    #         print(f"Error occurred: {e}")
+    #         return None
 
     def resume_message_function(self, file_list):
         text = "Check the videos to be analyzed: "
@@ -519,12 +520,12 @@ def main():
     # -----------------------------------------------------------------------------------------
     ## This block of code is to be used when the interface is going to be compiled into an exe
     ## It serves the function of removing the splash when the program finishes loading
-    try:
-        import pyi_splash
+    # try:
+    #     import pyi_splash
 
-        pyi_splash.close()
-    except:
-        pass
+    #     pyi_splash.close()
+    # except:
+    #     pass
     # -----------------------------------------------------------------------------------------
 
     app.exec_()  # Start the application
