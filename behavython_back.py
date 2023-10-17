@@ -79,6 +79,10 @@ class experiment_class:
             # ----------------------------------------------------------------------------------------------------------
             if self.options["crop_video"]:
                 runtime = range(trim_amount, int((max_analysis_time * frames_per_second) + trim_amount))
+                if number_of_frames < max(runtime):
+                    runtime = range(trim_amount, int(number_of_frames))
+                    print(f"Animal {animal.name} has less frames than the maximum analysis time.")
+
             else:
                 runtime = range(int(max_analysis_time * frames_per_second))
             for i in runtime:
@@ -248,8 +252,7 @@ class experiment_class:
             point_density_function = kde_instance.evaluate(kde_space_coordinates)
             color_limits = np.array(
                 [
-                    (x - np.min(point_density_function))
-                    / (np.max(point_density_function) - np.min(point_density_function))
+                    (x - np.min(point_density_function)) / (np.max(point_density_function) - np.min(point_density_function))
                     for x in point_density_function
                 ]
             )
@@ -371,9 +374,7 @@ class experiment_class:
             plot_number += 1
             plot_viewer.canvas.draw_idle()
         else:
-            plt.savefig(
-                save_folder + "/" + self.name + "_Overall Activity in the maze.png", frameon="false", dpi=figure_dpi
-            )
+            plt.savefig(save_folder + "/" + self.name + "_Overall Activity in the maze.png", frameon="false", dpi=figure_dpi)
             plot_viewer.canvas.axes[plot_number % 9].imshow(im, interpolation="bicubic")
             plot_viewer.canvas.axes[plot_number % 9].add_collection(line_collection_window)
             plot_number += 1
@@ -453,9 +454,7 @@ class experiment_class:
 
         if plot_option == 1:
             plt.subplots_adjust(hspace=0.8, wspace=0.8)
-            plt.savefig(
-                save_folder + "/" + self.name + "_Time spent on each area over time.png", frameon="false", dpi=600
-            )
+            plt.savefig(save_folder + "/" + self.name + "_Time spent on each area over time.png", frameon="false", dpi=600)
 
         plt.close("all")
 
@@ -540,9 +539,7 @@ class experiment_class:
 
         if plot_option == 1:
             plt.subplots_adjust(hspace=0.8, wspace=0.8)
-            plt.savefig(
-                save_folder + "/" + self.name + "_Time spent on each area over time.png", frameon="false", dpi=600
-            )
+            plt.savefig(save_folder + "/" + self.name + "_Time spent on each area over time.png", frameon="false", dpi=600)
 
         # Figure 4 - Number of crossings
         figure_4, (axe_41, axe_42) = plt.subplots(1, 2)
@@ -587,9 +584,7 @@ class experiment_class:
 
         if plot_option == 0:
             fig_2, axe_2 = plt.subplots()
-            plot_viewer.canvas.axes[plot_number % 9].imshow(
-                self.experiments[plot_number].animal_jpg, cmap="gray", aspect="auto"
-            )
+            plot_viewer.canvas.axes[plot_number % 9].imshow(self.experiments[plot_number].animal_jpg, cmap="gray", aspect="auto")
             sns.kdeplot(
                 x=x_collisions,
                 y=y_collisions,
@@ -604,9 +599,7 @@ class experiment_class:
             plot_viewer.canvas.draw_idle()
         else:
             fig_3, axe_3 = plt.subplots()
-            plot_viewer.canvas.axes[plot_number % 9].imshow(
-                self.experiments[plot_number].animal_jpg, cmap="gray", aspect="auto"
-            )
+            plot_viewer.canvas.axes[plot_number % 9].imshow(self.experiments[plot_number].animal_jpg, cmap="gray", aspect="auto")
             sns.kdeplot(
                 x=x_collisions,
                 y=y_collisions,
@@ -634,15 +627,11 @@ class experiment_class:
             ratio = min(max_height / image_width, max_width / image_height)
             # Calculate the new resolution in inches based on the dpi set
             axe_3.imshow(self.experiments[plot_number].animal_jpg, aspect="auto", interpolation="bicubic")
-            axe_3.set_title(
-                "Exploration map by ROI", loc="center", fontdict={"fontsize": "large", "fontweight": "normal"}
-            )
+            axe_3.set_title("Exploration map by ROI", loc="center", fontdict={"fontsize": "large", "fontweight": "normal"})
             fig_3.set_size_inches(new_resolution_in_inches)
             axe_3.axis("off")
             axe_3.axis("tight")
-            fig_3.savefig(
-                save_folder + "/" + self.experiments[plot_number].name + "Overall exploration by ROI.png", dpi=100
-            )
+            fig_3.savefig(save_folder + "/" + self.experiments[plot_number].name + "Overall exploration by ROI.png", dpi=100)
 
             fig_4, axe_4 = plt.subplots()
             axe_4.imshow(grid, cmap="inferno", interpolation="bessel")
@@ -657,9 +646,7 @@ class experiment_class:
             fig_4.savefig(
                 save_folder + "/" + self.experiments[plot_number].name + "Overall heatmap of the mice's nose position",
             )
-            plot_viewer.canvas.axes[plot_number % 9].imshow(
-                self.analysis_results["grid"], cmap="inferno", interpolation="bessel"
-            )
+            plot_viewer.canvas.axes[plot_number % 9].imshow(self.analysis_results["grid"], cmap="inferno", interpolation="bessel")
             pass
 
         plt.close("all")
@@ -692,9 +679,7 @@ class interface_functions:
             file_explorer.call("wm", "attributes", ".", "-topmost", True)
             selected_files = filedialog.askopenfilename(title="Select the files to analyze", multiple=True)
             if save_plots == 1:
-                selected_folder_to_save = filedialog.askdirectory(
-                    title="Select the folder to save the plots", mustexist=True
-                )
+                selected_folder_to_save = filedialog.askdirectory(title="Select the folder to save the plots", mustexist=True)
             experiments = []
 
             try:
@@ -716,9 +701,7 @@ class interface_functions:
                 experiments.append(experiment_class())
 
                 try:
-                    raw_data = pd.read_csv(
-                        files.directory[index] + ".csv", sep=",", na_values=["no info", "."], header=None
-                    )
+                    raw_data = pd.read_csv(files.directory[index] + ".csv", sep=",", na_values=["no info", "."], header=None)
                     raw_image = rgb2gray(skimage.io.imread(files.directory[index] + ".png"))
                 except:
                     line_edit.append("WARNING!! Doesn't exist a CSV or PNG file with the name " + files.name[index])
@@ -728,18 +711,14 @@ class interface_functions:
                     return experiments, selected_folder_to_save, error, inexistent_file
                 else:
                     if raw_data.shape[1] == 7 and experiment_type == "plus_maze":
-                        experiments[index].data = raw_data.interpolate(
-                            method="spline", order=1, limit_direction="both", axis=0
-                        )
+                        experiments[index].data = raw_data.interpolate(method="spline", order=1, limit_direction="both", axis=0)
                         line_edit.append("- File " + files.name[index] + ".csv was read")
                         experiments[index].last_frame = raw_image
                         line_edit.append("- File " + files.name[index] + ".png was read")
                         experiments[index].name = files.name[index]
                         experiments[index].directory = files.directory[index]
                     elif experiment_type == "open_field":
-                        experiments[index].data = raw_data.interpolate(
-                            method="spline", order=1, limit_direction="both", axis=0
-                        )
+                        experiments[index].data = raw_data.interpolate(method="spline", order=1, limit_direction="both", axis=0)
                         line_edit.append("- File " + files.name[index] + ".csv was read")
                         experiments[index].last_frame = raw_image
                         line_edit.append("- File " + files.name[index] + ".png was read")
@@ -759,9 +738,7 @@ class interface_functions:
             experiments = []
             selected_files = get_files(line_edit, data, experiments)
             if save_plots == 1:
-                selected_folder_to_save = filedialog.askdirectory(
-                    title="Select the folder to save the plots", mustexist=True
-                )
+                selected_folder_to_save = filedialog.askdirectory(title="Select the folder to save the plots", mustexist=True)
             try:
                 assert selected_folder_to_save != ""
                 assert len(experiments) > 0

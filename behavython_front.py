@@ -309,14 +309,7 @@ class behavython_gui(QMainWindow):
                 self.clear_unused_files_lineedit.append(f"Getting last frame of {filename}")
                 if not os.path.isfile(output_path):
                     subprocess.run(
-                        "ffmpeg -sseof -100 -i "
-                        + '"'
-                        + video_path
-                        + '"'
-                        + " -update 1 -q:v 1 "
-                        + '"'
-                        + output_path
-                        + '"',
+                        "ffmpeg -sseof -100 -i " + '"' + video_path + '"' + " -update 1 -q:v 1 " + '"' + output_path + '"',
                         shell=True,
                     )
                 else:
@@ -430,7 +423,9 @@ class behavython_gui(QMainWindow):
         title = "Missing files"
         message = "The following files are missing:\n\n" + "\n".join(
             missing_files
-            + ["\nPlease, these files are essential for the analysis to work.\nCheck the analysis folder and try again."]
+            + [
+                "\nPlease, these files are essential for the analysis to work.\nCheck the analysis folder before continuing with the analysis."
+            ]
         )
         warning_message_function(title, message)
 
