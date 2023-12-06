@@ -9,9 +9,9 @@ import subprocess
 import deeplabcut
 from pathlib import Path
 from tkinter import filedialog
-from PyQt5 import QtWidgets, uic
-from PyQt5.QtWidgets import QMainWindow, QMessageBox
-from PyQt5.QtCore import QObject, QThread, pyqtSignal
+from PyQt6 import QtWidgets, uic
+from PyQt6.QtWidgets import QMainWindow, QMessageBox
+from PyQt6.QtCore import QObject, QThread, pyqtSignal
 
 
 class analysis_class(QObject):
@@ -523,7 +523,7 @@ def main():
     #     pass
     # -----------------------------------------------------------------------------------------
 
-    app.exec_()  # Start the application
+    app.exec()  # Start the application
 
 
 if __name__ == "__main__":
