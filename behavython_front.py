@@ -472,7 +472,7 @@ class behavython_gui(QMainWindow):
         warning.setWindowTitle("Warning")  # Message box title
         warning.setText(text)  # Message box text
         warning.setInformativeText(info_text)  # Message box text
-        warning.setIcon(QMessageBox.Warning)  # Message box icon
+        warning.setIcon(QMessageBox.Icon.Warning)  # Message box icon
         warning.setStyleSheet(
             "QMessageBox{background:#353535;}QLabel{font:10pt/DejaVu Sans/;"
             + "font-weight:bold;color:#FFFFFF;}QPushButton{width:52px; border:2px solid #A21F27;border-radius:8px;"
@@ -480,10 +480,10 @@ class behavython_gui(QMainWindow):
             + "font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;"
             + "border-radius:8px;background-color:#A21F27;color:#FFFFFF;}"
         )
-        warning.setStandardButtons(QMessageBox.Yes | QMessageBox.No)  # Message box buttons
-        answer_yes = warning.button(QMessageBox.Yes)  # Set the button "yes"
+        warning.setStandardButtons(QMessageBox.StandardButton.Yes| QMessageBox.StandardButton.No)  # Message box buttons
+        answer_yes = warning.button(QMessageBox.StandardButton.Yes)  # Set the button "yes"
         answer_yes.setText("    YES    ")  # Rename the button "yes"
-        answer_no = warning.button(QMessageBox.No)  # Set the button "no"
+        answer_no = warning.button(QMessageBox.StandardButton.No)  # Set the button "no"
         answer_no.setText("     NO      ")  # Rename the button "no"
         warning.exec_()  # Execute the message box
         if warning.clickedButton() == answer_yes:  # If the button "yes" is clicked
@@ -496,7 +496,7 @@ def warning_message_function(title, text):
     warning = QMessageBox()  # Create the message box
     warning.setWindowTitle(title)  # Message box title
     warning.setText(text)  # Message box text
-    warning.setIcon(QMessageBox.Warning)  # Message box icon
+    warning.setIcon(QMessageBox.Icon.Warning)  # Message box icon
     warning.setStyleSheet(
         "QMessageBox{background:#353535;}QLabel{font:10pt/DejaVu Sans/;"
         + "font-weight:bold;color:#FFFFFF;}QPushButton{width:52px; border:2px solid #A21F27;border-radius:8px;"
@@ -504,7 +504,7 @@ def warning_message_function(title, text):
         + "font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;"
         + "border-radius:8px;background-color:#A21F27;color:#FFFFFF;}"
     )
-    warning.setStandardButtons(QMessageBox.Ok)  # Message box buttons
+    warning.setStandardButtons(QMessageBox.StandardButton.Ok)  # Message box buttons
     warning.exec_()
 
 
