@@ -193,7 +193,7 @@ class Animal:
         # The following line is necessary to convert the column names to lowercase
         # The data is stored in a MultiIndex dataframe, so the column names are tuples with the bodypart name and the axis/likelihood
         # The following line converts the tuples to lowercase strings
-        extracted_data.columns = pd.MultiIndex.from_frame(extracted_data.columns.to_frame().applymap(str.lower))
+        extracted_data.columns = pd.MultiIndex.from_frame(extracted_data.columns.to_frame().map(str.lower))
         self.bodyparts[bodypart] = {
             "x": extracted_data[bodypart, "x"],
             "y": extracted_data[bodypart, "y"],
@@ -223,7 +223,7 @@ class Animal:
         # The following line is necessary to convert the column names to lowercase
         # The data is stored in a MultiIndex dataframe, so the column names are tuples with the bodypart name and the axis/likelihood
         # The following line converts the tuples to lowercase strings
-        extracted_data.columns = pd.MultiIndex.from_frame(extracted_data.columns.to_frame().applymap(str.lower))
+        extracted_data.columns = pd.MultiIndex.from_frame(extracted_data.columns.to_frame().map(str.lower))
         try:
             self.skeleton[bone] = {
                 "length": extracted_data[bone, "length"],
@@ -249,9 +249,7 @@ class Animal:
             raw_image = mpimg.imread(image_file)
             self.animal_jpg = raw_image
         except KeyError:
-            print(
-                f"\nJPG file for the animal {self.name} not found.\nPlease, check if the name of the file is correct.\n"
-            )
+            print(f"\nJPG file for the animal {self.name} not found.\nPlease, check if the name of the file is correct.\n")
         return
 
     def add_position_file(self, position_file):
@@ -358,9 +356,9 @@ def get_files(line_edit, data: DataFiles, animal_list: list):
                     line_edit.append("Position file found for " + animal)
                     data.add_pos_file(animal, file)
                     continue
-                if (
-                    file.endswith(".jpg") or file.endswith(".png") or file.endswith(".jpeg")
-                ) and not data.experiment_images.get(animal):
+                if (file.endswith(".jpg") or file.endswith(".png") or file.endswith(".jpeg")) and not data.experiment_images.get(
+                    animal
+                ):
                     line_edit.append("Image file found for " + animal)
                     data.add_image_file(animal, file)
                     continue
@@ -472,9 +470,7 @@ def detect_collision(line_segment_start, line_segment_end, circle_center, circle
     line_segment_delta_x = line_end_x_relative_to_circle - line_start_x_relative_to_circle
     line_segment_delta_y = line_end_y_relative_to_circle - line_start_y_relative_to_circle
 
-    line_segment_length = math.sqrt(
-        line_segment_delta_x * line_segment_delta_x + line_segment_delta_y * line_segment_delta_y
-    )
+    line_segment_length = math.sqrt(line_segment_delta_x * line_segment_delta_x + line_segment_delta_y * line_segment_delta_y)
     discriminant_numerator = (
         line_start_x_relative_to_circle * line_end_y_relative_to_circle
         - line_end_x_relative_to_circle * line_start_y_relative_to_circle
@@ -486,12 +482,8 @@ def detect_collision(line_segment_start, line_segment_end, circle_center, circle
     if discriminant < 0:
         return []
     if discriminant == 0:
-        intersection_point_1_x = (discriminant_numerator * line_segment_delta_y) / (
-            line_segment_length * line_segment_length
-        )
-        intersection_point_1_y = (-discriminant_numerator * line_segment_delta_x) / (
-            line_segment_length * line_segment_length
-        )
+        intersection_point_1_x = (discriminant_numerator * line_segment_delta_y) / (line_segment_length * line_segment_length)
+        intersection_point_1_y = (-discriminant_numerator * line_segment_delta_x) / (line_segment_length * line_segment_length)
         parameterization_a = (
             intersection_point_1_x - line_start_x_relative_to_circle
         ) * line_segment_delta_x / line_segment_length + (

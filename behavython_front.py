@@ -485,7 +485,7 @@ class behavython_gui(QMainWindow):
         answer_yes.setText("    YES    ")  # Rename the button "yes"
         answer_no = warning.button(QMessageBox.StandardButton.No)  # Set the button "no"
         answer_no.setText("     NO      ")  # Rename the button "no"
-        warning.exec_()  # Execute the message box
+        warning.exec()  # Execute the message box
         if warning.clickedButton() == answer_yes:  # If the button "yes" is clicked
             return "yes"  # Return "yes"
         else:  # If the button "no" is clicked
@@ -505,7 +505,7 @@ def warning_message_function(title, text):
         + "border-radius:8px;background-color:#A21F27;color:#FFFFFF;}"
     )
     warning.setStandardButtons(QMessageBox.StandardButton.Ok)  # Message box buttons
-    warning.exec_()
+    warning.exec()
 
 
 def main():
