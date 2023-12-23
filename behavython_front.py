@@ -7,18 +7,19 @@ import subprocess
 # import cv2
 
 import deeplabcut
+from behavython_plot_widget import plot_viewer
 from pathlib import Path
 from tkinter import filedialog
-from PyQt6 import QtWidgets, uic
-from PyQt6.QtWidgets import QMainWindow, QMessageBox
-from PyQt6.QtCore import QObject, QThread, pyqtSignal
+from PySide6 import QtWidgets, QtCore, QtUiTools
+from PySide6.QtWidgets import QMainWindow, QMessageBox
+from PySide6.QtCore import QObject, QThread, Signal
 
 
 class analysis_class(QObject):
     """This class is a wrapper for the analysis function. It is used to run the analysis after the data is loaded."""
 
-    finished = pyqtSignal()  # Signal that will be output to the interface when the function is completed
-    progress_bar = pyqtSignal(int)
+    finished = Signal()  # Signal that will be output to the interface when the function is completed
+    progress_bar = Signal(int)
 
     def __init__(self, experiments, options, plot_viewer):
         """
@@ -71,43 +72,45 @@ class behavython_gui(QMainWindow):
         """
         super(behavython_gui, self).__init__()  # Calls the inherited classes __init__ method
         load_gui_path = os.path.join(os.path.dirname(__file__), "behavython_gui.ui")
-        self.interface = uic.loadUi(load_gui_path, self)  # Loads the interface design archive (made in Qt Designer)
-        self.show()
+        loader = QtUiTools.QUiLoader()
+        loader.registerCustomWidget(plot_viewer)
+        self.interface = loader.load(load_gui_path)  # Loads the interface design archive (made in Qt Designer)
+        self.interface.show()
         self.options = {}
-        self.clear_button.clicked.connect(self.clear_function)
-        self.analysis_button.clicked.connect(self.analysis_function)
+        self.interface.clear_button.clicked.connect(self.clear_function)
+        self.interface.analysis_button.clicked.connect(self.analysis_function)
 
         ## This block handles the deeplabcut analysis
-        self.folder_structure_check_button.clicked.connect(self.folder_structure_check_function)
-        self.dlc_video_analyze_button.clicked.connect(self.dlc_video_analyze_function)
-        self.extract_skeleton_button.clicked.connect(self.extract_skeleton_function)
-        self.clear_unused_files_button.clicked.connect(self.clear_unused_files_function)
-        self.get_config_path_button.clicked.connect(lambda: self.get_folder_path_function("config_path"))
-        self.get_videos_path_button.clicked.connect(lambda: self.get_folder_path_function("videos_path"))
-        self.get_frames_button.clicked.connect(self.get_frames_function)
+        self.interface.folder_structure_check_button.clicked.connect(self.folder_structure_check_function)
+        self.interface.dlc_video_analyze_button.clicked.connect(self.dlc_video_analyze_function)
+        self.interface.extract_skeleton_button.clicked.connect(self.extract_skeleton_function)
+        self.interface.clear_unused_files_button.clicked.connect(self.clear_unused_files_function)
+        self.interface.get_config_path_button.clicked.connect(lambda: self.get_folder_path_function("config_path"))
+        self.interface.get_videos_path_button.clicked.connect(lambda: self.get_folder_path_function("videos_path"))
+        self.interface.get_frames_button.clicked.connect(self.get_frames_function)
 
     def analysis_function(self):
-        self.resume_lineedit.clear()
-        self.options["arena_width"] = int(self.arena_width_lineedit.text())
-        self.options["arena_height"] = int(self.arena_height_lineedit.text())
-        self.options["frames_per_second"] = float(self.frames_per_second_lineedit.text())
-        self.options["experiment_type"] = self.type_combobox.currentText().lower().strip().replace(" ", "_")
-        self.options["plot_options"] = self.save_button.isChecked()
+        self.interface.resume_lineedit.clear()
+        self.options["arena_width"] = int(self.interface.arena_width_lineedit.text())
+        self.options["arena_height"] = int(self.interface.arena_height_lineedit.text())
+        self.options["frames_per_second"] = float(self.interface.frames_per_second_lineedit.text())
+        self.options["experiment_type"] = self.interface.type_combobox.currentText().lower().strip().replace(" ", "_")
+        self.options["plot_options"] = self.interface.save_button.isChecked()
         # Remove trailing spaces and replace x with comma and split the values at the comma to make a list
-        self.options["max_fig_res"] = str(self.fig_max_size.currentText()).replace(" ", "").replace("x", ",").split(",")
-        self.options["algo_type"] = self.algo_type_combobox.currentText().lower().strip()
-        if self.animal_combobox.currentIndex() == 0:
+        self.options["max_fig_res"] = str(self.interface.fig_max_size.currentText()).replace(" ", "").replace("x", ",").split(",")
+        self.options["algo_type"] = self.interface.algo_type_combobox.currentText().lower().strip()
+        if self.interface.animal_combobox.currentIndex() == 0:
             self.options["threshold"] = 0.0267
         else:
             self.options["threshold"] = 0.0667
-        self.options["task_duration"] = int(self.crop_video_lineedit.text())
-        self.options["trim_amount"] = int(self.crop_video_time_lineedit.text())
-        self.options["crop_video"] = self.crop_video_checkbox.isChecked()
+        self.options["task_duration"] = int(self.interface.crop_video_lineedit.text())
+        self.options["trim_amount"] = int(self.interface.crop_video_time_lineedit.text())
+        self.options["crop_video"] = self.interface.crop_video_checkbox.isChecked()
 
         functions = behavython_back.interface_functions()
         if self.options["algo_type"] == "deeplabcut":
             [self.experiments, save_folder, error_flag, inexistent_file] = functions.get_experiments(
-                self.resume_lineedit,
+                self.interface.resume_lineedit,
                 self.options["experiment_type"],
                 self.options["plot_options"],
                 self.options["algo_type"],
@@ -139,7 +142,7 @@ class behavython_gui(QMainWindow):
         # Creates a QThread object to plot the received data
         self.analysis_thread = QThread()
         # Creates a worker object named plot_data_class
-        self.analysis_worker = analysis_class(self.experiments, self.options, self.plot_viewer)
+        self.analysis_worker = analysis_class(self.experiments, self.options, self.interface.plot_viewer)
         # Moves the class to the thread
         self.analysis_worker.moveToThread(self.analysis_thread)
         # When the process is finished, this command quits the worker
@@ -158,26 +161,26 @@ class behavython_gui(QMainWindow):
         self.analysis_worker.run_analyse(self.options)
 
     def progress_bar_function(self, value):
-        self.progress_bar.setValue(value)
+        self.interface.progress_bar.setValue(value)
 
     def clear_function(self):
         self.options = {}
-        self.type_combobox.setCurrentIndex(0)
-        self.frames_per_second_lineedit.setText("30")
-        self.arena_width_lineedit.setText("65")
-        self.arena_height_lineedit.setText("65")
-        self.animal_combobox.setCurrentIndex(0)
-        self.fig_max_size.setCurrentIndex(0)
-        self.algo_type_combobox.setCurrentIndex(0)
+        self.interface.type_combobox.setCurrentIndex(0)
+        self.interface.frames_per_second_lineedit.setText("30")
+        self.interface.arena_width_lineedit.setText("65")
+        self.interface.arena_height_lineedit.setText("65")
+        self.interface.animal_combobox.setCurrentIndex(0)
+        self.interface.fig_max_size.setCurrentIndex(0)
+        self.interface.algo_type_combobox.setCurrentIndex(0)
         self.clear_plot()
 
     def clear_plot(self):
         for i in range(1, 10):
-            self.plot_viewer.canvas.axes[i - 1].cla()  # Changes the plot face color
+            self.interface.plot_viewer.canvas.axes[i - 1].cla()  # Changes the plot face color
 
     def folder_structure_check_function(self):
-        self.clear_unused_files_lineedit.clear()
-        folder_path = os.path.dirname(self.config_path_lineedit.text().replace('"', "").replace("'", ""))
+        self.interface.clear_unused_files_lineedit.clear()
+        folder_path = os.path.dirname(self.interface.config_path_lineedit.text().replace('"', "").replace("'", ""))
         if folder_path == "":
             message = "Please, select a path to the config.yaml file before checking the folder structure."
             title = "Path to config file not selected"
@@ -188,13 +191,13 @@ class behavython_gui(QMainWindow):
 
         for folder in required_folders:
             if not os.path.isdir(os.path.join(folder_path, folder)):
-                self.clear_unused_files_lineedit.append(f"The folder '{folder}' is NOT present")
+                self.interface.clear_unused_files_lineedit.append(f"The folder '{folder}' is NOT present")
                 return False
-            self.clear_unused_files_lineedit.append(f"The folder {folder} is OK")
+            self.interface.clear_unused_files_lineedit.append(f"The folder {folder} is OK")
 
         for file in required_files:
             if not os.path.isfile(os.path.join(folder_path, file)):
-                self.clear_unused_files_lineedit.append(f"The project's {file} is NOT present")
+                self.interface.clear_unused_files_lineedit.append(f"The project's {file} is NOT present")
                 return False
         # Check if dlc-models contains at least one iteration folder
         dlc_models_path = os.path.join(folder_path, "dlc-models")
@@ -204,13 +207,13 @@ class behavython_gui(QMainWindow):
             if os.path.isdir(os.path.join(dlc_models_path, f)) and f.startswith("iteration-")
         ]
         if not iteration_folders:
-            self.clear_unused_files_lineedit.append("There are no iteration folders in dlc-models.")
+            self.interface.clear_unused_files_lineedit.append("There are no iteration folders in dlc-models.")
             return False
 
         latest_iteration_folder = max(iteration_folders, key=lambda x: int(x.split("-")[1]))
         shuffle_set = os.listdir(os.path.join(dlc_models_path, latest_iteration_folder))
         if not shuffle_set:
-            self.clear_unused_files_lineedit.append("There are no shuffle sets in the latest iteration folder.")
+            self.interface.clear_unused_files_lineedit.append("There are no shuffle sets in the latest iteration folder.")
             return False
         else:
             for root, dirs, files in os.walk(os.path.join(dlc_models_path, latest_iteration_folder, shuffle_set[0])):
@@ -218,34 +221,34 @@ class behavython_gui(QMainWindow):
                     if dir.startswith("log"):
                         continue
                     if "train" not in dirs or "test" not in dirs:
-                        self.clear_unused_files_lineedit.append("The train or test folder is missing.")
+                        self.interface.clear_unused_files_lineedit.append("The train or test folder is missing.")
                         return False
                     if dir.startswith("test") and not os.path.isfile(os.path.join(root, dir, "pose_cfg.yaml")):
-                        self.clear_unused_files_lineedit.append("The pose_cfg.yaml file is missing in test folder.")
+                        self.interface.clear_unused_files_lineedit.append("The pose_cfg.yaml file is missing in test folder.")
                         return False
                     if dir.startswith("train"):
                         if not os.path.isfile(os.path.join(root, dir, "pose_cfg.yaml")):
-                            self.clear_unused_files_lineedit.append("The pose_cfg.yaml file is missing in test folder.")
+                            self.interface.clear_unused_files_lineedit.append("The pose_cfg.yaml file is missing in test folder.")
                             return False
                         elif not any("meta" in string for string in os.listdir(os.path.join(root, dir))):
-                            self.clear_unused_files_lineedit.append("The meta file is missing in train folder.")
+                            self.interface.clear_unused_files_lineedit.append("The meta file is missing in train folder.")
                             return False
                         elif not any("data" in string for string in os.listdir(os.path.join(root, dir))):
-                            self.clear_unused_files_lineedit.append("The data file is missing in train folder.")
+                            self.interface.clear_unused_files_lineedit.append("The data file is missing in train folder.")
                             return False
                         elif not any("index" in string for string in os.listdir(os.path.join(root, dir))):
-                            self.clear_unused_files_lineedit.append("The index file is missing in train folder.")
+                            self.interface.clear_unused_files_lineedit.append("The index file is missing in train folder.")
                             return False
 
         # If all checks pass, the folder structure is correct
-        self.clear_unused_files_lineedit.append("The folder structure is correct.")
+        self.interface.clear_unused_files_lineedit.append("The folder structure is correct.")
         return True
 
     def dlc_video_analyze_function(self):
-        self.clear_unused_files_lineedit.clear()
-        self.clear_unused_files_lineedit.append(f"Using DeepLabCut version{deeplabcut.__version__}")
-        config_path = self.config_path_lineedit.text().replace('"', "").replace("'", "")
-        videos = self.video_folder_lineedit.text().replace('"', "").replace("'", "")
+        self.interface.clear_unused_files_lineedit.clear()
+        self.interface.clear_unused_files_lineedit.append(f"Using DeepLabCut version{deeplabcut.__version__}")
+        config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
+        videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
         _, _, file_list = [entry for entry in os.walk(videos)][0]
 
         for file in file_list:
@@ -261,10 +264,10 @@ class behavython_gui(QMainWindow):
 
         continue_analysis = self.resume_message_function(file_list)
         if not continue_analysis:
-            self.clear_unused_files_lineedit.clear()
-            self.clear_unused_files_lineedit.append("Analysis canceled.")
+            self.interface.clear_unused_files_lineedit.clear()
+            self.interface.clear_unused_files_lineedit.append("Analysis canceled.")
             return
-        self.clear_unused_files_lineedit.append("Analyzing videos...")
+        self.interface.clear_unused_files_lineedit.append("Analyzing videos...")
         deeplabcut.analyze_videos(
             config_path,
             videos,
@@ -275,9 +278,9 @@ class behavython_gui(QMainWindow):
             allow_growth=True,
             save_as_csv=True,
         )
-        self.clear_unused_files_lineedit.append("Done analyzing videos.")
+        self.interface.clear_unused_files_lineedit.append("Done analyzing videos.")
 
-        self.clear_unused_files_lineedit.append("Filtering data files and saving as CSV...")
+        self.interface.clear_unused_files_lineedit.append("Filtering data files and saving as CSV...")
         deeplabcut.filterpredictions(
             config_path,
             videos,
@@ -292,11 +295,11 @@ class behavython_gui(QMainWindow):
             alpha=0.01,
             save_as_csv=True,
         )
-        self.clear_unused_files_lineedit.append("Done filtering data files")
+        self.interface.clear_unused_files_lineedit.append("Done filtering data files")
 
     def get_frames_function(self):
-        self.clear_unused_files_lineedit.clear()
-        videos = self.video_folder_lineedit.text().replace('"', "").replace("'", "")
+        self.interface.clear_unused_files_lineedit.clear()
+        videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
         _, _, file_list = [entry for entry in os.walk(videos)][0]
         for file in file_list:
             if ".mp4" in file or ".avi" in file or ".mov" in file or ".mkv" in file or ".wmv" in file or ".flv" in file:
@@ -306,34 +309,34 @@ class behavython_gui(QMainWindow):
             if filename.endswith(file_extension):
                 video_path = os.path.join(videos, filename)
                 output_path = os.path.splitext(video_path)[0] + ".jpg"
-                self.clear_unused_files_lineedit.append(f"Getting last frame of {filename}")
+                self.interface.clear_unused_files_lineedit.append(f"Getting last frame of {filename}")
                 if not os.path.isfile(output_path):
                     subprocess.run(
                         "ffmpeg -sseof -100 -i " + '"' + video_path + '"' + " -update 1 -q:v 1 " + '"' + output_path + '"',
                         shell=True,
                     )
                 else:
-                    self.clear_unused_files_lineedit.append(f"Last frame of {filename} already exists.")
+                    self.interface.clear_unused_files_lineedit.append(f"Last frame of {filename} already exists.")
         pass
 
     def extract_skeleton_function(self):
-        self.clear_unused_files_lineedit.clear()
-        self.clear_unused_files_lineedit.append(f"Using DeepLabCut version{deeplabcut.__version__}")
-        config_path = self.config_path_lineedit.text().replace('"', "").replace("'", "")
-        videos = self.video_folder_lineedit.text().replace('"', "").replace("'", "")
+        self.interface.clear_unused_files_lineedit.clear()
+        self.interface.clear_unused_files_lineedit.append(f"Using DeepLabCut version{deeplabcut.__version__}")
+        config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
+        videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
         _, _, file_list = [entry for entry in os.walk(videos)][0]
         for file in file_list:
             if ".mp4" in file or ".avi" in file or ".mov" in file or ".mkv" in file or ".wmv" in file or ".flv" in file:
                 file_extension = file.split(".")[-1]
 
-        self.clear_unused_files_lineedit.append("Extracting skeleton...")
+        self.interface.clear_unused_files_lineedit.append("Extracting skeleton...")
         deeplabcut.analyzeskeleton(config_path, videos, shuffle=1, trainingsetindex=0, filtered=True, save_as_csv=True)
-        self.clear_unused_files_lineedit.append("Done extracting skeleton.")
+        self.interface.clear_unused_files_lineedit.append("Done extracting skeleton.")
 
     def clear_unused_files_function(self):
-        self.clear_unused_files_lineedit.clear()
-        config_path = self.config_path_lineedit.text().replace('"', "").replace("'", "")
-        videos = self.video_folder_lineedit.text().replace('"', "").replace("'", "")
+        self.interface.clear_unused_files_lineedit.clear()
+        config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
+        videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
         _, _, file_list = [entry for entry in os.walk(videos)][0]
         for file in file_list:
             file_extension = ".mp4"
@@ -351,7 +354,7 @@ class behavython_gui(QMainWindow):
                 continue
             if file.endswith(".h5") or file.endswith(".pickle") or "filtered" not in file:
                 os.remove(os.path.join(videos, file))
-                self.clear_unused_files_lineedit.append(f"Removed {file}")
+                self.interface.clear_unused_files_lineedit.append(f"Removed {file}")
         _, _, file_list = [entry for entry in os.walk(videos)][0]
 
         has_filtered_csv = False
@@ -361,7 +364,7 @@ class behavython_gui(QMainWindow):
         has_right_roi_file = False
         has_image_file = False
         missing_files = []
-        task_type = self.type_combobox.currentText().lower().strip().replace(" ", "_")
+        task_type = self.interface.type_combobox.currentText().lower().strip().replace(" ", "_")
 
         for file in file_list:
             if file.endswith("filtered.csv"):
@@ -392,7 +395,7 @@ class behavython_gui(QMainWindow):
                 not has_image_file,
             ]
         ):
-            self.clear_unused_files_lineedit.append("There are missing files in the folder")
+            self.interface.clear_unused_files_lineedit.append("There are missing files in the folder")
         elif task_type == "njr" and any(
             [
                 not has_filtered_csv,
@@ -402,9 +405,9 @@ class behavython_gui(QMainWindow):
                 not has_image_file,
             ]
         ):
-            self.clear_unused_files_lineedit.append("There are missing files in the folder")
+            self.interface.clear_unused_files_lineedit.append("There are missing files in the folder")
         else:
-            self.clear_unused_files_lineedit.append("All required files are present.")
+            self.interface.clear_unused_files_lineedit.append("All required files are present.")
             return
         if not has_filtered_csv:
             missing_files.append(" - filtered.csv")
@@ -435,13 +438,13 @@ class behavython_gui(QMainWindow):
             file_explorer.withdraw()
             file_explorer.call("wm", "attributes", ".", "-topmost", True)
             config_file = str(Path(filedialog.askopenfilename(title="Select the config.yaml file", multiple=False)))
-            self.config_path_lineedit.setText(config_file)
+            self.interface.config_path_lineedit.setText(config_file)
         elif lineedit_name == "videos_path":
             file_explorer = tk.Tk()
             file_explorer.withdraw()
             file_explorer.call("wm", "attributes", ".", "-topmost", True)
             folder = str(Path(filedialog.askdirectory(title="Select the folder", mustexist=True)))
-            self.video_folder_lineedit.setText(folder)
+            self.interface.video_folder_lineedit.setText(folder)
             # self.video_length = self.get_video_length(folder)
 
     # def get_video_length(file_path):
@@ -509,6 +512,7 @@ def warning_message_function(title, text):
 
 
 def main():
+    QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts)
     app = QtWidgets.QApplication(sys.argv)  # Create an instance of QtWidgets.QApplication
     window = behavython_gui()  # Create an instance of our class
 

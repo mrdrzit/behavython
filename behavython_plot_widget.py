@@ -1,7 +1,6 @@
-from PyQt6 import QtWidgets
+from PySide6 import QtWidgets
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-
 
 class plot_viewer(QtWidgets.QWidget):
     """
@@ -31,6 +30,3 @@ class plot_viewer(QtWidgets.QWidget):
         vertical_layout.addWidget(self.canvas)  # Inserts the figure on the layout
         self.canvas.figure.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)  # Sets the plot margins
         self.setLayout(vertical_layout)  # Sets the layout
-
-        def includeFile(self):
-            return "QtCustomWidgets.widgets.mybutton"

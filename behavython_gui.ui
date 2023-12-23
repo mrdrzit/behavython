@@ -966,7 +966,7 @@ to see the help text</string>
         <string notr="true">QLabel{border:#969696;background-color:#2C53A1;border-radius:8px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
        </property>
        <property name="text">
-        <string notr="true">NETWROK SETTINGS</string>
+        <string notr="true">NETWORK SETTINGS</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
