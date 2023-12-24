@@ -2,11 +2,7 @@ import behavython_back
 import sys
 import os
 import tkinter as tk
-import subprocess
-
-# import cv2
-
-import deeplabcut
+from dlc_helper_functions import *
 from behavython_plot_widget import plot_viewer
 from pathlib import Path
 from tkinter import filedialog
@@ -81,13 +77,13 @@ class behavython_gui(QMainWindow):
         self.interface.analysis_button.clicked.connect(self.analysis_function)
 
         ## This block handles the deeplabcut analysis
-        self.interface.folder_structure_check_button.clicked.connect(self.folder_structure_check_function)
-        self.interface.dlc_video_analyze_button.clicked.connect(self.dlc_video_analyze_function)
-        self.interface.extract_skeleton_button.clicked.connect(self.extract_skeleton_function)
-        self.interface.clear_unused_files_button.clicked.connect(self.clear_unused_files_function)
-        self.interface.get_config_path_button.clicked.connect(lambda: self.get_folder_path_function("config_path"))
-        self.interface.get_videos_path_button.clicked.connect(lambda: self.get_folder_path_function("videos_path"))
-        self.interface.get_frames_button.clicked.connect(self.get_frames_function)
+        self.interface.folder_structure_check_button.clicked.connect(lambda: folder_structure_check_function(self))
+        self.interface.dlc_video_analyze_button.clicked.connect(lambda: dlc_video_analyze_function(self))
+        self.interface.extract_skeleton_button.clicked.connect(lambda: extract_skeleton_function(self))
+        self.interface.clear_unused_files_button.clicked.connect(lambda: clear_unused_files_function(self))
+        self.interface.get_config_path_button.clicked.connect(lambda: get_folder_path_function(self, "config_path"))
+        self.interface.get_videos_path_button.clicked.connect(lambda: get_folder_path_function(self, "videos_path"))
+        self.interface.get_frames_button.clicked.connect(lambda: get_frames_function(self))
 
     def analysis_function(self):
         self.interface.resume_lineedit.clear()
@@ -178,287 +174,6 @@ class behavython_gui(QMainWindow):
         for i in range(1, 10):
             self.interface.plot_viewer.canvas.axes[i - 1].cla()  # Changes the plot face color
 
-    def folder_structure_check_function(self):
-        self.interface.clear_unused_files_lineedit.clear()
-        folder_path = os.path.dirname(self.interface.config_path_lineedit.text().replace('"', "").replace("'", ""))
-        if folder_path == "":
-            message = "Please, select a path to the config.yaml file before checking the folder structure."
-            title = "Path to config file not selected"
-            warning_message_function(title, message)
-
-        required_folders = ["dlc-models", "evaluation-results", "labeled-data", "training-datasets", "videos"]
-        required_files = ["config.yaml"]
-
-        for folder in required_folders:
-            if not os.path.isdir(os.path.join(folder_path, folder)):
-                self.interface.clear_unused_files_lineedit.append(f"The folder '{folder}' is NOT present")
-                return False
-            self.interface.clear_unused_files_lineedit.append(f"The folder {folder} is OK")
-
-        for file in required_files:
-            if not os.path.isfile(os.path.join(folder_path, file)):
-                self.interface.clear_unused_files_lineedit.append(f"The project's {file} is NOT present")
-                return False
-        # Check if dlc-models contains at least one iteration folder
-        dlc_models_path = os.path.join(folder_path, "dlc-models")
-        iteration_folders = [
-            f
-            for f in os.listdir(dlc_models_path)
-            if os.path.isdir(os.path.join(dlc_models_path, f)) and f.startswith("iteration-")
-        ]
-        if not iteration_folders:
-            self.interface.clear_unused_files_lineedit.append("There are no iteration folders in dlc-models.")
-            return False
-
-        latest_iteration_folder = max(iteration_folders, key=lambda x: int(x.split("-")[1]))
-        shuffle_set = os.listdir(os.path.join(dlc_models_path, latest_iteration_folder))
-        if not shuffle_set:
-            self.interface.clear_unused_files_lineedit.append("There are no shuffle sets in the latest iteration folder.")
-            return False
-        else:
-            for root, dirs, files in os.walk(os.path.join(dlc_models_path, latest_iteration_folder, shuffle_set[0])):
-                for dir in dirs:
-                    if dir.startswith("log"):
-                        continue
-                    if "train" not in dirs or "test" not in dirs:
-                        self.interface.clear_unused_files_lineedit.append("The train or test folder is missing.")
-                        return False
-                    if dir.startswith("test") and not os.path.isfile(os.path.join(root, dir, "pose_cfg.yaml")):
-                        self.interface.clear_unused_files_lineedit.append("The pose_cfg.yaml file is missing in test folder.")
-                        return False
-                    if dir.startswith("train"):
-                        if not os.path.isfile(os.path.join(root, dir, "pose_cfg.yaml")):
-                            self.interface.clear_unused_files_lineedit.append("The pose_cfg.yaml file is missing in test folder.")
-                            return False
-                        elif not any("meta" in string for string in os.listdir(os.path.join(root, dir))):
-                            self.interface.clear_unused_files_lineedit.append("The meta file is missing in train folder.")
-                            return False
-                        elif not any("data" in string for string in os.listdir(os.path.join(root, dir))):
-                            self.interface.clear_unused_files_lineedit.append("The data file is missing in train folder.")
-                            return False
-                        elif not any("index" in string for string in os.listdir(os.path.join(root, dir))):
-                            self.interface.clear_unused_files_lineedit.append("The index file is missing in train folder.")
-                            return False
-
-        # If all checks pass, the folder structure is correct
-        self.interface.clear_unused_files_lineedit.append("The folder structure is correct.")
-        return True
-
-    def dlc_video_analyze_function(self):
-        self.interface.clear_unused_files_lineedit.clear()
-        self.interface.clear_unused_files_lineedit.append(f"Using DeepLabCut version{deeplabcut.__version__}")
-        config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
-        videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
-        _, _, file_list = [entry for entry in os.walk(videos)][0]
-
-        for file in file_list:
-            if ".mp4" in file or ".avi" in file or ".mov" in file or ".mkv" in file or ".wmv" in file or ".flv" in file:
-                file_extension = file.split(".")[-1]
-
-        all_has_same_extension = all([file.split(".")[-1] == file_extension for file in file_list])
-        if not all_has_same_extension:
-            title = "Video extension error"
-            message = "All videos must have the same extension.\n Please, check the videos folder and try again."
-            warning_message_function(title, message)
-            return False
-
-        continue_analysis = self.resume_message_function(file_list)
-        if not continue_analysis:
-            self.interface.clear_unused_files_lineedit.clear()
-            self.interface.clear_unused_files_lineedit.append("Analysis canceled.")
-            return
-        self.interface.clear_unused_files_lineedit.append("Analyzing videos...")
-        deeplabcut.analyze_videos(
-            config_path,
-            videos,
-            videotype=file_extension,
-            shuffle=1,
-            trainingsetindex=0,
-            gputouse=0,
-            allow_growth=True,
-            save_as_csv=True,
-        )
-        self.interface.clear_unused_files_lineedit.append("Done analyzing videos.")
-
-        self.interface.clear_unused_files_lineedit.append("Filtering data files and saving as CSV...")
-        deeplabcut.filterpredictions(
-            config_path,
-            videos,
-            videotype=file_extension,
-            shuffle=1,
-            trainingsetindex=0,
-            filtertype="median",
-            windowlength=5,
-            p_bound=0.001,
-            ARdegree=3,
-            MAdegree=1,
-            alpha=0.01,
-            save_as_csv=True,
-        )
-        self.interface.clear_unused_files_lineedit.append("Done filtering data files")
-
-    def get_frames_function(self):
-        self.interface.clear_unused_files_lineedit.clear()
-        videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
-        _, _, file_list = [entry for entry in os.walk(videos)][0]
-        for file in file_list:
-            if ".mp4" in file or ".avi" in file or ".mov" in file or ".mkv" in file or ".wmv" in file or ".flv" in file:
-                file_extension = file.split(".")[-1]
-
-        for filename in file_list:
-            if filename.endswith(file_extension):
-                video_path = os.path.join(videos, filename)
-                output_path = os.path.splitext(video_path)[0] + ".jpg"
-                self.interface.clear_unused_files_lineedit.append(f"Getting last frame of {filename}")
-                if not os.path.isfile(output_path):
-                    subprocess.run(
-                        "ffmpeg -sseof -100 -i " + '"' + video_path + '"' + " -update 1 -q:v 1 " + '"' + output_path + '"',
-                        shell=True,
-                    )
-                else:
-                    self.interface.clear_unused_files_lineedit.append(f"Last frame of {filename} already exists.")
-        pass
-
-    def extract_skeleton_function(self):
-        self.interface.clear_unused_files_lineedit.clear()
-        self.interface.clear_unused_files_lineedit.append(f"Using DeepLabCut version{deeplabcut.__version__}")
-        config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
-        videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
-        _, _, file_list = [entry for entry in os.walk(videos)][0]
-        for file in file_list:
-            if ".mp4" in file or ".avi" in file or ".mov" in file or ".mkv" in file or ".wmv" in file or ".flv" in file:
-                file_extension = file.split(".")[-1]
-
-        self.interface.clear_unused_files_lineedit.append("Extracting skeleton...")
-        deeplabcut.analyzeskeleton(config_path, videos, shuffle=1, trainingsetindex=0, filtered=True, save_as_csv=True)
-        self.interface.clear_unused_files_lineedit.append("Done extracting skeleton.")
-
-    def clear_unused_files_function(self):
-        self.interface.clear_unused_files_lineedit.clear()
-        config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
-        videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
-        _, _, file_list = [entry for entry in os.walk(videos)][0]
-        for file in file_list:
-            file_extension = ".mp4"
-            if ".mp4" in file or ".avi" in file or ".mov" in file or ".mkv" in file or ".wmv" in file or ".flv" in file:
-                file_extension = file.split(".")[-1]
-
-        for file in file_list:
-            if (
-                file.endswith(file_extension)
-                or file.endswith(".png")
-                or file.endswith(".jpg")
-                or file.endswith(".tiff")
-                or "roi" in file
-            ):
-                continue
-            if file.endswith(".h5") or file.endswith(".pickle") or "filtered" not in file:
-                os.remove(os.path.join(videos, file))
-                self.interface.clear_unused_files_lineedit.append(f"Removed {file}")
-        _, _, file_list = [entry for entry in os.walk(videos)][0]
-
-        has_filtered_csv = False
-        has_skeleton_filtered_csv = False
-        has_roi_file = False
-        has_left_roi_file = False
-        has_right_roi_file = False
-        has_image_file = False
-        missing_files = []
-        task_type = self.interface.type_combobox.currentText().lower().strip().replace(" ", "_")
-
-        for file in file_list:
-            if file.endswith("filtered.csv"):
-                has_filtered_csv = True
-                continue
-            elif file.endswith("filtered_skeleton.csv"):
-                has_skeleton_filtered_csv = True
-                continue
-            elif file.endswith(".png") or file.endswith(".jpg") or file.endswith(".tiff"):
-                has_image_file = True
-                continue
-            if task_type == "njr":
-                if file.endswith("roiR.csv"):
-                    has_right_roi_file = True
-                    continue
-                elif file.endswith("roiL.csv"):
-                    has_left_roi_file = True
-                    continue
-            elif task_type == "social_recognition":
-                if file.endswith("roi.csv"):
-                    has_roi_file = True
-                    continue
-        if task_type == "social_recognition" and any(
-            [
-                not has_filtered_csv,
-                not has_skeleton_filtered_csv,
-                not has_roi_file,
-                not has_image_file,
-            ]
-        ):
-            self.interface.clear_unused_files_lineedit.append("There are missing files in the folder")
-        elif task_type == "njr" and any(
-            [
-                not has_filtered_csv,
-                not has_skeleton_filtered_csv,
-                not has_left_roi_file,
-                not has_right_roi_file,
-                not has_image_file,
-            ]
-        ):
-            self.interface.clear_unused_files_lineedit.append("There are missing files in the folder")
-        else:
-            self.interface.clear_unused_files_lineedit.append("All required files are present.")
-            return
-        if not has_filtered_csv:
-            missing_files.append(" - filtered.csv")
-        if not has_skeleton_filtered_csv:
-            missing_files.append(" - skeleton_filtered.csv")
-        if not has_image_file:
-            missing_files.append(" - screenshot of the video")
-        if task_type == "njr":
-            if not has_left_roi_file:
-                missing_files.append(" - roiR.csv")
-            if not has_right_roi_file:
-                missing_files.append(" - roiL.csv")
-        if task_type == "social_recognition" and not has_roi_file:
-            missing_files.append(" - roi.csv")
-
-        title = "Missing files"
-        message = "The following files are missing:\n\n" + "\n".join(
-            missing_files
-            + [
-                "\nPlease, these files are essential for the analysis to work.\nCheck the analysis folder before continuing with the analysis."
-            ]
-        )
-        warning_message_function(title, message)
-
-    def get_folder_path_function(self, lineedit_name):
-        if lineedit_name == "config_path":
-            file_explorer = tk.Tk()
-            file_explorer.withdraw()
-            file_explorer.call("wm", "attributes", ".", "-topmost", True)
-            config_file = str(Path(filedialog.askopenfilename(title="Select the config.yaml file", multiple=False)))
-            self.interface.config_path_lineedit.setText(config_file)
-        elif lineedit_name == "videos_path":
-            file_explorer = tk.Tk()
-            file_explorer.withdraw()
-            file_explorer.call("wm", "attributes", ".", "-topmost", True)
-            folder = str(Path(filedialog.askdirectory(title="Select the folder", mustexist=True)))
-            self.interface.video_folder_lineedit.setText(folder)
-            # self.video_length = self.get_video_length(folder)
-
-    # def get_video_length(file_path):
-    #     try:
-    #         cap = cv2.VideoCapture(file_path)
-    #         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    #         fps = cap.get(cv2.CAP_PROP_FPS)
-    #         video_length = frame_count / fps
-    #         cap.release()
-    #         return video_length
-    #     except Exception as e:
-    #         print(f"Error occurred: {e}")
-    #         return None
-
     def resume_message_function(self, file_list):
         text = "Check the videos to be analyzed: "
         message = "The following files are going to be used for pose inference using DeepLabCut:\n\n" + "\n".join(
@@ -483,7 +198,7 @@ class behavython_gui(QMainWindow):
             + "font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;"
             + "border-radius:8px;background-color:#A21F27;color:#FFFFFF;}"
         )
-        warning.setStandardButtons(QMessageBox.StandardButton.Yes| QMessageBox.StandardButton.No)  # Message box buttons
+        warning.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)  # Message box buttons
         answer_yes = warning.button(QMessageBox.StandardButton.Yes)  # Set the button "yes"
         answer_yes.setText("    YES    ")  # Rename the button "yes"
         answer_no = warning.button(QMessageBox.StandardButton.No)  # Set the button "no"
