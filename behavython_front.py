@@ -241,7 +241,8 @@ def main():
     # except:
     #     pass
     # -----------------------------------------------------------------------------------------
-
+    os.system("cls")
+    os.system("echo Behavython loaded successfully!")
     app.exec()  # Start the application
 
 
