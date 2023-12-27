@@ -824,14 +824,8 @@ def get_folder_path_function(self, lineedit_name):
         # self.video_length = self.get_video_length(folder)
 
 
-# def get_video_length(file_path):
-#     try:
-#         cap = cv2.VideoCapture(file_path)
-#         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-#         fps = cap.get(cv2.CAP_PROP_FPS)
-#         video_length = frame_count / fps
-#         cap.release()
-#         return video_length
-#     except Exception as e:
-#         print(f"Error occurred: {e}")
-#         return None
+def check_roi_files(roi):
+    extracted_data = pd.read_csv(roi, sep=",")
+    must_have = ["x", "y", "width", "height"]
+    header = extracted_data.columns.to_frame().map(str.lower).to_numpy()
+    return all(elem in header for elem in must_have)
