@@ -1,11 +1,8 @@
 import behavython_back
 import sys
 import os
-import tkinter as tk
 from dlc_helper_functions import *
 from behavython_plot_widget import plot_viewer
-from pathlib import Path
-from tkinter import filedialog
 from PySide6 import QtWidgets, QtCore, QtUiTools
 from PySide6.QtWidgets import QMainWindow, QMessageBox
 from PySide6.QtCore import QObject, QThread, Signal
