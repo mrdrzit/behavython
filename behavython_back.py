@@ -80,6 +80,7 @@ class experiment_class:
                 runtime = range(trim_amount, int((max_analysis_time * frames_per_second) + trim_amount))
                 if number_of_frames < max(runtime):
                     runtime = range(trim_amount, int(number_of_frames))
+                    # TODO: Add a warning message when the user sets a trim amount that is too high.
                     print(f"Animal {animal.name} has less frames than the maximum analysis time.")
 
             else:
@@ -108,6 +109,7 @@ class experiment_class:
                     else:
                         collision_data.append([0, None, mice_head_area, None])
 
+            ## TODO: If there is no collision, the collision_data will be empty and the code will break. Throw an error and print a message to the user explaining what is a collision.
             collisions = pd.DataFrame(collision_data)
             xy_data = collisions[1].dropna()
 

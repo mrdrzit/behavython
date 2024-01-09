@@ -78,6 +78,20 @@ class Animal:
         # Currently the initialization is hardcoding the bodyparts and skeleton names to mirror
         # the ones used in the test data.
         # See the TODO above to add an option to dinamically add bodypart name
+        # TODO: Currently the initialization is hardcoding the bodyparts and skeleton names to mirror and throwing a message to the user:
+        """
+        "Bone {bone} not found in the skeleton file for the animal {self.name}"
+        "Please check the name of the bone in the skeleton file"
+        "The following bones are available:"
+        "focinho_orelhae": [],
+        "focinho_orelhad": [],
+        "orelhad_orelhae": [],
+        "orelhae_orelhad": [],
+        "orelhad_centro": [],
+        "orelhae_centro": [],
+        "centro_rabo": [],
+        """
+        # This should automatically select the correct bones and assign them to the skeleton dictionary
 
         self.name = None
         self.animal_jpg = []
