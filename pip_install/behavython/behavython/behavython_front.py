@@ -1,8 +1,8 @@
 import sys
 import os
-from . import behavython_back
-from . import dlc_helper_functions
-from . import behavython_plot_widget
+import behavython_back
+import dlc_helper_functions
+import behavython_plot_widget
 from PySide6 import QtWidgets, QtCore, QtUiTools
 from PySide6.QtWidgets import QMainWindow, QMessageBox
 from PySide6.QtCore import QObject, QThread, Signal
@@ -244,7 +244,7 @@ def main():
     # except:
     #     pass
     # -----------------------------------------------------------------------------------------
-    # os.system("cls")
+    os.system("cls")
     os.system("echo Behavython loaded successfully!")
     app.exec()  # Start the application
 

@@ -13,7 +13,7 @@ from tkinter import filedialog
 from skimage.color import rgb2gray
 from scipy import stats
 from copy import copy
-from . import dlc_helper_functions
+import dlc_helper_functions
 
 matplotlib.use("Qt5Agg")
 plt.ioff()
