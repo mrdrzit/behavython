@@ -375,7 +375,7 @@ class experiment_class:
             plot_number += 1
             plot_viewer.canvas.draw_idle()
         else:
-            plt.savefig(save_folder + "/" + self.name + "_Overall Activity in the maze.png", frameon="false", dpi=figure_dpi)
+            plt.savefig(save_folder + "/" + self.name + "_Overall Activity in the maze.png", dpi=figure_dpi)
             plot_viewer.canvas.axes[plot_number % 9].imshow(im, interpolation="bicubic")
             plot_viewer.canvas.axes[plot_number % 9].add_collection(line_collection_window)
             plot_number += 1
@@ -455,7 +455,7 @@ class experiment_class:
 
         if plot_option == 1:
             plt.subplots_adjust(hspace=0.8, wspace=0.8)
-            plt.savefig(save_folder + "/" + self.name + "_Time spent on each area over time.png", frameon="false", dpi=600)
+            plt.savefig(save_folder + "/" + self.name + "_Time spent on each area over time.png", dpi=600)
 
         plt.close("all")
 
@@ -503,7 +503,7 @@ class experiment_class:
             plot_number += 1
             plot_viewer.canvas.draw_idle()
         else:
-            plt.savefig(save_folder + "/" + self.name + "_Overall Activity in the maze.png", frameon="false", dpi=200)
+            plt.savefig(save_folder + "/" + self.name + "_Overall Activity in the maze.png", dpi=200)
             plot_viewer.canvas.axes[plot_number % 9].imshow(im, interpolation="bicubic")
             plot_viewer.canvas.axes[plot_number % 9].add_collection(line_collection_window)
             plot_number += 1
@@ -540,7 +540,7 @@ class experiment_class:
 
         if plot_option == 1:
             plt.subplots_adjust(hspace=0.8, wspace=0.8)
-            plt.savefig(save_folder + "/" + self.name + "_Time spent on each area over time.png", frameon="false", dpi=600)
+            plt.savefig(save_folder + "/" + self.name + "_Time spent on each area over time.png", dpi=600)
 
         # Figure 4 - Number of crossings
         figure_4, (axe_41, axe_42) = plt.subplots(1, 2)
@@ -555,7 +555,7 @@ class experiment_class:
 
         if plot_option == 1:
             plt.subplots_adjust(hspace=0.8, wspace=0.8)
-            plt.savefig(save_folder + "/" + self.name + "_Number of crossings.png", frameon="false", dpi=600)
+            plt.savefig(save_folder + "/" + self.name + "_Number of crossings.png", dpi=600)
 
         plt.close("all")
 

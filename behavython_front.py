@@ -65,6 +65,7 @@ class behavython_gui(QMainWindow):
         """
         super(behavython_gui, self).__init__()  # Calls the inherited classes __init__ method
         load_gui_path = os.path.join(os.path.dirname(__file__), "behavython_gui.ui")
+        os.environ["PYSIDE_DESIGNER_PLUGINS"] = os.path.join(os.path.dirname(__file__))
         loader = QtUiTools.QUiLoader()
         loader.registerCustomWidget(plot_viewer)
         self.interface = loader.load(load_gui_path)  # Loads the interface design archive (made in Qt Designer)
@@ -110,7 +111,7 @@ class behavython_gui(QMainWindow):
             )
         else:
             [self.experiments, save_folder, error_flag, inexistent_file] = functions.get_experiments(
-                self.resume_lineedit,
+                self.interface.resume_lineedit,
                 self.options["experiment_type"],
                 self.options["plot_options"],
                 self.options["algo_type"],
