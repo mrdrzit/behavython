@@ -45,6 +45,8 @@ class experiment_class:
             orelha_esq_y = animal.bodyparts["orelhae"]["y"]
             orelha_dir_x = animal.bodyparts["orelhad"]["x"]
             orelha_dir_y = animal.bodyparts["orelhad"]["y"]
+            centro_x = animal.bodyparts["centro"]["x"]
+            centro_y = animal.bodyparts["centro"]["y"]
             roi_X = []
             roi_Y = []
             roi_D = []
@@ -82,7 +84,6 @@ class experiment_class:
                     runtime = range(trim_amount, int(number_of_frames))
                     # TODO: Add a warning message when the user sets a trim amount that is too high.
                     print(f"Animal {animal.name} has less frames than the maximum analysis time.")
-
             else:
                 runtime = range(int(max_analysis_time * frames_per_second))
             for i in runtime:
@@ -162,6 +163,52 @@ class experiment_class:
             count_left = len(filtered_mask_left)
             exploration_time_right = count_right * (1 / frames_per_second)
             exploration_time_left = count_left * (1 / frames_per_second)
+
+            corrected_runtime_last_frame = runtime[-1] + 1
+            x_axe_cm = centro_x * factor_width  # Puts the x position on scale
+            y_axe_cm = centro_y * factor_height  # Puts the y position on scale
+            # Calculates the step difference of position in x axis
+            d_x_axe_cm = np.append(0, np.diff(centro_x)) * factor_width
+            # Calculates the step difference of position in y axis
+            d_y_axe_cm = np.append(0, np.diff(centro_y)) * factor_height
+
+            displacement_raw = np.sqrt(np.square(d_x_axe_cm) + np.square(d_y_axe_cm))
+            displacement = displacement_raw
+            displacement[displacement < threshold] = 0
+
+            # Sums all the animal's movements and calculates the accumulated distance traveled
+            accumulate_distance = np.cumsum(displacement)
+            # Gets the animal's total distance traveled
+            total_distance = max(accumulate_distance)
+            time_vector = np.linspace(
+                0, corrected_runtime_last_frame / frames_per_second, corrected_runtime_last_frame
+            )  # Creates a time vector
+
+            # Ignores the division by zero at runtime
+            # (division by zero is not an error in this case as the are moments when the animal is not moving)
+            np.seterr(divide="ignore", invalid="ignore")
+            # Calculates the first derivative and finds the animal's velocity per time
+            velocity = np.divide(displacement, np.transpose(np.append(0, np.diff(time_vector))))
+            mean_velocity = np.nanmean(velocity)
+
+            # Calculates the animal's acceleration
+            aceleration = np.divide(np.append(0, np.diff(velocity)), np.append(0, np.diff(time_vector)))
+            # Calculates the number of movements made by the animal
+            movements = np.sum(displacement > 0)
+            # Calculates the total time of movements made by the animal
+            time_moving = np.sum(displacement > 0) * (1 / frames_per_second)
+            # Calculates the total time of the animal without movimentations
+            time_resting = np.sum(displacement == 0) * (1 / frames_per_second)
+
+            kde_space_coordinates = np.array([np.array(x_axe), np.array(y_axe)])
+            kde_instance = stats.gaussian_kde(kde_space_coordinates)
+            point_density_function = kde_instance.evaluate(kde_space_coordinates)
+            color_limits = np.array(
+                [
+                    (x - np.min(point_density_function)) / (np.max(point_density_function) - np.min(point_density_function))
+                    for x in point_density_function
+                ]
+            )
 
             self.analysis_results = {
                 "x_data": x,
