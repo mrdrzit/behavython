@@ -292,7 +292,7 @@ QTabBar::tab:selected {
         <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
        </property>
        <property name="text">
-        <string notr="true">65</string>
+        <string notr="true">63</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
@@ -311,7 +311,7 @@ QTabBar::tab:selected {
         <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
        </property>
        <property name="text">
-        <string notr="true">65</string>
+        <string notr="true">39</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
@@ -892,6 +892,9 @@ to see the help text</string>
        <property name="text">
         <string>Crop video</string>
        </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
       </widget>
       <widget class="QLineEdit" name="crop_video_time_lineedit">
        <property name="geometry">
@@ -906,7 +909,7 @@ to see the help text</string>
         <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
        </property>
        <property name="text">
-        <string notr="true">15</string>
+        <string notr="true">4</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>

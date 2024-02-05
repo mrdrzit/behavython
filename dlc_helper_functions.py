@@ -5,7 +5,6 @@ import tkinter as tk
 import itertools as it
 import matplotlib
 import matplotlib.image as mpimg
-import deeplabcut
 import pandas as pd
 import subprocess
 from pathlib import Path
@@ -14,7 +13,9 @@ from tkinter import filedialog
 
 matplotlib.use("qtagg")
 
-
+DLC_ENABLE = False
+if DLC_ENABLE:
+    import deeplabcut
 class DataFiles:
     """
     This class organizes the files to be analyzed in separate dictionaries for each type of file
@@ -632,7 +633,8 @@ def folder_structure_check_function(self):
 
 def dlc_video_analyze_function(self):
     self.interface.clear_unused_files_lineedit.clear()
-    self.interface.clear_unused_files_lineedit.append(f"Using DeepLabCut version{deeplabcut.__version__}")
+    if DLC_ENABLE:
+        self.interface.clear_unused_files_lineedit.append(f"Using DeepLabCut version{deeplabcut.__version__}")
     config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
     videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
     _, _, file_list = [entry for entry in os.walk(videos)][0]
@@ -654,33 +656,35 @@ def dlc_video_analyze_function(self):
         self.interface.clear_unused_files_lineedit.append("Analysis canceled.")
         return
     self.interface.clear_unused_files_lineedit.append("Analyzing videos...")
-    deeplabcut.analyze_videos(
-        config_path,
-        videos,
-        videotype=file_extension,
-        shuffle=1,
-        trainingsetindex=0,
-        gputouse=0,
-        allow_growth=True,
-        save_as_csv=True,
-    )
+    if DLC_ENABLE:
+        deeplabcut.analyze_videos(
+            config_path,
+            videos,
+            videotype=file_extension,
+            shuffle=1,
+            trainingsetindex=0,
+            gputouse=0,
+            allow_growth=True,
+            save_as_csv=True,
+        )
     self.interface.clear_unused_files_lineedit.append("Done analyzing videos.")
 
     self.interface.clear_unused_files_lineedit.append("Filtering data files and saving as CSV...")
-    deeplabcut.filterpredictions(
-        config_path,
-        videos,
-        videotype=file_extension,
-        shuffle=1,
-        trainingsetindex=0,
-        filtertype="median",
-        windowlength=5,
-        p_bound=0.001,
-        ARdegree=3,
-        MAdegree=1,
-        alpha=0.01,
-        save_as_csv=True,
-    )
+    if DLC_ENABLE:
+        deeplabcut.filterpredictions(
+            config_path,
+            videos,
+            videotype=file_extension,
+            shuffle=1,
+            trainingsetindex=0,
+            filtertype="median",
+            windowlength=5,
+            p_bound=0.001,
+            ARdegree=3,
+            MAdegree=1,
+            alpha=0.01,
+            save_as_csv=True,
+        )
     self.interface.clear_unused_files_lineedit.append("Done filtering data files")
 
 
@@ -709,7 +713,8 @@ def get_frames_function(self):
 
 def extract_skeleton_function(self):
     self.interface.clear_unused_files_lineedit.clear()
-    self.interface.clear_unused_files_lineedit.append(f"Using DeepLabCut version{deeplabcut.__version__}")
+    if DLC_ENABLE:
+        self.interface.clear_unused_files_lineedit.append(f"Using DeepLabCut version{deeplabcut.__version__}")
     config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
     videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
     _, _, file_list = [entry for entry in os.walk(videos)][0]
