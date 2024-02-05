@@ -165,12 +165,20 @@ class experiment_class:
             exploration_time_left = count_left * (1 / frames_per_second)
 
             corrected_runtime_last_frame = runtime[-1] + 1
-            x_axe_cm = centro_x * factor_width  # Puts the x position on scale
-            y_axe_cm = centro_y * factor_height  # Puts the y position on scale
+            corrected_first_frame = runtime[1]-1
+            x_axe = centro_x[corrected_first_frame:corrected_runtime_last_frame] # Raw x position data
+            y_axe = centro_y[corrected_first_frame:corrected_runtime_last_frame] # Raw y position data
+            x_axe_cm = centro_x[corrected_first_frame:corrected_runtime_last_frame] * factor_width  # Puts the x position on scale
+            y_axe_cm = centro_y[corrected_first_frame:corrected_runtime_last_frame] * factor_height  # Puts the y position on scale
+            # The runtime[1]-1 is accessing the second element in the runtime list and subtracting 1. This is
+            # done to adjust for the fact that Python indexing starts at 0.
+            # So we are going from the start of the experiment, set by runtime with or without the trim amount
+            # and going to the end of the experiment, set by corrected_runtime_last_frame
+
             # Calculates the step difference of position in x axis
-            d_x_axe_cm = np.append(0, np.diff(centro_x)) * factor_width
+            d_x_axe_cm = np.append(0, np.diff(x_axe_cm))
             # Calculates the step difference of position in y axis
-            d_y_axe_cm = np.append(0, np.diff(centro_y)) * factor_height
+            d_y_axe_cm = np.append(0, np.diff(y_axe_cm)) 
 
             displacement_raw = np.sqrt(np.square(d_x_axe_cm) + np.square(d_y_axe_cm))
             displacement = displacement_raw
@@ -180,9 +188,7 @@ class experiment_class:
             accumulate_distance = np.cumsum(displacement)
             # Gets the animal's total distance traveled
             total_distance = max(accumulate_distance)
-            time_vector = np.linspace(
-                0, corrected_runtime_last_frame / frames_per_second, corrected_runtime_last_frame
-            )  # Creates a time vector
+            time_vector = np.linspace(0, len(runtime) / frames_per_second, len(runtime))  # Creates a time vector
 
             # Ignores the division by zero at runtime
             # (division by zero is not an error in this case as the are moments when the animal is not moving)
@@ -211,8 +217,8 @@ class experiment_class:
             )
 
             self.analysis_results = {
-                "x_data": x,
-                "y_data": y,
+                "x_data": x_axe,
+                "y_data": y_axe,
                 "exploration_time": exploration_time,
                 "exploration_time_right": exploration_time_right,
                 "exploration_time_left": exploration_time_left,
