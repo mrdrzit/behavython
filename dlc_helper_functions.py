@@ -52,7 +52,7 @@ class DataFiles:
 
 
 """
-TODO - Add an option to dinamically add bodypart name
+TODO #44 - Add an option to dinamically add bodypart name
 e.g. c57 = Animal('focinho', 'pata', 'orelha', 'rabo', 'etc')
 
 """

@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import re
 import matplotlib
+from scipy.interpolate import interp1d, Akima1DInterpolator as akima 
+from scipy.signal import savgol_filter, medfilt
 from matplotlib.collections import LineCollection
 from matplotlib import pyplot as plt
 from tkinter import filedialog
@@ -82,7 +84,7 @@ class experiment_class:
                 runtime = range(trim_amount, int((max_analysis_time * frames_per_second) + trim_amount))
                 if number_of_frames < max(runtime):
                     runtime = range(trim_amount, int(number_of_frames))
-                    # TODO: Add a warning message when the user sets a trim amount that is too high.
+                    # TODO: #42 Add a warning message when the user sets a trim amount that is too high.
                     print(f"Animal {animal.name} has less frames than the maximum analysis time.")
             else:
                 runtime = range(int(max_analysis_time * frames_per_second))
@@ -110,7 +112,12 @@ class experiment_class:
                     else:
                         collision_data.append([0, None, mice_head_area, None])
 
-            ## TODO: If there is no collision, the collision_data will be empty and the code will break. Throw an error and print a message to the user explaining what is a collision.
+            # ----------------------------------------------------------------------------------------------------------
+            corrected_runtime_last_frame = runtime[-1] + 1
+            corrected_first_frame = runtime[1]-1
+            ANALYSIS_RANGE = [corrected_first_frame, corrected_runtime_last_frame]
+            # ----------------------------------------------------------------------------------------------------------
+            ## TODO: #43 If there is no collision, the collision_data will be empty and the code will break. Throw an error and print a message to the user explaining what is a collision.
             collisions = pd.DataFrame(collision_data)
             xy_data = collisions[1].dropna()
 
@@ -122,7 +129,7 @@ class experiment_class:
             x, y = zip(*[item for sublist in xy_data.to_list() for item in sublist])
 
             # Calculate a gridmap with a exploration heatmap -----------------------------------------------------------
-            xy_values = [(int(focinho_x[i]), int(focinho_y[i])) for i in range(number_of_frames)]
+            xy_values = [(int(focinho_x[i]), int(focinho_y[i])) for i in range(ANALYSIS_RANGE[0], ANALYSIS_RANGE[1])]
             # Extract x and y values from the list
             x_values = [int(value) for value in focinho_x]
             y_values = [int(value) for value in focinho_y]
@@ -164,10 +171,42 @@ class experiment_class:
             exploration_time_right = count_right * (1 / frames_per_second)
             exploration_time_left = count_left * (1 / frames_per_second)
 
-            corrected_runtime_last_frame = runtime[-1] + 1
-            corrected_first_frame = runtime[1]-1
             x_axe = centro_x[corrected_first_frame:corrected_runtime_last_frame] # Raw x position data
             y_axe = centro_y[corrected_first_frame:corrected_runtime_last_frame] # Raw y position data
+            copy_x_axe = copy(x_axe)
+            copy_y_axe = copy(y_axe)
+            
+            diff_x_axis = np.append(0, np.diff(x_axe))
+            diff_y_axis = np.append(0, np.diff(y_axe))
+
+            gradient_mask_x = [
+                abs(value) > 100 for value in diff_x_axis
+            ]  # Threshold calculated based on tbe animal's size (which is approximately 100px for mice)
+            gradient_mask_y = [
+                abs(value) > 100 for value in diff_y_axis
+            ]  # Threshold calculated based on tbe animal's size (which is approximately 100px for mice)
+            
+            copy_x_axe.mask(gradient_mask_x, other=np.nan, inplace=True)
+            copy_y_axe.mask(gradient_mask_y, other=np.nan, inplace=True)
+
+            # interpd_x_axe = medfilt(copy_x_axe, 5)
+            # interpd_y_axe = medfilt(copy_y_axe, 5)
+            interpd_x_axe = savgol_filter(copy_x_axe, window_length=10, polyorder=1)
+            interpd_y_axe = savgol_filter(copy_y_axe, window_length=10, polyorder=1)
+
+            fig, axs = plt.subplots(2)
+            # Plot copy_x_axe and copy_y_axe on the second subplot
+            axs[0].plot(copy_x_axe, copy_y_axe)
+            axs[0].set_title('copy_x_axe and copy_y_axe')
+
+            # Plot interpd_x_axe and interpd_y_axe on the third subplot
+            axs[1].plot(interpd_x_axe, interpd_y_axe)
+            axs[1].set_title('interpd_x_axe and interpd_y_axe')
+
+            # Display the figure
+            plt.tight_layout()
+            plt.show()
+
             x_axe_cm = centro_x[corrected_first_frame:corrected_runtime_last_frame] * factor_width  # Puts the x position on scale
             y_axe_cm = centro_y[corrected_first_frame:corrected_runtime_last_frame] * factor_height  # Puts the y position on scale
             # The runtime[1]-1 is accessing the second element in the runtime list and subtracting 1. This is
@@ -183,6 +222,7 @@ class experiment_class:
             displacement_raw = np.sqrt(np.square(d_x_axe_cm) + np.square(d_y_axe_cm))
             displacement = displacement_raw
             displacement[displacement < threshold] = 0
+            displacement[displacement > 9] = 0
 
             # Sums all the animal's movements and calculates the accumulated distance traveled
             accumulate_distance = np.cumsum(displacement)
@@ -198,7 +238,7 @@ class experiment_class:
             mean_velocity = np.nanmean(velocity)
 
             # Calculates the animal's acceleration
-            aceleration = np.divide(np.append(0, np.diff(velocity)), np.append(0, np.diff(time_vector)))
+            acceleration = np.divide(np.append(0, np.diff(velocity)), np.append(0, np.diff(time_vector)))
             # Calculates the number of movements made by the animal
             movements = np.sum(displacement > 0)
             # Calculates the total time of movements made by the animal
@@ -216,9 +256,35 @@ class experiment_class:
                 ]
             )
 
+            movement_points = np.array([x_axe, y_axe]).T.reshape(-1, 1, 2)
+            # Creates a 2D array containing the line segments coordinates
+            movement_segments = np.concatenate([movement_points[:-1], movement_points[1:]], axis=1)
+            # smooth_segs = savgol_filter(movement_segments, 3, 2, axis=0)
+
+            filter_size = 4
+            moving_average_filter = np.ones((filter_size,)) / filter_size
+            smooth_segs = np.apply_along_axis(lambda m: np.convolve(m, moving_average_filter, mode='same'), axis=0, arr=movement_segments)
+
+            # Creates a LineCollection object with custom color map
+            movement_line_collection = LineCollection(smooth_segs, cmap="plasma", linewidth=1.5)
+            # Set the line color to the normalized values of "color_limits"
+            movement_line_collection.set_array(velocity)
+            lc_fig_1 = copy(movement_line_collection)
+
+            figure_1, axe_1 = plt.subplots()
+            axe_1.imshow(animal.animal_jpg)
+            axe_1.add_collection(movement_line_collection)
+            figure_1.colorbar(lc_fig_1, label="Speed")
+            axe_1.set_xlabel('X Position')
+            axe_1.set_ylabel('Y Position')
+            axe_1.legend([''])
+            axe_1.axis("tight")
+            axe_1.axis("off")
+            plt.show()
+
             self.analysis_results = {
-                "x_data": x_axe,
-                "y_data": y_axe,
+                "x_data": x,
+                "y_data": y,
                 "exploration_time": exploration_time,
                 "exploration_time_right": exploration_time_right,
                 "exploration_time_left": exploration_time_left,
@@ -239,11 +305,20 @@ class experiment_class:
                 "roi_Y": animal.rois[0]["y"],
                 "roi_D": (animal.rois[0]["width"] + animal.rois[0]["height"]) / 2,
                 "collision_data": collision_data,
+                "color_limits": color_limits,
+                "accumulate_distance": accumulate_distance,
+                "total_distance": total_distance,
+                "movements": movements,
+                "acceleration": acceleration,
             }
             dict_to_excel = {
                 "exploration_time": exploration_time,
                 "exploration_time_right": exploration_time_right,
                 "exploration_time_left": exploration_time_left,
+                "time moving": time_moving,
+                "time resting": time_resting,
+                "total distance": total_distance,
+                "mean velocity": mean_velocity,
             }
             data_frame = pd.DataFrame(data=dict_to_excel, index=[animal.name])
             data_frame = data_frame.T
@@ -293,7 +368,7 @@ class experiment_class:
             mean_velocity = np.nanmean(velocity)
 
             # Calculates the animal's acceleration
-            aceleration = np.divide(np.append(0, np.diff(velocity)), np.append(0, np.diff(time_vector)))
+            acceleration = np.divide(np.append(0, np.diff(velocity)), np.append(0, np.diff(time_vector)))
             # Calculates the number of movements made by the animal
             movements = np.sum(displacement > 0)
             # Calculates the total time of movements made by the animal
@@ -340,7 +415,7 @@ class experiment_class:
                 "time_vector": time_vector,
                 "velocity": velocity,
                 "mean_velocity": mean_velocity,
-                "aceleration": aceleration,
+                "acceleration": acceleration,
                 "movements": movements,
                 "time_spent": time_spent,
                 "time_moving": time_moving,
@@ -621,6 +696,10 @@ class experiment_class:
         x_collisions = self.analysis_results["x_data"]
         y_collisions = self.analysis_results["y_data"]
         grid = self.analysis_results["grid"]
+        displacement = self.analysis_results["displacement"]
+        color_limits = self.analysis_results["color_limits"]
+        acceleration = self.analysis_results["acceleration"]
+
 
         fig_1, axe_1 = plt.subplots()
         axe_1.set_title("Overall heatmap of the mice's nose position", loc="center")
@@ -637,7 +716,7 @@ class experiment_class:
         # ----------------------------------------------------------------------------------------------------------
 
         if plot_option == 0:
-            fig_2, axe_2 = plt.subplots()
+            _, axe_2 = plt.subplots()
             plot_viewer.canvas.axes[plot_number % 9].imshow(self.experiments[plot_number].animal_jpg, cmap="gray", aspect="auto")
             sns.kdeplot(
                 x=x_collisions,
@@ -651,6 +730,8 @@ class experiment_class:
             axe_2.axis("off")
             plot_number += 1
             plot_viewer.canvas.draw_idle()
+
+            
         else:
             fig_3, axe_3 = plt.subplots()
             plot_viewer.canvas.axes[plot_number % 9].imshow(self.experiments[plot_number].animal_jpg, cmap="gray", aspect="auto")
@@ -701,8 +782,7 @@ class experiment_class:
                 save_folder + "/" + self.experiments[plot_number].name + "Overall heatmap of the mice's nose position",
             )
             plot_viewer.canvas.axes[plot_number % 9].imshow(self.analysis_results["grid"], cmap="inferno", interpolation="bessel")
-            pass
-
+            
         plt.close("all")
         pass
 
