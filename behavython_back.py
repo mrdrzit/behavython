@@ -125,41 +125,12 @@ class experiment_class:
             #   t = [item for sublist in t for item in sublist]
             #   x, y = zip(*t)
             # Meaning that it flattens the list and then separates the x and y coordinates
-            x, y = zip(*[item for sublist in xy_data.to_list() for item in sublist])
-
-            # Calculate a gridmap with a exploration heatmap -----------------------------------------------------------
-            xy_values = [(int(focinho_x[i]), int(focinho_y[i])) for i in range(ANALYSIS_RANGE[0], ANALYSIS_RANGE[1])]
-            # Extract x and y values from the list
-            x_values = [int(value) for value in focinho_x]
-            y_values = [int(value) for value in focinho_y]
-
-            # Find the minimum and maximum values of x and y
-            min_x = min(x_values)
-            max_x = max(x_values)
-            min_y = min(y_values)
-            max_y = max(y_values)
-
-            bin_size = 10
-
-            # Calculate the number of bins in each dimension
-            num_bins_x = int((max_x - min_x) / bin_size) + 1
-            num_bins_y = int((max_y - min_y) / bin_size) + 1
-
-            # Create a grid to store the frequencies
-            grid = np.zeros((num_bins_y, num_bins_x), dtype=int)
-
-            # Assign the values to their corresponding bins in the grid
-            for xy in xy_values:
-                xi, yi = xy
-                bin_x = (xi - min_x) // bin_size
-                bin_y = (yi - min_y) // bin_size
-                grid[bin_y, bin_x] += 1  # Increment the frequency of the corresponding bin
-
+            x_collision_data, y_collision_data = zip(*[item for sublist in xy_data.to_list() for item in sublist])
             # ----------------------------------------------------------------------------------------------------------
-
+            
             # Calculate the total exploration time
             exploration_mask = collisions[0] > 0
-            exploration_mask = exploration_mask.replace({True: 1, False: 0})
+            exploration_mask = exploration_mask.astype(int)
             exploration_time = np.sum(exploration_mask) * (1 / frames_per_second)
 
             # Calculate the total exploration time in each ROI
