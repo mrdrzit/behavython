@@ -7,6 +7,7 @@ import matplotlib
 import matplotlib.image as mpimg
 import pandas as pd
 import subprocess
+import numpy as np
 from pathlib import Path
 from PySide6.QtWidgets import QMessageBox
 from tkinter import filedialog
@@ -848,3 +849,55 @@ def check_roi_files(roi):
     must_have = ["x", "y", "width", "height"]
     header = extracted_data.columns.to_frame().map(str.lower).to_numpy()
     return all(elem in header for elem in must_have)
+
+def create_frequency_grid(x_values, y_values, bin_size, analysis_range, *extra_data):
+    """
+    Creates a frequency grid based on the given x and y values.
+
+    Args:
+        x_values (list): List of x-coordinate values.
+        y_values (list): List of y-coordinate values.
+        bin_size (float): Size of each bin in the grid.
+        analysis_range (tuple): Range of indices to consider for analysis.
+        *extra_data: Additional data (e.g., speed, mean_speed).
+
+    Returns:
+        numpy.ndarray: The frequency grid.
+
+    """
+    if extra_data:
+        speed = extra_data[0]
+        mean_speed = extra_data[1]
+
+    # Calculate a gridmap with an exploration heatmap
+    xy_values = [(int(x_values[i]), int(y_values[i])) for i in range(analysis_range[0], analysis_range[1])]
+
+    # Find the minimum and maximum values of x and y
+    min_x = int(min(x_values))
+    max_x = int(max(x_values))
+    min_y = int(min(y_values))
+    max_y = int(max(y_values))
+
+    # Calculate the number of bins in each dimension
+    num_bins_x = int((max_x - min_x) / bin_size) + 1
+    num_bins_y = int((max_y - min_y) / bin_size) + 1
+
+    # Create a grid to store the frequencies
+    grid = np.zeros((num_bins_y, num_bins_x), dtype=int)
+    if extra_data:
+        # Assign the values to their corresponding bins in the grid
+        for ii, xy in enumerate(xy_values):
+            xi, yi = xy
+            bin_x = (xi - min_x) // bin_size
+            bin_y = (yi - min_y) // bin_size
+            if speed[ii] > mean_speed:
+                grid[bin_y, bin_x] += 1
+    else:
+        # Assign the values to their corresponding bins in the grid
+        for xy in xy_values:
+            xi, yi = xy
+            bin_x = (xi - min_x) // bin_size
+            bin_y = (yi - min_y) // bin_size
+            grid[bin_y, bin_x] += 1  # Increment the frequency of the corresponding bin
+
+    return grid
