@@ -86,15 +86,68 @@ QScrollBar::sub-page:vertical {
      <rect>
       <x>20</x>
       <y>80</y>
-      <width>311</width>
+      <width>310</width>
       <height>611</height>
      </rect>
     </property>
     <property name="styleSheet">
-     <string notr="true">QTabWidget::pane {border-top:2px solid #2C53A1;position: absolute;top: -0.5em;}QTabWidget::tab-bar{alignment: center;}QTabBar::tab{background:#606060;border:2px solid #606060;border-bottom-color: #606060;border-top-left-radius:8px;border-top-right-radius:8px;border-bottom-left-radius:8px;border-bottom-right-radius:8px;width: 45ex;height:7ex;padding:0px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;margin-left:2px;margin-right:2px;}QTabBar::tab:selected{background:#606060; border: 2px solid #2C53A1;border-bottom-color:#2C53A1;}</string>
+     <string notr="true">QTabWidget::pane {
+    border-top: 2px solid #2C53A1;
+    position: absolute;
+    top: -0.5em;
+}
+
+QTabWidget::tab-bar {
+    alignment: center;
+}
+
+QTabBar::tab {
+    background: #606060;
+    border: 2px solid #606060;
+    border-bottom-color: #606060;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    width: 130px;
+    height: 15px;
+    padding: 0px;
+    color: #FFFFFF;
+    font: 7pt &quot;DejaVu Sans&quot;;
+    font-weight: bold;
+    margin-left: 2px;
+    margin-right: 2px;
+}
+
+QTabBar::tab:selected {
+    background: #606060;
+    border: 2px solid #2C53A1;
+    border-bottom-color: #2C53A1;
+}</string>
+    </property>
+    <property name="tabShape">
+     <enum>QTabWidget::Rounded</enum>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>4</width>
+      <height>4</height>
+     </size>
+    </property>
+    <property name="usesScrollButtons">
+     <bool>true</bool>
+    </property>
+    <property name="documentMode">
+     <bool>false</bool>
+    </property>
+    <property name="tabsClosable">
+     <bool>false</bool>
+    </property>
+    <property name="movable">
+     <bool>false</bool>
     </property>
     <property name="tabBarAutoHide">
      <bool>false</bool>
@@ -239,7 +292,7 @@ QScrollBar::sub-page:vertical {
         <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
        </property>
        <property name="text">
-        <string notr="true">65</string>
+        <string notr="true">63</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
@@ -258,7 +311,7 @@ QScrollBar::sub-page:vertical {
         <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
        </property>
        <property name="text">
-        <string notr="true">65</string>
+        <string notr="true">39</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
@@ -609,10 +662,10 @@ QScrollBar::sub-page:vertical {
         <string notr="true">QComboBox{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QListView{color:#FFFFFF;font:8pt&quot;Century Gothic&quot;;font-weight:bold;background-color:#969696;border:0px;}QListView{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QComboBox::drop-down{width:20px;border:5px;}QComboBox::down-arrow{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #FFFFFF;width:0.5px;height:1px;border-radius:2px;}QComboBox::down-arrow:hover{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #A21F27;width:0.5px;height:1px;border-radius:2px;}QAbstractItemView{border:2px solid #969696;selection-background-color:#2C53A1;}</string>
        </property>
        <property name="currentText">
-        <string notr="true">  640 x 480</string>
+        <string notr="true"> 1280 x 720</string>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>1</number>
        </property>
        <property name="sizeAdjustPolicy">
         <enum>QComboBox::AdjustToContentsOnFirstShow</enum>
@@ -651,7 +704,6 @@ QScrollBar::sub-page:vertical {
         <font>
          <family>DejaVu Sans</family>
          <pointsize>6</pointsize>
-         <weight>75</weight>
          <italic>false</italic>
          <bold>true</bold>
         </font>
@@ -809,7 +861,7 @@ to see the help text</string>
         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
        </property>
       </widget>
-      <widget class="QLineEdit" name="crop_video_lineedit">
+      <widget class="QLineEdit" name="task_duration_lineedit">
        <property name="geometry">
         <rect>
          <x>160</x>
@@ -839,6 +891,9 @@ to see the help text</string>
        </property>
        <property name="text">
         <string>Crop video</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
        </property>
       </widget>
       <widget class="QLineEdit" name="crop_video_time_lineedit">
@@ -1126,7 +1181,6 @@ to see the help text</string>
         <font>
          <family>DejaVu Sans</family>
          <pointsize>6</pointsize>
-         <weight>75</weight>
          <italic>false</italic>
          <bold>true</bold>
         </font>
@@ -1403,7 +1457,6 @@ to see the help text</string>
         <font>
          <family>DejaVu Sans</family>
          <pointsize>8</pointsize>
-         <weight>50</weight>
          <italic>false</italic>
          <bold>false</bold>
         </font>
@@ -1500,7 +1553,6 @@ QScrollBar::sub-page:vertical {
         <font>
          <family>DejaVu Sans</family>
          <pointsize>9</pointsize>
-         <weight>75</weight>
          <italic>false</italic>
          <bold>true</bold>
         </font>
@@ -1528,7 +1580,6 @@ QScrollBar::sub-page:vertical {
         <font>
          <family>DejaVu Sans</family>
          <pointsize>8</pointsize>
-         <weight>75</weight>
          <italic>false</italic>
          <bold>true</bold>
         </font>
@@ -1556,7 +1607,6 @@ QScrollBar::sub-page:vertical {
         <font>
          <family>DejaVu Sans</family>
          <pointsize>8</pointsize>
-         <weight>75</weight>
          <italic>false</italic>
          <bold>true</bold>
         </font>

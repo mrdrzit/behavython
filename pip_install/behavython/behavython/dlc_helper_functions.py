@@ -5,16 +5,18 @@ import tkinter as tk
 import itertools as it
 import matplotlib
 import matplotlib.image as mpimg
-import deeplabcut
 import pandas as pd
 import subprocess
+import numpy as np
 from pathlib import Path
 from PySide6.QtWidgets import QMessageBox
 from tkinter import filedialog
 
 matplotlib.use("qtagg")
 
-
+DLC_ENABLE = True
+if DLC_ENABLE:
+    import deeplabcut
 class DataFiles:
     """
     This class organizes the files to be analyzed in separate dictionaries for each type of file
@@ -51,7 +53,7 @@ class DataFiles:
 
 
 """
-TODO - Add an option to dinamically add bodypart name
+TODO #44 - Add an option to dinamically add bodypart name
 e.g. c57 = Animal('focinho', 'pata', 'orelha', 'rabo', 'etc')
 
 """
@@ -78,6 +80,20 @@ class Animal:
         # Currently the initialization is hardcoding the bodyparts and skeleton names to mirror
         # the ones used in the test data.
         # See the TODO above to add an option to dinamically add bodypart name
+        # TODO: Currently the initialization is hardcoding the bodyparts and skeleton names to mirror and throwing a message to the user:
+        """
+        "Bone {bone} not found in the skeleton file for the animal {self.name}"
+        "Please check the name of the bone in the skeleton file"
+        "The following bones are available:"
+        "focinho_orelhae": [],
+        "focinho_orelhad": [],
+        "orelhad_orelhae": [],
+        "orelhae_orelhad": [],
+        "orelhad_centro": [],
+        "orelhae_centro": [],
+        "centro_rabo": [],
+        """
+        # This should automatically select the correct bones and assign them to the skeleton dictionary
 
         self.name = None
         self.animal_jpg = []
@@ -618,7 +634,8 @@ def folder_structure_check_function(self):
 
 def dlc_video_analyze_function(self):
     self.interface.clear_unused_files_lineedit.clear()
-    self.interface.clear_unused_files_lineedit.append(f"Using DeepLabCut version{deeplabcut.__version__}")
+    if DLC_ENABLE:
+        self.interface.clear_unused_files_lineedit.append(f"Using DeepLabCut version{deeplabcut.__version__}")
     config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
     videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
     _, _, file_list = [entry for entry in os.walk(videos)][0]
@@ -640,33 +657,35 @@ def dlc_video_analyze_function(self):
         self.interface.clear_unused_files_lineedit.append("Analysis canceled.")
         return
     self.interface.clear_unused_files_lineedit.append("Analyzing videos...")
-    deeplabcut.analyze_videos(
-        config_path,
-        videos,
-        videotype=file_extension,
-        shuffle=1,
-        trainingsetindex=0,
-        gputouse=0,
-        allow_growth=True,
-        save_as_csv=True,
-    )
+    if DLC_ENABLE:
+        deeplabcut.analyze_videos(
+            config_path,
+            videos,
+            videotype=file_extension,
+            shuffle=1,
+            trainingsetindex=0,
+            gputouse=0,
+            allow_growth=True,
+            save_as_csv=True,
+        )
     self.interface.clear_unused_files_lineedit.append("Done analyzing videos.")
 
     self.interface.clear_unused_files_lineedit.append("Filtering data files and saving as CSV...")
-    deeplabcut.filterpredictions(
-        config_path,
-        videos,
-        videotype=file_extension,
-        shuffle=1,
-        trainingsetindex=0,
-        filtertype="median",
-        windowlength=5,
-        p_bound=0.001,
-        ARdegree=3,
-        MAdegree=1,
-        alpha=0.01,
-        save_as_csv=True,
-    )
+    if DLC_ENABLE:
+        deeplabcut.filterpredictions(
+            config_path,
+            videos,
+            videotype=file_extension,
+            shuffle=1,
+            trainingsetindex=0,
+            filtertype="median",
+            windowlength=5,
+            p_bound=0.001,
+            ARdegree=3,
+            MAdegree=1,
+            alpha=0.01,
+            save_as_csv=True,
+        )
     self.interface.clear_unused_files_lineedit.append("Done filtering data files")
 
 
@@ -695,7 +714,8 @@ def get_frames_function(self):
 
 def extract_skeleton_function(self):
     self.interface.clear_unused_files_lineedit.clear()
-    self.interface.clear_unused_files_lineedit.append(f"Using DeepLabCut version{deeplabcut.__version__}")
+    if DLC_ENABLE:
+        self.interface.clear_unused_files_lineedit.append(f"Using DeepLabCut version{deeplabcut.__version__}")
     config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
     videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
     _, _, file_list = [entry for entry in os.walk(videos)][0]
@@ -829,3 +849,55 @@ def check_roi_files(roi):
     must_have = ["x", "y", "width", "height"]
     header = extracted_data.columns.to_frame().map(str.lower).to_numpy()
     return all(elem in header for elem in must_have)
+
+def create_frequency_grid(x_values, y_values, bin_size, analysis_range, *extra_data):
+    """
+    Creates a frequency grid based on the given x and y values.
+
+    Args:
+        x_values (list): List of x-coordinate values.
+        y_values (list): List of y-coordinate values.
+        bin_size (float): Size of each bin in the grid.
+        analysis_range (tuple): Range of indices to consider for analysis.
+        *extra_data: Additional data (e.g., speed, mean_speed).
+
+    Returns:
+        numpy.ndarray: The frequency grid.
+
+    """
+    if extra_data:
+        speed = extra_data[0]
+        mean_speed = extra_data[1]
+
+    # Calculate a gridmap with an exploration heatmap
+    xy_values = [(int(x_values[i]), int(y_values[i])) for i in range(analysis_range[0], analysis_range[1])]
+
+    # Find the minimum and maximum values of x and y
+    min_x = int(min(x_values))
+    max_x = int(max(x_values))
+    min_y = int(min(y_values))
+    max_y = int(max(y_values))
+
+    # Calculate the number of bins in each dimension
+    num_bins_x = int((max_x - min_x) / bin_size) + 1
+    num_bins_y = int((max_y - min_y) / bin_size) + 1
+
+    # Create a grid to store the frequencies
+    grid = np.zeros((num_bins_y, num_bins_x), dtype=int)
+    if extra_data:
+        # Assign the values to their corresponding bins in the grid
+        for ii, xy in enumerate(xy_values):
+            xi, yi = xy
+            bin_x = (xi - min_x) // bin_size
+            bin_y = (yi - min_y) // bin_size
+            if speed[ii] > mean_speed:
+                grid[bin_y, bin_x] += 1
+    else:
+        # Assign the values to their corresponding bins in the grid
+        for xy in xy_values:
+            xi, yi = xy
+            bin_x = (xi - min_x) // bin_size
+            bin_y = (yi - min_y) // bin_size
+            grid[bin_y, bin_x] += 1  # Increment the frequency of the corresponding bin
+
+    return grid
