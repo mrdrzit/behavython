@@ -13,7 +13,8 @@ from tkinter import filedialog
 from skimage.color import rgb2gray
 from scipy import stats
 from copy import copy
-from dlc_helper_functions import *
+from behavython.dlc_helper_functions import *
+
 plt.ioff()
 
 
@@ -111,7 +112,7 @@ class experiment_class:
 
             # ----------------------------------------------------------------------------------------------------------
             corrected_runtime_last_frame = runtime[-1] + 1
-            corrected_first_frame = runtime[1]-1
+            corrected_first_frame = runtime[1] - 1
             ANALYSIS_RANGE = [corrected_first_frame, corrected_runtime_last_frame]
             # ----------------------------------------------------------------------------------------------------------
             ## TODO: #43 If there is no collision, the collision_data will be empty and the code will break. Throw an error and print a message to the user explaining what is a collision.
@@ -125,7 +126,7 @@ class experiment_class:
             # Meaning that it flattens the list and then separates the x and y coordinates
             x_collision_data, y_collision_data = zip(*[item for sublist in xy_data.to_list() for item in sublist])
             # ----------------------------------------------------------------------------------------------------------
-            
+
             # Calculate the total exploration time
             exploration_mask = collisions[0] > 0
             exploration_mask = exploration_mask.astype(int)
@@ -139,8 +140,8 @@ class experiment_class:
             exploration_time_right = count_right * (1 / frames_per_second)
             exploration_time_left = count_left * (1 / frames_per_second)
 
-            x_axe = centro_x[corrected_first_frame:corrected_runtime_last_frame] # Raw x position data
-            y_axe = centro_y[corrected_first_frame:corrected_runtime_last_frame] # Raw y position data
+            x_axe = centro_x[corrected_first_frame:corrected_runtime_last_frame]  # Raw x position data
+            y_axe = centro_y[corrected_first_frame:corrected_runtime_last_frame]  # Raw y position data
 
             x_axe_cm = centro_x[corrected_first_frame:corrected_runtime_last_frame] * factor_width  # Puts the x position on scale
             y_axe_cm = centro_y[corrected_first_frame:corrected_runtime_last_frame] * factor_height  # Puts the y position on scale
@@ -152,7 +153,7 @@ class experiment_class:
             # Calculates the step difference of position in x axis
             d_x_axe_cm = np.append(0, np.diff(x_axe_cm))
             # Calculates the step difference of position in y axis
-            d_y_axe_cm = np.append(0, np.diff(y_axe_cm)) 
+            d_y_axe_cm = np.append(0, np.diff(y_axe_cm))
 
             displacement_raw = np.sqrt(np.square(d_x_axe_cm) + np.square(d_y_axe_cm))
             displacement = displacement_raw
@@ -245,7 +246,6 @@ class experiment_class:
                 "time_resting": time_resting,
                 "mean_velocity": mean_velocity,
                 "analysis_range": ANALYSIS_RANGE,
-                
             }
             if options["experiment_type"] == "njr":
                 dict_to_excel = {
@@ -699,14 +699,7 @@ class experiment_class:
             fig_1.savefig(save_folder + "/" + animal_name + " Overall heatmap of the mice's nose position.png")
 
             # Plot the Overall exploration by ROI
-            kde_axis = sns.kdeplot(
-                x = x_collisions,
-                y = y_collisions,
-                ax = axe_2,
-                cmap = "inferno",
-                fill = True,
-                alpha = 0.5,
-            )
+            kde_axis = sns.kdeplot(x=x_collisions,y=y_collisions,ax=axe_2,cmap="inferno",fill=True,alpha=0.5)
             axe_2.imshow(animal_image, interpolation="bessel")
             fig_2.savefig(save_folder + "/" + animal_name + " Overall exploration by ROI.png")
 

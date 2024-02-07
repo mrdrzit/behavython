@@ -48,7 +48,7 @@ class analysis_class(QObject):
                 )
             self.progress_bar.emit(round(((i + 1) / len(self.experiments)) * 100))
 
-        if self.options["plot_options"] in "plotting_enabled" :
+        if self.options["plot_options"] in "plotting_enabled":
             results_data_frame.T.to_excel(self.options["save_folder"] + "/analysis_results.xlsx")
         self.finished.emit()
 
@@ -101,7 +101,7 @@ class behavython_gui(QMainWindow):
         self.options["trim_amount"] = int(self.interface.crop_video_time_lineedit.text())
         self.options["crop_video"] = self.interface.crop_video_checkbox.isChecked()
 
-        functions = behavython_back.interface_functions()
+        functions = interface_functions()
         if self.options["algo_type"] == "deeplabcut":
             [self.experiments, save_folder, error_flag, inexistent_file] = functions.get_experiments(
                 self.interface.resume_lineedit,

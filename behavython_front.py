@@ -48,7 +48,7 @@ class analysis_class(QObject):
                 )
             self.progress_bar.emit(round(((i + 1) / len(self.experiments)) * 100))
 
-        if self.options["plot_options"] in "plotting_enabled" :
+        if self.options["plot_options"] in "plotting_enabled":
             results_data_frame.T.to_excel(self.options["save_folder"] + "/analysis_results.xlsx")
         self.finished.emit()
 
