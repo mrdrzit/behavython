@@ -1,11 +1,12 @@
-import behavython_back
+from behavython.behavython_back import experiment_class, interface_functions
 import sys
 import os
-from dlc_helper_functions import *
-from behavython_plot_widget import plot_viewer
+from behavython.dlc_helper_functions import *
+from behavython.behavython_plot_widget import plot_viewer
 from PySide6 import QtWidgets, QtCore, QtUiTools
 from PySide6.QtWidgets import QMainWindow, QMessageBox
 from PySide6.QtCore import QObject, QThread, Signal
+from PySide6.QtGui import QIcon, QPixmap
 
 
 class analysis_class(QObject):
@@ -27,9 +28,7 @@ class analysis_class(QObject):
     def run_analyse(self, options):
         for i in range(0, len(self.experiments)):
             if options["algo_type"] == "deeplabcut":
-                analyse_results, data_frame = behavython_back.experiment_class.video_analyse(
-                    self, self.options, self.experiments[i]
-                )
+                analyse_results, data_frame = experiment_class.video_analyse(self, self.options, self.experiments[i])
                 pass
             else:
                 analyse_results, data_frame = self.experiments[i].video_analyse(self.options)
@@ -43,9 +42,7 @@ class analysis_class(QObject):
             elif self.options["experiment_type"] == "plus_maze":
                 self.experiments[i].plot_analysis_pluz_maze(self.plot_viewer, i, self.options["save_folder"])
             elif self.options["experiment_type"] == "njr" or self.options["experiment_type"] == "social_recognition":
-                behavython_back.experiment_class.plot_analysis_social_behavior(
-                    self, self.plot_viewer, i, self.options["save_folder"]
-                )
+                experiment_class.plot_analysis_social_behavior(self, self.plot_viewer, i, self.options["save_folder"])
             self.progress_bar.emit(round(((i + 1) / len(self.experiments)) * 100))
 
         if self.options["plot_options"] in "plotting_enabled":
@@ -69,6 +66,17 @@ class behavython_gui(QMainWindow):
         loader = QtUiTools.QUiLoader()
         loader.registerCustomWidget(plot_viewer)
         self.interface = loader.load(load_gui_path)  # Loads the interface design archive (made in Qt Designer)
+
+        window_pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "logo/VY.ico"))
+        behavython_logo_pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "logo/logo.png"))
+
+        print(os.path.join(os.path.dirname(__file__), "logo/logo.png"))
+        print(os.path.join(os.path.dirname(__file__), "logo/VY.ico"))
+              
+        window_icon = QIcon(window_pixmap)
+        self.setPixmap = QPixmap(behavython_logo_pixmap)
+        self.setWindowIcon(window_icon)
+
         self.interface.show()
         self.options = {}
         self.interface.clear_button.clicked.connect(self.clear_function)

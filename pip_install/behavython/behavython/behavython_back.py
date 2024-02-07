@@ -17,7 +17,6 @@ from behavython.dlc_helper_functions import *
 
 plt.ioff()
 
-
 class experiment_class:
     """
     This class declares each experiment and makes the necessary  calculations to

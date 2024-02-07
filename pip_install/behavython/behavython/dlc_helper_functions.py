@@ -12,8 +12,6 @@ from pathlib import Path
 from PySide6.QtWidgets import QMessageBox
 from tkinter import filedialog
 
-matplotlib.use("qtagg")
-
 DLC_ENABLE = True
 if DLC_ENABLE:
     import deeplabcut
