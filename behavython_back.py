@@ -143,39 +143,6 @@ class experiment_class:
 
             x_axe = centro_x[corrected_first_frame:corrected_runtime_last_frame] # Raw x position data
             y_axe = centro_y[corrected_first_frame:corrected_runtime_last_frame] # Raw y position data
-            copy_x_axe = copy(x_axe)
-            copy_y_axe = copy(y_axe)
-            
-            diff_x_axis = np.append(0, np.diff(x_axe))
-            diff_y_axis = np.append(0, np.diff(y_axe))
-
-            gradient_mask_x = [
-                abs(value) > 100 for value in diff_x_axis
-            ]  # Threshold calculated based on tbe animal's size (which is approximately 100px for mice)
-            gradient_mask_y = [
-                abs(value) > 100 for value in diff_y_axis
-            ]  # Threshold calculated based on tbe animal's size (which is approximately 100px for mice)
-            
-            copy_x_axe.mask(gradient_mask_x, other=np.nan, inplace=True)
-            copy_y_axe.mask(gradient_mask_y, other=np.nan, inplace=True)
-
-            # interpd_x_axe = medfilt(copy_x_axe, 5)
-            # interpd_y_axe = medfilt(copy_y_axe, 5)
-            interpd_x_axe = savgol_filter(copy_x_axe, window_length=10, polyorder=1)
-            interpd_y_axe = savgol_filter(copy_y_axe, window_length=10, polyorder=1)
-
-            fig, axs = plt.subplots(2)
-            # Plot copy_x_axe and copy_y_axe on the second subplot
-            axs[0].plot(copy_x_axe, copy_y_axe)
-            axs[0].set_title('copy_x_axe and copy_y_axe')
-
-            # Plot interpd_x_axe and interpd_y_axe on the third subplot
-            axs[1].plot(interpd_x_axe, interpd_y_axe)
-            axs[1].set_title('interpd_x_axe and interpd_y_axe')
-
-            # Display the figure
-            plt.tight_layout()
-            plt.show()
 
             x_axe_cm = centro_x[corrected_first_frame:corrected_runtime_last_frame] * factor_width  # Puts the x position on scale
             y_axe_cm = centro_y[corrected_first_frame:corrected_runtime_last_frame] * factor_height  # Puts the y position on scale
@@ -192,10 +159,11 @@ class experiment_class:
             displacement_raw = np.sqrt(np.square(d_x_axe_cm) + np.square(d_y_axe_cm))
             displacement = displacement_raw
             displacement[displacement < threshold] = 0
-            displacement[displacement > 9] = 0
+            displacement[displacement > 55] = 0
 
             # Sums all the animal's movements and calculates the accumulated distance traveled
             accumulate_distance = np.cumsum(displacement)
+
             # Gets the animal's total distance traveled
             total_distance = max(accumulate_distance)
             time_vector = np.linspace(0, len(runtime) / frames_per_second, len(runtime))  # Creates a time vector
@@ -229,8 +197,6 @@ class experiment_class:
             movement_points = np.array([x_axe, y_axe]).T.reshape(-1, 1, 2)
             # Creates a 2D array containing the line segments coordinates
             movement_segments = np.concatenate([movement_points[:-1], movement_points[1:]], axis=1)
-            # smooth_segs = savgol_filter(movement_segments, 3, 2, axis=0)
-
             filter_size = 4
             moving_average_filter = np.ones((filter_size,)) / filter_size
             smooth_segs = np.apply_along_axis(lambda m: np.convolve(m, moving_average_filter, mode='same'), axis=0, arr=movement_segments)
@@ -241,24 +207,20 @@ class experiment_class:
             movement_line_collection.set_array(velocity)
             lc_fig_1 = copy(movement_line_collection)
 
-            figure_1, axe_1 = plt.subplots()
-            axe_1.imshow(animal.animal_jpg)
-            axe_1.add_collection(movement_line_collection)
-            figure_1.colorbar(lc_fig_1, label="Speed")
-            axe_1.set_xlabel('X Position')
-            axe_1.set_ylabel('Y Position')
-            axe_1.legend([''])
-            axe_1.axis("tight")
-            axe_1.axis("off")
-            plt.show()
+            position_grid = create_frequency_grid(focinho_x, focinho_y, bin_size, ANALYSIS_RANGE)
+            velocity_grid = create_frequency_grid(centro_x, centro_y, bin_size, ANALYSIS_RANGE, velocity, mean_velocity)
 
             self.analysis_results = {
-                "x_data": x,
-                "y_data": y,
+                "y_pos_data": y_axe,
+                "x_pos_data": x_axe,
+                "x_collision_data": x_collision_data,
+                "y_collision_data": y_collision_data,
                 "exploration_time": exploration_time,
                 "exploration_time_right": exploration_time_right,
                 "exploration_time_left": exploration_time_left,
-                "grid": grid,
+                "position_grid": position_grid,
+                "velocity_grid": velocity_grid,
+                "velocity": velocity,
                 "video_width": video_width,
                 "video_height": video_height,
                 "max_video_height": max_video_height,
@@ -280,21 +242,34 @@ class experiment_class:
                 "total_distance": total_distance,
                 "movements": movements,
                 "acceleration": acceleration,
+                "displacement": displacement,
+                "time_moving": time_moving,
+                "time_resting": time_resting,
+                "mean_velocity": mean_velocity,
+                "analysis_range": ANALYSIS_RANGE,
+                
             }
-            dict_to_excel = {
-                "exploration_time": exploration_time,
-                "exploration_time_right": exploration_time_right,
-                "exploration_time_left": exploration_time_left,
-                "time moving": time_moving,
-                "time resting": time_resting,
-                "total distance": total_distance,
-                "mean velocity": mean_velocity,
-            }
+            if options["experiment_type"] == "njr":
+                dict_to_excel = {
+                    "exploration_time (s)": exploration_time,
+                    "exploration_time_right (s)": exploration_time_right,
+                    "exploration_time_left (s)": exploration_time_left,
+                    "time moving (S)": time_moving,
+                    "time resting (S)": time_resting,
+                    "total distance (cm)": total_distance,
+                    "mean velocity (cm/s)": mean_velocity,
+                }
+            elif options["experiment_type"] == "social_recognition":
+                dict_to_excel = {
+                    "exploration_time (s)": exploration_time,
+                    "time moving (s)": time_moving,
+                    "time resting (s)": time_resting,
+                    "total distance (cm)": total_distance,
+                    "mean velocity (cm/s)": mean_velocity,
+                }
             data_frame = pd.DataFrame(data=dict_to_excel, index=[animal.name])
             data_frame = data_frame.T
-
             return self.analysis_results, data_frame
-
         else:
             self.experiment_type = options["experiment_type"]
             arena_width = options["arena_width"]
@@ -465,7 +440,7 @@ class experiment_class:
         figure_1.subplots_adjust(left=0, right=1, bottom=0, top=1)
         figure_1.set_size_inches(new_resolution_in_inches)
 
-        if plot_option == 0:
+        if plot_option in "plotting_enabled":
             # Modulo 9 to make sure the plot number is not out of bounds
             plot_viewer.canvas.axes[plot_number % 9].imshow(im, interpolation="bicubic")
             plot_viewer.canvas.axes[plot_number % 9].add_collection(line_collection_window)
@@ -551,7 +526,7 @@ class experiment_class:
         axe_32.set_ylim((0, 1.5))
         axe_32.set_title("Lower arm")
 
-        if plot_option == 1:
+        if plot_option in "plotting_enabled":
             plt.subplots_adjust(hspace=0.8, wspace=0.8)
             plt.savefig(save_folder + "/" + self.name + "_Time spent on each area over time.png", dpi=600)
 
@@ -594,7 +569,7 @@ class experiment_class:
         figure_1.set_size_inches(new_resolution_in_inches)
 
         # Modulo 9 to make sure the plot number is not out of bounds
-        if plot_option == 1:
+        if plot_option in "plotting_enabled":
             plot_viewer.canvas.axes[plot_number % 9].imshow(im, interpolation="bicubic")
             plot_viewer.canvas.axes[plot_number % 9].add_collection(line_collection_window)
             # Increment the plot number to be used in the next plot (advance in window)
@@ -636,7 +611,7 @@ class experiment_class:
         axe_32.set_ylim((0, 1.5))
         axe_32.set_title("edge")
 
-        if plot_option == 1:
+        if plot_option in "plotting_enabled":
             plt.subplots_adjust(hspace=0.8, wspace=0.8)
             plt.savefig(save_folder + "/" + self.name + "_Time spent on each area over time.png", dpi=600)
 
@@ -651,111 +626,106 @@ class experiment_class:
         axe_42.set_ylim((0, 1.5))
         axe_42.set_title("edge")
 
-        if plot_option == 1:
+        if plot_option in "plotting_enabled":
             plt.subplots_adjust(hspace=0.8, wspace=0.8)
             plt.savefig(save_folder + "/" + self.name + "_Number of crossings.png", dpi=600)
 
         plt.close("all")
 
     def plot_analysis_social_behavior(self, plot_viewer, plot_number, save_folder):
+        animal_image = self.experiments[plot_number].animal_jpg
+        animal_name = self.experiments[plot_number].name
+        x_pos = self.analysis_results["x_pos_data"]
+        y_pos = self.analysis_results["y_pos_data"]
         plot_option = self.analysis_results["plot_options"]
         image_height = self.analysis_results["video_height"]
         image_width = self.analysis_results["video_width"]
         max_height = self.analysis_results["max_video_height"]
         max_width = self.analysis_results["max_video_width"]
-        x_collisions = self.analysis_results["x_data"]
-        y_collisions = self.analysis_results["y_data"]
-        grid = self.analysis_results["grid"]
-        displacement = self.analysis_results["displacement"]
-        color_limits = self.analysis_results["color_limits"]
-        acceleration = self.analysis_results["acceleration"]
+        x_collisions = self.analysis_results["x_collision_data"]
+        y_collisions = self.analysis_results["y_collision_data"]
+        position_grid = self.analysis_results["position_grid"]
+        accumulate_distance = self.analysis_results["accumulate_distance"]
+        frames_per_second = self.options["frames_per_second"]
+        ANALYSIS_RANGE = self.analysis_results["analysis_range"]
+        analysis_time_frames = ANALYSIS_RANGE[1] - ANALYSIS_RANGE[0]
+        time_vector_secs = np.arange(0, analysis_time_frames/frames_per_second, 1/frames_per_second)
 
-
-        fig_1, axe_1 = plt.subplots()
-        axe_1.set_title("Overall heatmap of the mice's nose position", loc="center")
-        axe_1.set_xlabel("X (pixels)")
-        axe_1.set_ylabel("Y (pixels)")
-        axe_1.set_xticks([])
-        axe_1.set_yticks([])
+        # Calculate the ratio to be used for image resizing without losing the aspect ratio
         ratio = min(max_height / image_width, max_width / image_height)
-        # Calculate the new resolution in inches based on the dpi set
-
         new_resolution_in_inches = (int(image_width * ratio / 100), int(image_height * ratio / 100))
-        temp = np.multiply(np.sort(sum(self.analysis_results["grid"])), 1 / 30)
-        range_time_each_bin = np.sort(temp).round(decimals=1)
-        # ----------------------------------------------------------------------------------------------------------
+        
+        with plt.ioff():
+            fig_1, axe_1 = plt.subplots()
+            fig_1.subplots_adjust(left=0.08, right=0.95, bottom=0.08, top=0.95, hspace=0, wspace=0)
+            fig_1.set_size_inches(new_resolution_in_inches)
+            axe_1.set_title("Overall heatmap of the mice's nose position", loc="center", fontdict={"fontsize": new_resolution_in_inches[1] * 2, "fontweight": "normal", "color": "black"})
+            axe_1.set_xlabel("X (pixels)", fontdict={"fontsize": new_resolution_in_inches[1] * 1.2, "fontweight": "normal", "color": "black"})
+            axe_1.set_ylabel("Y (pixels)", fontdict={"fontsize": new_resolution_in_inches[1] * 1.2, "fontweight": "normal", "color": "black"})
+            axe_1.set_xticks([])
+            axe_1.set_yticks([])
+        
+            fig_2, axe_2 = plt.subplots()
+            fig_2.subplots_adjust(left=0.08, right=0.95, bottom=0.08, top=0.95, hspace=0, wspace=0)
+            fig_2.set_size_inches(new_resolution_in_inches)
+            axe_2.set_title("Exploration map by ROI", loc="center", fontdict={"fontsize": new_resolution_in_inches[1] * 2, "fontweight": "normal", "color": "black"})
+            axe_2.set_xticks([])
+            axe_2.set_yticks([])
 
-        if plot_option == 0:
-            _, axe_2 = plt.subplots()
-            plot_viewer.canvas.axes[plot_number % 9].imshow(self.experiments[plot_number].animal_jpg, cmap="gray", aspect="auto")
-            sns.kdeplot(
-                x=x_collisions,
-                y=y_collisions,
-                fill=True,
-                ax=plot_viewer.canvas.axes[plot_number % 9],
-                cmap="inferno",
-                alpha=0.5,
-            )
-            axe_2.axis("tight")
-            axe_2.axis("off")
-            plot_number += 1
-            plot_viewer.canvas.draw_idle()
-
-            
-        else:
-            fig_3, axe_3 = plt.subplots()
-            plot_viewer.canvas.axes[plot_number % 9].imshow(self.experiments[plot_number].animal_jpg, cmap="gray", aspect="auto")
-            sns.kdeplot(
-                x=x_collisions,
-                y=y_collisions,
-                fill=True,
-                ax=plot_viewer.canvas.axes[plot_number % 9],
-                cmap="inferno",
-                alpha=0.5,
-            )
-            # Do i really need to plot this twice?
-            sns.kdeplot(
-                x=x_collisions,
-                y=y_collisions,
-                fill=True,
-                ax=axe_3,
-                cbar=False,
-                cmap="inferno",
-                cbar_kws={
-                    "label": "Permanence time (s)",
-                    "location": "right",
-                    "cbar": True,
-                },
-                alpha=0.5,
-            )
-            # Calculate the ratio to be used for image resizing without losing the aspect ratio
-            ratio = min(max_height / image_width, max_width / image_height)
-            # Calculate the new resolution in inches based on the dpi set
-            axe_3.imshow(self.experiments[plot_number].animal_jpg, aspect="auto", interpolation="bicubic")
-            axe_3.set_title("Exploration map by ROI", loc="center", fontdict={"fontsize": "large", "fontweight": "normal"})
-            fig_3.set_size_inches(new_resolution_in_inches)
-            axe_3.axis("off")
-            axe_3.axis("tight")
-            fig_3.savefig(save_folder + "/" + self.experiments[plot_number].name + "Overall exploration by ROI.png", dpi=100)
+            # fig_3, axe_3 = plt.subplots()
+            # fig_3.subplots_adjust(left=0.08, right=0.95, bottom=0.08, top=0.95, hspace=0, wspace=0)
+            # fig_3.set_size_inches(new_resolution_in_inches)
+            # axe_3.set_title("Locations where the velocity was higher than the average", loc="center", fontdict={"fontsize": new_resolution_in_inches[1] * 2, "fontweight": "normal", "color": "black"})
+            # axe_3.set_xlabel("X (pixels)")
+            # axe_3.set_ylabel("Y (pixels)")
+            # axe_3.set_xticks([])
+            # axe_3.set_yticks([])
+            # axe_3.axis("off")
 
             fig_4, axe_4 = plt.subplots()
-            axe_4.imshow(grid, cmap="inferno", interpolation="bessel")
+            fig_4.subplots_adjust(left=0.08, right=0.95, bottom=0.08, top=0.95, hspace=0, wspace=0)
             fig_4.set_size_inches(new_resolution_in_inches)
-            axe_4.axis("tight")
-            axe_4.axis("off")
-            axe_4.set_title("Overall heatmap of the mice's nose position", loc="center")
-            axe_4.set_xlabel("X (pixels)")
-            axe_4.set_ylabel("Y (pixels)")
-            axe_4.set_xticks([])
-            axe_4.set_yticks([])
-            fig_4.savefig(
-                save_folder + "/" + self.experiments[plot_number].name + "Overall heatmap of the mice's nose position",
-            )
-            plot_viewer.canvas.axes[plot_number % 9].imshow(self.analysis_results["grid"], cmap="inferno", interpolation="bessel")
-            
-        plt.close("all")
-        pass
+            axe_4.set_title("Distance accumulated over time", loc="center", fontdict={"fontsize": new_resolution_in_inches[1] * 2, "fontweight": "normal", "color": "black"})
+            axe_4.set_xlabel("Time (s)", fontdict={"fontsize": new_resolution_in_inches[1] * 1.2, "fontweight": "normal", "color": "black"})
+            axe_4.set_ylabel("Distance (cm)", fontdict={"fontsize": new_resolution_in_inches[1] * 1.2, "fontweight": "normal", "color": "black"})
+            axe_4.grid(True)
 
+            fig_5, axe_5 = plt.subplots()
+            fig_5.subplots_adjust(left=0.08, right=0.95, bottom=0.08, top=0.95, hspace=0, wspace=0)
+            fig_5.set_size_inches(new_resolution_in_inches)
+            axe_5.set_title("Animal movement in the arena", loc="center", fontdict={"fontsize": new_resolution_in_inches[1] * 2, "fontweight": "normal", "color": "black"})
+            axe_5.axis("off")
+
+            # Plot the heatmap of the mice's nose position
+            axe_1.imshow(position_grid, cmap="inferno", interpolation="bessel")
+            fig_1.savefig(save_folder + "/" + animal_name + " Overall heatmap of the mice's nose position.png")
+
+            # Plot the Overall exploration by ROI
+            kde_axis = sns.kdeplot(
+                x = x_collisions,
+                y = y_collisions,
+                ax = axe_2,
+                cmap = "inferno",
+                fill = True,
+                alpha = 0.5,
+            )
+            axe_2.imshow(animal_image, interpolation="bessel")
+            fig_2.savefig(save_folder + "/" + animal_name + " Overall exploration by ROI.png")
+
+            # # Plot the locations where the velocity was higher than the average
+            # axe_3.imshow(velocity_grid, cmap="inferno", interpolation="bessel")
+            # fig_3.savefig(save_folder + "/" + animal_name + " Locations where the velocity was higher than the average.png")
+            
+            # Plot the distance accumulated over time
+            axe_4.plot(time_vector_secs, accumulate_distance)
+            fig_4.savefig(save_folder + "/" + animal_name + " Distance accumulated over time.png")
+
+            # Plot the animal movement in the arena
+            axe_5.plot(x_pos, y_pos, color="orangered", linewidth=1.5)
+            axe_5.imshow(animal_image, interpolation="bessel", alpha=0.9)
+            fig_5.savefig(save_folder + "/" + animal_name + " Animal movement in the arena.png")
+            
+            plt.close("all")
 
 class files_class:
     def __init__(self):
@@ -782,7 +752,7 @@ class interface_functions:
             file_explorer.withdraw()
             file_explorer.call("wm", "attributes", ".", "-topmost", True)
             selected_files = filedialog.askopenfilename(title="Select the files to analyze", multiple=True)
-            if save_plots == 1:
+            if save_plots in "plotting_enabled":
                 selected_folder_to_save = filedialog.askdirectory(title="Select the folder to save the plots", mustexist=True)
             experiments = []
 
@@ -841,7 +811,7 @@ class interface_functions:
             error = 0
             experiments = []
             selected_files = get_files(line_edit, data, experiments)
-            if save_plots == 1:
+            if save_plots in "plotting_enabled":
                 selected_folder_to_save = filedialog.askdirectory(title="Select the folder to save the plots", mustexist=True)
             try:
                 assert selected_folder_to_save != ""
