@@ -48,7 +48,7 @@ class analysis_class(QObject):
                 )
             self.progress_bar.emit(round(((i + 1) / len(self.experiments)) * 100))
 
-        if self.options["plot_options"] == 1:
+        if self.options["plot_options"] in "plotting_enabled" :
             results_data_frame.T.to_excel(self.options["save_folder"] + "/analysis_results.xlsx")
         self.finished.emit()
 
@@ -89,7 +89,7 @@ class behavython_gui(QMainWindow):
         self.options["arena_height"] = int(self.interface.arena_height_lineedit.text())
         self.options["frames_per_second"] = float(self.interface.frames_per_second_lineedit.text())
         self.options["experiment_type"] = self.interface.type_combobox.currentText().lower().strip().replace(" ", "_")
-        self.options["plot_options"] = self.interface.save_button.isChecked()
+        self.options["plot_options"] = "plotting_enabled" if self.interface.save_button.isChecked() else "plotting_disabled"
         # Remove trailing spaces and replace x with comma and split the values at the comma to make a list
         self.options["max_fig_res"] = str(self.interface.fig_max_size.currentText()).replace(" ", "").replace("x", ",").split(",")
         self.options["algo_type"] = self.interface.algo_type_combobox.currentText().lower().strip()
@@ -97,7 +97,7 @@ class behavython_gui(QMainWindow):
             self.options["threshold"] = 0.0267
         else:
             self.options["threshold"] = 0.0667
-        self.options["task_duration"] = int(self.interface.crop_video_lineedit.text())
+        self.options["task_duration"] = int(self.interface.task_duration_lineedit.text())
         self.options["trim_amount"] = int(self.interface.crop_video_time_lineedit.text())
         self.options["crop_video"] = self.interface.crop_video_checkbox.isChecked()
 
@@ -166,6 +166,19 @@ class behavython_gui(QMainWindow):
         self.interface.animal_combobox.setCurrentIndex(0)
         self.interface.fig_max_size.setCurrentIndex(0)
         self.interface.algo_type_combobox.setCurrentIndex(0)
+        self.interface.clear_unused_files_lineedit.clear()
+        self.interface.resume_lineedit.clear()
+        self.interface.algo_type_combobox.setCurrentIndex(0)
+        self.interface.arena_width_lineedit.setText("63")
+        self.interface.arena_height_lineedit.setText("39")
+        self.interface.frames_per_second_lineedit.setText("30")
+        self.interface.animal_combobox.setCurrentIndex(0)
+        self.interface.task_duration_lineedit.setText("300")
+        self.interface.crop_video_time_lineedit.setText("15")
+        self.interface.fig_max_size.setCurrentIndex(1)
+        self.interface.only_plot_button.setChecked(False)
+        self.interface.save_button.setChecked(True)
+        self.interface.crop_video_checkbox.setChecked(True)
         self.clear_plot()
 
     def clear_plot(self):
