@@ -7,8 +7,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import re
 import matplotlib
-from scipy.interpolate import interp1d, Akima1DInterpolator as akima 
-from scipy.signal import savgol_filter, medfilt
 from matplotlib.collections import LineCollection
 from matplotlib import pyplot as plt
 from tkinter import filedialog
