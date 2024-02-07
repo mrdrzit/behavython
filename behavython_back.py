@@ -16,8 +16,6 @@ from skimage.color import rgb2gray
 from scipy import stats
 from copy import copy
 from dlc_helper_functions import *
-
-matplotlib.use("Qt5Agg")
 plt.ioff()
 
 
@@ -79,6 +77,7 @@ class experiment_class:
             factor_width = arena_width / video_width
             factor_height = arena_height / video_height
             number_of_frames = animal.exp_length()
+            bin_size = 10
             # ----------------------------------------------------------------------------------------------------------
             if self.options["crop_video"]:
                 runtime = range(trim_amount, int((max_analysis_time * frames_per_second) + trim_amount))
@@ -105,10 +104,10 @@ class experiment_class:
                 # ------------------------------------------------------------------------------------------------------
 
                 # Calculate the collisions between the ROI and the mice's nose
-                for i in range(number_of_filled_rois):
-                    collision = detect_collision([Q[0], Q[1]], [P[0], P[1]], [roi_X[i], roi_Y[i]], roi_D[i] / 2)
+                for ii in range(number_of_filled_rois):
+                    collision = detect_collision([Q[0], Q[1]], [P[0], P[1]], [roi_X[ii], roi_Y[ii]], roi_D[ii] / 2)
                     if collision:
-                        collision_data.append([1, collision, mice_head_area, roi_NAME[i]])
+                        collision_data.append([1, collision, mice_head_area, roi_NAME[ii]])
                     else:
                         collision_data.append([0, None, mice_head_area, None])
 
