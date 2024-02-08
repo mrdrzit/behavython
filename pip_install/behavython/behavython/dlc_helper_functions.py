@@ -676,12 +676,12 @@ def dlc_video_analyze_function(self):
             videotype=file_extension,
             shuffle=1,
             trainingsetindex=0,
-            filtertype="median",
-            windowlength=5,
+            filtertype="arima",
+            windowlength=8,
             p_bound=0.001,
             ARdegree=3,
             MAdegree=1,
-            alpha=0.01,
+            alpha=0.02,
             save_as_csv=True,
         )
     self.interface.clear_unused_files_lineedit.append("Done filtering data files")
