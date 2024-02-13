@@ -4,9 +4,9 @@ import os
 from behavython.dlc_helper_functions import *
 from behavython.behavython_plot_widget import plot_viewer
 from PySide6 import QtWidgets, QtCore, QtUiTools
+from behavython.behavython_gui import Ui_behavython as Ui_MainWindow
 from PySide6.QtWidgets import QMainWindow, QMessageBox
 from PySide6.QtCore import QObject, QThread, Signal
-from PySide6.QtGui import QIcon, QPixmap
 
 
 class analysis_class(QObject):
@@ -50,7 +50,7 @@ class analysis_class(QObject):
         self.finished.emit()
 
 
-class behavython_gui(QMainWindow):
+class behavython_gui(QMainWindow, Ui_MainWindow):
     """
     This class contains all the commands of the interface as well as the constructors of the
     interface itself.
@@ -61,65 +61,66 @@ class behavython_gui(QMainWindow):
         This private function calls the interface of a .ui file created in Qt Designer.
         """
         super(behavython_gui, self).__init__()  # Calls the inherited classes __init__ method
-        load_gui_path = os.path.join(os.path.dirname(__file__), "behavython_gui.ui")
+        # load_gui_path = os.path.join(os.path.dirname(__file__), "behavython_gui.ui")
         os.environ["PYSIDE_DESIGNER_PLUGINS"] = os.path.join(os.path.dirname(__file__))
         loader = QtUiTools.QUiLoader()
         loader.registerCustomWidget(plot_viewer)
-        self.interface = loader.load(load_gui_path)  # Loads the interface design archive (made in Qt Designer)
+        # self.interface = loader.load(load_gui_path)  # Loads the interface design archive (made in Qt Designer)
+        self.setupUi(self)
 
-        window_pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "logo/VY.ico"))
-        behavython_logo_pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "logo/logo.png"))
+        # window_pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "logo/VY.ico"))
+        # behavython_logo_pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "logo/logo.png"))
 
-        print(os.path.join(os.path.dirname(__file__), "logo/logo.png"))
-        print(os.path.join(os.path.dirname(__file__), "logo/VY.ico"))
+        # print(os.path.join(os.path.dirname(__file__), "logo/logo.png"))
+        # print(os.path.join(os.path.dirname(__file__), "logo/VY.ico"))
               
-        window_icon = QIcon(window_pixmap)
-        self.setPixmap = QPixmap(behavython_logo_pixmap)
-        self.setWindowIcon(window_icon)
+        # window_icon = QIcon(window_pixmap)
+        # self.setPixmap = QPixmap(behavython_logo_pixmap)
+        # self.setWindowIcon(window_icon)
 
-        self.interface.show()
+        self.show()
         self.options = {}
-        self.interface.clear_button.clicked.connect(self.clear_function)
-        self.interface.analysis_button.clicked.connect(self.analysis_function)
+        self.clear_button.clicked.connect(self.clear_function)
+        self.analysis_button.clicked.connect(self.analysis_function)
 
         ## This block handles the deeplabcut analysis
-        self.interface.folder_structure_check_button.clicked.connect(lambda: folder_structure_check_function(self))
-        self.interface.dlc_video_analyze_button.clicked.connect(lambda: dlc_video_analyze_function(self))
-        self.interface.extract_skeleton_button.clicked.connect(lambda: extract_skeleton_function(self))
-        self.interface.clear_unused_files_button.clicked.connect(lambda: clear_unused_files_function(self))
-        self.interface.get_config_path_button.clicked.connect(lambda: get_folder_path_function(self, "config_path"))
-        self.interface.get_videos_path_button.clicked.connect(lambda: get_folder_path_function(self, "videos_path"))
-        self.interface.get_frames_button.clicked.connect(lambda: get_frames_function(self))
+        self.folder_structure_check_button.clicked.connect(lambda: folder_structure_check_function(self))
+        self.dlc_video_analyze_button.clicked.connect(lambda: dlc_video_analyze_function(self))
+        self.extract_skeleton_button.clicked.connect(lambda: extract_skeleton_function(self))
+        self.clear_unused_files_button.clicked.connect(lambda: clear_unused_files_function(self))
+        self.get_config_path_button.clicked.connect(lambda: get_folder_path_function(self, "config_path"))
+        self.get_videos_path_button.clicked.connect(lambda: get_folder_path_function(self, "videos_path"))
+        self.get_frames_button.clicked.connect(lambda: get_frames_function(self))
 
     def analysis_function(self):
-        self.interface.resume_lineedit.clear()
-        self.options["arena_width"] = int(self.interface.arena_width_lineedit.text())
-        self.options["arena_height"] = int(self.interface.arena_height_lineedit.text())
-        self.options["frames_per_second"] = float(self.interface.frames_per_second_lineedit.text())
-        self.options["experiment_type"] = self.interface.type_combobox.currentText().lower().strip().replace(" ", "_")
-        self.options["plot_options"] = "plotting_enabled" if self.interface.save_button.isChecked() else "plotting_disabled"
+        self.resume_lineedit.clear()
+        self.options["arena_width"] = int(self.arena_width_lineedit.text())
+        self.options["arena_height"] = int(self.arena_height_lineedit.text())
+        self.options["frames_per_second"] = float(self.frames_per_second_lineedit.text())
+        self.options["experiment_type"] = self.type_combobox.currentText().lower().strip().replace(" ", "_")
+        self.options["plot_options"] = "plotting_enabled" if self.save_button.isChecked() else "plotting_disabled"
         # Remove trailing spaces and replace x with comma and split the values at the comma to make a list
-        self.options["max_fig_res"] = str(self.interface.fig_max_size.currentText()).replace(" ", "").replace("x", ",").split(",")
-        self.options["algo_type"] = self.interface.algo_type_combobox.currentText().lower().strip()
-        if self.interface.animal_combobox.currentIndex() == 0:
+        self.options["max_fig_res"] = str(self.fig_max_size.currentText()).replace(" ", "").replace("x", ",").split(",")
+        self.options["algo_type"] = self.algo_type_combobox.currentText().lower().strip()
+        if self.animal_combobox.currentIndex() == 0:
             self.options["threshold"] = 0.0267
         else:
             self.options["threshold"] = 0.0667
-        self.options["task_duration"] = int(self.interface.task_duration_lineedit.text())
-        self.options["trim_amount"] = int(self.interface.crop_video_time_lineedit.text())
-        self.options["crop_video"] = self.interface.crop_video_checkbox.isChecked()
+        self.options["task_duration"] = int(self.task_duration_lineedit.text())
+        self.options["trim_amount"] = int(self.crop_video_time_lineedit.text())
+        self.options["crop_video"] = self.crop_video_checkbox.isChecked()
 
         functions = interface_functions()
         if self.options["algo_type"] == "deeplabcut":
             [self.experiments, save_folder, error_flag, inexistent_file] = functions.get_experiments(
-                self.interface.resume_lineedit,
+                self.resume_lineedit,
                 self.options["experiment_type"],
                 self.options["plot_options"],
                 self.options["algo_type"],
             )
         else:
             [self.experiments, save_folder, error_flag, inexistent_file] = functions.get_experiments(
-                self.interface.resume_lineedit,
+                self.resume_lineedit,
                 self.options["experiment_type"],
                 self.options["plot_options"],
                 self.options["algo_type"],
@@ -144,7 +145,7 @@ class behavython_gui(QMainWindow):
         # Creates a QThread object to plot the received data
         self.analysis_thread = QThread()
         # Creates a worker object named plot_data_class
-        self.analysis_worker = analysis_class(self.experiments, self.options, self.interface.plot_viewer)
+        self.analysis_worker = analysis_class(self.experiments, self.options, self.plot_viewer)
         # Moves the class to the thread
         self.analysis_worker.moveToThread(self.analysis_thread)
         # When the process is finished, this command quits the worker
@@ -163,35 +164,35 @@ class behavython_gui(QMainWindow):
         self.analysis_worker.run_analyse(self.options)
 
     def progress_bar_function(self, value):
-        self.interface.progress_bar.setValue(value)
+        self.progress_bar.setValue(value)
 
     def clear_function(self):
         self.options = {}
-        self.interface.type_combobox.setCurrentIndex(0)
-        self.interface.frames_per_second_lineedit.setText("30")
-        self.interface.arena_width_lineedit.setText("65")
-        self.interface.arena_height_lineedit.setText("65")
-        self.interface.animal_combobox.setCurrentIndex(0)
-        self.interface.fig_max_size.setCurrentIndex(0)
-        self.interface.algo_type_combobox.setCurrentIndex(0)
-        self.interface.clear_unused_files_lineedit.clear()
-        self.interface.resume_lineedit.clear()
-        self.interface.algo_type_combobox.setCurrentIndex(0)
-        self.interface.arena_width_lineedit.setText("63")
-        self.interface.arena_height_lineedit.setText("39")
-        self.interface.frames_per_second_lineedit.setText("30")
-        self.interface.animal_combobox.setCurrentIndex(0)
-        self.interface.task_duration_lineedit.setText("300")
-        self.interface.crop_video_time_lineedit.setText("15")
-        self.interface.fig_max_size.setCurrentIndex(1)
-        self.interface.only_plot_button.setChecked(False)
-        self.interface.save_button.setChecked(True)
-        self.interface.crop_video_checkbox.setChecked(True)
+        self.type_combobox.setCurrentIndex(0)
+        self.frames_per_second_lineedit.setText("30")
+        self.arena_width_lineedit.setText("65")
+        self.arena_height_lineedit.setText("65")
+        self.animal_combobox.setCurrentIndex(0)
+        self.fig_max_size.setCurrentIndex(0)
+        self.algo_type_combobox.setCurrentIndex(0)
+        self.clear_unused_files_lineedit.clear()
+        self.resume_lineedit.clear()
+        self.algo_type_combobox.setCurrentIndex(0)
+        self.arena_width_lineedit.setText("63")
+        self.arena_height_lineedit.setText("39")
+        self.frames_per_second_lineedit.setText("30")
+        self.animal_combobox.setCurrentIndex(0)
+        self.task_duration_lineedit.setText("300")
+        self.crop_video_time_lineedit.setText("15")
+        self.fig_max_size.setCurrentIndex(1)
+        self.only_plot_button.setChecked(False)
+        self.save_button.setChecked(True)
+        self.crop_video_checkbox.setChecked(True)
         self.clear_plot()
 
     def clear_plot(self):
         for i in range(1, 10):
-            self.interface.plot_viewer.canvas.axes[i - 1].cla()  # Changes the plot face color
+            self.plot_viewer.canvas.axes[i - 1].cla()  # Changes the plot face color
 
     def resume_message_function(self, file_list):
         text = "Check the videos to be analyzed: "
@@ -205,7 +206,7 @@ class behavython_gui(QMainWindow):
             return False
 
     def option_message_function(self, text, info_text):
-        warning = QMessageBox(self.interface)  # Create the message box
+        warning = QMessageBox(self)  # Create the message box
         warning.setWindowTitle("Warning")  # Message box title
         warning.setText(text)  # Message box text
         warning.setInformativeText(info_text)  # Message box text
