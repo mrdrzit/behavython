@@ -8,8 +8,9 @@ import matplotlib.image as mpimg
 import pandas as pd
 import subprocess
 import numpy as np
+import json
 from pathlib import Path
-from PySide6.QtWidgets import QMessageBox
+from PySide6.QtWidgets import QMessageBox, QFileDialog
 from tkinter import filedialog
 
 matplotlib.use("qtagg")
@@ -249,10 +250,10 @@ class Animal:
                 "likelihood": extracted_data[bone, "likelihood"],
             }
         except KeyError:
-            print(f"\nBone {bone} not found in the skeleton file for the animal {self.name}")
-            print("Please check the name of the bone in the skeleton file\n")
-            print("The following bones are available:")
-            print("focinho_orelhae\nfocinho_orelhad\norelhad_orelhae\norelhae_orelhad\norelhae_rabo\norelhad_rabo\n")
+            # print(f"\nBone {bone} not found in the skeleton file for the animal {self.name}")
+            # print("Please check the name of the bone in the skeleton file\n")
+            # print("The following bones are available:")
+            # print("focinho_orelhae\nfocinho_orelhad\norelhad_orelhae\norelhae_orelhad\norelhae_rabo\norelhad_rabo\n")
             return
 
     def add_experiment_jpg(self, image_file):
@@ -901,3 +902,79 @@ def create_frequency_grid(x_values, y_values, bin_size, analysis_range, *extra_d
             grid[bin_y, bin_x] += 1  # Increment the frequency of the corresponding bin
 
     return grid
+
+def options_to_configuration(configuration):
+    # Define mapping for key conversions
+    options_to_configuration = {
+        "algo_type": "Algorithm Type",
+        "arena_height": "Arena height",
+        "arena_width": "Arena width",
+        "crop_video": "Crop video",
+        "experiment_type": "Experiment Type",
+        "frames_per_second": "Video framerate",
+        "max_fig_res": "Plot resolution",
+        "plot_options": "Plot option",
+        "save_folder": "Saved data folder",
+        "task_duration": "Task Duration",
+        "threshold": "Experimental Animal",
+        "trim_amount": "Amount to trim"
+    }
+    
+    # Perform key conversions
+    converted_data = {}
+    for old_key, new_key in options_to_configuration.items():
+        if old_key in configuration:
+            converted_data[new_key] = configuration[old_key]
+
+    # Add or modify specific keys
+    if converted_data["Experimental Animal"] == 0.0267:
+        converted_data["Experimental Animal"] = "mouse"
+    elif converted_data["Experimental Animal"] == 0.0667:
+        converted_data["Experimental Animal"] = "rat"
+
+    return converted_data
+
+def configuration_to_options(configuration):
+    configuration_to_options = {
+        'Algorithm Type': 'algo_type',
+        'Arena height': 'arena_height',
+        'Arena width': 'arena_width',
+        'Crop video': 'crop_video',
+        'Experiment Type': 'experiment_type',
+        'Video framerate': 'frames_per_second',
+        'Plot resolution': 'max_fig_res',
+        'Plot option': 'plot_options',
+        'Saved data folder': 'save_folder',
+        'Task Duration': 'task_duration',
+        'Experimental Animal': 'threshold',
+        'Amount to trim': 'trim_amount'
+    }
+
+    # Perform key conversions
+    converted_data = {}
+    for old_key, new_key in configuration_to_options.items():
+        if old_key in configuration:
+            converted_data[new_key] = configuration[old_key]
+
+    # Add or modify specific keys
+    if converted_data["threshold"] == "mouse":
+        converted_data["threshold"] = 0.0267
+    elif converted_data["threshold"] == "rat":
+        converted_data["threshold"] = 0.0667
+
+    return converted_data
+
+def test_configuration_file(config_path):
+    try:
+        with open(config_path, "r") as file:
+            configuration = json.load(file)
+            return configuration
+    except:
+        return False
+    
+def file_selection_function(self):
+    file_dialog = QFileDialog(self.interface)
+    file_dialog.setNameFilter("JSON files (*.json)")
+    file_dialog.setWindowTitle("Select a configuration file")
+    if file_dialog.exec():
+        return file_dialog.selectedFiles()[0]
