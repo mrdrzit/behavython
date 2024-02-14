@@ -82,7 +82,11 @@ class experiment_class:
                 if number_of_frames < max(runtime):
                     runtime = range(trim_amount, int(number_of_frames))
                     # TODO: #42 Add a warning message when the user sets a trim amount that is too high.
-                    print(f"Animal {animal.name} has less frames than the maximum analysis time.")
+                    print("\n")
+                    print(f"---------------------- WARNING FOR ANIMAL {animal.name} ----------------------")
+                    print(f"The trim amount set is too high for the animal {animal.name}.\nThe analysis for this video will be done from {int(trim_amount/frames_per_second)} to {max_analysis_time} seconds.")
+                    print(f"At the end of the analysis you should check if the analysis is coherent with the animal's behavior.\nIf it's not, redo the analysis with a lower trim amount for this animal: {animal.name}")
+                    print("-------------------------------------------------------------------------------\n")
             else:
                 runtime = range(int(max_analysis_time * frames_per_second))
             for i in runtime:

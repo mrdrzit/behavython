@@ -49,10 +49,10 @@ class analysis_class(QObject):
 
         if self.options["plot_options"] in "plotting_enabled":
             results_data_frame.T.to_excel(self.options["save_folder"] + "/analysis_results.xlsx")
-
-        options_to_JSON = json.dumps(self.options, indent=4)
-        _ = 1
-        pass
+        config_file_path = self.options["save_folder"] + "/analysis_configuration.json"
+        config_json = options_to_configuration(self.options)
+        with open(config_file_path, "w") as config_file:
+            json.dump(config_json, config_file, indent=4, sort_keys=True)
         self.finished.emit()
 
 
@@ -91,7 +91,7 @@ class behavython_gui(QMainWindow):
         self.interface.resume_lineedit.clear()
         self.options["arena_width"] = int(self.interface.arena_width_lineedit.text())
         self.options["arena_height"] = int(self.interface.arena_height_lineedit.text())
-        self.options["frames_per_second"] = float(self.interface.frames_per_second_lineedit.text())
+        self.options["frames_per_second"] = int(self.interface.frames_per_second_lineedit.text())
         self.options["experiment_type"] = self.interface.type_combobox.currentText().lower().strip().replace(" ", "_")
         self.options["plot_options"] = "plotting_enabled" if self.interface.save_button.isChecked() else "plotting_disabled"
         # Remove trailing spaces and replace x with comma and split the values at the comma to make a list
@@ -163,128 +163,121 @@ class behavython_gui(QMainWindow):
 
     def clear_function(self, configuration={}):
         if configuration:
-            self.options = configuration
-            if configuration["experiment_type"] == "NJR":
+            # self.options = configuration
+            if configuration["Experiment Type"].lower().strip().replace(" ", "_") == "njr":
                 self.interface.type_combobox.setCurrentIndex(0)
-            elif configuration["experiment_type"] == "social_recognition":
+            elif configuration["Experiment Type"].lower().strip().replace(" ", "_") == "social_recognition":
                 self.interface.type_combobox.setCurrentIndex(1)
-            elif configuration["experiment_type"] == "plus_maze":
+            elif configuration["Experiment Type"].lower().strip().replace(" ", "_") == "plus_maze":
                 self.interface.type_combobox.setCurrentIndex(2)
-            elif configuration["experiment_type"] == "open_field":
+            elif configuration["Experiment Type"].lower().strip().replace(" ", "_") == "open_field":
                 self.interface.type_combobox.setCurrentIndex(3)
             else:
                 warning_message_function("Configuration file", "The file selected is not a valid configuration file.\n Please, select a valid experiment type.")
+                self.clear_function
                 return
             
-            if configuration["algo_type"] == "deeplabcut":
+            if configuration["Algorithm Type"].lower().strip().replace(" ", "_") == "deeplabcut":
                 self.interface.algo_type_combobox.setCurrentIndex(0)
-            elif configuration["algo_type"] == "bonsai":
+            elif configuration["Algorithm Type"].lower().strip().replace(" ", "_") == "bonsai":
                 self.interface.algo_type_combobox.setCurrentIndex(1)
             else:
                 warning_message_function("Configuration file", "The file selected is not a valid configuration file.\n Please, select a valid algorithm type.")
+                self.clear_function
                 return
             
-            if configuration["arena_width"] > 0 and configuration["arena_height"] < 650:
-                self.interface.arena_width_lineedit.setText(str(configuration["arena_width"]))
+            if configuration["Arena width"] > 0 and configuration["Arena width"] < 650:
+                self.interface.arena_width_lineedit.setText(str(int(configuration["Arena width"])))
             else:
                 warning_message_function("Configuration file", "The file selected is not a valid configuration file.\n Please, select a valid arena width.")
+                self.clear_function
                 return
             
-            if configuration["arena_height"] > 0 and configuration["arena_height"] < 650:
-                self.interface.arena_height_lineedit.setText(str(configuration["arena_height"]))
+            if configuration["Arena height"] > 0 and configuration["Arena height"] < 650:
+                self.interface.arena_height_lineedit.setText(str(int(configuration["Arena height"])))
             else:
                 warning_message_function("Configuration file", "The file selected is not a valid configuration file.\n Please, select a valid arena height.")
+                self.clear_function
                 return
             
-            if configuration["frames_per_second"] > 0 and configuration["frames_per_second"] < 240:
-                self.interface.frames_per_second_lineedit.setText(str(configuration["frames_per_second"]))
+            if configuration["Video framerate"] > 0 and configuration["Video framerate"] < 240:
+                self.interface.frames_per_second_lineedit.setText(str(int(configuration["Video framerate"])))
             else:
                 warning_message_function("Configuration file", "The file selected is not a valid configuration file.\n Please, select a valid number of frames per second.")
+                self.clear_function
                 return
             
-            if configuration["threshold"] == 0.0267:
+            if configuration["Experimental Animal"].lower().strip().replace(" ", "_") == "mouse":
                 self.interface.animal_combobox.setCurrentIndex(0)
-            elif configuration["threshold"] == 0.0667:
+            elif configuration["Experimental Animal"].lower().strip().replace(" ", "_") == "rat":
                 self.interface.animal_combobox.setCurrentIndex(1)
             else:
                 warning_message_function("Configuration file", "The file selected is not a valid configuration file.\n Please, select a valid experimental animal.\n We support mice and rats at the time.")
+                self.clear_function
                 return
 
-            if configuration["task_duration"] > 0 and configuration["task_duration"] < 86400:
-                self.interface.task_duration_lineedit.setText(str(configuration["task_duration"]))
+            if configuration["Task Duration"] > 0 and configuration["Task Duration"] < 86400:
+                self.interface.task_duration_lineedit.setText(str(int(configuration["Task Duration"])))
             else:
                 warning_message_function("Configuration file", "The file selected is not a valid configuration file.\n Please, select a valid task duration. We support up to 24 hours of task duration.")
+                self.clear_function
                 return
 
-            if configuration["trim_amount"] > 0 and configuration["trim_amount"] < configuration["task_duration"]:
-                self.interface.crop_video_time_lineedit.setText(str(configuration["trim_amount"]))
+            if configuration["Amount to trim"] > 0 and configuration["Amount to trim"] < configuration["Task Duration"]:
+                self.interface.crop_video_time_lineedit.setText(str(int(configuration["Amount to trim"])))
             else:
                 warning_message_function("Configuration file", "The file selected is not a valid configuration file.\n Please, select a valid trim amount. You cannot trim more than the video duration.")
+                self.clear_function
                 return
 
             resolutions = [['640', '480'], ['1280', '720'], ['1920', '1080'], ['2560', '1440']]
-            if configuration["max_fig_res"] in resolutions:
-                # if the max_res is 640 set index 0, if 1280 set index 1, if 1920 set index 2, if 2560 set index 3
-                self.interface.fig_max_size.setCurrentIndex(resolutions.index(configuration["max_fig_res"]))
+            if configuration["Plot resolution"] in resolutions:
+                self.interface.fig_max_size.setCurrentIndex(resolutions.index(configuration["Plot resolution"]))
             else:
                 warning_message_function("Configuration file", "The file selected is not a valid configuration file.\n Please, select a valid figure resolution.")
+                self.clear_function
                 return
 
-            self.interface.fig_max_size.setCurrentIndex(0)
+            if configuration["Plot option"] == "plotting_enabled":
+                self.interface.save_button.setChecked(True)
+                self.interface.only_plot_button.setChecked(False)
+            elif configuration["Plot option"] == "plotting_disabled":
+                self.interface.save_button.setChecked(False)
+                self.interface.only_plot_button.setChecked(True)
+            else:
+                warning_message_function("Configuration file", "The file selected is not a valid configuration file.\n Please, select a valid plot option.")
+                self.clear_function
+                return
+
+            if configuration["Crop video"] == True:
+                self.interface.crop_video_checkbox.setChecked(True)
+            elif configuration["Crop video"] == False:
+                self.interface.crop_video_checkbox.setChecked(False)
+            else:
+                warning_message_function("Configuration file", "The file selected is not a valid configuration file.\n Please, select a valid crop video option.")
+                self.clear_function
+                return
+            
             self.interface.clear_unused_files_lineedit.clear()
             self.interface.resume_lineedit.clear()
-            self.interface.arena_width_lineedit.setText("63")
-            self.interface.arena_height_lineedit.setText("39")
-            self.interface.frames_per_second_lineedit.setText("30")
-            self.interface.fig_max_size.setCurrentIndex(1)
-            self.interface.only_plot_button.setChecked(False)
-            self.interface.save_button.setChecked(True)
-            self.interface.crop_video_checkbox.setChecked(True)
             self.clear_plot()
         else:
             self.options = {}
+            self.interface.arena_width_lineedit.setText("30")
+            self.interface.arena_height_lineedit.setText("30")
             self.interface.type_combobox.setCurrentIndex(0)
             self.interface.frames_per_second_lineedit.setText("30")
-            self.interface.arena_width_lineedit.setText("65")
-            self.interface.arena_height_lineedit.setText("65")
             self.interface.animal_combobox.setCurrentIndex(0)
-            self.interface.fig_max_size.setCurrentIndex(0)
             self.interface.algo_type_combobox.setCurrentIndex(0)
             self.interface.clear_unused_files_lineedit.clear()
             self.interface.resume_lineedit.clear()
-            self.interface.algo_type_combobox.setCurrentIndex(0)
-            self.interface.arena_width_lineedit.setText("63")
-            self.interface.arena_height_lineedit.setText("39")
-            self.interface.frames_per_second_lineedit.setText("30")
-            self.interface.animal_combobox.setCurrentIndex(0)
             self.interface.task_duration_lineedit.setText("300")
             self.interface.crop_video_time_lineedit.setText("15")
+            self.interface.crop_video_checkbox.setChecked(True)
             self.interface.fig_max_size.setCurrentIndex(1)
             self.interface.only_plot_button.setChecked(False)
             self.interface.save_button.setChecked(True)
-            self.interface.crop_video_checkbox.setChecked(True)
             self.clear_plot()
-    
-    def load_configuration(self, config_path):
-        config_path = r"C:\Users\Matheus\Desktop\test.json"
-        if not self.test_configuration_file(config_path):
-            warning_message_function("Configuration file", "The file selected is not a valid configuration file.")
-            return
-        else:
-            configuration = json.load(open(config_path))
-            self.clear_function(configuration)
-
-    def test_configuration_file(self, config_path):
-        try:
-            with open(config_path, "r") as file:
-                configuration = json.load(file)
-                return configuration
-        except:
-            return False
-        
-    def convert_configuration_to_interface(self, configuration):
-        pass
-
 
     def clear_plot(self):
         for i in range(1, 10):
@@ -300,6 +293,15 @@ class behavython_gui(QMainWindow):
             return True
         else:
             return False
+    def load_configuration(self, config_path):
+        config_path = file_selection_function(self)
+        if not test_configuration_file(config_path):
+            warning_message_function("Configuration file", "The file selected is not a valid configuration file.")
+            return
+        else:
+            configuration = json.load(open(config_path))
+            self.clear_function(configuration)
+            self.interface.resume_lineedit.setText("Configuration file loaded successfully!")
 
     def option_message_function(self, text, info_text):
         warning = QMessageBox(self.interface)  # Create the message box
@@ -325,7 +327,6 @@ class behavython_gui(QMainWindow):
         else:  # If the button "no" is clicked
             return "no"
 
-
 def warning_message_function(title, text):
     warning = QMessageBox()  # Create the message box
     warning.setWindowTitle(title)  # Message box title
@@ -340,7 +341,6 @@ def warning_message_function(title, text):
     )
     warning.setStandardButtons(QMessageBox.StandardButton.Ok)  # Message box buttons
     warning.exec()
-
 
 def main():
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts)
