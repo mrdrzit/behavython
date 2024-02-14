@@ -292,7 +292,7 @@ QTabBar::tab:selected {
         <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
        </property>
        <property name="text">
-        <string notr="true">63</string>
+        <string notr="true">30</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
@@ -311,7 +311,7 @@ QTabBar::tab:selected {
         <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
        </property>
        <property name="text">
-        <string notr="true">39</string>
+        <string notr="true">30</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
@@ -662,10 +662,10 @@ QScrollBar::sub-page:vertical {
         <string notr="true">QComboBox{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QListView{color:#FFFFFF;font:8pt&quot;Century Gothic&quot;;font-weight:bold;background-color:#969696;border:0px;}QListView{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QComboBox::drop-down{width:20px;border:5px;}QComboBox::down-arrow{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #FFFFFF;width:0.5px;height:1px;border-radius:2px;}QComboBox::down-arrow:hover{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #A21F27;width:0.5px;height:1px;border-radius:2px;}QAbstractItemView{border:2px solid #969696;selection-background-color:#2C53A1;}</string>
        </property>
        <property name="currentText">
-        <string notr="true"> 1280 x 720</string>
+        <string notr="true">1920 x 1080</string>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>2</number>
        </property>
        <property name="sizeAdjustPolicy">
         <enum>QComboBox::AdjustToContentsOnFirstShow</enum>
@@ -1047,6 +1047,9 @@ to see the help text</string>
        </property>
       </widget>
       <widget class="QLineEdit" name="config_path_lineedit">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
        <property name="geometry">
         <rect>
          <x>0</x>
@@ -1066,6 +1069,9 @@ to see the help text</string>
          <width>500</width>
          <height>20</height>
         </size>
+       </property>
+       <property name="mouseTracking">
+        <bool>false</bool>
        </property>
        <property name="styleSheet">
         <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
