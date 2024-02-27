@@ -127,7 +127,16 @@ class experiment_class:
             #   t = [item for sublist in t for item in sublist]
             #   x, y = zip(*t)
             # Meaning that it flattens the list and then separates the x and y coordinates
-            x_collision_data, y_collision_data = zip(*[item for sublist in xy_data.to_list() for item in sublist])
+            try:
+                x_collision_data, y_collision_data = zip(*[item for sublist in xy_data.to_list() for item in sublist])
+            except ValueError:
+                x_collision_data, y_collision_data = np.zeros(len(runtime)), np.zeros(len(runtime)) # If there is no collision, the x and y collision data will be 0
+                print("\n")
+                print(f"---------------------- WARNING FOR ANIMAL {animal.name} ----------------------")
+                print(f"Something went wrong with the animal's {animal.name} exploration data.\nThere are no exploration data in the video for this animal.")
+                print(f"Please check the video for this animal: {animal.name}")
+                print("-------------------------------------------------------------------------------\n")
+
             # ----------------------------------------------------------------------------------------------------------
 
             # Calculate the total exploration time
@@ -702,9 +711,12 @@ class experiment_class:
             fig_1.savefig(save_folder + "/" + animal_name + " Overall heatmap of the mice's nose position.png")
 
             # Plot the Overall exploration by ROI
-            kde_axis = sns.kdeplot(x=x_collisions,y=y_collisions,ax=axe_2,cmap="inferno",fill=True,alpha=0.5)
-            axe_2.imshow(animal_image, interpolation="bessel")
-            fig_2.savefig(save_folder + "/" + animal_name + " Overall exploration by ROI.png")
+            if len(x_collisions) > 0 or len(y_collisions) > 0:
+                kde_axis = sns.kdeplot(x=x_collisions,y=y_collisions,ax=axe_2,cmap="inferno",fill=True,alpha=0.5)
+                axe_2.imshow(animal_image, interpolation="bessel")
+                fig_2.savefig(save_folder + "/" + animal_name + " Overall exploration by ROI.png")
+            else:
+                pass
 
             # # Plot the locations where the velocity was higher than the average
             # axe_3.imshow(velocity_grid, cmap="inferno", interpolation="bessel")
