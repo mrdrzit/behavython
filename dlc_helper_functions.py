@@ -346,7 +346,7 @@ def get_files(line_edit, data: DataFiles, animal_list: list):
     file_explorer = tk.Tk()
     file_explorer.withdraw()
     file_explorer.call("wm", "attributes", ".", "-topmost", True)
-    data_files = filedialog.askopenfilename(title="Select the files to analyze", multiple=True)
+    data_files = filedialog.askopenfilename(title="Select the files to analyze", multiple=True, filetypes=[("DLC Analysis files", "*.csv *.jpg *.png *.jpeg")])
 
     ## Uncomment the following lines to test the code without the GUI
     # data_files = [
