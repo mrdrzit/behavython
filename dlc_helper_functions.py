@@ -687,6 +687,19 @@ def dlc_video_analyze_function(self):
             alpha=0.01,
             save_as_csv=True,
         )
+    
+    if DLC_ENABLE:
+        deeplabcut.plot_trajectories(
+            config_path,
+            videos,
+            videotype=file_extension,
+            showfigures=False,
+            filtered=True,
+        )
+    if DLC_ENABLE:
+        os.rename(os.path.join(videos, "plot-poses"), os.path.join(videos, "accuracy_check_plots"))
+    
+    self.interface.clear_unused_files_lineedit.append("Plots to visualize prediction accuracy were saved.")
     self.interface.clear_unused_files_lineedit.append("Done filtering data files")
 
 
