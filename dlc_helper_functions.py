@@ -15,7 +15,7 @@ from tkinter import filedialog
 
 matplotlib.use("qtagg")
 
-DLC_ENABLE = True
+DLC_ENABLE = False
 if DLC_ENABLE:
     import deeplabcut
 class DataFiles:
@@ -343,18 +343,14 @@ def get_files(line_edit, data: DataFiles, animal_list: list):
     Returns:
         None: The function does not return anything, but it fills the data and animal_list objects
     """
-    file_explorer = tk.Tk()
-    file_explorer.withdraw()
-    file_explorer.call("wm", "attributes", ".", "-topmost", True)
-    data_files = filedialog.askopenfilename(title="Select the files to analyze", multiple=True, filetypes=[("DLC Analysis files", "*.csv *.jpg *.png *.jpeg")])
+    # file_explorer = tk.Tk()
+    # file_explorer.withdraw()
+    # file_explorer.call("wm", "attributes", ".", "-topmost", True)
+    # data_files = filedialog.askopenfilename(title="Select the files to analyze", multiple=True, filetypes=[("DLC Analysis files", "*.csv *.jpg *.png *.jpeg")])
 
     ## Uncomment the following lines to test the code without the GUI
-    # data_files = [
-    #     r"C:\\Users\\uzuna\Documents\\GITHUB\\My_projects\\tests\\Deeplabcut\\data\\C57\\C57_1_downsampled_roi.csv",
-    #     r"C:\\Users\\uzuna\Documents\\GITHUB\\My_projects\\tests\\Deeplabcut\\data\\C57\\C57_1_downsampledDLC_resnet50_C57Feb17shuffle1_145000_filtered.csv",
-    #     r"C:\\Users\\uzuna\Documents\\GITHUB\\My_projects\\tests\\Deeplabcut\\data\\C57\\C57_1_downsampledDLC_resnet50_C57Feb17shuffle1_145000_filtered.png",
-    #     r"C:\\Users\\uzuna\Documents\\GITHUB\\My_projects\\tests\\Deeplabcut\\data\\C57\\C57_1_downsampledDLC_resnet50_C57Feb17shuffle1_145000_filtered_skeleton.csv",
-    # ]
+    data_dir = os.path.dirname(__file__)
+    data_files = [os.path.join(data_dir, "bouts_Data", f) for f in os.listdir(os.path.join(data_dir, "bouts_Data")) if f.endswith(".csv") or f.endswith(".jpg") or f.endswith(".png") or f.endswith(".jpeg")]
 
     get_name = re.compile(r"^.*?(?=DLC)|^.*?(?=(\.jpg|\.png|\.bmp|\.jpeg|\.svg))")
     # TODO #38 - Remove this regex and use the list created below to get the roi files4
@@ -991,3 +987,24 @@ def file_selection_function(self):
     file_dialog.setWindowTitle("Select a configuration file")
     if file_dialog.exec():
         return file_dialog.selectedFiles()[0]
+    
+
+def find_sections(dataframe, framerate):
+    in_interval = False
+    start_idx = None
+    intervals = pd.DataFrame(columns=["start", "end", "duration"])
+    for idx, row in dataframe.iterrows():
+        value = row[0]
+        if value == 1 and not in_interval:
+            start_idx = idx
+            in_interval = True
+        elif value == 0 and in_interval:
+            duration = (idx - (start_idx - 1)) * (1 / framerate)
+            new_dataframe = pd.DataFrame(data=[[start_idx, idx, duration]], columns = ["start", "end", "duration"])
+            intervals = pd.concat([intervals, new_dataframe])
+            in_interval = False
+        
+    if in_interval:
+        duration = (idx - (start_idx - 1)) * (1 / framerate)
+        intervals = pd.concat([intervals, pd.DataFrame({"start": start_idx, "end": idx, "duration": duration})], ignore_index=True)
+    return intervals

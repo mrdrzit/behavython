@@ -92,8 +92,10 @@ class behavython_gui(QMainWindow):
         self.options["arena_width"] = int(self.interface.arena_width_lineedit.text())
         self.options["arena_height"] = int(self.interface.arena_height_lineedit.text())
         self.options["frames_per_second"] = int(self.interface.frames_per_second_lineedit.text())
-        self.options["experiment_type"] = self.interface.type_combobox.currentText().lower().strip().replace(" ", "_")
-        self.options["plot_options"] = "plotting_enabled" if self.interface.save_button.isChecked() else "plotting_disabled"
+        # self.options["experiment_type"] = self.interface.type_combobox.currentText().lower().strip().replace(" ", "_")
+        self.options["experiment_type"] = "social_recognition"
+        # self.options["plot_options"] = "plotting_enabled" if self.interface.save_button.isChecked() else "plotting_disabled"
+        self.options["plot_options"] = "plotting_enabled" 
         # Remove trailing spaces and replace x with comma and split the values at the comma to make a list
         self.options["max_fig_res"] = str(self.interface.fig_max_size.currentText()).replace(" ", "").replace("x", ",").split(",")
         self.options["algo_type"] = self.interface.algo_type_combobox.currentText().lower().strip()
@@ -103,7 +105,8 @@ class behavython_gui(QMainWindow):
             self.options["threshold"] = 0.0667
         self.options["task_duration"] = int(self.interface.task_duration_lineedit.text())
         self.options["trim_amount"] = int(self.interface.crop_video_time_lineedit.text())
-        self.options["crop_video"] = self.interface.crop_video_checkbox.isChecked()
+        # self.options["crop_video"] = self.interface.crop_video_checkbox.isChecked()
+        self.options["crop_video"] = False
 
         functions = behavython_back.interface_functions()
         if self.options["algo_type"] == "deeplabcut":

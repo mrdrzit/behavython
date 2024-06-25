@@ -14,7 +14,7 @@ from skimage.color import rgb2gray
 from scipy import stats
 from copy import copy
 from dlc_helper_functions import *
-plt.ioff()
+# plt.ioff()
 
 
 class experiment_class:
@@ -49,7 +49,7 @@ class experiment_class:
             roi_Y = []
             roi_D = []
             roi_NAME = []
-            roi_regex = re.compile(r"\/([^\/]+)\.")
+            roi_regex = re.compile(r"\\([^\\]+)\.")
             number_of_filled_rois = sum(1 for roi in animal.rois if roi["x"])
             for i in range(number_of_filled_rois):
                 # Finds the name of the roi in the file name
@@ -143,6 +143,12 @@ class experiment_class:
             exploration_mask = collisions[0] > 0
             exploration_mask = exploration_mask.astype(int)
             exploration_time = np.sum(exploration_mask) * (1 / frames_per_second)
+
+            # get sections 
+            exploration_bouts = find_sections(collisions, frames_per_second)
+            overview = exploration_bouts.agg({"start": "min", "end": "max", "duration": "mean"}).reset_index(drop=True)
+            
+            fig, ax = plt.subplots(figsize=(10, 5))
 
             # Calculate the total exploration time in each ROI
             filtered_mask_right = collisions[collisions.iloc[:, -1].fillna("").str.contains("roiR")]
@@ -258,6 +264,7 @@ class experiment_class:
                 "time_resting": time_resting,
                 "mean_velocity": mean_velocity,
                 "analysis_range": ANALYSIS_RANGE,
+                "exploration_bouts": exploration_bouts,
             }
             if options["experiment_type"] == "njr":
                 dict_to_excel = {
@@ -818,7 +825,9 @@ class interface_functions:
             experiments = []
             selected_files = get_files(line_edit, data, experiments)
             if save_plots in "plotting_enabled":
-                selected_folder_to_save = filedialog.askdirectory(title="Select the folder to save the plots", mustexist=True)
+                figures_folder = os.path.dirname(__file__)
+                # selected_folder_to_save = filedialog.askdirectory(title="Select the folder to save the plots", mustexist=True)
+                selected_folder_to_save = os.path.join(figures_folder, "bouts_data", "plots")
             try:
                 assert selected_folder_to_save != ""
                 assert len(experiments) > 0
