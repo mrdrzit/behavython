@@ -10,7 +10,8 @@ import subprocess
 import numpy as np
 import json
 from pathlib import Path
-from PySide6.QtWidgets import QMessageBox, QFileDialog
+from PySide6.QtWidgets import QMessageBox, QFileDialog, QDialog, QVBoxLayout, QLabel, QPushButton, QScrollArea, QWidget
+from PySide6.QtGui import QFontMetrics
 from tkinter import filedialog
 
 matplotlib.use("qtagg")
@@ -991,3 +992,59 @@ def file_selection_function(self):
     file_dialog.setWindowTitle("Select a configuration file")
     if file_dialog.exec():
         return file_dialog.selectedFiles()[0]
+    
+
+class CustomDialog(QDialog):
+    def __init__(self, text, info_text, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Warning")
+
+        layout = QVBoxLayout()
+
+        # Scroll area
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        
+        # Widget to hold the content
+        content_widget = QWidget()
+        content_layout = QVBoxLayout(content_widget)
+
+        label = QLabel(text)
+        info_label = QLabel(info_text)
+
+        content_layout.addWidget(label)
+        content_layout.addWidget(info_label)
+        scroll_area.setWidget(content_widget)
+        
+        # Apply stylesheet to the scroll area and its viewport
+        scroll_area.setStyleSheet("QScrollArea {background-color:#353535; border:none;}")
+        scroll_area.viewport().setStyleSheet("background-color:#353535; border:none;")
+
+        layout.addWidget(scroll_area)
+
+        # Buttons
+        self.button_yes = QPushButton("    YES    ")
+        self.button_no = QPushButton("     NO      ")
+
+        self.button_yes.clicked.connect(self.accept)
+        self.button_no.clicked.connect(self.reject)
+
+        layout.addWidget(self.button_yes)
+        layout.addWidget(self.button_no)
+
+        self.setLayout(layout)
+
+        # StyleSheet
+        self.setStyleSheet(
+            "QDialog{background-color:#353535;}"  # Set dialog background
+            "QLabel{font:10pt 'DejaVu Sans'; font-weight:bold; color:#FFFFFF;}"  # Set label font and color
+            "QPushButton{width:52px; border:2px solid #A21F27; border-radius:8px; background-color:#2C53A1; color:#FFFFFF; font:10pt 'DejaVu Sans'; font-weight:bold;}"  # Set button style
+            "QPushButton:pressed{border:2px solid #A21F27; border-radius:8px; background-color:#A21F27; color:#FFFFFF;}"  # Set button pressed style
+        )
+
+        # Calculate the required width based on the longest line of text
+        font_metrics = QFontMetrics(info_label.font())
+        longest_line_width = max(font_metrics.horizontalAdvance(line) for line in info_text.split('\n'))
+        # Add some padding to the width
+        padding = 200
+        self.setFixedWidth(longest_line_width + padding)

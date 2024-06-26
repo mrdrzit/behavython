@@ -304,27 +304,12 @@ class behavython_gui(QMainWindow):
             self.interface.resume_lineedit.setText("Configuration file loaded successfully!")
 
     def option_message_function(self, text, info_text):
-        warning = QMessageBox(self.interface)  # Create the message box
-        warning.setWindowTitle("Warning")  # Message box title
-        warning.setText(text)  # Message box text
-        warning.setInformativeText(info_text)  # Message box text
-        warning.setIcon(QMessageBox.Icon.Warning)  # Message box icon
-        warning.setStyleSheet(
-            "QMessageBox{background:#353535;}QLabel{font:10pt/DejaVu Sans/;"
-            + "font-weight:bold;color:#FFFFFF;}QPushButton{width:52px; border:2px solid #A21F27;border-radius:8px;"
-            + "background-color:#2C53A1;color:#FFFFFF;font:10pt/DejaVu Sans/;"
-            + "font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;"
-            + "border-radius:8px;background-color:#A21F27;color:#FFFFFF;}"
-        )
-        warning.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)  # Message box buttons
-        answer_yes = warning.button(QMessageBox.StandardButton.Yes)  # Set the button "yes"
-        answer_yes.setText("    YES    ")  # Rename the button "yes"
-        answer_no = warning.button(QMessageBox.StandardButton.No)  # Set the button "no"
-        answer_no.setText("     NO      ")  # Rename the button "no"
-        warning.exec()  # Execute the message box
-        if warning.clickedButton() == answer_yes:  # If the button "yes" is clicked
-            return "yes"  # Return "yes"
-        else:  # If the button "no" is clicked
+        dialog = CustomDialog(text, info_text, self.interface)
+        result = dialog.exec()
+
+        if result == QDialog.Accepted:
+            return "yes"
+        else:
             return "no"
 
 def warning_message_function(title, text):
