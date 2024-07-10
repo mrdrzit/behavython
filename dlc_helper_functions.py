@@ -213,7 +213,7 @@ class Animal:
         # The following line is necessary to convert the column names to lowercase
         # The data is stored in a MultiIndex dataframe, so the column names are tuples with the bodypart name and the axis/likelihood
         # The following line converts the tuples to lowercase strings
-        extracted_data.columns = pd.MultiIndex.from_frame(extracted_data.columns.to_frame().map(str.lower))
+        extracted_data.columns = pd.MultiIndex.from_frame(extracted_data.columns.to_frame().applymap(str.lower))
         self.bodyparts[bodypart] = {
             "x": extracted_data[bodypart, "x"],
             "y": extracted_data[bodypart, "y"],
@@ -243,7 +243,7 @@ class Animal:
         # The following line is necessary to convert the column names to lowercase
         # The data is stored in a MultiIndex dataframe, so the column names are tuples with the bodypart name and the axis/likelihood
         # The following line converts the tuples to lowercase strings
-        extracted_data.columns = pd.MultiIndex.from_frame(extracted_data.columns.to_frame().map(str.lower))
+        extracted_data.columns = pd.MultiIndex.from_frame(extracted_data.columns.to_frame().applymap(str.lower))
         try:
             self.skeleton[bone] = {
                 "length": extracted_data[bone, "length"],
@@ -347,7 +347,7 @@ def get_files(line_edit, data: DataFiles, animal_list: list):
     file_explorer = tk.Tk()
     file_explorer.withdraw()
     file_explorer.call("wm", "attributes", ".", "-topmost", True)
-    data_files = filedialog.askopenfilename(title="Select the files to analyze", multiple=True, filetypes=[("DLC Analysis files", "*.csv *.jpg *.png *.jpeg")])
+    data_files = filedialog.askopenfilename(title="Select the files to analyze", multiple=True, filetypes=[("DLC Analysis files", "*filtered.csv *filtered_skeleton.csv *_roi.csv *.jpg *.png *.jpeg")])
 
     ## Uncomment the following lines to test the code without the GUI
     # data_files = [
@@ -862,7 +862,7 @@ def get_folder_path_function(self, lineedit_name):
 def check_roi_files(roi):
     extracted_data = pd.read_csv(roi, sep=",")
     must_have = ["x", "y", "width", "height"]
-    header = extracted_data.columns.to_frame().map(str.lower).to_numpy()
+    header = extracted_data.columns.to_frame().applymap(str.lower).to_numpy()
     return all(elem in header for elem in must_have)
 
 def create_frequency_grid(x_values, y_values, bin_size, analysis_range, *extra_data):
