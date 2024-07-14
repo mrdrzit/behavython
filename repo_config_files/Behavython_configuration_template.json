@@ -1,0 +1,17 @@
+{
+    "Algorithm Type": "deeplabcut",
+    "Amount to trim": 15,
+    "Arena height": 30,
+    "Arena width": 30,
+    "Crop video": true,
+    "Experiment Type": "social_recognition",
+    "Experimental Animal": "mouse",
+    "Plot option": "plotting_enabled",
+    "Plot resolution": [
+        "1920",
+        "1080"
+    ],
+    "Saved data folder": "",
+    "Task Duration": 300,
+    "Video framerate": 30
+}
