@@ -26,7 +26,7 @@ from tkinter import filedialog
 matplotlib.use('agg')
 
 import debugpy
-DLC_ENABLE = False
+DLC_ENABLE = True
 if DLC_ENABLE:
     import deeplabcut
 class DataFiles:
@@ -563,9 +563,8 @@ def warning_message_function(title, text):
     warning.setStandardButtons(QMessageBox.StandardButton.Ok)  # Message box buttons
     warning.exec()
 
-def folder_structure_check_function(self, text_signal=None, progress_callback=None):
-    # debugpy.debug_this_thread()
-    text_signal.emit(("clear_unused_files_lineedit", "Clear_lineedit"))
+def folder_structure_check_function(self):
+    self.interface.clear_unused_files_lineedit.clear()
     folder_path = os.path.dirname(self.interface.config_path_lineedit.text().replace('"', "").replace("'", ""))
     if folder_path == "":
         message = "Please, select a path to the config.yaml file before checking the folder structure."
@@ -577,27 +576,27 @@ def folder_structure_check_function(self, text_signal=None, progress_callback=No
 
     for folder in required_folders:
         if not os.path.isdir(os.path.join(folder_path, folder)):
-            text_signal.emit(("clear_unused_files_lineedit", f"The folder '{folder}' is NOT present"))
+            self.interface.clear_unused_files_lineedit.append(f"The folder '{folder}' is NOT present")
             return False
-        text_signal.emit(("clear_unused_files_lineedit", f"The folder '{folder}' is OK"))
+        self.interface.clear_unused_files_lineedit.append(f"The folder {folder} is OK")
+
     for file in required_files:
         if not os.path.isfile(os.path.join(folder_path, file)):
-            text_signal.emit(("clear_unused_files_lineedit", f"The project's {file} is NOT present"))
+            self.interface.clear_unused_files_lineedit.append(f"The project's {file} is NOT present")
             return False
+    # Check if dlc-models contains at least one iteration folder
     dlc_models_path = os.path.join(folder_path, "dlc-models")
     iteration_folders = [
         f for f in os.listdir(dlc_models_path) if os.path.isdir(os.path.join(dlc_models_path, f)) and f.startswith("iteration-")
     ]
     if not iteration_folders:
-        text_signal.emit(("clear_unused_files_lineedit", "There are no iteration folders in dlc-models."))
-        # self.interface.clear_unused_files_lineedit.append("There are no iteration folders in dlc-models.")
+        self.interface.clear_unused_files_lineedit.append("There are no iteration folders in dlc-models.")
         return False
 
     latest_iteration_folder = max(iteration_folders, key=lambda x: int(x.split("-")[1]))
     shuffle_set = os.listdir(os.path.join(dlc_models_path, latest_iteration_folder))
     if not shuffle_set:
-        text_signal.emit(("clear_unused_files_lineedit", "There are no shuffle sets in the latest iteration folder."))
-        # self.interface.clear_unused_files_lineedit.append("There are no shuffle sets in the latest iteration folder.")
+        self.interface.clear_unused_files_lineedit.append("There are no shuffle sets in the latest iteration folder.")
         return False
     else:
         for root, dirs, files in os.walk(os.path.join(dlc_models_path, latest_iteration_folder, shuffle_set[0])):
@@ -605,38 +604,40 @@ def folder_structure_check_function(self, text_signal=None, progress_callback=No
                 if dir.startswith("log"):
                     continue
                 if "train" not in dirs or "test" not in dirs:
-                    text_signal.emit(("clear_unused_files_lineedit", "The train or test folder is missing."))
+                    self.interface.clear_unused_files_lineedit.append("The train or test folder is missing.")
                     return False
                 if dir.startswith("test") and not os.path.isfile(os.path.join(root, dir, "pose_cfg.yaml")):
-                    text_signal.emit(("clear_unused_files_lineedit", "The pose_cfg.yaml file is missing in test folder."))
+                    self.interface.clear_unused_files_lineedit.append("The pose_cfg.yaml file is missing in test folder.")
                     return False
                 if dir.startswith("train"):
                     if not os.path.isfile(os.path.join(root, dir, "pose_cfg.yaml")):
-                        text_signal.emit(("clear_unused_files_lineedit", "The pose_cfg.yaml file is missing in train folder."))
+                        self.interface.clear_unused_files_lineedit.append("The pose_cfg.yaml file is missing in test folder.")
                         return False
                     elif not any("meta" in string for string in os.listdir(os.path.join(root, dir))):
-                        text_signal.emit(("clear_unused_files_lineedit", "The meta file is missing in train folder."))
+                        self.interface.clear_unused_files_lineedit.append("The meta file is missing in train folder.")
                         return False
                     elif not any("data" in string for string in os.listdir(os.path.join(root, dir))):
-                        text_signal.emit(("clear_unused_files_lineedit", "The meta file is missing in train folder."))
+                        self.interface.clear_unused_files_lineedit.append("The data file is missing in train folder.")
                         return False
                     elif not any("index" in string for string in os.listdir(os.path.join(root, dir))):
-                        text_signal.emit(("clear_unused_files_lineedit", "The meta file is missing in train folder."))
+                        self.interface.clear_unused_files_lineedit.append("The index file is missing in train folder.")
                         return False
 
     # If all checks pass, the folder structure is correct
-    text_signal.emit(("clear_unused_files_lineedit", "The folder structure is correct."))
+    self.interface.clear_unused_files_lineedit.append("The folder structure is correct.")
     return True
 
-def dlc_video_analyze_function(self, text_signal=None, progress_callback=None):
-    # self.interface.clear_unused_files_lineedit.clear()
+def dlc_video_analyze_function(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
     debugpy.debug_this_thread()
     text_signal.emit(("clear_unused_files_lineedit", "clear_lineedit"))
     if DLC_ENABLE:
-        self.interface.clear_unused_files_lineedit.append(f"Using DeepLabCut version {deeplabcut.__version__}")
+        text_signal.emit(("clear_unused_files_lineedit", f"Using DeepLabCut version {deeplabcut.__version__}"))
     config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
     videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
-    video_list = [os.path.join(videos, file) for file in os.listdir(videos) if file.endswith(".mp4") or file.endswith(".avi") or file.endswith(".mov")]
+    if (config_path == "") or (videos == ""):
+        text_signal.emit(("clear_unused_files_lineedit", "Both the config file and the videos folder must be selected."))
+        return
+    video_list = [os.path.join(videos, file) for file in os.listdir(videos) if file.endswith(".mp4") or file.endswith(".avi") or file.endswith(".mov") or file.endswith(".mkv") or file.endswith(".flv") or file.endswith(".webm")]
     file_extension = False
     valid_extensions = [".mp4", ".avi", ".mov"]
     invalid_files = [file for file in video_list if not any(file.endswith(ext) for ext in valid_extensions)]
@@ -645,27 +646,27 @@ def dlc_video_analyze_function(self, text_signal=None, progress_callback=None):
         if invalid_files:
             title = "Video extension error"
             message = "Videos must have the extension '.mp4', '.avi' or '.mov'.\n Please, check the videos folder and try again."
-            warning_message_function(title, message)
+            warning_message.emit((title, message))
             return
         if (".mp4" in file or ".avi" in file or ".mov" in file) and (not file_extension):
             file_extension = file.split(".")[-1]
         elif file_extension and (file.split(".")[-1] != file_extension):
             title = "Video extension error"
             message = "All videos must have the same extension.\n Please, check the videos folder and try again."
-            warning_message_function(title, message)
+            warning_message.emit((title, message))
 
     continue_analysis = self.resume_message_function(video_list)
     if not continue_analysis:
-        self.interface.clear_unused_files_lineedit.clear()
-        self.interface.clear_unused_files_lineedit.append("Analysis canceled.")
+        text_signal.emit(("clear_unused_files_lineedit", "clear_lineedit"))
+        text_signal.emit(("clear_unused_files_lineedit", "Analysis canceled."))
         return
-    self.interface.clear_unused_files_lineedit.append("Analyzing videos...")
-    list_of_videos =  [file for file in video_list]
+    text_signal.emit(("clear_unused_files_lineedit", "Analyzing videos..."))
+    list_of_videos = [file for file in video_list]
     if DLC_ENABLE:
         deeplabcut.analyze_videos(config_path,list_of_videos,videotype=file_extension,shuffle=1,trainingsetindex=0,gputouse=0,allow_growth=True,save_as_csv=True)
-    self.interface.clear_unused_files_lineedit.append("Done analyzing videos.")
+    text_signal.emit(("clear_unused_files_lineedit", "Done analyzing videos."))
 
-    self.interface.clear_unused_files_lineedit.append("Filtering data files and saving as CSV...")
+    text_signal.emit(("clear_unused_files_lineedit", "Filtering data files and saving as CSV..."))
     if DLC_ENABLE:
         deeplabcut.filterpredictions(
             config_path,
@@ -693,10 +694,10 @@ def dlc_video_analyze_function(self, text_signal=None, progress_callback=None):
     if DLC_ENABLE:
         os.rename(os.path.join(videos, "plot-poses"), os.path.join(videos, "accuracy_check_plots"))
     
-    self.interface.clear_unused_files_lineedit.append("Plots to visualize prediction accuracy were saved.")
-    self.interface.clear_unused_files_lineedit.append("Done filtering data files")
+    text_signal.emit(("clear_unused_files_lineedit", "Plots to visualize prediction accuracy were saved."))
+    text_signal.emit(("clear_unused_files_lineedit", "Done filtering data files"))
 
-def get_frames_function(self, text_signal=None, progress_callback=None):
+def get_frames_function(self):
     self.interface.clear_unused_files_lineedit.clear()
     videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
     _, _, file_list = [entry for entry in os.walk(videos)][0]
@@ -732,7 +733,7 @@ def get_frames_function(self, text_signal=None, progress_callback=None):
                 self.interface.clear_unused_files_lineedit.append(f"Last frame of {filename} already exists.")
     pass
 
-def extract_skeleton_function(self, text_signal=None, progress_callback=None):
+def extract_skeleton_function(self):
     self.interface.clear_unused_files_lineedit.clear()
     if DLC_ENABLE:
         self.interface.clear_unused_files_lineedit.append(f"Using DeepLabCut version {deeplabcut.__version__}")
@@ -743,7 +744,7 @@ def extract_skeleton_function(self, text_signal=None, progress_callback=None):
     deeplabcut.analyzeskeleton(config_path, videos, shuffle=1, trainingsetindex=0, filtered=True, save_as_csv=True)
     self.interface.clear_unused_files_lineedit.append("Done extracting skeleton.")
 
-def clear_unused_files_function(self, text_signal=None, progress_callback=None):
+def clear_unused_files_function(self):
     self.interface.clear_unused_files_lineedit.clear()
     videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
     _, _, file_list = [entry for entry in os.walk(videos)][0]
@@ -841,7 +842,7 @@ def clear_unused_files_function(self, text_signal=None, progress_callback=None):
     )
     warning_message_function(title, message)
 
-def get_folder_path_function(self, lineedit_name, text_signal=None, progress_callback=None):
+def get_folder_path_function(self, lineedit_name):
     if lineedit_name == "config_path":
         file_explorer = tk.Tk()
         file_explorer.withdraw()
@@ -854,7 +855,6 @@ def get_folder_path_function(self, lineedit_name, text_signal=None, progress_cal
         file_explorer.call("wm", "attributes", ".", "-topmost", True)
         folder = str(Path(filedialog.askdirectory(title="Select the folder", mustexist=True)))
         self.interface.video_folder_lineedit.setText(folder)
-        # self.video_length = self.get_video_length(folder)
 
 def check_roi_files(roi):
     extracted_data = pd.read_csv(roi, sep=",")
@@ -1052,12 +1052,12 @@ def run_analysis(self):
     options = get_options(self)
 
     # Define the worker and connect its signals
-    def analysis_thread(options, experiments, progress_callback):
+    def analysis_thread(options, experiments, text_signal=None, progress=None):
         results_data_frame = pd.DataFrame()
         for i, experiment in enumerate(experiments):
             analysis_results, data_frame = video_analyse(self, options, experiment)
             results_data_frame = results_data_frame.join(data_frame) if not results_data_frame.empty else data_frame
-            progress_callback.emit(round(((i + 1) / len(experiments)) * 100))
+            progress.emit(round(((i + 1) / len(experiments)) * 100))
             if options["plot_options"] == "plotting_enabled":
                 plot_analysis_social_behavior(experiment, analysis_results, options, recent_folder.text())
             config_file_path = options["save_folder"] + "/analysis_configuration.json"
@@ -1112,7 +1112,7 @@ def get_options(self):
 
     return options
 
-def clear_interface(self, progress_callback=None):
+def clear_interface(self):
     self.options = {}
     self.interface.arena_width_lineedit.setText("30")
     self.interface.arena_height_lineedit.setText("30")
@@ -1189,12 +1189,16 @@ def load_configuration_file(self, configuration={}):
             clear_interface(self)
             return
 
-        if configuration["Amount to trim"] > 0 and configuration["Amount to trim"] < configuration["Task Duration"]:
-            self.interface.crop_video_time_lineedit.setText(str(int(configuration["Amount to trim"])))
-        else:
-            warning_message_function("Configuration file", "The file selected is not a valid configuration file.\n Please, select a valid trim amount. You cannot trim more than the video duration.")
+        if configuration["Amount to trim"] < 0:
+            warning_message_function("Configuration file", "The file selected is not a valid configuration file.\n Please, select a positive trim amount.")
             clear_interface(self)
             return
+        elif configuration["Amount to trim"] > configuration["Task Duration"]:
+            warning_message_function("Configuration file", "The file selected is not a valid configuration file.\n Please, select a trim amount smaller than the task duration.")
+            clear_interface(self)
+            return
+        else:
+            self.interface.crop_video_time_lineedit.setText(str(int(configuration["Amount to trim"])))
 
         resolutions = [['640', '480'], ['1280', '720'], ['1920', '1080'], ['2560', '1440']]
         if configuration["Plot resolution"] in resolutions:
@@ -1580,9 +1584,6 @@ def option_message_function(self, text, info_text):
         return "yes"
     else:
         return "no"
-    
-def progress_bar_function(self, value):
-    self.interface.progress_bar.setValue(value)
 
 class files_class:
     def __init__(self):
@@ -1635,6 +1636,8 @@ class WorkerSignals(QObject):
     progress = Signal(int)
     finished = Signal()
     text_signal = Signal(tuple)
+    warning_message = Signal(object)
+    resume_message = Signal(object)
 
 class Worker(QRunnable):
     '''
@@ -1655,11 +1658,14 @@ class Worker(QRunnable):
         self.args = args
         self.kwargs = kwargs
         self.signals = WorkerSignals()
-        self.kwargs['progress_callback'] = self.signals.progress
-        self.kwargs['text_signal'] = self.signals.text_signal
+        self.kwargs["progress"] = self.signals.progress
+        self.kwargs["text_signal"] = self.signals.text_signal
+        self.kwargs["warning_message"] = self.signals.warning_message
+        self.kwargs["resume_message"] = self.signals.resume_message
 
     @Slot()
     def run(self):
+        debugpy.debug_this_thread()
         try:
             result = self.function(*self.args, **self.kwargs)
         except Exception as e:
