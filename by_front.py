@@ -19,16 +19,18 @@ class behavython_gui(QWidget):
         load_gui_path = os.path.join(os.path.dirname(__file__), "behavython_gui.ui")
         loader = QtUiTools.QUiLoader()
         self.interface = loader.load(load_gui_path)  # Loads the interface design archive (made in Qt Designer)
+        self.set_icons_and_logo()
         self.interface.show()
         self.options = {}
+        self.progress_bar = self.interface.progress_bar
 
         # Create a QThreadPool instance
-        self.threadpool = QtCore.QThreadPool()
+        self.threadpool = QtCore.QThreadPool.globalInstance()
 
         # Analysis tab
         self.interface.analysis_button.clicked.connect(lambda: run_analysis(self))
         self.interface.clear_button.clicked.connect(lambda: clear_interface(self))
-        self.interface.load_configuration_button.clicked.connect(lambda: load_configuration(self))
+        self.interface.load_configuration_button.clicked.connect(lambda: self.load_configuration())
 
         # Deeplabcut tab
         self.interface.get_config_path_button.clicked.connect(lambda: get_folder_path_function(self, "config_path"))
@@ -68,6 +70,19 @@ class behavython_gui(QWidget):
     def run_worker(self, function, *args, **kwargs):
         worker = Worker(function, *args, **kwargs)
         self.threadpool.start(worker)
+
+    def update_progress_bar(self, progress):
+        self.progress_bar.setValue(progress)
+
+    def load_configuration(self):
+        config_path = file_selection_function(self)
+        if not test_configuration_file(config_path):
+            warning_message_function("Configuration file", "The file selected is not a valid configuration file.")
+            return
+        else:
+            configuration = json.load(open(config_path))
+            load_configuration_file(self, configuration)
+            self.interface.resume_lineedit.setText("Configuration file loaded successfully!")
 
 def main():
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts)

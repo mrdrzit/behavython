@@ -11,14 +11,11 @@ import numpy as np
 import json
 import base64
 import random
-import copy
-import skimage
 import traceback
-import sys
 import seaborn as sns
+from pathlib import Path
 from matplotlib import pyplot as plt
 from matplotlib.collections import LineCollection
-from skimage.color import rgb2gray
 from scipy import stats
 from pathlib import Path
 from PySide6.QtWidgets import QMessageBox, QFileDialog, QDialog, QVBoxLayout, QLabel, QPushButton, QScrollArea, QWidget
@@ -26,10 +23,11 @@ from PySide6.QtGui import QFontMetrics
 from PySide6.QtCore import QRunnable, Slot, Signal, QObject
 from tkinter import filedialog
 
-matplotlib.use("qtagg")
+matplotlib.use('agg')
 
 DLC_ENABLE = True
 if DLC_ENABLE:
+    import debugpy
     import deeplabcut
 class DataFiles:
     """
@@ -632,39 +630,36 @@ def folder_structure_check_function(self):
 def dlc_video_analyze_function(self):
     self.interface.clear_unused_files_lineedit.clear()
     if DLC_ENABLE:
-        self.interface.clear_unused_files_lineedit.append(f"Using DeepLabCut version{deeplabcut.__version__}")
+        self.interface.clear_unused_files_lineedit.append(f"Using DeepLabCut version {deeplabcut.__version__}")
     config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
     videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
-    _, _, file_list = [entry for entry in os.walk(videos)][0]
+    video_list = [os.path.join(videos, file) for file in os.listdir(videos) if file.endswith(".mp4") or file.endswith(".avi") or file.endswith(".mov")]
+    file_extension = False
+    valid_extensions = [".mp4", ".avi", ".mov"]
+    invalid_files = [file for file in video_list if not any(file.endswith(ext) for ext in valid_extensions)]
 
-    for file in file_list:
-        if ".mp4" in file or ".avi" in file or ".mov" in file or ".mkv" in file or ".wmv" in file or ".flv" in file:
+    for file in video_list:
+        if invalid_files:
+            title = "Video extension error"
+            message = "Videos must have the extension '.mp4', '.avi' or '.mov'.\n Please, check the videos folder and try again."
+            warning_message_function(title, message)
+            return
+        if (".mp4" in file or ".avi" in file or ".mov" in file) and (not file_extension):
             file_extension = file.split(".")[-1]
+        elif file_extension and (file.split(".")[-1] != file_extension):
+            title = "Video extension error"
+            message = "All videos must have the same extension.\n Please, check the videos folder and try again."
+            warning_message_function(title, message)
 
-    all_has_same_extension = all([file.split(".")[-1] == file_extension for file in file_list])
-    if not all_has_same_extension:
-        title = "Video extension error"
-        message = "All videos must have the same extension.\n Please, check the videos folder and try again."
-        warning_message_function(title, message)
-        return False
-
-    continue_analysis = self.resume_message_function(file_list)
+    continue_analysis = self.resume_message_function(video_list)
     if not continue_analysis:
         self.interface.clear_unused_files_lineedit.clear()
         self.interface.clear_unused_files_lineedit.append("Analysis canceled.")
         return
     self.interface.clear_unused_files_lineedit.append("Analyzing videos...")
+    list_of_videos =  [file for file in video_list]
     if DLC_ENABLE:
-        deeplabcut.analyze_videos(
-            config_path,
-            videos,
-            videotype=file_extension,
-            shuffle=1,
-            trainingsetindex=0,
-            gputouse=0,
-            allow_growth=True,
-            save_as_csv=True,
-        )
+        deeplabcut.analyze_videos(config_path,list_of_videos,videotype=file_extension,shuffle=1,trainingsetindex=0,gputouse=0,allow_growth=True,save_as_csv=True)
     self.interface.clear_unused_files_lineedit.append("Done analyzing videos.")
 
     self.interface.clear_unused_files_lineedit.append("Filtering data files and saving as CSV...")
@@ -702,18 +697,32 @@ def get_frames_function(self):
     self.interface.clear_unused_files_lineedit.clear()
     videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
     _, _, file_list = [entry for entry in os.walk(videos)][0]
-    for file in file_list:
-        if ".mp4" in file or ".avi" in file or ".mov" in file or ".mkv" in file or ".wmv" in file or ".flv" in file:
+    video_list = [os.path.join(videos, file) for file in os.listdir(videos) if file.endswith(".mp4") or file.endswith(".avi") or file.endswith(".mov")]
+    file_extension = False
+    valid_extensions = [".mp4", ".avi", ".mov"]
+    invalid_files = [file for file in video_list if not any(file.endswith(ext) for ext in valid_extensions)]
+
+    for file in video_list:
+        if invalid_files:
+            title = "Video extension error"
+            message = "Videos must have the extension '.mp4', '.avi' or '.mov'.\n Please, check the videos folder and try again."
+            warning_message_function(title, message)
+            return
+        if (".mp4" in file or ".avi" in file or ".mov" in file) and (not file_extension):
             file_extension = file.split(".")[-1]
+        elif file_extension and (file.split(".")[-1] != file_extension):
+            title = "Video extension error"
+            message = "All videos must have the same extension.\n Please, check the videos folder and try again."
+            warning_message_function(title, message)
 
     for filename in file_list:
         if filename.endswith(file_extension):
             video_path = os.path.join(videos, filename)
             output_path = os.path.splitext(video_path)[0] + ".jpg"
-            self.interface.clear_unused_files_lineedit.append(f"Getting last frame of {filename}")
             if not os.path.isfile(output_path):
+                self.interface.clear_unused_files_lineedit.append(f"Getting a frame of {filename}")
                 subprocess.run(
-                    "ffmpeg -sseof -100 -i " + '"' + video_path + '"' + " -update 1 -q:v 1 " + '"' + output_path + '"',
+                    "ffmpeg -sseof -1000 -i " + '"' + video_path + '"' + " -update 1 -q:v 1 " + '"' + output_path + '"',
                     shell=True,
                 )
             else:
@@ -723,13 +732,9 @@ def get_frames_function(self):
 def extract_skeleton_function(self):
     self.interface.clear_unused_files_lineedit.clear()
     if DLC_ENABLE:
-        self.interface.clear_unused_files_lineedit.append(f"Using DeepLabCut version{deeplabcut.__version__}")
+        self.interface.clear_unused_files_lineedit.append(f"Using DeepLabCut version {deeplabcut.__version__}")
     config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
     videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
-    _, _, file_list = [entry for entry in os.walk(videos)][0]
-    for file in file_list:
-        if ".mp4" in file or ".avi" in file or ".mov" in file or ".mkv" in file or ".wmv" in file or ".flv" in file:
-            file_extension = file.split(".")[-1]
 
     self.interface.clear_unused_files_lineedit.append("Extracting skeleton...")
     deeplabcut.analyzeskeleton(config_path, videos, shuffle=1, trainingsetindex=0, filtered=True, save_as_csv=True)
@@ -737,7 +742,6 @@ def extract_skeleton_function(self):
 
 def clear_unused_files_function(self):
     self.interface.clear_unused_files_lineedit.clear()
-    config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
     videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
     _, _, file_list = [entry for entry in os.walk(videos)][0]
     for file in file_list:
@@ -1038,40 +1042,72 @@ class CustomDialog(QDialog):
         padding = 200
         self.setFixedWidth(longest_line_width + padding)
 
-def run_analysis(self, options):
-    for i in range(0, len(self.experiments)):
-        _, data_frame = video_analyse(self, self.options, self.experiments[i])
-        if i == 0:
-            results_data_frame = data_frame
-        else:
-            results_data_frame = results_data_frame.join(data_frame)
-        
-        plot_analysis_social_behavior(self, self.plot_viewer, i, self.options["save_folder"])
-        self.progress_bar.emit(round(((i + 1) / len(self.experiments)) * 100))
+def run_analysis(self):
+    line_edit = self.interface.resume_lineedit
+    recent_folder = self.interface.recent_analysis_directory_lineedit
+    [experiments, _, _, _] = get_experiments(self, line_edit, recent_folder, "deeplabcut")
+    options = get_options(self)
 
-    results_data_frame.T.to_excel(self.options["save_folder"] + "/analysis_results.xlsx")
-    config_file_path = self.options["save_folder"] + "/analysis_configuration.json"
-    config_json = options_to_configuration(self.options)
-    with open(config_file_path, "w") as config_file:
-        json.dump(config_json, config_file, indent=4, sort_keys=True)
-    self.finished.emit()
+    # Define the worker and connect its signals
+    def analysis_thread(options, experiments, progress_callback):
+        results_data_frame = pd.DataFrame()
+        for i, experiment in enumerate(experiments):
+            analysis_results, data_frame = video_analyse(self, options, experiment)
+            results_data_frame = results_data_frame.join(data_frame) if not results_data_frame.empty else data_frame
+            progress_callback.emit(round(((i + 1) / len(experiments)) * 100))
+            if options["plot_options"] == "plotting_enabled":
+                plot_analysis_social_behavior(experiment, analysis_results, options, recent_folder.text())
+            config_file_path = options["save_folder"] + "/analysis_configuration.json"
+            config_json = options_to_configuration(options)
+            with open(config_file_path, "w") as config_file:
+                json.dump(config_json, config_file, indent=4, sort_keys=True)
+        return results_data_frame
+
+    # Create and start the worker
+    analysis_worker = Worker(analysis_thread, options, experiments)
+    analysis_worker.signals.progress.connect(self.update_progress_bar)
+    analysis_worker.signals.result.connect(handle_results)
+    analysis_worker.signals.error.connect(handle_error)
+    analysis_worker.signals.finished.connect(on_worker_finished)
+    self.threadpool.start(analysis_worker)
+
+def handle_results(results):
+    try:
+        results_data_frame, options = results
+        results_data_frame.T.to_excel(options["save_folder"] + "/analysis_results.xlsx")
+    except:
+        os.system("cls")
+        print("Error saving results")
+
+def handle_error(error_info):
+    exctype, value, traceback_str = error_info
+    print(f"Error: {value}")
+
+def on_worker_finished():
+    text = "Analysis completed successfully."
+    title = "Analysis completed"
+    warning_message_function(title, text)
 
 def get_options(self):
+    options = {}
     self.interface.resume_lineedit.clear()
-    self.options["arena_width"] = int(self.interface.arena_width_lineedit.text())
-    self.options["arena_height"] = int(self.interface.arena_height_lineedit.text())
-    self.options["frames_per_second"] = int(self.interface.frames_per_second_lineedit.text())
-    self.options["experiment_type"] = self.interface.type_combobox.currentText().lower().strip().replace(" ", "_")
-    self.options["plot_options"] = "plotting_enabled" if self.interface.save_button.isChecked() else "plotting_disabled"
-    self.options["max_fig_res"] = str(self.interface.fig_max_size.currentText()).replace(" ", "").replace("x", ",").split(",")
-    self.options["algo_type"] = self.interface.algo_type_combobox.currentText().lower().strip()
+    options["arena_width"] = int(self.interface.arena_width_lineedit.text())
+    options["arena_height"] = int(self.interface.arena_height_lineedit.text())
+    options["frames_per_second"] = int(self.interface.frames_per_second_lineedit.text())
+    options["experiment_type"] = self.interface.type_combobox.currentText().lower().strip().replace(" ", "_")
+    options["max_fig_res"] = str(self.interface.fig_max_size.currentText()).replace(" ", "").replace("x", ",").split(",")
+    options["algo_type"] = self.interface.algo_type_combobox.currentText().lower().strip()
     if self.interface.animal_combobox.currentIndex() == 0:
-        self.options["threshold"] = 0.0267
+        options["threshold"] = 0.0267
     else:
-        self.options["threshold"] = 0.0667
-    self.options["task_duration"] = int(self.interface.task_duration_lineedit.text())
-    self.options["trim_amount"] = int(self.interface.crop_video_time_lineedit.text())
-    self.options["crop_video"] = self.interface.crop_video_checkbox.isChecked()
+        options["threshold"] = 0.0667
+    options["task_duration"] = int(self.interface.task_duration_lineedit.text())
+    options["trim_amount"] = int(self.interface.crop_video_time_lineedit.text())
+    options["crop_video"] = self.interface.crop_video_checkbox.isChecked()
+    options["save_folder"] = self.interface.recent_analysis_directory_lineedit.text()
+    options["plot_options"] = "plotting_enabled" if self.interface.plot_data_checkbox.isChecked() else "plotting_disabled"
+
+    return options
 
 def clear_interface(self):
     self.options = {}
@@ -1087,10 +1123,9 @@ def clear_interface(self):
     self.interface.crop_video_time_lineedit.setText("0")
     self.interface.crop_video_checkbox.setChecked(False)
     self.interface.fig_max_size.setCurrentIndex(1)
-    self.interface.only_plot_button.setChecked(False)
-    self.interface.save_button.setChecked(True)
+    self.interface.plot_data_checkbox.setChecked(True)
 
-def load_configuration(self, configuration={}):
+def load_configuration_file(self, configuration={}):
     if configuration:
         if configuration["Experiment Type"].lower().strip().replace(" ", "_") == "njr":
             self.interface.type_combobox.setCurrentIndex(0)
@@ -1167,11 +1202,9 @@ def load_configuration(self, configuration={}):
             return
 
         if configuration["Plot option"] == "plotting_enabled":
-            self.interface.save_button.setChecked(True)
-            self.interface.only_plot_button.setChecked(False)
+            self.interface.plot_data_checkbox.setChecked(True)
         elif configuration["Plot option"] == "plotting_disabled":
-            self.interface.save_button.setChecked(False)
-            self.interface.only_plot_button.setChecked(True)
+            self.interface.plot_data_checkbox.setChecked(False)
         else:
             warning_message_function("Configuration file", "The file selected is not a valid configuration file.\n Please, select a valid plot option.")
             clear_interface(self)
@@ -1185,77 +1218,20 @@ def load_configuration(self, configuration={}):
             warning_message_function("Configuration file", "The file selected is not a valid configuration file.\n Please, select a valid crop video option.")
             clear_interface(self)
             return
+    else:
+        warning_message_function("The configuratuin file is empty, setting the default values.")
+        clear_interface(self)
+        return
 
-def get_experiments(self, line_edit, experiment_type, save_plots, algo_type="bonsai"):
-    if algo_type == "bonsai":
-        inexistent_file = 0
-        selected_folder_to_save = 0
-        error = 0
-        file_explorer = tk.Tk()
-        file_explorer.withdraw()
-        file_explorer.call("wm", "attributes", ".", "-topmost", True)
-        selected_files = filedialog.askopenfilename(title="Select the files to analyze", multiple=True)
-        if save_plots in "plotting_enabled":
-            selected_folder_to_save = filedialog.askdirectory(title="Select the folder to save the plots", mustexist=True)
-        experiments = []
-
-        try:
-            assert selected_folder_to_save != ""
-            assert len(selected_files) > 0
-        except AssertionError:
-            if len(selected_files) == 0:
-                line_edit.append(" ERROR: No files selected")
-                error = 1
-            else:
-                line_edit.append(" ERROR: No destination folder selected")
-                error = 2
-            return experiments, selected_folder_to_save, error, inexistent_file
-
-        files = files_class()
-        files.add_files(selected_files)
-
-        for index in range(0, files.number):
-            experiments.append(experiment_class())
-
-            try:
-                raw_data = pd.read_csv(files.directory[index] + ".csv", sep=",", na_values=["no info", "."], header=None)
-                raw_image = rgb2gray(skimage.io.imread(files.directory[index] + ".png"))
-            except:
-                line_edit.append("WARNING!! Doesn't exist a CSV or PNG file with the name " + files.name[index])
-                experiments.pop()
-                error = 3
-                inexistent_file = files.name[index]
-                return experiments, selected_folder_to_save, error, inexistent_file
-            else:
-                if raw_data.shape[1] == 7 and experiment_type == "plus_maze":
-                    experiments[index].data = raw_data.interpolate(method="spline", order=1, limit_direction="both", axis=0)
-                    line_edit.append("- File " + files.name[index] + ".csv was read")
-                    experiments[index].last_frame = raw_image
-                    line_edit.append("- File " + files.name[index] + ".png was read")
-                    experiments[index].name = files.name[index]
-                    experiments[index].directory = files.directory[index]
-                elif experiment_type == "open_field":
-                    experiments[index].data = raw_data.interpolate(method="spline", order=1, limit_direction="both", axis=0)
-                    line_edit.append("- File " + files.name[index] + ".csv was read")
-                    experiments[index].last_frame = raw_image
-                    line_edit.append("- File " + files.name[index] + ".png was read")
-                    experiments[index].name = files.name[index]
-                    experiments[index].directory = files.directory[index]
-                else:
-                    line_edit.append(
-                        "WARNING!! The "
-                        + files.name[index]
-                        + ".csv file had more columns than the elevated plus maze test allows"
-                    )
-    elif algo_type == "deeplabcut":
+def get_experiments(self, line_edit, recent_analysis_folder_line_edit, algo_type="deeplabcut"):
+    if algo_type == "deeplabcut":
         data = DataFiles()
         inexistent_file = 0
         selected_folder_to_save = 0
         error = 0
         experiments = []
         selected_files = get_files(line_edit, data, experiments)
-        if save_plots in "plotting_enabled":
-            selected_folder_to_save = filedialog.askdirectory(title="Select the folder to save the plots", mustexist=True)
+        selected_folder_to_save = filedialog.askdirectory(title="Select the folder to save the plots", mustexist=True)
         try:
             assert selected_folder_to_save != ""
             assert len(experiments) > 0
@@ -1267,11 +1243,11 @@ def get_experiments(self, line_edit, experiment_type, save_plots, algo_type="bon
                 line_edit.append(" ERROR: No destination folder selected")
                 error = 2
             return experiments, selected_folder_to_save, error, inexistent_file
+    recent_analysis_folder_line_edit.setText(selected_folder_to_save)
     return experiments, selected_folder_to_save, error, inexistent_file
     
 def video_analyse(self, options, animal=None):
     if options["algo_type"] == "deeplabcut":
-        # Deeplabcut data
         collision_data = []
         dimensions = animal.exp_dimensions()
         focinho_x = animal.bodyparts["focinho"]["x"]
@@ -1306,7 +1282,6 @@ def video_analyse(self, options, animal=None):
         # (height is stored in the first element of the list and is converted to int beacuse it comes as a string)
         max_video_height = int(options["max_fig_res"][0])
         max_video_width = int(options["max_fig_res"][1])
-        plot_options = options["plot_options"]
         trim_amount = int(options["trim_amount"] * frames_per_second)
         video_height, video_width, _ = dimensions
         factor_width = arena_width / video_width
@@ -1314,7 +1289,7 @@ def video_analyse(self, options, animal=None):
         number_of_frames = animal.exp_length()
         bin_size = 10
         # ----------------------------------------------------------------------------------------------------------
-        if self.options["crop_video"]:
+        if options["crop_video"]:
             runtime = range(trim_amount, int((max_analysis_time * frames_per_second) + trim_amount))
             if number_of_frames < max(runtime):
                 runtime = range(trim_amount, int(number_of_frames))
@@ -1453,12 +1428,11 @@ def video_analyse(self, options, animal=None):
         movement_line_collection = LineCollection(smooth_segs, cmap="plasma", linewidth=1.5)
         # Set the line color to the normalized values of "color_limits"
         movement_line_collection.set_array(velocity)
-        lc_fig_1 = copy(movement_line_collection)
 
         position_grid = create_frequency_grid(focinho_x, focinho_y, bin_size, ANALYSIS_RANGE)
         velocity_grid = create_frequency_grid(centro_x, centro_y, bin_size, ANALYSIS_RANGE, velocity, mean_velocity)
 
-        self.analysis_results = {
+        analysis_results = {
             "y_pos_data": y_axe,
             "x_pos_data": x_axe,
             "x_collision_data": x_collision_data,
@@ -1473,7 +1447,6 @@ def video_analyse(self, options, animal=None):
             "video_height": video_height,
             "max_video_height": max_video_height,
             "max_video_width": max_video_width,
-            "plot_options": plot_options,
             "dimensions": animal.exp_dimensions(),
             "focinho_x": animal.bodyparts["focinho"]["x"],
             "focinho_y": animal.bodyparts["focinho"]["y"],
@@ -1516,162 +1489,24 @@ def video_analyse(self, options, animal=None):
             }
         data_frame = pd.DataFrame(data=dict_to_excel, index=[animal.name])
         data_frame = data_frame.T
-        return self.analysis_results, data_frame
-    else:
-        self.experiment_type = options["experiment_type"]
-        arena_width = options["arena_width"]
-        arena_height = options["arena_height"]
-        frames_per_second = options["frames_per_second"]
-        threshold = options["threshold"]
-        # Maximum video height set by user
-        # (height is stored in the first element of the list and is converted to int beacuse it comes as a string)
-        max_video_height = int(options["max_fig_res"][0])
-        max_video_width = int(options["max_fig_res"][1])
-        plot_options = options["plot_options"]
-        video_height, video_width = self.last_frame.shape
-        factor_width = arena_width / video_width
-        factor_height = arena_height / video_height
-        number_of_frames = len(self.data)
+        self.interface.resume_lineedit.append(f"Analysis for animal {animal.name} completed.")
+        return analysis_results, data_frame
 
-        x_axe = self.data[0]  # Gets the x position
-        y_axe = self.data[1]  # Gets the y position
-        x_axe_cm = self.data[0] * factor_width  # Puts the x position on scale
-        y_axe_cm = self.data[1] * factor_height  # Puts the y position on scale
-        # Calculates the step difference of position in x axis
-        d_x_axe_cm = np.append(0, np.diff(self.data[0])) * factor_width
-        # Calculates the step difference of position in y axis
-        d_y_axe_cm = np.append(0, np.diff(self.data[1])) * factor_height
-
-        displacement_raw = np.sqrt(np.square(d_x_axe_cm) + np.square(d_y_axe_cm))
-        displacement = displacement_raw
-        displacement[displacement < threshold] = 0
-
-        # Sums all the animal's movements and calculates the accumulated distance traveled
-        accumulate_distance = np.cumsum(displacement)
-        # Gets the animal's total distance traveled
-        total_distance = max(accumulate_distance)
-        time_vector = np.linspace(0, len(self.data) / frames_per_second, len(self.data))  # Creates a time vector
-
-        # Ignores the division by zero at runtime
-        # (division by zero is not an error in this case as the are moments when the animal is not moving)
-        np.seterr(divide="ignore", invalid="ignore")
-        # Calculates the first derivative and finds the animal's velocity per time
-        velocity = np.divide(displacement, np.transpose(np.append(0, np.diff(time_vector))))
-        mean_velocity = np.nanmean(velocity)
-
-        # Calculates the animal's acceleration
-        acceleration = np.divide(np.append(0, np.diff(velocity)), np.append(0, np.diff(time_vector)))
-        # Calculates the number of movements made by the animal
-        movements = np.sum(displacement > 0)
-        # Calculates the total time of movements made by the animal
-        time_moving = np.sum(displacement > 0) * (1 / frames_per_second)
-        # Calculates the total time of the animal without movimentations
-        time_resting = np.sum(displacement == 0) * (1 / frames_per_second)
-
-        kde_space_coordinates = np.array([np.array(x_axe), np.array(y_axe)])
-        kde_instance = stats.gaussian_kde(kde_space_coordinates)
-        point_density_function = kde_instance.evaluate(kde_space_coordinates)
-        color_limits = np.array(
-            [
-                (x - np.min(point_density_function)) / (np.max(point_density_function) - np.min(point_density_function))
-                for x in point_density_function
-            ]
-        )
-
-        quadrant_data = np.array(self.data[self.data.columns[2:]])  # Extract the quadrant data from csv file
-        # Here, the values will be off-by-one because MATLAB starts at 1
-        colDif = np.abs(quadrant_data[:, 0] - np.sum(quadrant_data[:][:, 1:], axis=1))
-        # Create a logical array where there is a "full entry"
-        full_entry_indexes = colDif != 1
-        # True crossings over time (full crossings only)
-        time_spent = np.delete(quadrant_data, full_entry_indexes, 0)
-        quadrant_crossings = abs(np.diff(time_spent, axis=0))
-        # Total time spent in each quadrant
-        total_time_in_quadrant = np.sum(np.divide(time_spent, frames_per_second), 0)
-        # Total # of entries in each quadrant
-        total_number_of_entries = np.sum(quadrant_crossings > 0, 0)
-
-        self.analysis_results = {
-            "video_width": video_width,
-            "video_height": video_height,
-            "number_of_frames": number_of_frames,
-            "x_axe": x_axe,
-            "y_axe": y_axe,
-            "x_axe_cm": x_axe_cm,
-            "y_axe_cm": y_axe_cm,
-            "d_x_axe_cm": d_x_axe_cm,
-            "d_y_axe_cm": d_y_axe_cm,
-            "displacement": displacement,
-            "accumulate_distance": accumulate_distance,
-            "total_distance": total_distance,
-            "time_vector": time_vector,
-            "velocity": velocity,
-            "mean_velocity": mean_velocity,
-            "acceleration": acceleration,
-            "movements": movements,
-            "time_spent": time_spent,
-            "time_moving": time_moving,
-            "time_resting": time_resting,
-            "quadrant_crossings": quadrant_crossings,
-            "time_in_quadrant": total_time_in_quadrant,
-            "number_of_entries": total_number_of_entries,
-            "color_limits": color_limits,
-            "max_video_height": max_video_height,
-            "max_video_width": max_video_width,
-            "plot_options": plot_options,
-        }
-
-        if self.experiment_type == "plus_maze":
-            dict_to_excel = {
-                "Total distance (cm)": total_distance,
-                "Mean velocity (cm/s)": mean_velocity,
-                "Movements": movements,
-                "Time moving (s)": time_moving,
-                "Time resting(s)": time_resting,
-                "Total time at the upper arm (s)": total_time_in_quadrant[0],
-                "Total time at the lower arm (s)": total_time_in_quadrant[1],
-                "Total time at the left arm (s)": total_time_in_quadrant[2],
-                "Total time at the right arm (s)": total_time_in_quadrant[3],
-                "Total time at the center (s)": total_time_in_quadrant[4],
-                "Crossings to the upper arm": total_number_of_entries[0],
-                "Crossings to the lower arm": total_number_of_entries[1],
-                "Crossings to the left arm": total_number_of_entries[2],
-                "Crossings to the right arm": total_number_of_entries[3],
-                "Crossings to the center": total_number_of_entries[4],
-            }
-        else:
-            dict_to_excel = {
-                "Total distance (cm)": total_distance,
-                "Mean velocity (cm/s)": mean_velocity,
-                "Movements": movements,
-                "Time moving (s)": time_moving,
-                "Time resting(s)": time_resting,
-                "Total time at the center (s)": total_time_in_quadrant[0],
-                "Total time at the edge (s)": total_time_in_quadrant[1],
-                "Crossings to the center": total_number_of_entries[0],
-                "Crossings to the edge": total_number_of_entries[1],
-            }
-
-        data_frame = pd.DataFrame(data=dict_to_excel, index=[self.name])
-        data_frame = data_frame.T
-        return self.analysis_results, data_frame
-
-def plot_analysis_social_behavior(self, plot_viewer, plot_number, save_folder):
-    animal_image = self.experiments[plot_number].animal_jpg
-    animal_name = self.experiments[plot_number].name
-    x_pos = self.analysis_results["x_pos_data"]
-    y_pos = self.analysis_results["y_pos_data"]
-    plot_option = self.analysis_results["plot_options"]
-    image_height = self.analysis_results["video_height"]
-    image_width = self.analysis_results["video_width"]
-    max_height = self.analysis_results["max_video_height"]
-    max_width = self.analysis_results["max_video_width"]
-    x_collisions = self.analysis_results["x_collision_data"]
-    y_collisions = self.analysis_results["y_collision_data"]
-    position_grid = self.analysis_results["position_grid"]
-    accumulate_distance = self.analysis_results["accumulate_distance"]
-    frames_per_second = self.options["frames_per_second"]
-    ANALYSIS_RANGE = self.analysis_results["analysis_range"]
+def plot_analysis_social_behavior(experiment, analysis_results, options, save_folder):
+    animal_image = experiment.animal_jpg
+    animal_name = experiment.name
+    x_pos = analysis_results["x_pos_data"]
+    y_pos = analysis_results["y_pos_data"]
+    image_height = analysis_results["video_height"]
+    image_width = analysis_results["video_width"]
+    max_height = analysis_results["max_video_height"]
+    max_width = analysis_results["max_video_width"]
+    x_collisions = analysis_results["x_collision_data"]
+    y_collisions = analysis_results["y_collision_data"]
+    position_grid = analysis_results["position_grid"]
+    accumulate_distance = analysis_results["accumulate_distance"]
+    frames_per_second = options["frames_per_second"]
+    ANALYSIS_RANGE = analysis_results["analysis_range"]
     analysis_time_frames = ANALYSIS_RANGE[1] - ANALYSIS_RANGE[0]
     time_vector_secs = np.arange(0, analysis_time_frames/frames_per_second, 1/frames_per_second)
 
@@ -1696,16 +1531,6 @@ def plot_analysis_social_behavior(self, plot_viewer, plot_number, save_folder):
         axe_2.set_xticks([])
         axe_2.set_yticks([])
 
-        # fig_3, axe_3 = plt.subplots()
-        # fig_3.subplots_adjust(left=0.08, right=0.95, bottom=0.08, top=0.95, hspace=0, wspace=0)
-        # fig_3.set_size_inches(new_resolution_in_inches)
-        # axe_3.set_title("Locations where the velocity was higher than the average", loc="center", fontdict={"fontsize": new_resolution_in_inches[1] * 2, "fontweight": "normal", "color": "black"})
-        # axe_3.set_xlabel("X (pixels)")
-        # axe_3.set_ylabel("Y (pixels)")
-        # axe_3.set_xticks([])
-        # axe_3.set_yticks([])
-        # axe_3.axis("off")
-
         fig_4, axe_4 = plt.subplots()
         fig_4.subplots_adjust(left=0.08, right=0.95, bottom=0.08, top=0.95, hspace=0, wspace=0)
         fig_4.set_size_inches(new_resolution_in_inches)
@@ -1728,10 +1553,6 @@ def plot_analysis_social_behavior(self, plot_viewer, plot_number, save_folder):
         kde_axis = sns.kdeplot(x=x_collisions,y=y_collisions,ax=axe_2,cmap="inferno",fill=True,alpha=0.5)
         axe_2.imshow(animal_image, interpolation="bessel")
         fig_2.savefig(save_folder + "/" + animal_name + " Overall exploration by ROI.png")
-
-        # # Plot the locations where the velocity was higher than the average
-        # axe_3.imshow(velocity_grid, cmap="inferno", interpolation="bessel")
-        # fig_3.savefig(save_folder + "/" + animal_name + " Locations where the velocity was higher than the average.png")
         
         # Plot the distance accumulated over time
         axe_4.plot(time_vector_secs, accumulate_distance)
@@ -1757,15 +1578,9 @@ def option_message_function(self, text, info_text):
     else:
         return "no"
     
-def analysis_completed_message(self):
-    """
-    Displays a dialog box with the message "Analysis completed".
-    """
-    dialog = CustomDialog("Analysis completed", "The analysis was completed successfully.", self.interface)
-    dialog.exec()
-
 def progress_bar_function(self, value):
     self.interface.progress_bar.setValue(value)
+
 class files_class:
     def __init__(self):
         self.number = 0
@@ -1814,7 +1629,7 @@ class WorkerSignals(QObject):
     finished = Signal()  # QtCore.Signal
     error = Signal(tuple)
     result = Signal(object)
-    progress_bar = Signal(int)
+    progress = Signal(int)
     finished = Signal()
 
 class Worker(QRunnable):
@@ -1836,26 +1651,19 @@ class Worker(QRunnable):
         self.args = args
         self.kwargs = kwargs
         self.signals = WorkerSignals()
+        self.kwargs['progress_callback'] = self.signals.progress
 
     @Slot()
     def run(self):
-        '''
-        Initialise the runner function with passed args, kwargs.
-        '''
         try:
-            result = self.function(
-                *self.args, **self.kwargs,
-                status=self.signals.status,
-                progress=self.signals.progress
-            )
-        except:
+            result = self.function(*self.args, **self.kwargs)
+        except Exception as e:
             traceback.print_exc()
-            exctype, value = sys.exc_info()[:2]
-            self.signals.error.emit((exctype, value, traceback.format_exc()))
+            self.signals.error.emit((type(e), str(e), traceback.format_exc()))
         else:
-            self.signals.result.emit(result)  # Return the result of the processing
+            self.signals.result.emit((result, self.args[0]))
         finally:
-            self.signals.finished.emit()  # Done
+            self.signals.finished.emit()
 
 def get_message():
     a = b'V2VsY29tZSB0byBCZWhhdnl0aG9uIFRvb2xzOiB3aGVyZSB5b3VyIG1pc3Rha2VzIGJlY29tZSBvdXIgZW50ZXJ0YWlubWVudCxDb25ncmF0dWxhdGlvbnMgb24gY2hvb3NpbmcgQmVoYXZ5dGhvbiBUb29sczogeW91ciBzaG9ydGN1dCB0byBjb2RlIGluZHVjZWQgaGVhZGFjaGVzLEJlaGF2eXRob24gVG9vbHM6IEJlY2F1c2UgZGVidWdnaW5nIGlzIGZvciB0aGUgd2VhayxEaXZlIGludG8gQmVoYXZ5dGhvbiBUb29sczogd2hlcmUgdXNlciBmcmllbmRseSBpcyBqdXN0IGEgbXl0aCxXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IFlvdXIgcGVyc29uYWwgdG91ciBvZiBwcm9ncmFtbWluZyBwdXJnYXRvcnksQmVoYXZ5dGhvbiBUb29sczogUGVyZmVjdCBmb3IgdGhvc2Ugd2hvIGxvdmUgdGhlIHNtZWxsIG9mIGZhaWx1cmUgaW4gdGhlIG1vcm5pbmcsU3RhcnQgcXVlc3Rpb25pbmcgeW91ciBsaWZlIGNob2ljZXM6IFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29scyxCZWhhdnl0aG9uIFRvb2xzOiBNYWtpbmcgc2ltcGxlIHRhc2tzIGltcG9zc2libHkgY29tcGxpY2F0ZWQgc2luY2UgWWVhciB6ZXJvLEVuam95IEJlaGF2eXRob24gVG9vbHM6IHdlIHByb21pc2UgeW91IHdpbGwgcmVncmV0IGl0LFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogVGhlIHBsYWNlIHdoZXJlIGJ1Z3MgZmVlbCBhdCBob21lLEJlaGF2eXRob24gVG9vbHM6IEJlY2F1c2Ugd2hhdCBpcyBsaWZlIHdpdGhvdXQgYSBsaXR0bGUgdG9ydHVyZSxQcmVwYXJlIGZvciBhIHJpZGUgdGhyb3VnaCBjaGFvcyB3aXRoIEJlaGF2eXRob24gVG9vbHMsQmVoYXZ5dGhvbiBUb29sczogV2hlcmUgc2FuaXR5IGdvZXMgdG8gZGllLFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogdGhlIGVwaXRvbWUgb2YgaW5lZmZpY2llbmN5LEJlaGF2eXRob24gVG9vbHM6IE1ha2luZyBzdXJlIHlvdSBuZXZlciBnZXQgdG9vIGNvbWZvcnRhYmxlLFN0ZXAgcmlnaHQgdXAgdG8gQmVoYXZ5dGhvbiBUb29sczogWW91ciBmYXN0IHRyYWNrIHRvIGZydXN0cmF0aW9uLEJlaGF2eXRob24gVG9vbHM6IFR1cm5pbmcgZHJlYW1zIGludG8gbmlnaHRtYXJlcyxXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IHlvdXIgZGFpbHkgZG9zZSBvZiBkaWdpdGFsIGRpc2FwcG9pbnRtZW50LEJlaGF2eXRob24gVG9vbHM6IFdoZW4geW91IHdhbnQgdG8gbWFrZSB5b3VyIHByb2JsZW1zIHdvcnNlLFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogd2hlcmUgZXZlcnkgZmVhdHVyZSBpcyBhIG5ldyBmb3JtIG9mIGFnb255LEJlbSB2aW5kbyBjb21wYW5oZWlybyBkZSBkaWFzIG1hbGRpdG9z'
