@@ -12,6 +12,7 @@ import json
 import base64
 import random
 import traceback
+import shutil
 import seaborn as sns
 from pathlib import Path
 from matplotlib import pyplot as plt
@@ -24,8 +25,6 @@ from PySide6.QtCore import QRunnable, Slot, Signal, QObject
 from tkinter import filedialog
 
 matplotlib.use('agg')
-
-import debugpy
 DLC_ENABLE = True
 if DLC_ENABLE:
     import deeplabcut
@@ -628,7 +627,6 @@ def folder_structure_check_function(self):
     return True
 
 def dlc_video_analyze_function(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
-    debugpy.debug_this_thread()
     text_signal.emit(("clear_unused_files_lineedit", "clear_lineedit"))
     if DLC_ENABLE:
         text_signal.emit(("clear_unused_files_lineedit", f"Using DeepLabCut version {deeplabcut.__version__}"))
@@ -697,8 +695,8 @@ def dlc_video_analyze_function(self, text_signal=None, progress=None, warning_me
     text_signal.emit(("clear_unused_files_lineedit", "Plots to visualize prediction accuracy were saved."))
     text_signal.emit(("clear_unused_files_lineedit", "Done filtering data files"))
 
-def get_frames_function(self):
-    self.interface.clear_unused_files_lineedit.clear()
+def get_frames_function(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
+    text_signal.emit(("clear_unused_files_lineedit", "clear_lineedit"))
     videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
     _, _, file_list = [entry for entry in os.walk(videos)][0]
     video_list = [os.path.join(videos, file) for file in os.listdir(videos) if file.endswith(".mp4") or file.endswith(".avi") or file.endswith(".mov")]
@@ -710,27 +708,27 @@ def get_frames_function(self):
         if invalid_files:
             title = "Video extension error"
             message = "Videos must have the extension '.mp4', '.avi' or '.mov'.\n Please, check the videos folder and try again."
-            warning_message_function(title, message)
+            warning_message.emit((title, message))
             return
         if (".mp4" in file or ".avi" in file or ".mov" in file) and (not file_extension):
             file_extension = file.split(".")[-1]
         elif file_extension and (file.split(".")[-1] != file_extension):
             title = "Video extension error"
             message = "All videos must have the same extension.\n Please, check the videos folder and try again."
-            warning_message_function(title, message)
+            warning_message.emit((title, message))
 
     for filename in file_list:
         if filename.endswith(file_extension):
             video_path = os.path.join(videos, filename)
             output_path = os.path.splitext(video_path)[0] + ".jpg"
             if not os.path.isfile(output_path):
-                self.interface.clear_unused_files_lineedit.append(f"Getting a frame of {filename}")
+                text_signal.emit(("clear_unused_files_lineedit", f"Getting a frame of {filename}"))
                 subprocess.run(
                     "ffmpeg -sseof -1000 -i " + '"' + video_path + '"' + " -update 1 -q:v 1 " + '"' + output_path + '"',
                     shell=True,
                 )
             else:
-                self.interface.clear_unused_files_lineedit.append(f"Last frame of {filename} already exists.")
+                text_signal.emit(("clear_unused_files_lineedit", f"Last frame of {filename} already exists."))
     pass
 
 def extract_skeleton_function(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
@@ -747,13 +745,20 @@ def extract_skeleton_function(self, text_signal=None, progress=None, warning_mes
 def clear_unused_files_function(self):
     self.interface.clear_unused_files_lineedit.clear()
     videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
+    unwanted_folder = os.path.join(videos, "unwanted_files")
+
+    if not os.path.exists(unwanted_folder):
+        os.makedirs(unwanted_folder)
+
     _, _, file_list = [entry for entry in os.walk(videos)][0]
+
+    file_extension = ".mp4"
     for file in file_list:
-        file_extension = ".mp4"
-        if ".mp4" in file or ".avi" in file or ".mov" in file or ".mkv" in file or ".wmv" in file or ".flv" in file:
+        if any(ext in file for ext in [".mp4", ".avi", ".mov", ".mkv", ".wmv", ".flv"]):
             file_extension = file.split(".")[-1]
 
     for file in file_list:
+        file_path = os.path.join(videos, file)
         if (
             file.endswith(file_extension)
             or file.endswith(".png")
@@ -763,8 +768,9 @@ def clear_unused_files_function(self):
         ):
             continue
         if file.endswith(".h5") or file.endswith(".pickle") or "filtered" not in file:
-            os.remove(os.path.join(videos, file))
-            self.interface.clear_unused_files_lineedit.append(f"Removed {file}")
+            shutil.move(file_path, os.path.join(unwanted_folder, file))
+            self.interface.clear_unused_files_lineedit.append(f"Moved {file} to unwanted_files")
+
     _, _, file_list = [entry for entry in os.walk(videos)][0]
 
     has_filtered_csv = False
@@ -1052,7 +1058,7 @@ def run_analysis(self):
     options = get_options(self)
 
     # Define the worker and connect its signals
-    def analysis_thread(options, experiments, text_signal=None, progress=None):
+    def analysis_thread(options, experiments, text_signal=None, progress=None, warning_message=None, resume_message=None):
         results_data_frame = pd.DataFrame()
         for i, experiment in enumerate(experiments):
             analysis_results, data_frame = video_analyse(self, options, experiment)
@@ -1665,7 +1671,6 @@ class Worker(QRunnable):
 
     @Slot()
     def run(self):
-        debugpy.debug_this_thread()
         try:
             result = self.function(*self.args, **self.kwargs)
         except Exception as e:

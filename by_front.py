@@ -42,7 +42,6 @@ class behavython_gui(QWidget):
         self.interface.clear_unused_files_button.clicked.connect(lambda: clear_unused_files_function(self))
 
     def resume_message_function(self, file_list):
-        debugpy.debug_this_thread()
         text = "Check the videos to be analyzed: "
         message = "The following files are going to be used for pose inference using DeepLabCut:\n\n" + "\n".join(
             file_list + ["\nIs this correct?\n"] + ["If so, click 'Yes' to continue or 'No' to cancel the analysis.\n"]
@@ -94,7 +93,6 @@ class behavython_gui(QWidget):
 
     def handle_resume_message(self, file_list):
         self.resume_message_function(file_list)
-        
             
     def load_configuration(self, progress_callback=None):
         config_path = file_selection_function(self)
