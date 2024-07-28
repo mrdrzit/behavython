@@ -18,16 +18,16 @@ from matplotlib import pyplot as plt
 from matplotlib.collections import LineCollection
 from scipy import stats
 from pathlib import Path
-from PySide6.QtWidgets import QMessageBox, QFileDialog, QDialog, QVBoxLayout, QLabel, QPushButton, QScrollArea, QWidget
+from PySide6.QtWidgets import QMessageBox, QFileDialog, QDialog, QVBoxLayout, QLabel, QPushButton, QScrollArea, QWidget, QApplication
 from PySide6.QtGui import QFontMetrics
 from PySide6.QtCore import QRunnable, Slot, Signal, QObject
 from tkinter import filedialog
 
 matplotlib.use('agg')
 
-DLC_ENABLE = True
+import debugpy
+DLC_ENABLE = False
 if DLC_ENABLE:
-    import debugpy
     import deeplabcut
 class DataFiles:
     """
@@ -563,8 +563,9 @@ def warning_message_function(title, text):
     warning.setStandardButtons(QMessageBox.StandardButton.Ok)  # Message box buttons
     warning.exec()
 
-def folder_structure_check_function(self):
-    self.interface.clear_unused_files_lineedit.clear()
+def folder_structure_check_function(self, text_signal=None, progress_callback=None):
+    # debugpy.debug_this_thread()
+    text_signal.emit(("clear_unused_files_lineedit", "Clear_lineedit"))
     folder_path = os.path.dirname(self.interface.config_path_lineedit.text().replace('"', "").replace("'", ""))
     if folder_path == "":
         message = "Please, select a path to the config.yaml file before checking the folder structure."
@@ -576,27 +577,27 @@ def folder_structure_check_function(self):
 
     for folder in required_folders:
         if not os.path.isdir(os.path.join(folder_path, folder)):
-            self.interface.clear_unused_files_lineedit.append(f"The folder '{folder}' is NOT present")
+            text_signal.emit(("clear_unused_files_lineedit", f"The folder '{folder}' is NOT present"))
             return False
-        self.interface.clear_unused_files_lineedit.append(f"The folder {folder} is OK")
-
+        text_signal.emit(("clear_unused_files_lineedit", f"The folder '{folder}' is OK"))
     for file in required_files:
         if not os.path.isfile(os.path.join(folder_path, file)):
-            self.interface.clear_unused_files_lineedit.append(f"The project's {file} is NOT present")
+            text_signal.emit(("clear_unused_files_lineedit", f"The project's {file} is NOT present"))
             return False
-    # Check if dlc-models contains at least one iteration folder
     dlc_models_path = os.path.join(folder_path, "dlc-models")
     iteration_folders = [
         f for f in os.listdir(dlc_models_path) if os.path.isdir(os.path.join(dlc_models_path, f)) and f.startswith("iteration-")
     ]
     if not iteration_folders:
-        self.interface.clear_unused_files_lineedit.append("There are no iteration folders in dlc-models.")
+        text_signal.emit(("clear_unused_files_lineedit", "There are no iteration folders in dlc-models."))
+        # self.interface.clear_unused_files_lineedit.append("There are no iteration folders in dlc-models.")
         return False
 
     latest_iteration_folder = max(iteration_folders, key=lambda x: int(x.split("-")[1]))
     shuffle_set = os.listdir(os.path.join(dlc_models_path, latest_iteration_folder))
     if not shuffle_set:
-        self.interface.clear_unused_files_lineedit.append("There are no shuffle sets in the latest iteration folder.")
+        text_signal.emit(("clear_unused_files_lineedit", "There are no shuffle sets in the latest iteration folder."))
+        # self.interface.clear_unused_files_lineedit.append("There are no shuffle sets in the latest iteration folder.")
         return False
     else:
         for root, dirs, files in os.walk(os.path.join(dlc_models_path, latest_iteration_folder, shuffle_set[0])):
@@ -604,31 +605,33 @@ def folder_structure_check_function(self):
                 if dir.startswith("log"):
                     continue
                 if "train" not in dirs or "test" not in dirs:
-                    self.interface.clear_unused_files_lineedit.append("The train or test folder is missing.")
+                    text_signal.emit(("clear_unused_files_lineedit", "The train or test folder is missing."))
                     return False
                 if dir.startswith("test") and not os.path.isfile(os.path.join(root, dir, "pose_cfg.yaml")):
-                    self.interface.clear_unused_files_lineedit.append("The pose_cfg.yaml file is missing in test folder.")
+                    text_signal.emit(("clear_unused_files_lineedit", "The pose_cfg.yaml file is missing in test folder."))
                     return False
                 if dir.startswith("train"):
                     if not os.path.isfile(os.path.join(root, dir, "pose_cfg.yaml")):
-                        self.interface.clear_unused_files_lineedit.append("The pose_cfg.yaml file is missing in test folder.")
+                        text_signal.emit(("clear_unused_files_lineedit", "The pose_cfg.yaml file is missing in train folder."))
                         return False
                     elif not any("meta" in string for string in os.listdir(os.path.join(root, dir))):
-                        self.interface.clear_unused_files_lineedit.append("The meta file is missing in train folder.")
+                        text_signal.emit(("clear_unused_files_lineedit", "The meta file is missing in train folder."))
                         return False
                     elif not any("data" in string for string in os.listdir(os.path.join(root, dir))):
-                        self.interface.clear_unused_files_lineedit.append("The data file is missing in train folder.")
+                        text_signal.emit(("clear_unused_files_lineedit", "The meta file is missing in train folder."))
                         return False
                     elif not any("index" in string for string in os.listdir(os.path.join(root, dir))):
-                        self.interface.clear_unused_files_lineedit.append("The index file is missing in train folder.")
+                        text_signal.emit(("clear_unused_files_lineedit", "The meta file is missing in train folder."))
                         return False
 
     # If all checks pass, the folder structure is correct
-    self.interface.clear_unused_files_lineedit.append("The folder structure is correct.")
+    text_signal.emit(("clear_unused_files_lineedit", "The folder structure is correct."))
     return True
 
-def dlc_video_analyze_function(self):
-    self.interface.clear_unused_files_lineedit.clear()
+def dlc_video_analyze_function(self, text_signal=None, progress_callback=None):
+    # self.interface.clear_unused_files_lineedit.clear()
+    debugpy.debug_this_thread()
+    text_signal.emit(("clear_unused_files_lineedit", "clear_lineedit"))
     if DLC_ENABLE:
         self.interface.clear_unused_files_lineedit.append(f"Using DeepLabCut version {deeplabcut.__version__}")
     config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
@@ -693,7 +696,7 @@ def dlc_video_analyze_function(self):
     self.interface.clear_unused_files_lineedit.append("Plots to visualize prediction accuracy were saved.")
     self.interface.clear_unused_files_lineedit.append("Done filtering data files")
 
-def get_frames_function(self):
+def get_frames_function(self, text_signal=None, progress_callback=None):
     self.interface.clear_unused_files_lineedit.clear()
     videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
     _, _, file_list = [entry for entry in os.walk(videos)][0]
@@ -729,7 +732,7 @@ def get_frames_function(self):
                 self.interface.clear_unused_files_lineedit.append(f"Last frame of {filename} already exists.")
     pass
 
-def extract_skeleton_function(self):
+def extract_skeleton_function(self, text_signal=None, progress_callback=None):
     self.interface.clear_unused_files_lineedit.clear()
     if DLC_ENABLE:
         self.interface.clear_unused_files_lineedit.append(f"Using DeepLabCut version {deeplabcut.__version__}")
@@ -740,7 +743,7 @@ def extract_skeleton_function(self):
     deeplabcut.analyzeskeleton(config_path, videos, shuffle=1, trainingsetindex=0, filtered=True, save_as_csv=True)
     self.interface.clear_unused_files_lineedit.append("Done extracting skeleton.")
 
-def clear_unused_files_function(self):
+def clear_unused_files_function(self, text_signal=None, progress_callback=None):
     self.interface.clear_unused_files_lineedit.clear()
     videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
     _, _, file_list = [entry for entry in os.walk(videos)][0]
@@ -838,7 +841,7 @@ def clear_unused_files_function(self):
     )
     warning_message_function(title, message)
 
-def get_folder_path_function(self, lineedit_name):
+def get_folder_path_function(self, lineedit_name, text_signal=None, progress_callback=None):
     if lineedit_name == "config_path":
         file_explorer = tk.Tk()
         file_explorer.withdraw()
@@ -1109,7 +1112,7 @@ def get_options(self):
 
     return options
 
-def clear_interface(self):
+def clear_interface(self, progress_callback=None):
     self.options = {}
     self.interface.arena_width_lineedit.setText("30")
     self.interface.arena_height_lineedit.setText("30")
@@ -1631,6 +1634,7 @@ class WorkerSignals(QObject):
     result = Signal(object)
     progress = Signal(int)
     finished = Signal()
+    text_signal = Signal(tuple)
 
 class Worker(QRunnable):
     '''
@@ -1652,6 +1656,7 @@ class Worker(QRunnable):
         self.kwargs = kwargs
         self.signals = WorkerSignals()
         self.kwargs['progress_callback'] = self.signals.progress
+        self.kwargs['text_signal'] = self.signals.text_signal
 
     @Slot()
     def run(self):

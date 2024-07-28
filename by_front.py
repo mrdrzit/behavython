@@ -27,19 +27,31 @@ class behavython_gui(QWidget):
         # Create a QThreadPool instance
         self.threadpool = QtCore.QThreadPool.globalInstance()
 
-        # Analysis tab
-        self.interface.analysis_button.clicked.connect(lambda: run_analysis(self))
-        self.interface.clear_button.clicked.connect(lambda: clear_interface(self))
-        self.interface.load_configuration_button.clicked.connect(lambda: self.load_configuration())
+        # # Analysis tab
+        # self.interface.analysis_button.clicked.connect(lambda: run_analysis(self))
+        # self.interface.clear_button.clicked.connect(lambda: clear_interface(self))
+        # self.interface.load_configuration_button.clicked.connect(lambda: self.load_configuration())
 
-        # Deeplabcut tab
-        self.interface.get_config_path_button.clicked.connect(lambda: get_folder_path_function(self, "config_path"))
-        self.interface.get_videos_path_button.clicked.connect(lambda: get_folder_path_function(self, "videos_path"))
-        self.interface.folder_structure_check_button.clicked.connect(lambda: folder_structure_check_function(self))
-        self.interface.dlc_video_analyze_button.clicked.connect(lambda: dlc_video_analyze_function(self))
-        self.interface.extract_skeleton_button.clicked.connect(lambda: extract_skeleton_function(self))
-        self.interface.get_frames_button.clicked.connect(lambda: get_frames_function(self))
-        self.interface.clear_unused_files_button.clicked.connect(lambda: clear_unused_files_function(self))
+        self.interface.analysis_button.clicked.connect(lambda: run_analysis(self))
+        self.interface.clear_button.clicked.connect(lambda: self.run_worker(clear_interface, self))
+        self.interface.load_configuration_button.clicked.connect(lambda: self.run_worker(self.load_configuration()))
+
+        # # Deeplabcut tab
+        # self.interface.get_config_path_button.clicked.connect(lambda: get_folder_path_function(self, "config_path"))
+        # self.interface.get_videos_path_button.clicked.connect(lambda: get_folder_path_function(self, "videos_path"))
+        # self.interface.folder_structure_check_button.clicked.connect(lambda: folder_structure_check_function(self))
+        # self.interface.dlc_video_analyze_button.clicked.connect(lambda: dlc_video_analyze_function(self))
+        # self.interface.extract_skeleton_button.clicked.connect(lambda: extract_skeleton_function(self))
+        # self.interface.get_frames_button.clicked.connect(lambda: get_frames_function(self))
+        # self.interface.clear_unused_files_button.clicked.connect(lambda: clear_unused_files_function(self))
+
+        self.interface.get_config_path_button.clicked.connect(lambda: self.run_worker(get_folder_path_function, self, "config_path"))
+        self.interface.get_videos_path_button.clicked.connect(lambda: self.run_worker(get_folder_path_function, self, "videos_path"))
+        self.interface.folder_structure_check_button.clicked.connect(lambda: self.run_worker(folder_structure_check_function, self))
+        self.interface.dlc_video_analyze_button.clicked.connect(lambda: self.run_worker(dlc_video_analyze_function, self))
+        self.interface.extract_skeleton_button.clicked.connect(lambda: self.run_worker(extract_skeleton_function, self))
+        self.interface.get_frames_button.clicked.connect(lambda: self.run_worker(get_frames_function, self))
+        self.interface.clear_unused_files_button.clicked.connect(lambda: self.run_worker(clear_unused_files_function, self))
 
     def resume_message_function(self, file_list):
         text = "Check the videos to be analyzed: "
@@ -69,12 +81,23 @@ class behavython_gui(QWidget):
 
     def run_worker(self, function, *args, **kwargs):
         worker = Worker(function, *args, **kwargs)
+        worker.signals.text_signal.connect(self.update_lineedit)
         self.threadpool.start(worker)
 
     def update_progress_bar(self, progress):
         self.progress_bar.setValue(progress)
 
-    def load_configuration(self):
+    def update_lineedit(self, values):
+        # debugpy.debug_this_thread()
+        lineedit, text = values
+        if "resume_lineedit" in lineedit:
+            self.interface.resume_lineedit.append(text)
+        elif "clear_unused_files_lineedit" in lineedit:
+            self.interface.clear_unused_files_lineedit.append(text)
+        elif "clear_unused_files_lineedit" in lineedit and "clear_lineedit" in text:
+            self.interface.clear_unused_files_lineedit.clear()
+        
+    def load_configuration(self, progress_callback=None):
         config_path = file_selection_function(self)
         if not test_configuration_file(config_path):
             warning_message_function("Configuration file", "The file selected is not a valid configuration file.")
