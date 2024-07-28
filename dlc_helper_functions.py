@@ -733,16 +733,16 @@ def get_frames_function(self):
                 self.interface.clear_unused_files_lineedit.append(f"Last frame of {filename} already exists.")
     pass
 
-def extract_skeleton_function(self):
-    self.interface.clear_unused_files_lineedit.clear()
+def extract_skeleton_function(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
+    text_signal.emit(("clear_unused_files_lineedit", "clear_lineedit"))
     if DLC_ENABLE:
         self.interface.clear_unused_files_lineedit.append(f"Using DeepLabCut version {deeplabcut.__version__}")
     config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
     videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
 
-    self.interface.clear_unused_files_lineedit.append("Extracting skeleton...")
+    text_signal.emit(("clear_unused_files_lineedit", "Extracting skeleton..."))
     deeplabcut.analyzeskeleton(config_path, videos, shuffle=1, trainingsetindex=0, filtered=True, save_as_csv=True)
-    self.interface.clear_unused_files_lineedit.append("Done extracting skeleton.")
+    text_signal.emit(("clear_unused_files_lineedit", "Done extracting skeleton."))
 
 def clear_unused_files_function(self):
     self.interface.clear_unused_files_lineedit.clear()

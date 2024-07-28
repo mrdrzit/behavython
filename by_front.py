@@ -93,7 +93,6 @@ class behavython_gui(QWidget):
         warning_message_function(title, text)
 
     def handle_resume_message(self, file_list):
-        debugpy.debug_this_thread()
         self.resume_message_function(file_list)
         
             
