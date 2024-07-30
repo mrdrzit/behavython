@@ -5,6 +5,7 @@ from PySide6 import QtCore, QtUiTools, QtGui
 from PySide6.QtWidgets import QWidget
 from PySide6 import QtWidgets, QtCore, QtUiTools, QtGui
 
+
 class behavython_gui(QWidget):
     """
     This class contains all the commands of the interface as well as the constructors of the
@@ -41,6 +42,21 @@ class behavython_gui(QWidget):
         self.interface.get_frames_button.clicked.connect(lambda: self.run_worker(get_frames_function, self))
         self.interface.clear_unused_files_button.clicked.connect(lambda: clear_unused_files_function(self))
 
+        # Data process tab
+        self.interface.get_config_path_data_process_button.clicked.connect(lambda: get_folder_path_function(self, "config_path_data_process"))
+        self.interface.get_frames_path_data_process_button.clicked.connect(lambda: get_folder_path_function(self, "videos_path_data_process"))
+        self.interface.get_videos_path_video_editing_button.clicked.connect(lambda: get_folder_path_function(self, "crop_path_video_editing"))
+        self.interface.get_source_folder_path_button_video_editing_button.clicked.connect(lambda: get_folder_path_function(self, "source_folder"))
+        self.interface.get_destination_folder_path_button_video_editing_button.clicked.connect(lambda: get_folder_path_function(self, "destination_folder"))
+        self.interface.convert_csv_to_h5_data_process_button.clicked.connect(lambda: self.run_worker(convert_csv_to_h5, self))
+        self.interface.analyze_frames_data_process_button.clicked.connect(lambda: self.run_worker(analyze_folder_with_frames, self))
+
+        # Video editing tab
+        self.interface.get_video_coordinates_video_editing_button.clicked.connect(lambda: self.run_worker(get_crop_coordinates, self))
+        self.interface.save_cropped_dimensions_video_editing_button.clicked.connect(lambda: save_crop_coordinates(self))
+        self.interface.crop_videos_button_video_editing_button.clicked.connect(lambda: self.run_worker(crop_videos, self))
+        self.interface.copy_files_with_robocopy_video_editing_button.clicked.connect(lambda: self.run_worker(copy_folder_robocopy, self))
+
     def resume_message_function(self, file_list):
         text = "Check the videos to be analyzed: "
         message = "The following files are going to be used for pose inference using DeepLabCut:\n\n" + "\n".join(
@@ -76,16 +92,22 @@ class behavython_gui(QWidget):
 
     def update_progress_bar(self, progress):
         self.progress_bar.setValue(progress)
-        
+
     def update_lineedit(self, values):
-        lineedit, text = values
-        if "resume_lineedit" in lineedit:
+        text, lineedit = values
+        if "resume_lineedit" == lineedit:
             self.interface.resume_lineedit.append(text)
-        elif "clear_unused_files_lineedit" in lineedit:
-            if "clear_lineedit" in text:
+        elif "log_data_process_lineedit" == lineedit:
+            self.interface.log_data_process_lineedit.append(text)
+        elif "clear_unused_files_lineedit" == lineedit:
+            if "clear_lineedit" == text:
                 self.interface.clear_unused_files_lineedit.clear()
             else:
                 self.interface.clear_unused_files_lineedit.append(text)
+        elif "log_video_editing_lineedit" == lineedit:
+            self.interface.log_video_editing_lineedit.append(text)
+        elif "log_data_process_lineedit" == lineedit:
+            self.interface.log_data_process_lineedit.append(text)
 
     def handle_warning_message(self, results):
         title, text = results
@@ -93,7 +115,7 @@ class behavython_gui(QWidget):
 
     def handle_resume_message(self, file_list):
         self.resume_message_function(file_list)
-            
+
     def load_configuration(self, progress_callback=None):
         config_path = file_selection_function(self)
         if not test_configuration_file(config_path):
@@ -104,6 +126,7 @@ class behavython_gui(QWidget):
             load_configuration_file(self, configuration)
             self.interface.resume_lineedit.setText("Configuration file loaded successfully!")
 
+
 def main():
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts)
     app = QtWidgets.QApplication(sys.argv)  # Create an instance of QtWidgets.QApplication
@@ -112,6 +135,7 @@ def main():
     startup = get_message()
     os.system(f"echo {startup}")
     app.exec()  # Start the application
+
 
 if __name__ == "__main__":
     show = main()

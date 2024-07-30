@@ -13,21 +13,307 @@ import base64
 import random
 import traceback
 import shutil
+from tqdm import tqdm
+import cv2
+import csv
+from PIL import Image
 import seaborn as sns
 from pathlib import Path
 from matplotlib import pyplot as plt
 from matplotlib.collections import LineCollection
 from scipy import stats
 from pathlib import Path
-from PySide6.QtWidgets import QMessageBox, QFileDialog, QDialog, QVBoxLayout, QLabel, QPushButton, QScrollArea, QWidget, QApplication
+from PySide6.QtWidgets import QMessageBox, QFileDialog, QDialog, QVBoxLayout, QLabel, QPushButton, QScrollArea, QWidget
 from PySide6.QtGui import QFontMetrics
 from PySide6.QtCore import QRunnable, Slot, Signal, QObject
 from tkinter import filedialog
 
-matplotlib.use('agg')
+import debugpy
+
+matplotlib.use("agg")
 DLC_ENABLE = True
 if DLC_ENABLE:
     import deeplabcut
+
+
+class CustomDialog(QDialog):
+    def __init__(self, text, info_text, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Warning")
+
+        layout = QVBoxLayout()
+
+        # Scroll area
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+
+        # Widget to hold the content
+        content_widget = QWidget()
+        content_layout = QVBoxLayout(content_widget)
+
+        label = QLabel(text)
+        info_label = QLabel(info_text)
+
+        content_layout.addWidget(label)
+        content_layout.addWidget(info_label)
+        scroll_area.setWidget(content_widget)
+
+        # Apply stylesheet to the scroll area and its viewport
+        scroll_area.setStyleSheet("QScrollArea {background-color:#353535; border:none;}")
+        scroll_area.viewport().setStyleSheet("background-color:#353535; border:none;")
+
+        layout.addWidget(scroll_area)
+
+        # Buttons
+        self.button_yes = QPushButton("    YES    ")
+        self.button_no = QPushButton("     NO      ")
+
+        self.button_yes.clicked.connect(self.accept)
+        self.button_no.clicked.connect(self.reject)
+
+        layout.addWidget(self.button_yes)
+        layout.addWidget(self.button_no)
+
+        self.setLayout(layout)
+
+        # StyleSheet
+        self.setStyleSheet(
+            "QDialog{background-color:#353535;}"  # Set dialog background
+            "QLabel{font:10pt 'DejaVu Sans'; font-weight:bold; color:#FFFFFF;}"  # Set label font and color
+            "QPushButton{width:52px; border:2px solid #A21F27; border-radius:8px; background-color:#2C53A1; color:#FFFFFF; font:10pt 'DejaVu Sans'; font-weight:bold;}"  # Set button style
+            "QPushButton:pressed{border:2px solid #A21F27; border-radius:8px; background-color:#A21F27; color:#FFFFFF;}"  # Set button pressed style
+        )
+
+        # Calculate the required width based on the longest line of text
+        font_metrics = QFontMetrics(info_label.font())
+        longest_line_width = max(font_metrics.horizontalAdvance(line) for line in info_text.split("\n"))
+        # Add some padding to the width
+        padding = 200
+        self.setFixedWidth(longest_line_width + padding)
+
+
+class files_class:
+    def __init__(self):
+        self.number = 0
+        self.directory = []
+        self.name = []
+
+    def add_files(self, selected_files):
+        for file in selected_files:
+            name = os.path.basename(file)[:-4]
+            if name not in self.name:
+                self.name.append(name)
+                self.number = self.number + 1
+                self.directory.append(file[:-4])
+
+
+class experiment_class:
+    """
+    This class declares each experiment and makes the necessary  calculations to
+    analyze the movement of the animal in the experimental box.
+
+    For each experiment one object of this class will be created and added in
+    a experiments list.
+    """
+
+    def __init__(self):
+        self.name = []  # Experiment name
+        self.data = []  # Experiment loaded data
+        self.last_frame = []  # Experiment last behavior video frame
+        self.directory = []  # Experiment directory
+
+
+class WorkerSignals(QObject):
+    """
+    Defines the signals available from a running worker thread.
+
+    Supported signals are:
+
+    finished
+        No data
+
+    error
+        tuple (exctype, value, traceback.format_exc() )
+
+    result
+        object data returned from processing, anything
+
+    """
+
+    finished = Signal()  # QtCore.Signal
+    error = Signal(tuple)
+    result = Signal(object)
+    progress = Signal(int)
+    finished = Signal()
+    text_signal = Signal(tuple)
+    warning_message = Signal(object)
+    resume_message = Signal(object)
+
+
+class Worker(QRunnable):
+    """
+    Worker thread
+
+    Inherits from QRunnable to handler worker thread setup, signals and wrap-up.
+
+    parameters:
+        fn: The function to run on this worker thread.
+        args: The arguments to pass to the function fn.
+        kwargs: The keyword arguments to pass to the function fn.
+
+    """
+
+    def __init__(self, function, *args, **kwargs):
+        super(Worker, self).__init__()
+        self.function = function
+        self.args = args
+        self.kwargs = kwargs
+        self.signals = WorkerSignals()
+        self.kwargs["progress"] = self.signals.progress
+        self.kwargs["text_signal"] = self.signals.text_signal
+        self.kwargs["warning_message"] = self.signals.warning_message
+        self.kwargs["resume_message"] = self.signals.resume_message
+
+    @Slot()
+    def run(self):
+        try:
+            result = self.function(*self.args, **self.kwargs)
+        except Exception as e:
+            traceback.print_exc()
+            self.signals.error.emit((type(e), str(e), traceback.format_exc()))
+        else:
+            self.signals.result.emit((result, self.args[0]))
+        finally:
+            self.signals.finished.emit()
+
+
+class video_editing_tool:
+    """
+    A class that represents a video editing tool.
+
+    Attributes:
+        image_list (list): A list of image paths.
+        image_names (list): A list of image names.
+        modified_images (set): A set of image names that have been modified.
+        image_dictionary (dict): A dictionary mapping image names to image data.
+        crop_coordinates (dict): A dictionary mapping image names to crop coordinates.
+        coordinate (list): A list to store the coordinates of a point.
+
+    Methods:
+        load_images(): Loads the images from the image list.
+        is_image_modified(image_name): Checks if an image has been modified.
+        get_modified_images(): Returns the set of modified image names.
+        set_coordinates(event, x, y, _, __): Sets the coordinates of a point.
+        process_images(): Processes the images and extracts crop coordinates.
+    """
+
+    def __init__(self, image_list=[], image_names=[]):
+        self.image_list = image_list
+        self.image_names = image_names
+        self.modified_images = set()
+        self.image_dictionary, self.crop_coordinates = self.load_images()
+        self.coordinate = None
+
+    def load_images(self):
+        """
+        Loads the images from the image list.
+
+        Returns:
+            image_data (dict): A dictionary mapping image names to image data.
+            coordinates (dict): A dictionary mapping image names to None.
+        """
+        image_data = []
+        for image in self.image_list:
+            image = Image.open(image)
+            image_data.append(np.array(image))
+        image_data = dict(zip(self.image_names, image_data))
+        coordinates = dict(zip(self.image_names, [None] * len(self.image_names)))
+        return image_data, coordinates
+
+    def is_image_modified(self, image_name):
+        """
+        Checks if an image has been modified.
+
+        Parameters:
+            image_name (str): The name of the image.
+
+        Returns:
+            bool: True if the image has been modified, False otherwise.
+        """
+        return image_name in self.modified_images
+
+    def get_modified_images(self):
+        """
+        Returns the set of modified image names.
+
+        Returns:
+            set: The set of modified image names.
+        """
+        return self.modified_images
+
+    def set_coordinates(self, event, x, y, _, __):
+        """
+        Sets the coordinates of a point.
+
+        Parameters:
+            event: The event type.
+            x (int): The x-coordinate of the point.
+            y (int): The y-coordinate of the point.
+            _:
+            __:
+        """
+        if event == cv2.EVENT_LBUTTONDOWN:
+            self.current_image = self.original_image.copy()
+            cv2.drawMarker(
+                self.current_image,
+                (x, y),
+                (0, 0, 255),
+                markerType=cv2.MARKER_CROSS,
+                markerSize=20,
+                thickness=2,
+            )
+            cv2.imshow(self.current_image_name, self.current_image)
+            self.coordinate = [x, y]
+
+    def process_images(self):
+        """
+        Processes the images and extracts crop coordinates.
+        """
+        total_images = len(self.image_dictionary)
+        for image_name, image_data in tqdm(self.image_dictionary.items(), total=total_images, desc="Processing Images"):
+            current_point = [None, None]
+            if not image_name.lower().endswith((".png", ".jpg", ".jpeg")):
+                print(f"[ERROR]: {image_name} is not a valid image file. Check the files supplied to the function.")
+            elif self.is_image_modified(image_name):
+                print(f"Skipping {image_name} as it has already been used.")
+            else:
+                self.current_image_name = image_name
+                self.original_image = image_data  # Store the current image
+                self.current_image = self.original_image.copy()
+                cv2.namedWindow(self.current_image_name)
+                cv2.moveWindow(self.current_image_name, 20, 20)
+                cv2.setMouseCallback(self.current_image_name, self.set_coordinates)
+
+                for i in range(2):
+                    window_title = f"Click on the {'origin' if i == 0 else 'end'} point in image: {image_name}. Press any key to continue."
+                    cv2.setWindowTitle(self.current_image_name, window_title)
+
+                    while True:
+                        cv2.imshow(self.current_image_name, self.current_image)
+                        if cv2.waitKey(0):
+                            current_point[i] = self.coordinate
+                            break
+                origin_x = current_point[0][0]
+                origin_y = current_point[0][1]
+                heigth = abs(current_point[0][1] - current_point[1][1])
+                width = abs(current_point[0][0] - current_point[1][0])
+                print(f"Origin: ({origin_x}, {origin_y})\nHeight: {heigth}\nWidth: {width}")
+                self.modified_images.add(image_name)
+                self.crop_coordinates[image_name] = (origin_x, origin_y, heigth, width)
+                cv2.destroyAllWindows()
+        print(f"Processed {len(self.modified_images)} images.")
+
+
 class DataFiles:
     """
     This class organizes the files to be analyzed in separate dictionaries for each type of file
@@ -61,6 +347,7 @@ class DataFiles:
 
     def add_roi_file(self, key, file):
         self.roi_files[key] = file
+
 
 class Animal:
     """
@@ -300,6 +587,7 @@ class Animal:
         """
         return self.animal_jpg.shape
 
+
 def get_unique_names(file_list, regex):
     """
     get_unique_names generates a list of unique names from a list of files
@@ -331,6 +619,7 @@ def get_unique_names(file_list, regex):
 
     return names
 
+
 def get_files(line_edit, data: DataFiles, animal_list: list):
     """
     get_files organizes que files to be analyzed in separate dictionaries for each type of file
@@ -346,7 +635,9 @@ def get_files(line_edit, data: DataFiles, animal_list: list):
     file_explorer = tk.Tk()
     file_explorer.withdraw()
     file_explorer.call("wm", "attributes", ".", "-topmost", True)
-    data_files = filedialog.askopenfilename(title="Select the files to analyze", multiple=True, filetypes=[("DLC Analysis files", "*filtered.csv *filtered_skeleton.csv *_roi.csv *.jpg *.png *.jpeg")])
+    data_files = filedialog.askopenfilename(
+        title="Select the files to analyze", multiple=True, filetypes=[("DLC Analysis files", "*filtered.csv *filtered_skeleton.csv *_roi.csv *.jpg *.png *.jpeg")]
+    )
 
     ## Uncomment the following lines to test the code without the GUI
     # data_files = [
@@ -375,9 +666,7 @@ def get_files(line_edit, data: DataFiles, animal_list: list):
                     line_edit.append("Position file found for " + animal)
                     data.add_pos_file(animal, file)
                     continue
-                if (file.endswith(".jpg") or file.endswith(".png") or file.endswith(".jpeg")) and not data.experiment_images.get(
-                    animal
-                ):
+                if (file.endswith(".jpg") or file.endswith(".png") or file.endswith(".jpeg")) and not data.experiment_images.get(animal):
                     line_edit.append("Image file found for " + animal)
                     data.add_image_file(animal, file)
                     continue
@@ -400,6 +689,7 @@ def get_files(line_edit, data: DataFiles, animal_list: list):
             animal_list[exp_number].add_skeleton(bone)
 
     return data_files
+
 
 def angle_between_lines(line1, line2, origin):
     """
@@ -438,6 +728,7 @@ def angle_between_lines(line1, line2, origin):
     # Convert to degrees and return
     return math.degrees(angle)
 
+
 def line_trough_triangle_vertex(A, B, C):
     """
     line_trough_triangle_vertex Returns the points of a line passing through the center of the triangle's `A` vertex
@@ -461,8 +752,10 @@ def line_trough_triangle_vertex(A, B, C):
 
     return P, Q
 
+
 def sign(x):
     return -1 if x < 0 else 1
+
 
 def detect_collision(line_segment_start, line_segment_end, circle_center, circle_radius):
     """Detects intersections between a line segment and a circle.
@@ -486,66 +779,43 @@ def detect_collision(line_segment_start, line_segment_end, circle_center, circle
     line_segment_delta_y = line_end_y_relative_to_circle - line_start_y_relative_to_circle
 
     line_segment_length = math.sqrt(line_segment_delta_x * line_segment_delta_x + line_segment_delta_y * line_segment_delta_y)
-    discriminant_numerator = (
-        line_start_x_relative_to_circle * line_end_y_relative_to_circle
-        - line_end_x_relative_to_circle * line_start_y_relative_to_circle
-    )
-    discriminant = (
-        circle_radius * circle_radius * line_segment_length * line_segment_length
-        - discriminant_numerator * discriminant_numerator
-    )
+    discriminant_numerator = line_start_x_relative_to_circle * line_end_y_relative_to_circle - line_end_x_relative_to_circle * line_start_y_relative_to_circle
+    discriminant = circle_radius * circle_radius * line_segment_length * line_segment_length - discriminant_numerator * discriminant_numerator
     if discriminant < 0:
         return []
     if discriminant == 0:
         intersection_point_1_x = (discriminant_numerator * line_segment_delta_y) / (line_segment_length * line_segment_length)
         intersection_point_1_y = (-discriminant_numerator * line_segment_delta_x) / (line_segment_length * line_segment_length)
-        parameterization_a = (
-            intersection_point_1_x - line_start_x_relative_to_circle
-        ) * line_segment_delta_x / line_segment_length + (
+        parameterization_a = (intersection_point_1_x - line_start_x_relative_to_circle) * line_segment_delta_x / line_segment_length + (
             intersection_point_1_y - line_start_y_relative_to_circle
         ) * line_segment_delta_y / line_segment_length
-        return (
-            [(intersection_point_1_x + circle_center[0], intersection_point_1_y + circle_center[1])]
-            if 0 < parameterization_a < line_segment_length
-            else []
-        )
+        return [(intersection_point_1_x + circle_center[0], intersection_point_1_y + circle_center[1])] if 0 < parameterization_a < line_segment_length else []
 
-    intersection_point_1_x = (
-        discriminant_numerator * line_segment_delta_y
-        + sign(line_segment_delta_y) * line_segment_delta_x * math.sqrt(discriminant)
-    ) / (line_segment_length * line_segment_length)
-    intersection_point_1_y = (
-        -discriminant_numerator * line_segment_delta_x + abs(line_segment_delta_y) * math.sqrt(discriminant)
-    ) / (line_segment_length * line_segment_length)
-    parameterization_a = (
-        intersection_point_1_x - line_start_x_relative_to_circle
-    ) * line_segment_delta_x / line_segment_length + (
+    intersection_point_1_x = (discriminant_numerator * line_segment_delta_y + sign(line_segment_delta_y) * line_segment_delta_x * math.sqrt(discriminant)) / (
+        line_segment_length * line_segment_length
+    )
+    intersection_point_1_y = (-discriminant_numerator * line_segment_delta_x + abs(line_segment_delta_y) * math.sqrt(discriminant)) / (
+        line_segment_length * line_segment_length
+    )
+    parameterization_a = (intersection_point_1_x - line_start_x_relative_to_circle) * line_segment_delta_x / line_segment_length + (
         intersection_point_1_y - line_start_y_relative_to_circle
     ) * line_segment_delta_y / line_segment_length
-    intersection_points = (
-        [(intersection_point_1_x + circle_center[0], intersection_point_1_y + circle_center[1])]
-        if 0 < parameterization_a < line_segment_length
-        else []
-    )
+    intersection_points = [(intersection_point_1_x + circle_center[0], intersection_point_1_y + circle_center[1])] if 0 < parameterization_a < line_segment_length else []
 
-    intersection_point_2_x = (
-        discriminant_numerator * line_segment_delta_y
-        - sign(line_segment_delta_y) * line_segment_delta_x * math.sqrt(discriminant)
-    ) / (line_segment_length * line_segment_length)
-    intersection_point_2_y = (
-        -discriminant_numerator * line_segment_delta_x - abs(line_segment_delta_y) * math.sqrt(discriminant)
-    ) / (line_segment_length * line_segment_length)
-    parameterization_b = (
-        intersection_point_2_x - line_start_x_relative_to_circle
-    ) * line_segment_delta_x / line_segment_length + (
+    intersection_point_2_x = (discriminant_numerator * line_segment_delta_y - sign(line_segment_delta_y) * line_segment_delta_x * math.sqrt(discriminant)) / (
+        line_segment_length * line_segment_length
+    )
+    intersection_point_2_y = (-discriminant_numerator * line_segment_delta_x - abs(line_segment_delta_y) * math.sqrt(discriminant)) / (
+        line_segment_length * line_segment_length
+    )
+    parameterization_b = (intersection_point_2_x - line_start_x_relative_to_circle) * line_segment_delta_x / line_segment_length + (
         intersection_point_2_y - line_start_y_relative_to_circle
     ) * line_segment_delta_y / line_segment_length
     intersection_points += (
-        [(intersection_point_2_x + circle_center[0], intersection_point_2_y + circle_center[1])]
-        if 0 < parameterization_b < line_segment_length
-        else []
+        [(intersection_point_2_x + circle_center[0], intersection_point_2_y + circle_center[1])] if 0 < parameterization_b < line_segment_length else []
     )
     return intersection_points
+
 
 def warning_message_function(title, text):
     warning = QMessageBox()  # Create the message box
@@ -561,6 +831,7 @@ def warning_message_function(title, text):
     )
     warning.setStandardButtons(QMessageBox.StandardButton.Ok)  # Message box buttons
     warning.exec()
+
 
 def folder_structure_check_function(self):
     self.interface.clear_unused_files_lineedit.clear()
@@ -585,9 +856,7 @@ def folder_structure_check_function(self):
             return False
     # Check if dlc-models contains at least one iteration folder
     dlc_models_path = os.path.join(folder_path, "dlc-models")
-    iteration_folders = [
-        f for f in os.listdir(dlc_models_path) if os.path.isdir(os.path.join(dlc_models_path, f)) and f.startswith("iteration-")
-    ]
+    iteration_folders = [f for f in os.listdir(dlc_models_path) if os.path.isdir(os.path.join(dlc_models_path, f)) and f.startswith("iteration-")]
     if not iteration_folders:
         self.interface.clear_unused_files_lineedit.append("There are no iteration folders in dlc-models.")
         return False
@@ -626,16 +895,21 @@ def folder_structure_check_function(self):
     self.interface.clear_unused_files_lineedit.append("The folder structure is correct.")
     return True
 
+
 def dlc_video_analyze_function(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
     text_signal.emit(("clear_unused_files_lineedit", "clear_lineedit"))
     if DLC_ENABLE:
-        text_signal.emit(("clear_unused_files_lineedit", f"Using DeepLabCut version {deeplabcut.__version__}"))
+        text_signal.emit((f"Using DeepLabCut version {deeplabcut.__version__}", "clear_unused_files_lineedit"))
     config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
     videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
     if (config_path == "") or (videos == ""):
-        text_signal.emit(("clear_unused_files_lineedit", "Both the config file and the videos folder must be selected."))
+        text_signal.emit(("Both the config file and the videos folder must be selected.", "clear_unused_files_lineedit"))
         return
-    video_list = [os.path.join(videos, file) for file in os.listdir(videos) if file.endswith(".mp4") or file.endswith(".avi") or file.endswith(".mov") or file.endswith(".mkv") or file.endswith(".flv") or file.endswith(".webm")]
+    video_list = [
+        os.path.join(videos, file)
+        for file in os.listdir(videos)
+        if file.endswith(".mp4") or file.endswith(".avi") or file.endswith(".mov") or file.endswith(".mkv") or file.endswith(".flv") or file.endswith(".webm")
+    ]
     file_extension = False
     valid_extensions = [".mp4", ".avi", ".mov"]
     invalid_files = [file for file in video_list if not any(file.endswith(ext) for ext in valid_extensions)]
@@ -655,16 +929,16 @@ def dlc_video_analyze_function(self, text_signal=None, progress=None, warning_me
 
     continue_analysis = self.resume_message_function(video_list)
     if not continue_analysis:
-        text_signal.emit(("clear_unused_files_lineedit", "clear_lineedit"))
-        text_signal.emit(("clear_unused_files_lineedit", "Analysis canceled."))
+        text_signal.emit(("clear_lineedit", "clear_unused_files_lineedit"))
+        text_signal.emit(("Analysis canceled.", "clear_unused_files_lineedit"))
         return
-    text_signal.emit(("clear_unused_files_lineedit", "Analyzing videos..."))
+    text_signal.emit(("Analyzing videos...", "clear_unused_files_lineedit"))
     list_of_videos = [file for file in video_list]
     if DLC_ENABLE:
-        deeplabcut.analyze_videos(config_path,list_of_videos,videotype=file_extension,shuffle=1,trainingsetindex=0,gputouse=0,allow_growth=True,save_as_csv=True)
-    text_signal.emit(("clear_unused_files_lineedit", "Done analyzing videos."))
+        deeplabcut.analyze_videos(config_path, list_of_videos, videotype=file_extension, shuffle=1, trainingsetindex=0, gputouse=0, allow_growth=True, save_as_csv=True)
+    text_signal.emit(("Done analyzing videos.", "clear_unused_files_lineedit"))
 
-    text_signal.emit(("clear_unused_files_lineedit", "Filtering data files and saving as CSV..."))
+    text_signal.emit(("Filtering data files and saving as CSV...", "clear_unused_files_lineedit"))
     if DLC_ENABLE:
         deeplabcut.filterpredictions(
             config_path,
@@ -680,7 +954,7 @@ def dlc_video_analyze_function(self, text_signal=None, progress=None, warning_me
             alpha=0.01,
             save_as_csv=True,
         )
-    
+
     if DLC_ENABLE:
         deeplabcut.plot_trajectories(
             config_path,
@@ -691,12 +965,13 @@ def dlc_video_analyze_function(self, text_signal=None, progress=None, warning_me
         )
     if DLC_ENABLE:
         os.rename(os.path.join(videos, "plot-poses"), os.path.join(videos, "accuracy_check_plots"))
-    
-    text_signal.emit(("clear_unused_files_lineedit", "Plots to visualize prediction accuracy were saved."))
-    text_signal.emit(("clear_unused_files_lineedit", "Done filtering data files"))
+
+    text_signal.emit(("Plots to visualize prediction accuracy were saved.", "clear_unused_files_lineedit"))
+    text_signal.emit(("Done filtering data files", "clear_unused_files_lineedit"))
+
 
 def get_frames_function(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
-    text_signal.emit(("clear_unused_files_lineedit", "clear_lineedit"))
+    text_signal.emit(("clear_lineedit", "clear_unused_files_lineedit"))
     videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
     _, _, file_list = [entry for entry in os.walk(videos)][0]
     video_list = [os.path.join(videos, file) for file in os.listdir(videos) if file.endswith(".mp4") or file.endswith(".avi") or file.endswith(".mov")]
@@ -722,25 +997,28 @@ def get_frames_function(self, text_signal=None, progress=None, warning_message=N
             video_path = os.path.join(videos, filename)
             output_path = os.path.splitext(video_path)[0] + ".jpg"
             if not os.path.isfile(output_path):
-                text_signal.emit(("clear_unused_files_lineedit", f"Getting a frame of {filename}"))
+                text_signal.emit((f"Getting a frame of {filename}", "clear_unused_files_lineedit"))
                 subprocess.run(
                     "ffmpeg -sseof -1000 -i " + '"' + video_path + '"' + " -update 1 -q:v 1 " + '"' + output_path + '"',
                     shell=True,
                 )
             else:
-                text_signal.emit(("clear_unused_files_lineedit", f"Last frame of {filename} already exists."))
+                text_signal.emit((f"Last frame of {filename} already exists.", "clear_unused_files_lineedit"))
     pass
 
+
 def extract_skeleton_function(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
-    text_signal.emit(("clear_unused_files_lineedit", "clear_lineedit"))
+    text_signal.emit(("clear_lineedit", "clear_unused_files_lineedit"))
     if DLC_ENABLE:
-        self.interface.clear_unused_files_lineedit.append(f"Using DeepLabCut version {deeplabcut.__version__}")
+        text_signal.emit(("Using DeepLabCut version " + deeplabcut.__version__, "clear_unused_files_lineedit"))
+        # self.interface.clear_unused_files_lineedit.append(f"Using DeepLabCut version {deeplabcut.__version__}")
     config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
     videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
 
-    text_signal.emit(("clear_unused_files_lineedit", "Extracting skeleton..."))
+    text_signal.emit(("Extracting skeleton...", "clear_unused_files_lineedit"))
     deeplabcut.analyzeskeleton(config_path, videos, shuffle=1, trainingsetindex=0, filtered=True, save_as_csv=True)
-    text_signal.emit(("clear_unused_files_lineedit", "Done extracting skeleton."))
+    text_signal.emit(("Done extracting skeleton.", "clear_unused_files_lineedit"))
+
 
 def clear_unused_files_function(self):
     self.interface.clear_unused_files_lineedit.clear()
@@ -759,13 +1037,7 @@ def clear_unused_files_function(self):
 
     for file in file_list:
         file_path = os.path.join(videos, file)
-        if (
-            file.endswith(file_extension)
-            or file.endswith(".png")
-            or file.endswith(".jpg")
-            or file.endswith(".tiff")
-            or "roi" in file
-        ):
+        if file.endswith(file_extension) or file.endswith(".png") or file.endswith(".jpg") or file.endswith(".tiff") or "roi" in file:
             continue
         if file.endswith(".h5") or file.endswith(".pickle") or "filtered" not in file:
             shutil.move(file_path, os.path.join(unwanted_folder, file))
@@ -841,32 +1113,68 @@ def clear_unused_files_function(self):
 
     title = "Missing files"
     message = "The following files are missing:\n\n" + "\n".join(
-        missing_files
-        + [
-            "\nPlease, these files are essential for the analysis to work.\nCheck the analysis folder before continuing with the analysis."
-        ]
+        missing_files + ["\nPlease, these files are essential for the analysis to work.\nCheck the analysis folder before continuing with the analysis."]
     )
     warning_message_function(title, message)
 
+
 def get_folder_path_function(self, lineedit_name):
-    if lineedit_name == "config_path":
+    if "config_path" == lineedit_name.lower():
         file_explorer = tk.Tk()
         file_explorer.withdraw()
         file_explorer.call("wm", "attributes", ".", "-topmost", True)
         config_file = str(Path(filedialog.askopenfilename(title="Select the config.yaml file", multiple=False)))
         self.interface.config_path_lineedit.setText(config_file)
-    elif lineedit_name == "videos_path":
+    elif "videos_path" == lineedit_name.lower():
         file_explorer = tk.Tk()
         file_explorer.withdraw()
         file_explorer.call("wm", "attributes", ".", "-topmost", True)
         folder = str(Path(filedialog.askdirectory(title="Select the folder", mustexist=True)))
         self.interface.video_folder_lineedit.setText(folder)
+    elif "config_path_data_process" == lineedit_name.lower():
+        file_explorer = tk.Tk()
+        file_explorer.withdraw()
+        file_explorer.call("wm", "attributes", ".", "-topmost", True)
+        config_file = str(Path(filedialog.askopenfilename(title="Select the config.yaml file", multiple=False)))
+        self.interface.config_path_data_process_lineedit.setText(config_file)
+    elif "videos_path_data_process" == lineedit_name.lower():
+        file_explorer = tk.Tk()
+        file_explorer.withdraw()
+        file_explorer.call("wm", "attributes", ".", "-topmost", True)
+        folder = str(Path(filedialog.askdirectory(title="Select the folder", mustexist=True)))
+        self.interface.video_folder_data_process_lineedit.setText(folder)
+    elif "crop_path" == lineedit_name.lower():
+        file_explorer = tk.Tk()
+        file_explorer.withdraw()
+        file_explorer.call("wm", "attributes", ".", "-topmost", True)
+        folder = str(Path(filedialog.askdirectory(title="Select the folder", mustexist=True)))
+        self.interface.videos_to_crop_folder_lineedit.setText(folder)
+    elif "crop_path_video_editing" == lineedit_name.lower():
+        file_explorer = tk.Tk()
+        file_explorer.withdraw()
+        file_explorer.call("wm", "attributes", ".", "-topmost", True)
+        folder = str(Path(filedialog.askdirectory(title="Select the folder", mustexist=True)))
+        self.interface.videos_to_crop_folder_video_editing_lineedit.setText(folder)
+    elif "source_folder" == lineedit_name.lower():
+        file_explorer = tk.Tk()
+        file_explorer.withdraw()
+        file_explorer.call("wm", "attributes", ".", "-topmost", True)
+        folder = str(Path(filedialog.askdirectory(title="Select the source folder", mustexist=True)))
+        self.interface.source_folder_path_video_editing_lineedit.setText(folder)
+    elif "destination_folder" == lineedit_name.lower():
+        file_explorer = tk.Tk()
+        file_explorer.withdraw()
+        file_explorer.call("wm", "attributes", ".", "-topmost", True)
+        folder = str(Path(filedialog.askdirectory(title="Select the destination folder", mustexist=True)))
+        self.interface.destination_folder_path_video_editing_lineedit.setText(folder)
+
 
 def check_roi_files(roi):
     extracted_data = pd.read_csv(roi, sep=",")
     must_have = ["x", "y", "width", "height"]
     header = extracted_data.columns.to_frame().applymap(str.lower).to_numpy()
     return all(elem in header for elem in must_have)
+
 
 def create_frequency_grid(x_values, y_values, bin_size, analysis_range, *extra_data):
     """
@@ -920,6 +1228,7 @@ def create_frequency_grid(x_values, y_values, bin_size, analysis_range, *extra_d
 
     return grid
 
+
 def options_to_configuration(configuration):
     # Define mapping for key conversions
     options_to_configuration = {
@@ -934,9 +1243,9 @@ def options_to_configuration(configuration):
         "save_folder": "Saved data folder",
         "task_duration": "Task Duration",
         "threshold": "Experimental Animal",
-        "trim_amount": "Amount to trim"
+        "trim_amount": "Amount to trim",
     }
-    
+
     # Perform key conversions
     converted_data = {}
     for old_key, new_key in options_to_configuration.items():
@@ -951,20 +1260,21 @@ def options_to_configuration(configuration):
 
     return converted_data
 
+
 def configuration_to_options(configuration):
     configuration_to_options = {
-        'Algorithm Type': 'algo_type',
-        'Arena height': 'arena_height',
-        'Arena width': 'arena_width',
-        'Crop video': 'crop_video',
-        'Experiment Type': 'experiment_type',
-        'Video framerate': 'frames_per_second',
-        'Plot resolution': 'max_fig_res',
-        'Plot option': 'plot_options',
-        'Saved data folder': 'save_folder',
-        'Task Duration': 'task_duration',
-        'Experimental Animal': 'threshold',
-        'Amount to trim': 'trim_amount'
+        "Algorithm Type": "algo_type",
+        "Arena height": "arena_height",
+        "Arena width": "arena_width",
+        "Crop video": "crop_video",
+        "Experiment Type": "experiment_type",
+        "Video framerate": "frames_per_second",
+        "Plot resolution": "max_fig_res",
+        "Plot option": "plot_options",
+        "Saved data folder": "save_folder",
+        "Task Duration": "task_duration",
+        "Experimental Animal": "threshold",
+        "Amount to trim": "trim_amount",
     }
 
     # Perform key conversions
@@ -981,6 +1291,7 @@ def configuration_to_options(configuration):
 
     return converted_data
 
+
 def test_configuration_file(config_path):
     try:
         with open(config_path, "r") as file:
@@ -988,68 +1299,15 @@ def test_configuration_file(config_path):
             return configuration
     except:
         return False
-    
+
+
 def file_selection_function(self):
     file_dialog = QFileDialog(self.interface)
     file_dialog.setNameFilter("JSON files (*.json)")
     file_dialog.setWindowTitle("Select a configuration file")
     if file_dialog.exec():
         return file_dialog.selectedFiles()[0]
-    
-class CustomDialog(QDialog):
-    def __init__(self, text, info_text, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Warning")
 
-        layout = QVBoxLayout()
-
-        # Scroll area
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        
-        # Widget to hold the content
-        content_widget = QWidget()
-        content_layout = QVBoxLayout(content_widget)
-
-        label = QLabel(text)
-        info_label = QLabel(info_text)
-
-        content_layout.addWidget(label)
-        content_layout.addWidget(info_label)
-        scroll_area.setWidget(content_widget)
-        
-        # Apply stylesheet to the scroll area and its viewport
-        scroll_area.setStyleSheet("QScrollArea {background-color:#353535; border:none;}")
-        scroll_area.viewport().setStyleSheet("background-color:#353535; border:none;")
-
-        layout.addWidget(scroll_area)
-
-        # Buttons
-        self.button_yes = QPushButton("    YES    ")
-        self.button_no = QPushButton("     NO      ")
-
-        self.button_yes.clicked.connect(self.accept)
-        self.button_no.clicked.connect(self.reject)
-
-        layout.addWidget(self.button_yes)
-        layout.addWidget(self.button_no)
-
-        self.setLayout(layout)
-
-        # StyleSheet
-        self.setStyleSheet(
-            "QDialog{background-color:#353535;}"  # Set dialog background
-            "QLabel{font:10pt 'DejaVu Sans'; font-weight:bold; color:#FFFFFF;}"  # Set label font and color
-            "QPushButton{width:52px; border:2px solid #A21F27; border-radius:8px; background-color:#2C53A1; color:#FFFFFF; font:10pt 'DejaVu Sans'; font-weight:bold;}"  # Set button style
-            "QPushButton:pressed{border:2px solid #A21F27; border-radius:8px; background-color:#A21F27; color:#FFFFFF;}"  # Set button pressed style
-        )
-
-        # Calculate the required width based on the longest line of text
-        font_metrics = QFontMetrics(info_label.font())
-        longest_line_width = max(font_metrics.horizontalAdvance(line) for line in info_text.split('\n'))
-        # Add some padding to the width
-        padding = 200
-        self.setFixedWidth(longest_line_width + padding)
 
 def run_analysis(self):
     line_edit = self.interface.resume_lineedit
@@ -1066,10 +1324,6 @@ def run_analysis(self):
             progress.emit(round(((i + 1) / len(experiments)) * 100))
             if options["plot_options"] == "plotting_enabled":
                 plot_analysis_social_behavior(experiment, analysis_results, options, recent_folder.text())
-            config_file_path = options["save_folder"] + "/analysis_configuration.json"
-            config_json = options_to_configuration(options)
-            with open(config_file_path, "w") as config_file:
-                json.dump(config_json, config_file, indent=4, sort_keys=True)
         return results_data_frame
 
     # Create and start the worker
@@ -1077,8 +1331,9 @@ def run_analysis(self):
     analysis_worker.signals.progress.connect(self.update_progress_bar)
     analysis_worker.signals.result.connect(handle_results)
     analysis_worker.signals.error.connect(handle_error)
-    analysis_worker.signals.finished.connect(on_worker_finished)
+    analysis_worker.signals.finished.connect(lambda: on_worker_finished(options))
     self.threadpool.start(analysis_worker)
+
 
 def handle_results(results):
     try:
@@ -1088,14 +1343,21 @@ def handle_results(results):
         os.system("cls")
         print("Error saving results")
 
+
 def handle_error(error_info):
     exctype, value, traceback_str = error_info
     print(f"Error: {value}")
 
-def on_worker_finished():
+
+def on_worker_finished(options):
+    config_file_path = options["save_folder"] + "/analysis_configuration.json"
+    config_json = options_to_configuration(options)
+    with open(config_file_path, "w") as config_file:
+        json.dump(config_json, config_file, indent=4, sort_keys=True)
     text = "Analysis completed successfully."
     title = "Analysis completed"
     warning_message_function(title, text)
+
 
 def get_options(self):
     options = {}
@@ -1118,6 +1380,7 @@ def get_options(self):
 
     return options
 
+
 def clear_interface(self):
     self.options = {}
     self.interface.arena_width_lineedit.setText("30")
@@ -1134,6 +1397,7 @@ def clear_interface(self):
     self.interface.fig_max_size.setCurrentIndex(1)
     self.interface.plot_data_checkbox.setChecked(True)
 
+
 def load_configuration_file(self, configuration={}):
     if configuration:
         if configuration["Experiment Type"].lower().strip().replace(" ", "_") == "njr":
@@ -1148,7 +1412,7 @@ def load_configuration_file(self, configuration={}):
             warning_message_function("Configuration file", "The file selected is not a valid configuration file.\n Please, select a valid experiment type.")
             clear_interface(self)
             return
-        
+
         if configuration["Algorithm Type"].lower().strip().replace(" ", "_") == "deeplabcut":
             self.interface.algo_type_combobox.setCurrentIndex(0)
         elif configuration["Algorithm Type"].lower().strip().replace(" ", "_") == "bonsai":
@@ -1157,41 +1421,47 @@ def load_configuration_file(self, configuration={}):
             warning_message_function("Configuration file", "The file selected is not a valid configuration file.\n Please, select a valid algorithm type.")
             clear_interface(self)
             return
-        
+
         if configuration["Arena width"] > 0 and configuration["Arena width"] < 650:
             self.interface.arena_width_lineedit.setText(str(int(configuration["Arena width"])))
         else:
             warning_message_function("Configuration file", "The file selected is not a valid configuration file.\n Please, select a valid arena width.")
             clear_interface(self)
             return
-        
+
         if configuration["Arena height"] > 0 and configuration["Arena height"] < 650:
             self.interface.arena_height_lineedit.setText(str(int(configuration["Arena height"])))
         else:
             warning_message_function("Configuration file", "The file selected is not a valid configuration file.\n Please, select a valid arena height.")
             clear_interface(self)
             return
-        
+
         if configuration["Video framerate"] > 0 and configuration["Video framerate"] < 240:
             self.interface.frames_per_second_lineedit.setText(str(int(configuration["Video framerate"])))
         else:
             warning_message_function("Configuration file", "The file selected is not a valid configuration file.\n Please, select a valid number of frames per second.")
             clear_interface(self)
             return
-        
+
         if configuration["Experimental Animal"].lower().strip().replace(" ", "_") == "mouse":
             self.interface.animal_combobox.setCurrentIndex(0)
         elif configuration["Experimental Animal"].lower().strip().replace(" ", "_") == "rat":
             self.interface.animal_combobox.setCurrentIndex(1)
         else:
-            warning_message_function("Configuration file", "The file selected is not a valid configuration file.\n Please, select a valid experimental animal.\n We support mice and rats at the time.")
+            warning_message_function(
+                "Configuration file",
+                "The file selected is not a valid configuration file.\n Please, select a valid experimental animal.\n We support mice and rats at the time.",
+            )
             clear_interface(self)
             return
 
         if configuration["Task Duration"] > 0 and configuration["Task Duration"] < 86400:
             self.interface.task_duration_lineedit.setText(str(int(configuration["Task Duration"])))
         else:
-            warning_message_function("Configuration file", "The file selected is not a valid configuration file.\n Please, select a valid task duration. We support up to 24 hours of task duration.")
+            warning_message_function(
+                "Configuration file",
+                "The file selected is not a valid configuration file.\n Please, select a valid task duration. We support up to 24 hours of task duration.",
+            )
             clear_interface(self)
             return
 
@@ -1200,13 +1470,15 @@ def load_configuration_file(self, configuration={}):
             clear_interface(self)
             return
         elif configuration["Amount to trim"] > configuration["Task Duration"]:
-            warning_message_function("Configuration file", "The file selected is not a valid configuration file.\n Please, select a trim amount smaller than the task duration.")
+            warning_message_function(
+                "Configuration file", "The file selected is not a valid configuration file.\n Please, select a trim amount smaller than the task duration."
+            )
             clear_interface(self)
             return
         else:
             self.interface.crop_video_time_lineedit.setText(str(int(configuration["Amount to trim"])))
 
-        resolutions = [['640', '480'], ['1280', '720'], ['1920', '1080'], ['2560', '1440']]
+        resolutions = [["640", "480"], ["1280", "720"], ["1920", "1080"], ["2560", "1440"]]
         if configuration["Plot resolution"] in resolutions:
             self.interface.fig_max_size.setCurrentIndex(resolutions.index(configuration["Plot resolution"]))
         else:
@@ -1236,6 +1508,7 @@ def load_configuration_file(self, configuration={}):
         clear_interface(self)
         return
 
+
 def get_experiments(self, line_edit, recent_analysis_folder_line_edit, algo_type="deeplabcut"):
     if algo_type == "deeplabcut":
         data = DataFiles()
@@ -1258,7 +1531,8 @@ def get_experiments(self, line_edit, recent_analysis_folder_line_edit, algo_type
             return experiments, selected_folder_to_save, error, inexistent_file
     recent_analysis_folder_line_edit.setText(selected_folder_to_save)
     return experiments, selected_folder_to_save, error, inexistent_file
-    
+
+
 def video_analyse(self, options, animal=None):
     if options["algo_type"] == "deeplabcut":
         collision_data = []
@@ -1309,8 +1583,12 @@ def video_analyse(self, options, animal=None):
                 # TODO: #42 Add a warning message when the user sets a trim amount that is too high.
                 print("\n")
                 print(f"---------------------- WARNING FOR ANIMAL {animal.name} ----------------------")
-                print(f"The trim amount set is too high for the animal {animal.name}.\nThe analysis for this video will be done from {int(trim_amount/frames_per_second)} to {max_analysis_time} seconds.")
-                print(f"At the end of the analysis you should check if the analysis is coherent with the animal's behavior.\nIf it's not, redo the analysis with a lower trim amount for this animal: {animal.name}")
+                print(
+                    f"The trim amount set is too high for the animal {animal.name}.\nThe analysis for this video will be done from {int(trim_amount/frames_per_second)} to {max_analysis_time} seconds."
+                )
+                print(
+                    f"At the end of the analysis you should check if the analysis is coherent with the animal's behavior.\nIf it's not, redo the analysis with a lower trim amount for this animal: {animal.name}"
+                )
                 print("-------------------------------------------------------------------------------\n")
         else:
             runtime = range(int(max_analysis_time * frames_per_second))
@@ -1355,7 +1633,7 @@ def video_analyse(self, options, animal=None):
         try:
             x_collision_data, y_collision_data = zip(*[item for sublist in xy_data.to_list() for item in sublist])
         except ValueError:
-            x_collision_data, y_collision_data = np.zeros(len(runtime)), np.zeros(len(runtime)) # If there is no collision, the x and y collision data will be 0
+            x_collision_data, y_collision_data = np.zeros(len(runtime)), np.zeros(len(runtime))  # If there is no collision, the x and y collision data will be 0
             print("\n")
             print(f"---------------------- WARNING FOR ANIMAL {animal.name} ----------------------")
             print(f"Something went wrong with the animal's {animal.name} exploration data.\nThere are no exploration data in the video for this animal.")
@@ -1424,10 +1702,7 @@ def video_analyse(self, options, animal=None):
         kde_instance = stats.gaussian_kde(kde_space_coordinates)
         point_density_function = kde_instance.evaluate(kde_space_coordinates)
         color_limits = np.array(
-            [
-                (x - np.min(point_density_function)) / (np.max(point_density_function) - np.min(point_density_function))
-                for x in point_density_function
-            ]
+            [(x - np.min(point_density_function)) / (np.max(point_density_function) - np.min(point_density_function)) for x in point_density_function]
         )
 
         movement_points = np.array([x_axe, y_axe]).T.reshape(-1, 1, 2)
@@ -1435,7 +1710,7 @@ def video_analyse(self, options, animal=None):
         movement_segments = np.concatenate([movement_points[:-1], movement_points[1:]], axis=1)
         filter_size = 4
         moving_average_filter = np.ones((filter_size,)) / filter_size
-        smooth_segs = np.apply_along_axis(lambda m: np.convolve(m, moving_average_filter, mode='same'), axis=0, arr=movement_segments)
+        smooth_segs = np.apply_along_axis(lambda m: np.convolve(m, moving_average_filter, mode="same"), axis=0, arr=movement_segments)
 
         # Creates a LineCollection object with custom color map
         movement_line_collection = LineCollection(smooth_segs, cmap="plasma", linewidth=1.5)
@@ -1505,6 +1780,7 @@ def video_analyse(self, options, animal=None):
         self.interface.resume_lineedit.append(f"Analysis for animal {animal.name} completed.")
         return analysis_results, data_frame
 
+
 def plot_analysis_social_behavior(experiment, analysis_results, options, save_folder):
     animal_image = experiment.animal_jpg
     animal_name = experiment.name
@@ -1521,22 +1797,24 @@ def plot_analysis_social_behavior(experiment, analysis_results, options, save_fo
     frames_per_second = options["frames_per_second"]
     ANALYSIS_RANGE = analysis_results["analysis_range"]
     analysis_time_frames = ANALYSIS_RANGE[1] - ANALYSIS_RANGE[0]
-    time_vector_secs = np.arange(0, analysis_time_frames/frames_per_second, 1/frames_per_second)
+    time_vector_secs = np.arange(0, analysis_time_frames / frames_per_second, 1 / frames_per_second)
 
     # Calculate the ratio to be used for image resizing without losing the aspect ratio
     ratio = min(max_height / image_width, max_width / image_height)
     new_resolution_in_inches = (int(image_width * ratio / 100), int(image_height * ratio / 100))
-    
+
     with plt.ioff():
         fig_1, axe_1 = plt.subplots()
         fig_1.subplots_adjust(left=0.08, right=0.95, bottom=0.08, top=0.95, hspace=0, wspace=0)
         fig_1.set_size_inches(new_resolution_in_inches)
-        axe_1.set_title("Overall heatmap of the mice's nose position", loc="center", fontdict={"fontsize": new_resolution_in_inches[1] * 2, "fontweight": "normal", "color": "black"})
+        axe_1.set_title(
+            "Overall heatmap of the mice's nose position", loc="center", fontdict={"fontsize": new_resolution_in_inches[1] * 2, "fontweight": "normal", "color": "black"}
+        )
         axe_1.set_xlabel("X (pixels)", fontdict={"fontsize": new_resolution_in_inches[1] * 1.2, "fontweight": "normal", "color": "black"})
         axe_1.set_ylabel("Y (pixels)", fontdict={"fontsize": new_resolution_in_inches[1] * 1.2, "fontweight": "normal", "color": "black"})
         axe_1.set_xticks([])
         axe_1.set_yticks([])
-    
+
         fig_2, axe_2 = plt.subplots()
         fig_2.subplots_adjust(left=0.08, right=0.95, bottom=0.08, top=0.95, hspace=0, wspace=0)
         fig_2.set_size_inches(new_resolution_in_inches)
@@ -1563,10 +1841,10 @@ def plot_analysis_social_behavior(experiment, analysis_results, options, save_fo
         fig_1.savefig(save_folder + "/" + animal_name + " Overall heatmap of the mice's nose position.png")
 
         # Plot the Overall exploration by ROI
-        kde_axis = sns.kdeplot(x=x_collisions,y=y_collisions,ax=axe_2,cmap="inferno",fill=True,alpha=0.5)
+        kde_axis = sns.kdeplot(x=x_collisions, y=y_collisions, ax=axe_2, cmap="inferno", fill=True, alpha=0.5)
         axe_2.imshow(animal_image, interpolation="bessel")
         fig_2.savefig(save_folder + "/" + animal_name + " Overall exploration by ROI.png")
-        
+
         # Plot the distance accumulated over time
         axe_4.plot(time_vector_secs, accumulate_distance)
         fig_4.savefig(save_folder + "/" + animal_name + " Distance accumulated over time.png")
@@ -1575,8 +1853,9 @@ def plot_analysis_social_behavior(experiment, analysis_results, options, save_fo
         axe_5.plot(x_pos, y_pos, color="orangered", linewidth=1.5)
         axe_5.imshow(animal_image, interpolation="bessel", alpha=0.9)
         fig_5.savefig(save_folder + "/" + animal_name + " Animal movement in the arena.png")
-        
+
         plt.close("all")
+
 
 def option_message_function(self, text, info_text):
     """
@@ -1591,97 +1870,224 @@ def option_message_function(self, text, info_text):
     else:
         return "no"
 
-class files_class:
-    def __init__(self):
-        self.number = 0
-        self.directory = []
-        self.name = []
 
-    def add_files(self, selected_files):
-        for file in selected_files:
-            name = os.path.basename(file)[:-4]
-            if name not in self.name:
-                self.name.append(name)
-                self.number = self.number + 1
-                self.directory.append(file[:-4])
-
-class experiment_class:
+def convert_csv_to_h5(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
     """
-    This class declares each experiment and makes the necessary  calculations to
-    analyze the movement of the animal in the experimental box.
+    Converts CSV files to H5 format using DeepLabCut.
 
-    For each experiment one object of this class will be created and added in
-    a experiments list.
+    This function takes the values from the `config_path_lineedit` and `scorer_lineedit` fields of the `interface` object.
+    It also checks the value of the `confirm_folders_checkbox` to determine whether to prompt the user for confirmation.
+
+    If the `config` field is empty, an error message is displayed in the `log_lineedit` field and the function returns.
+    If the `scorer` field is empty, an error message is displayed in the `log_lineedit` field and the function returns.
+
+    Parameters:
+        self (object): The instance of the class containing the function.
+
+    Returns:
+        None
     """
 
-    def __init__(self):
-        self.name = []  # Experiment name
-        self.data = []  # Experiment loaded data
-        self.last_frame = []  # Experiment last behavior video frame
-        self.directory = []  # Experiment directory
+    config = self.interface.config_path_data_process_lineedit.text()
+    scorer = self.interface.scorer_data_process_lineedit.text()
+    confirm_folders = self.interface.confirm_folders_checkbox.isChecked()
 
-class WorkerSignals(QObject):
-    '''
-    Defines the signals available from a running worker thread.
+    if config == "":
+        text_signal.emit(("[ERROR]: Please select a config file.", "log_data_process_lineedit"))
+        return
+    elif scorer == "":
+        text_signal.emit(("[ERROR]: Please select a scorer.", "log_data_process_lineedit"))
+        return
+    deeplabcut.convertcsv2h5(config, userfeedback=confirm_folders, scorer=scorer)
 
-    Supported signals are:
 
-    finished
-        No data
+def analyze_folder_with_frames(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
+    """
+    Analyzes a folder containing video frames using DeepLabCut.
 
-    error
-        tuple (exctype, value, traceback.format_exc() )
+    This function prompts the user to select a config file and a video folder. It then displays a message with the list
+    of files in the video folder and asks the user to confirm if they want to proceed with the analysis. If the user
+    confirms, it calls the `analyze_time_lapse_frames` function from DeepLabCut to perform pose inference on the frames.
 
-    result
-        object data returned from processing, anything
+    Args:
+        self: The instance of the class containing the function.
 
-    '''
-    finished = Signal()  # QtCore.Signal
-    error = Signal(tuple)
-    result = Signal(object)
-    progress = Signal(int)
-    finished = Signal()
-    text_signal = Signal(tuple)
-    warning_message = Signal(object)
-    resume_message = Signal(object)
+    Returns:
+        None
+    """
+    config = self.interface.config_path_data_process_lineedit.text()
+    video_folder = self.interface.video_folder_data_process_lineedit.text()
+    frametype = self.interface.frames_extensions_combobox.currentText().strip().lower()
 
-class Worker(QRunnable):
-    '''
-    Worker thread
+    if config == "":
+        text_signal.emit(("[ERROR]: Please select a config file.", "clear_unused_files_lineedit"))
+        return
+    elif video_folder == "":
+        text_signal.emit(("[ERROR]: Please select a folder.", "clear_unused_files_lineedit"))
+        return
 
-    Inherits from QRunnable to handler worker thread setup, signals and wrap-up.
+    deeplabcut.analyze_time_lapse_frames(config, video_folder, frametype, save_as_csv=True)
+    deeplabcut.filterpredictions(
+        config,
+        video_folder,
+        videotype=frametype,
+        shuffle=1,
+        trainingsetindex=0,
+        filtertype="median",
+        windowlength=5,
+        p_bound=0.001,
+        ARdegree=3,
+        MAdegree=1,
+        alpha=0.01,
+        save_as_csv=True,
+    )
+    deeplabcut.plot_trajectories(config, video_folder, videotype=frametype, showfigures=False)
 
-    parameters:
-        fn: The function to run on this worker thread.
-        args: The arguments to pass to the function fn.
-        kwargs: The keyword arguments to pass to the function fn.
 
-    '''
+def get_crop_coordinates(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
+    """
+    Get dimensions to crop videos based on the provided folder path.
 
-    def __init__(self, function, *args, **kwargs):
-        super(Worker, self).__init__()
-        self.function = function
-        self.args = args
-        self.kwargs = kwargs
-        self.signals = WorkerSignals()
-        self.kwargs["progress"] = self.signals.progress
-        self.kwargs["text_signal"] = self.signals.text_signal
-        self.kwargs["warning_message"] = self.signals.warning_message
-        self.kwargs["resume_message"] = self.signals.resume_message
+    This function takes the folder path from the `videos_to_crop_folder_lineedit` text field of the interface,
+    retrieves the image names from the folder, and creates a list of image paths. It then initializes a `video_editing_tool`
+    object with the image list and names, and processes the images to obtain the crop coordinates. The crop coordinates
+    are stored in the `crop_coordinates` attribute of the object.
 
-    @Slot()
-    def run(self):
-        try:
-            result = self.function(*self.args, **self.kwargs)
-        except Exception as e:
-            traceback.print_exc()
-            self.signals.error.emit((type(e), str(e), traceback.format_exc()))
+    Finally, the function iterates over the `crop_coordinates` dictionary and appends the crop coordinates for each image
+    to the `log_lineedit_page_2` text field of the interface.
+
+    note: The `crop_coordinates` attribute is stored in the `self` object for later use in ffmpeg cropping.
+
+    """
+    folder_path = self.interface.videos_to_crop_folder_video_editing_lineedit.text()
+    image_names = [file for file in os.listdir(folder_path) if file.lower().endswith((".png", ".jpg", ".jpeg"))]
+    video_list = [os.path.join(folder_path, file) for file in os.listdir(folder_path) if file.lower().endswith((".mp4", ".avi", ".mov")) and not "_cropped" in file]
+    if os.path.exists(os.path.join(folder_path, "crop_coordinates.csv")):
+        with open(os.path.join(folder_path, "crop_coordinates.csv"), mode="r", newline="") as file:
+            reader = csv.reader(file)
+            next(reader)
+            temp_coordinates = {rows[0]: [int(rows[1]), int(rows[2]), int(rows[3]), int(rows[4])] for rows in reader}
+
+        if len(set(video_list)) == len(set(temp_coordinates)):
+            if set(image_names) == set(temp_coordinates.keys()):
+                text_signal.emit(("[INFO]: Crop coordinates found. Loading from csv.", "log_video_editing_lineedit"))
+                # self.interface.log_video_editing_lineedit.append("[INFO]: Crop coordinates found. Loading from csv.")
+                self.crop_coordinates = temp_coordinates
+                return
+    else:
+        text_signal.emit(("[ERROR]: No crop coordinates found. Defaulting to manual cropping.", "log_video_editing_lineedit"))
+        # self.interface.log_video_editing_lineedit.append("[ERROR]: The saved csv does not contain crop coordinates for all images. Defaulting to manual cropping.")
+        image_list = [os.path.join(folder_path, image) for image in image_names]
+        crop_tool = video_editing_tool(image_list, image_names)
+        crop_tool.process_images()
+        coordinates = crop_tool.crop_coordinates
+        self.crop_coordinates = coordinates
+    return
+
+
+def crop_videos(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
+    """
+    Crop videos based on the provided crop coordinates.
+
+    This function takes the folder path containing videos to be cropped and the crop coordinates
+    stored in the `self.coordinates` dictionary. It crops each video using the corresponding
+    crop coordinates and saves the cropped videos in the same folder.
+
+    """
+    cropped = set()
+    folder_path = self.interface.videos_to_crop_folder_video_editing_lineedit.text()
+    image_names = [file for file in os.listdir(folder_path) if file.lower().endswith((".png", ".jpg", ".jpeg"))]
+    video_list = [os.path.join(folder_path, file) for file in os.listdir(folder_path) if file.lower().endswith((".mp4", ".avi", ".mov")) and not "_cropped" in file]
+    if len(set(video_list)) != len(set(image_names)):
+        text_signal.emit(
+            ("[ERROR]: There is a mismatch between the video and image files. Please ensure that all videos have corresponding images.", "log_video_editing_lineedit")
+        )
+        # self.interface.log_video_editing_lineedit.append(
+        #     "[ERROR]: There is a mismatch between the video and image files. Please ensure that all videos have corresponding images."
+        # )
+        return
+    dictionary_without_extension_in_name = {key.split(".")[0]: value for key, value in self.crop_coordinates.items()}
+
+    for image_name, crop_coordinates in self.crop_coordinates.items():
+        text_signal.emit((f"Crop Coordinates for {image_name}: {crop_coordinates}", "log_video_editing_lineedit"))
+        # self.interface.log_video_editing_lineedit.append(f"Crop Coordinates for {image_name}: {crop_coordinates}")
+
+    for video_path in video_list:
+        video_name = os.path.splitext(os.path.basename(video_path))[0]
+        if video_name in cropped:
+            text_signal.emit((f"[INFO]: {video_name} has already been cropped.", "log_video_editing_lineedit"))
+            # self.interface.log_video_editing_lineedit.append(f"[INFO]: {video_name} has already been cropped.")
+            continue
+
+        if video_name in dictionary_without_extension_in_name:
+            origin_x, origin_y, width, height = dictionary_without_extension_in_name[video_name]
+            deeplabcut.CropVideo(video_path, width, height, origin_x, origin_y, "_cropped", outpath=folder_path)
+            cropped.add(video_name)
+            text_signal.emit((f"[INFO]: Cropped video {video_name} successfully.", "log_video_editing_lineedit"))
+            # self.interface.log_video_editing_lineedit.append(f"[INFO]: Cropped video {video_name} successfully.")
         else:
-            self.signals.result.emit((result, self.args[0]))
-        finally:
-            self.signals.finished.emit()
+            text_signal.emit((f"[WARNING]: No crop coordinates found for video {video_name}.", "log_video_editing_lineedit"))
+            # self.interface.log_video_editing_lineedit.append(f"[WARNING]: No crop coordinates found for video {video_name}.")
+
+
+def copy_folder_robocopy(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
+    source = self.interface.source_folder_path_video_editing_lineedit.text()
+    destination = self.interface.destination_folder_path_video_editing_lineedit.text()
+    # If the destination path contains spaces, change the directory name to use underscores
+    if " " in destination:
+        warning_message.emit(("Destination folder", "The destination folder path contains spaces. Please remove the spaces and try again."))
+        return
+
+    exclude_files = self.interface.exclude_files_checkbox.isChecked()
+
+    if source == "":
+        text_signal.emit(("[ERROR]: Please select a source folder.", "log_video_editing_lineedit"))
+        # self.interface.source_folder_path_video_editing_lineedit.append("[ERROR]: Please select a source folder.")
+        return
+    elif destination == "":
+        text_signal.emit(("[ERROR]: Please select a destination folder.", "log_video_editing_lineedit"))
+        # self.interface.source_folder_path_video_editing_lineedit.append("[ERROR]: Please select a destination folder.")
+        return
+
+    if exclude_files:
+        extensions_to_exclude = self.interface.file_exclusion_video_editing_lineedit.text().lower().strip().split(",")
+        extensions_str = " ".join([f'"*{ext.strip()}"' for ext in extensions_to_exclude])
+        command = f'robocopy "{source}" "{destination}" /e /zb /copyall /xf {extensions_str}'
+    else:
+        command = f'robocopy "{source}" "{destination}" /e /zb /copyall'
+
+    # Prepare the command to run as administrator
+    admin_command = f"powershell -Command \"Start-Process cmd -ArgumentList '/c {command}' -Verb RunAs\""
+
+    try:
+        subprocess.run(admin_command, check=True, shell=True)
+    except subprocess.CalledProcessError as e:
+        text_signal.emit((f"[ERROR]: {str(e)}", "log_video_editing_lineedit"))
+        self.interface.log_video_editing_lineedit.append(f"[ERROR]: {str(e)}")
+
+
+def save_crop_coordinates(self):
+    """
+    Saves the crop coordinates to a CSV file.
+
+    If no crop coordinates are found, an error message is displayed.
+    """
+    if self.crop_coordinates is None:
+        self.interface.log_video_editing_lineedit.append("[ERROR]: No crop coordinates found.")
+        return
+    folder_path = self.interface.videos_to_crop_folder_video_editing_lineedit.text()
+    crop_coordinates = self.crop_coordinates
+    csv_file_path = os.path.join(folder_path, "crop_coordinates.csv")
+
+    with open(csv_file_path, mode="w", newline="") as file:
+        writer = csv.writer(file)
+        writer.writerow(["name", "x_origin", "y_origin", "width", "height"])
+        for name, coordinate in crop_coordinates.items():
+            writer.writerow([name] + list(coordinate))
+    self.interface.log_video_editing_lineedit.append(f"[INFO]: Crop coordinates saved to {csv_file_path}.")
+
 
 def get_message():
-    a = b'V2VsY29tZSB0byBCZWhhdnl0aG9uIFRvb2xzOiB3aGVyZSB5b3VyIG1pc3Rha2VzIGJlY29tZSBvdXIgZW50ZXJ0YWlubWVudCxDb25ncmF0dWxhdGlvbnMgb24gY2hvb3NpbmcgQmVoYXZ5dGhvbiBUb29sczogeW91ciBzaG9ydGN1dCB0byBjb2RlIGluZHVjZWQgaGVhZGFjaGVzLEJlaGF2eXRob24gVG9vbHM6IEJlY2F1c2UgZGVidWdnaW5nIGlzIGZvciB0aGUgd2VhayxEaXZlIGludG8gQmVoYXZ5dGhvbiBUb29sczogd2hlcmUgdXNlciBmcmllbmRseSBpcyBqdXN0IGEgbXl0aCxXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IFlvdXIgcGVyc29uYWwgdG91ciBvZiBwcm9ncmFtbWluZyBwdXJnYXRvcnksQmVoYXZ5dGhvbiBUb29sczogUGVyZmVjdCBmb3IgdGhvc2Ugd2hvIGxvdmUgdGhlIHNtZWxsIG9mIGZhaWx1cmUgaW4gdGhlIG1vcm5pbmcsU3RhcnQgcXVlc3Rpb25pbmcgeW91ciBsaWZlIGNob2ljZXM6IFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29scyxCZWhhdnl0aG9uIFRvb2xzOiBNYWtpbmcgc2ltcGxlIHRhc2tzIGltcG9zc2libHkgY29tcGxpY2F0ZWQgc2luY2UgWWVhciB6ZXJvLEVuam95IEJlaGF2eXRob24gVG9vbHM6IHdlIHByb21pc2UgeW91IHdpbGwgcmVncmV0IGl0LFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogVGhlIHBsYWNlIHdoZXJlIGJ1Z3MgZmVlbCBhdCBob21lLEJlaGF2eXRob24gVG9vbHM6IEJlY2F1c2Ugd2hhdCBpcyBsaWZlIHdpdGhvdXQgYSBsaXR0bGUgdG9ydHVyZSxQcmVwYXJlIGZvciBhIHJpZGUgdGhyb3VnaCBjaGFvcyB3aXRoIEJlaGF2eXRob24gVG9vbHMsQmVoYXZ5dGhvbiBUb29sczogV2hlcmUgc2FuaXR5IGdvZXMgdG8gZGllLFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogdGhlIGVwaXRvbWUgb2YgaW5lZmZpY2llbmN5LEJlaGF2eXRob24gVG9vbHM6IE1ha2luZyBzdXJlIHlvdSBuZXZlciBnZXQgdG9vIGNvbWZvcnRhYmxlLFN0ZXAgcmlnaHQgdXAgdG8gQmVoYXZ5dGhvbiBUb29sczogWW91ciBmYXN0IHRyYWNrIHRvIGZydXN0cmF0aW9uLEJlaGF2eXRob24gVG9vbHM6IFR1cm5pbmcgZHJlYW1zIGludG8gbmlnaHRtYXJlcyxXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IHlvdXIgZGFpbHkgZG9zZSBvZiBkaWdpdGFsIGRpc2FwcG9pbnRtZW50LEJlaGF2eXRob24gVG9vbHM6IFdoZW4geW91IHdhbnQgdG8gbWFrZSB5b3VyIHByb2JsZW1zIHdvcnNlLFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogd2hlcmUgZXZlcnkgZmVhdHVyZSBpcyBhIG5ldyBmb3JtIG9mIGFnb255LEJlbSB2aW5kbyBjb21wYW5oZWlybyBkZSBkaWFzIG1hbGRpdG9z'
-    sample = random.sample(base64.b64decode(a).decode().split(','), 1)[0]
+    a = b"V2VsY29tZSB0byBCZWhhdnl0aG9uIFRvb2xzOiB3aGVyZSB5b3VyIG1pc3Rha2VzIGJlY29tZSBvdXIgZW50ZXJ0YWlubWVudCxDb25ncmF0dWxhdGlvbnMgb24gY2hvb3NpbmcgQmVoYXZ5dGhvbiBUb29sczogeW91ciBzaG9ydGN1dCB0byBjb2RlIGluZHVjZWQgaGVhZGFjaGVzLEJlaGF2eXRob24gVG9vbHM6IEJlY2F1c2UgZGVidWdnaW5nIGlzIGZvciB0aGUgd2VhayxEaXZlIGludG8gQmVoYXZ5dGhvbiBUb29sczogd2hlcmUgdXNlciBmcmllbmRseSBpcyBqdXN0IGEgbXl0aCxXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IFlvdXIgcGVyc29uYWwgdG91ciBvZiBwcm9ncmFtbWluZyBwdXJnYXRvcnksQmVoYXZ5dGhvbiBUb29sczogUGVyZmVjdCBmb3IgdGhvc2Ugd2hvIGxvdmUgdGhlIHNtZWxsIG9mIGZhaWx1cmUgaW4gdGhlIG1vcm5pbmcsU3RhcnQgcXVlc3Rpb25pbmcgeW91ciBsaWZlIGNob2ljZXM6IFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29scyxCZWhhdnl0aG9uIFRvb2xzOiBNYWtpbmcgc2ltcGxlIHRhc2tzIGltcG9zc2libHkgY29tcGxpY2F0ZWQgc2luY2UgWWVhciB6ZXJvLEVuam95IEJlaGF2eXRob24gVG9vbHM6IHdlIHByb21pc2UgeW91IHdpbGwgcmVncmV0IGl0LFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogVGhlIHBsYWNlIHdoZXJlIGJ1Z3MgZmVlbCBhdCBob21lLEJlaGF2eXRob24gVG9vbHM6IEJlY2F1c2Ugd2hhdCBpcyBsaWZlIHdpdGhvdXQgYSBsaXR0bGUgdG9ydHVyZSxQcmVwYXJlIGZvciBhIHJpZGUgdGhyb3VnaCBjaGFvcyB3aXRoIEJlaGF2eXRob24gVG9vbHMsQmVoYXZ5dGhvbiBUb29sczogV2hlcmUgc2FuaXR5IGdvZXMgdG8gZGllLFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogdGhlIGVwaXRvbWUgb2YgaW5lZmZpY2llbmN5LEJlaGF2eXRob24gVG9vbHM6IE1ha2luZyBzdXJlIHlvdSBuZXZlciBnZXQgdG9vIGNvbWZvcnRhYmxlLFN0ZXAgcmlnaHQgdXAgdG8gQmVoYXZ5dGhvbiBUb29sczogWW91ciBmYXN0IHRyYWNrIHRvIGZydXN0cmF0aW9uLEJlaGF2eXRob24gVG9vbHM6IFR1cm5pbmcgZHJlYW1zIGludG8gbmlnaHRtYXJlcyxXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IHlvdXIgZGFpbHkgZG9zZSBvZiBkaWdpdGFsIGRpc2FwcG9pbnRtZW50LEJlaGF2eXRob24gVG9vbHM6IFdoZW4geW91IHdhbnQgdG8gbWFrZSB5b3VyIHByb2JsZW1zIHdvcnNlLFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogd2hlcmUgZXZlcnkgZmVhdHVyZSBpcyBhIG5ldyBmb3JtIG9mIGFnb255LEJlbSB2aW5kbyBjb21wYW5oZWlybyBkZSBkaWFzIG1hbGRpdG9z"
+    sample = random.sample(base64.b64decode(a).decode().split(","), 1)[0]
     return sample

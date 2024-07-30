@@ -23,7 +23,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Behavython</string>
   </property>
   <property name="styleSheet">
    <string notr="true">QWidget {
@@ -35,14 +35,14 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>69</y>
+     <y>70</y>
      <width>331</width>
      <height>821</height>
     </rect>
    </property>
    <property name="minimumSize">
     <size>
-     <width>331</width>
+     <width>10</width>
      <height>821</height>
     </size>
    </property>
@@ -71,8 +71,8 @@ QTabBar::tab {
     border-top-right-radius: 8px;
     border-bottom-left-radius: 8px;
     border-bottom-right-radius: 8px;
-    width: 150px;
-    height: 20px;
+    width: 70px;
+    height: 40px;
     padding: 0px;
     color: #FFFFFF;
     font: 7pt &quot;DejaVu Sans&quot;;
@@ -91,7 +91,7 @@ QTabBar::tab:selected {
     <enum>QTabWidget::Rounded</enum>
    </property>
    <property name="currentIndex">
-    <number>1</number>
+    <number>0</number>
    </property>
    <property name="iconSize">
     <size>
@@ -134,10 +134,10 @@ QTabBar::tab:selected {
       <string notr="true">QComboBox{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QListView{color:#FFFFFF;font:8pt&quot;Century Gothic&quot;;font-weight:bold;background-color:#969696;border:0px;}QListView{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QComboBox::drop-down{width:20px;border:5px;}QComboBox::down-arrow{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #FFFFFF;width:0.5px;height:1px;border-radius:2px;}QComboBox::down-arrow:hover{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #A21F27;width:0.5px;height:1px;border-radius:2px;}QAbstractItemView{border:2px solid #969696;selection-background-color:#2C53A1;}</string>
      </property>
      <property name="currentText">
-      <string notr="true">          NJR</string>
+      <string notr="true">Social Recognition</string>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <item>
       <property name="text">
@@ -153,9 +153,9 @@ QTabBar::tab:selected {
     <widget class="QLabel" name="label_1">
      <property name="geometry">
       <rect>
-       <x>30</x>
+       <x>20</x>
        <y>20</y>
-       <width>271</width>
+       <width>291</width>
        <height>20</height>
       </rect>
      </property>
@@ -367,7 +367,7 @@ to see the help text</string>
       <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
      </property>
      <property name="text">
-      <string notr="true">15</string>
+      <string notr="true">300</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>
@@ -560,7 +560,7 @@ to see the help text</string>
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>780</y>
+       <y>760</y>
        <width>311</width>
        <height>23</height>
       </rect>
@@ -742,10 +742,10 @@ to see the help text</string>
       <string notr="true">QComboBox{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QListView{color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;background-color:#969696;border:0px;}QListView{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QComboBox::drop-down{width:20px;border:5px;}QComboBox::down-arrow{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #FFFFFF;width:0.5px;height:1px;border-radius:2px;}QComboBox::down-arrow:hover{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #A21F27;width:0.5px;height:1px;border-radius:2px;}QAbstractItemView{border:2px solid #969696;selection-background-color:#2C53A1;}</string>
      </property>
      <property name="currentText">
-      <string notr="true">     640 x 480</string>
+      <string notr="true">   1920 x 1080</string>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>2</number>
      </property>
      <property name="sizeAdjustPolicy">
       <enum>QComboBox::AdjustToContentsOnFirstShow</enum>
@@ -777,7 +777,7 @@ to see the help text</string>
        <x>15</x>
        <y>460</y>
        <width>301</width>
-       <height>311</height>
+       <height>291</height>
       </rect>
      </property>
      <property name="styleSheet">
@@ -965,7 +965,7 @@ QScrollBar::sub-page:vertical {
       <string>Plot data?</string>
      </property>
      <property name="checked">
-      <bool>false</bool>
+      <bool>true</bool>
      </property>
     </widget>
     <zorder>type_combobox</zorder>
@@ -1636,6 +1636,1456 @@ QScrollBar::sub-page:vertical {
      </property>
      <property name="text">
       <string notr="true">CLEANUP FOLDER</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="data_process">
+    <attribute name="title">
+     <string>DATA PROCESS</string>
+    </attribute>
+    <widget class="QTextEdit" name="log_data_process_lineedit">
+     <property name="geometry">
+      <rect>
+       <x>22</x>
+       <y>409</y>
+       <width>290</width>
+       <height>350</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>DejaVu Sans</family>
+       <pointsize>8</pointsize>
+       <italic>false</italic>
+       <bold>false</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QTextEdit{color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:light}
+QScrollBar:horizontal {
+    background-color: #353535;
+    height: 10px;
+}
+
+QScrollBar::handle:horizontal {
+    background-color: #2C53A1;
+    min-width: 20px;
+}
+
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal {
+    background-color: #353535;
+}
+
+QScrollBar:vertical {
+    background-color: #353535;
+    width: 10px;
+}
+
+QScrollBar::handle:vertical {
+    background-color: #2C53A1;
+    min-height: 20px;
+}
+
+QScrollBar::add-page:vertical,
+QScrollBar::sub-page:vertical {
+    background-color: #353535;
+}</string>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Plain</enum>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="config_path_data_process_lineedit">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>28</x>
+       <y>73</y>
+       <width>285</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>285</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>500</width>
+       <height>20</height>
+      </size>
+     </property>
+     <property name="mouseTracking">
+      <bool>false</bool>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+     </property>
+     <property name="text">
+      <string notr="true"/>
+     </property>
+     <property name="frame">
+      <bool>false</bool>
+     </property>
+     <property name="cursorPosition">
+      <number>0</number>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+     <property name="placeholderText">
+      <string>path\to\project_folder\config.yaml</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="frames_folder_data_process_label">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>308</y>
+       <width>195</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>130</width>
+       <height>16</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>200</width>
+       <height>42</height>
+      </size>
+     </property>
+     <property name="font">
+      <font>
+       <family>DejaVu Sans</family>
+       <pointsize>7</pointsize>
+       <italic>false</italic>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+     </property>
+     <property name="text">
+      <string notr="true">Folder containing the frames to analyze</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="Line" name="line_data_process_conversion_section">
+     <property name="geometry">
+      <rect>
+       <x>22</x>
+       <y>233</y>
+       <width>291</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">color: rgb(96, 96, 96)</string>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Plain</enum>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="scorer_data_process_lineedit">
+     <property name="geometry">
+      <rect>
+       <x>232</x>
+       <y>144</y>
+       <width>81</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>300</width>
+       <height>20</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+     </property>
+     <property name="text">
+      <string notr="true"/>
+     </property>
+     <property name="frame">
+      <bool>false</bool>
+     </property>
+     <property name="cursorPosition">
+      <number>0</number>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+     <property name="readOnly">
+      <bool>false</bool>
+     </property>
+     <property name="placeholderText">
+      <string>Type Here</string>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="frames_extensions_combobox">
+     <property name="geometry">
+      <rect>
+       <x>216</x>
+       <y>280</y>
+       <width>91</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="cursor">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Set the maximum resolution for the resulting figures computed.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;Note that, to maintain aspect ratio of the original file, the final resolution might have &amp;quot;uncommon&amp;quot; sizes and might not match 1:1 the maximum resolution set (if the original image also had &amp;quot;uncommon&amp;quot; resolution).&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="autoFillBackground">
+      <bool>false</bool>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QComboBox{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QListView{color:#FFFFFF;font:8pt&quot;Century Gothic&quot;;font-weight:bold;background-color:#969696;border:0px;}QListView{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QComboBox::drop-down{width:20px;border:5px;}QComboBox::down-arrow{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #FFFFFF;width:0.5px;height:1px;border-radius:2px;}QComboBox::down-arrow:hover{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #A21F27;width:0.5px;height:1px;border-radius:2px;}QAbstractItemView{border:2px solid #969696;selection-background-color:#2C53A1;}</string>
+     </property>
+     <property name="currentText">
+      <string notr="true">         .jpg</string>
+     </property>
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <property name="sizeAdjustPolicy">
+      <enum>QComboBox::AdjustToContentsOnFirstShow</enum>
+     </property>
+     <item>
+      <property name="text">
+       <string>         .jpg</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string notr="true">        .png</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>        .jpeg</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QLabel" name="get_frames_data_process_label">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>113</y>
+       <width>291</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>100</width>
+       <height>10</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>300</width>
+       <height>30</height>
+      </size>
+     </property>
+     <property name="font">
+      <font>
+       <family>DejaVu Sans</family>
+       <pointsize>7</pointsize>
+       <italic>false</italic>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{
+    border:#969696;
+    background-color:#2C53A1;
+    border-radius:8px;
+    color:#FFFFFF;
+    font:7pt&quot;DejaVu Sans&quot;;
+    font-weight:bold;
+}</string>
+     </property>
+     <property name="text">
+      <string notr="true">CONVERT CSV FILES TO H5</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="analyze_frames_data_process_button">
+     <property name="geometry">
+      <rect>
+       <x>102</x>
+       <y>360</y>
+       <width>131</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="cursor">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton{font:14pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+     </property>
+     <property name="text">
+      <string notr="true">ANALYZE FRAMES</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="confirm_folders_checkbox">
+     <property name="geometry">
+      <rect>
+       <x>120</x>
+       <y>171</y>
+       <width>101</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>DejaVu Sans</family>
+       <pointsize>8</pointsize>
+       <italic>false</italic>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QCheckBox{
+     color:#FFFFFF;
+    font:8pt&quot;DejaVu Sans&quot;;
+    font-weight:bold;
+}
+QCheckBox::indicator{
+    width:15px;
+    height:15px;
+    background-color:#606060;
+    border-radius:4px;
+}
+ QCheckBox::indicator:checked{
+    background-color:#A21F27;
+}
+</string>
+     </property>
+     <property name="text">
+      <string>Confirm folders?</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="file_extension_data_process_label">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>283</y>
+       <width>195</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>130</width>
+       <height>16</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>200</width>
+       <height>42</height>
+      </size>
+     </property>
+     <property name="font">
+      <font>
+       <family>DejaVu Sans</family>
+       <pointsize>7</pointsize>
+       <italic>false</italic>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+     </property>
+     <property name="text">
+      <string notr="true">What is the extension of the frames?</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QLabel" name="get_scorer_data_process_label">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>139</y>
+       <width>181</width>
+       <height>30</height>
+      </rect>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>100</width>
+       <height>30</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>260</width>
+       <height>16</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+     </property>
+     <property name="text">
+      <string notr="true">Type here the scorer name to put in the csv files</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QLabel" name="analyze_frames_data_process_label">
+     <property name="geometry">
+      <rect>
+       <x>33</x>
+       <y>253</y>
+       <width>270</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>70</width>
+       <height>10</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>270</width>
+       <height>60</height>
+      </size>
+     </property>
+     <property name="font">
+      <font>
+       <family>DejaVu Sans</family>
+       <pointsize>7</pointsize>
+       <italic>false</italic>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{
+    border:#969696;
+    background-color:#2C53A1;
+    border-radius:8px;
+    color:#FFFFFF;
+    font:7pt&quot;DejaVu Sans&quot;;
+    font-weight:bold;
+}
+</string>
+     </property>
+     <property name="text">
+      <string notr="true">ANALYZE FRAMES IN FOLDER</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QLabel" name="network_tab_section_label">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>20</y>
+       <width>291</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{
+    border:#969696;
+    background-color:#2C53A1;
+    border-radius:8px;
+    color:#FFFFFF;
+    font:7pt&quot;DejaVu Sans&quot;;
+    font-weight:bold;
+}</string>
+     </property>
+     <property name="text">
+      <string notr="true">NETWORK SETTINGS</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="get_config_path_data_process_button">
+     <property name="geometry">
+      <rect>
+       <x>232</x>
+       <y>47</y>
+       <width>81</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>DejaVu Sans</family>
+       <pointsize>8</pointsize>
+       <italic>false</italic>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="cursor">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton{font:10pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+     </property>
+     <property name="text">
+      <string notr="true">GET FILE</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="convert_csv_to_h5_data_process_button">
+     <property name="geometry">
+      <rect>
+       <x>108</x>
+       <y>199</y>
+       <width>131</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="cursor">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton{font:14pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+     </property>
+     <property name="text">
+      <string notr="true">CONVERT CSV TO H5</string>
+     </property>
+    </widget>
+    <widget class="Line" name="line_data_process_network">
+     <property name="geometry">
+      <rect>
+       <x>22</x>
+       <y>95</y>
+       <width>291</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">color: rgb(96, 96, 96)</string>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Plain</enum>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="get_frames_path_data_process_button">
+     <property name="geometry">
+      <rect>
+       <x>217</x>
+       <y>307</y>
+       <width>91</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>DejaVu Sans</family>
+       <pointsize>8</pointsize>
+       <italic>false</italic>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="cursor">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton{font:6pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+     </property>
+     <property name="text">
+      <string notr="true">GET FOLDER</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="video_folder_data_process_lineedit">
+     <property name="geometry">
+      <rect>
+       <x>28</x>
+       <y>333</y>
+       <width>285</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>285</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>500</width>
+       <height>20</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+     </property>
+     <property name="text">
+      <string notr="true"/>
+     </property>
+     <property name="frame">
+      <bool>false</bool>
+     </property>
+     <property name="cursorPosition">
+      <number>0</number>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+     <property name="placeholderText">
+      <string>path\to\video\folder\</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="config_path_data_process_label">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>50</y>
+       <width>170</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>170</width>
+       <height>16</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>200</width>
+       <height>16</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{color:#FFFFFF;font:6pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+     </property>
+     <property name="text">
+      <string notr="true">Path to the config.yaml file </string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <zorder>log_data_process_lineedit</zorder>
+    <zorder>config_path_data_process_lineedit</zorder>
+    <zorder>frames_folder_data_process_label</zorder>
+    <zorder>line_data_process_conversion_section</zorder>
+    <zorder>scorer_data_process_lineedit</zorder>
+    <zorder>get_frames_data_process_label</zorder>
+    <zorder>analyze_frames_data_process_button</zorder>
+    <zorder>confirm_folders_checkbox</zorder>
+    <zorder>file_extension_data_process_label</zorder>
+    <zorder>get_scorer_data_process_label</zorder>
+    <zorder>analyze_frames_data_process_label</zorder>
+    <zorder>network_tab_section_label</zorder>
+    <zorder>get_config_path_data_process_button</zorder>
+    <zorder>convert_csv_to_h5_data_process_button</zorder>
+    <zorder>line_data_process_network</zorder>
+    <zorder>get_frames_path_data_process_button</zorder>
+    <zorder>video_folder_data_process_lineedit</zorder>
+    <zorder>config_path_data_process_label</zorder>
+    <zorder>frames_extensions_combobox</zorder>
+   </widget>
+   <widget class="QWidget" name="video_editing">
+    <attribute name="title">
+     <string>VIDEO EDITING</string>
+    </attribute>
+    <widget class="QLabel" name="source_folder_video_editing_label">
+     <property name="geometry">
+      <rect>
+       <x>24</x>
+       <y>208</y>
+       <width>195</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>130</width>
+       <height>16</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>200</width>
+       <height>42</height>
+      </size>
+     </property>
+     <property name="font">
+      <font>
+       <family>DejaVu Sans</family>
+       <pointsize>7</pointsize>
+       <italic>false</italic>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+     </property>
+     <property name="text">
+      <string notr="true">Source folder</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="get_source_folder_path_button_video_editing_button">
+     <property name="geometry">
+      <rect>
+       <x>220</x>
+       <y>207</y>
+       <width>91</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>DejaVu Sans</family>
+       <pointsize>8</pointsize>
+       <italic>false</italic>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="cursor">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton{font:6pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+     </property>
+     <property name="text">
+      <string notr="true">GET FOLDER</string>
+     </property>
+    </widget>
+    <widget class="QTextEdit" name="log_video_editing_lineedit">
+     <property name="geometry">
+      <rect>
+       <x>14</x>
+       <y>404</y>
+       <width>290</width>
+       <height>351</height>
+      </rect>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>24</width>
+       <height>155</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>290</width>
+       <height>600</height>
+      </size>
+     </property>
+     <property name="font">
+      <font>
+       <family>DejaVu Sans</family>
+       <pointsize>8</pointsize>
+       <italic>false</italic>
+       <bold>false</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QTextEdit{color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:light}
+QScrollBar:horizontal {
+    background-color: #353535;
+    height: 10px;
+}
+
+QScrollBar::handle:horizontal {
+    background-color: #2C53A1;
+    min-width: 20px;
+}
+
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal {
+    background-color: #353535;
+}
+
+QScrollBar:vertical {
+    background-color: #353535;
+    width: 10px;
+}
+
+QScrollBar::handle:vertical {
+    background-color: #2C53A1;
+    min-height: 20px;
+}
+
+QScrollBar::add-page:vertical,
+QScrollBar::sub-page:vertical {
+    background-color: #353535;
+}</string>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Plain</enum>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="get_video_coordinates_video_editing_button">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>100</y>
+       <width>131</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="cursor">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton{font:14pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+     </property>
+     <property name="text">
+      <string notr="true">GET COORDINATES</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="copy_videos_video_editing_label">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>180</y>
+       <width>291</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>70</width>
+       <height>10</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>291</width>
+       <height>60</height>
+      </size>
+     </property>
+     <property name="font">
+      <font>
+       <family>DejaVu Sans</family>
+       <pointsize>7</pointsize>
+       <italic>false</italic>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{
+    border:#969696;
+    background-color:#2C53A1;
+    border-radius:8px;
+    color:#FFFFFF;
+    font:7pt&quot;DejaVu Sans&quot;;
+    font-weight:bold;
+}
+</string>
+     </property>
+     <property name="text">
+      <string notr="true">COPY FOLDERS USING ROBOCOPY</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QLabel" name="videos_folder_video_editing_label">
+     <property name="geometry">
+      <rect>
+       <x>22</x>
+       <y>48</y>
+       <width>195</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>130</width>
+       <height>16</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>200</width>
+       <height>42</height>
+      </size>
+     </property>
+     <property name="font">
+      <font>
+       <family>DejaVu Sans</family>
+       <pointsize>7</pointsize>
+       <italic>false</italic>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+     </property>
+     <property name="text">
+      <string notr="true">Folder containing the frames to analyze</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="file_exclusion_video_editing_lineedit">
+     <property name="geometry">
+      <rect>
+       <x>25</x>
+       <y>310</y>
+       <width>171</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>149</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>500</width>
+       <height>20</height>
+      </size>
+     </property>
+     <property name="toolTip">
+      <string>&quot;Enter the file extensions to exclude separated by commas. For example: .txt,.log,.bak&quot;</string>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+     </property>
+     <property name="text">
+      <string notr="true"/>
+     </property>
+     <property name="frame">
+      <bool>false</bool>
+     </property>
+     <property name="cursorPosition">
+      <number>0</number>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+     <property name="readOnly">
+      <bool>false</bool>
+     </property>
+     <property name="placeholderText">
+      <string>File extensions to exclude (&quot;.csv&quot;)</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="save_cropped_dimensions_video_editing_button">
+     <property name="geometry">
+      <rect>
+       <x>170</x>
+       <y>100</y>
+       <width>131</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="cursor">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton{font:14pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+     </property>
+     <property name="text">
+      <string notr="true">SAVE TO FILE</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="copy_files_with_robocopy_video_editing_button">
+     <property name="geometry">
+      <rect>
+       <x>100</x>
+       <y>350</y>
+       <width>131</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="cursor">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton{font:14pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+     </property>
+     <property name="text">
+      <string notr="true">COPY FOLDER</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="videos_to_crop_folder_video_editing_lineedit">
+     <property name="geometry">
+      <rect>
+       <x>23</x>
+       <y>73</y>
+       <width>285</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>285</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>500</width>
+       <height>20</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+     </property>
+     <property name="text">
+      <string notr="true"/>
+     </property>
+     <property name="frame">
+      <bool>false</bool>
+     </property>
+     <property name="cursorPosition">
+      <number>0</number>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+     <property name="placeholderText">
+      <string>%USERPROFILE%\path\to\video\folder\</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="get_destination_folder_path_button_video_editing_button">
+     <property name="geometry">
+      <rect>
+       <x>220</x>
+       <y>255</y>
+       <width>91</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>DejaVu Sans</family>
+       <pointsize>8</pointsize>
+       <italic>false</italic>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="cursor">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton{font:6pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+     </property>
+     <property name="text">
+      <string notr="true">GET FOLDER</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="destination_folder_path_video_editing_lineedit">
+     <property name="geometry">
+      <rect>
+       <x>25</x>
+       <y>281</y>
+       <width>285</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>285</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>500</width>
+       <height>20</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+     </property>
+     <property name="text">
+      <string notr="true"/>
+     </property>
+     <property name="frame">
+      <bool>false</bool>
+     </property>
+     <property name="cursorPosition">
+      <number>0</number>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+     <property name="placeholderText">
+      <string>path\to\video\folder\</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="source_folder_path_video_editing_lineedit">
+     <property name="geometry">
+      <rect>
+       <x>25</x>
+       <y>233</y>
+       <width>285</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>285</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>500</width>
+       <height>20</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+     </property>
+     <property name="text">
+      <string notr="true"/>
+     </property>
+     <property name="frame">
+      <bool>false</bool>
+     </property>
+     <property name="cursorPosition">
+      <number>0</number>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+     <property name="placeholderText">
+      <string>path\to\video\folder\</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="crop_videos_button_video_editing_button">
+     <property name="geometry">
+      <rect>
+       <x>100</x>
+       <y>140</y>
+       <width>131</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="cursor">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton{font:14pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+     </property>
+     <property name="text">
+      <string notr="true">CROP VIDEOS</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="destination_folder_video_editing_label">
+     <property name="geometry">
+      <rect>
+       <x>24</x>
+       <y>256</y>
+       <width>195</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>130</width>
+       <height>16</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>200</width>
+       <height>42</height>
+      </size>
+     </property>
+     <property name="font">
+      <font>
+       <family>DejaVu Sans</family>
+       <pointsize>7</pointsize>
+       <italic>false</italic>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+     </property>
+     <property name="text">
+      <string notr="true">Destination Folder</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QLabel" name="crop_videos_video_editing_label">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>20</y>
+       <width>291</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>70</width>
+       <height>10</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>291</width>
+       <height>60</height>
+      </size>
+     </property>
+     <property name="font">
+      <font>
+       <family>DejaVu Sans</family>
+       <pointsize>7</pointsize>
+       <italic>false</italic>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{
+    border:#969696;
+    background-color:#2C53A1;
+    border-radius:8px;
+    color:#FFFFFF;
+    font:7pt&quot;DejaVu Sans&quot;;
+    font-weight:bold;
+}
+</string>
+     </property>
+     <property name="text">
+      <string notr="true">CROP VIDEOS IN A FOLDER</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="get_videos_path_video_editing_button">
+     <property name="geometry">
+      <rect>
+       <x>218</x>
+       <y>47</y>
+       <width>91</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>DejaVu Sans</family>
+       <pointsize>8</pointsize>
+       <italic>false</italic>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="cursor">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton{font:6pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+     </property>
+     <property name="text">
+      <string notr="true">GET FOLDER</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="exclude_files_checkbox">
+     <property name="geometry">
+      <rect>
+       <x>210</x>
+       <y>310</y>
+       <width>101</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>DejaVu Sans</family>
+       <pointsize>8</pointsize>
+       <italic>false</italic>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QCheckBox{
+     color:#FFFFFF;
+    font:8pt&quot;DejaVu Sans&quot;;
+    font-weight:bold;
+}
+QCheckBox::indicator{
+    width:15px;
+    height:15px;
+    background-color:#606060;
+    border-radius:4px;
+}
+ QCheckBox::indicator:checked{
+    background-color:#A21F27;
+}
+</string>
+     </property>
+     <property name="text">
+      <string>Exclude files?</string>
      </property>
     </widget>
    </widget>
