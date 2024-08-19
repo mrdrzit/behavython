@@ -75,7 +75,7 @@ QTabBar::tab {
     height: 40px;
     padding: 0px;
     color: #FFFFFF;
-    font: 7pt &quot;DejaVu Sans&quot;;
+    font: 6pt &quot;DejaVu Sans&quot;;
     font-weight: bold;
     margin-left: 2px;
     margin-right: 2px;
@@ -88,7 +88,7 @@ QTabBar::tab:selected {
 }</string>
    </property>
    <property name="tabShape">
-    <enum>QTabWidget::Rounded</enum>
+    <enum>QTabWidget::TabShape::Rounded</enum>
    </property>
    <property name="currentIndex">
     <number>0</number>
@@ -166,7 +166,7 @@ QTabBar::tab:selected {
       <string notr="true">SETTINGS</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
     <widget class="QLabel" name="label_3">
@@ -191,7 +191,7 @@ QTabBar::tab:selected {
       <string notr="true">Arena width</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
     </widget>
     <widget class="QLabel" name="label_4">
@@ -216,7 +216,7 @@ QTabBar::tab:selected {
       <string notr="true">Arena height</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
     </widget>
     <widget class="QLabel" name="label_11">
@@ -241,7 +241,7 @@ QTabBar::tab:selected {
       <string notr="true">Task duration</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
     </widget>
     <widget class="QLabel" name="label_13">
@@ -269,7 +269,7 @@ QTabBar::tab:selected {
 to see the help text</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
     <widget class="QLabel" name="label_5">
@@ -288,7 +288,7 @@ to see the help text</string>
       <string notr="true">Frames per second</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
     </widget>
     <widget class="QLabel" name="label_15">
@@ -313,7 +313,7 @@ to see the help text</string>
       <string notr="true">How much to trim</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
     </widget>
     <widget class="QLabel" name="label_6">
@@ -332,7 +332,7 @@ to see the help text</string>
       <string notr="true">cm</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
     <widget class="QLineEdit" name="arena_width_lineedit">
@@ -351,7 +351,7 @@ to see the help text</string>
       <string notr="true">30</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
     <widget class="QLineEdit" name="task_duration_lineedit">
@@ -370,7 +370,7 @@ to see the help text</string>
       <string notr="true">300</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
     <widget class="QLabel" name="label_8">
@@ -389,7 +389,7 @@ to see the help text</string>
       <string notr="true">fps</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
     <widget class="QPushButton" name="clear_button">
@@ -433,7 +433,7 @@ to see the help text</string>
       <string notr="true">Experiment type</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
     </widget>
     <widget class="QLabel" name="label_9">
@@ -458,7 +458,7 @@ to see the help text</string>
       <string notr="true">Analysis Engine</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
     </widget>
     <widget class="QLineEdit" name="arena_height_lineedit">
@@ -477,7 +477,7 @@ to see the help text</string>
       <string notr="true">30</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
     <widget class="QLabel" name="label_17">
@@ -496,7 +496,7 @@ to see the help text</string>
       <string notr="true">sec</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
     <widget class="QPushButton" name="load_configuration_button">
@@ -553,7 +553,7 @@ to see the help text</string>
       <string notr="true">sec</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
     <widget class="QProgressBar" name="progress_bar">
@@ -589,7 +589,7 @@ to see the help text</string>
       <string notr="true">30</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
     <widget class="QLabel" name="label_10">
@@ -611,7 +611,7 @@ to see the help text</string>
       <string notr="true">Experimental animal</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
     </widget>
     <widget class="QComboBox" name="algo_type_combobox">
@@ -657,7 +657,7 @@ to see the help text</string>
       <string notr="true">cm</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
     <widget class="QComboBox" name="animal_combobox">
@@ -711,7 +711,7 @@ to see the help text</string>
       <string notr="true">0</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
     <widget class="QComboBox" name="fig_max_size">
@@ -748,7 +748,7 @@ to see the help text</string>
       <number>2</number>
      </property>
      <property name="sizeAdjustPolicy">
-      <enum>QComboBox::AdjustToContentsOnFirstShow</enum>
+      <enum>QComboBox::SizeAdjustPolicy::AdjustToContentsOnFirstShow</enum>
      </property>
      <item>
       <property name="text">
@@ -813,10 +813,10 @@ QScrollBar::sub-page:vertical {
 }</string>
      </property>
      <property name="frameShape">
-      <enum>QFrame::NoFrame</enum>
+      <enum>QFrame::Shape::NoFrame</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Plain</enum>
+      <enum>QFrame::Shadow::Plain</enum>
      </property>
      <property name="readOnly">
       <bool>true</bool>
@@ -841,7 +841,7 @@ QScrollBar::sub-page:vertical {
       <string notr="true">Desired figure size</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
     </widget>
     <widget class="QPushButton" name="analysis_button">
@@ -897,7 +897,7 @@ QScrollBar::sub-page:vertical {
       <string notr="true">Most recent analysis directory</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
     </widget>
     <widget class="QLineEdit" name="recent_analysis_directory_lineedit">
@@ -940,7 +940,7 @@ QScrollBar::sub-page:vertical {
       <number>0</number>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
      <property name="readOnly">
       <bool>true</bool>
@@ -1088,10 +1088,10 @@ QScrollBar::sub-page:vertical {
 }</string>
      </property>
      <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
+      <enum>QFrame::Shape::StyledPanel</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Plain</enum>
+      <enum>QFrame::Shadow::Plain</enum>
      </property>
      <property name="readOnly">
       <bool>true</bool>
@@ -1131,7 +1131,7 @@ QScrollBar::sub-page:vertical {
       <string notr="true">Extract skeleton data</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
     </widget>
     <widget class="QLabel" name="network_tab_title">
@@ -1150,7 +1150,7 @@ QScrollBar::sub-page:vertical {
       <string notr="true">NETWORK SETTINGS</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
     <widget class="QLabel" name="config_path">
@@ -1187,7 +1187,7 @@ QScrollBar::sub-page:vertical {
       <string notr="true">Path to the config.yaml file </string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
     </widget>
     <widget class="QLineEdit" name="video_folder_lineedit">
@@ -1224,7 +1224,7 @@ QScrollBar::sub-page:vertical {
       <number>0</number>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
      <property name="readOnly">
       <bool>true</bool>
@@ -1273,7 +1273,7 @@ QScrollBar::sub-page:vertical {
       <number>0</number>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
      <property name="readOnly">
       <bool>true</bool>
@@ -1343,7 +1343,7 @@ QScrollBar::sub-page:vertical {
       <string notr="true">Folder containing the videos to analyze</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -1365,7 +1365,7 @@ QScrollBar::sub-page:vertical {
       <string notr="true">DATA REFINING</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
     <widget class="QLabel" name="get_frames_label">
@@ -1402,7 +1402,7 @@ QScrollBar::sub-page:vertical {
       <string notr="true">Get a frame from every video</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -1442,7 +1442,7 @@ QScrollBar::sub-page:vertical {
       <string notr="true">Check if the folder structure is correct</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
     <widget class="QLabel" name="dlc_video_analyze_title">
@@ -1479,7 +1479,7 @@ QScrollBar::sub-page:vertical {
       <string notr="true">Analyze videos using the network supplied</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
     <widget class="QLabel" name="clear_unused_files_title">
@@ -1516,7 +1516,7 @@ QScrollBar::sub-page:vertical {
       <string notr="true">Remove unnecessary files</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
     </widget>
     <widget class="QPushButton" name="extract_skeleton_button">
@@ -1647,9 +1647,9 @@ QScrollBar::sub-page:vertical {
      <property name="geometry">
       <rect>
        <x>22</x>
-       <y>409</y>
+       <y>421</y>
        <width>290</width>
-       <height>350</height>
+       <height>341</height>
       </rect>
      </property>
      <property name="font">
@@ -1693,10 +1693,10 @@ QScrollBar::sub-page:vertical {
 }</string>
      </property>
      <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
+      <enum>QFrame::Shape::StyledPanel</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Plain</enum>
+      <enum>QFrame::Shadow::Plain</enum>
      </property>
      <property name="readOnly">
       <bool>true</bool>
@@ -1742,7 +1742,7 @@ QScrollBar::sub-page:vertical {
       <number>0</number>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
      <property name="readOnly">
       <bool>true</bool>
@@ -1755,9 +1755,9 @@ QScrollBar::sub-page:vertical {
      <property name="geometry">
       <rect>
        <x>30</x>
-       <y>308</y>
-       <width>195</width>
-       <height>16</height>
+       <y>307</y>
+       <width>181</width>
+       <height>21</height>
       </rect>
      </property>
      <property name="sizePolicy">
@@ -1774,8 +1774,8 @@ QScrollBar::sub-page:vertical {
      </property>
      <property name="maximumSize">
       <size>
-       <width>200</width>
-       <height>42</height>
+       <width>181</width>
+       <height>21</height>
       </size>
      </property>
      <property name="font">
@@ -1793,7 +1793,7 @@ QScrollBar::sub-page:vertical {
       <string notr="true">Folder containing the frames to analyze</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -1812,10 +1812,10 @@ QScrollBar::sub-page:vertical {
       <string notr="true">color: rgb(96, 96, 96)</string>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Plain</enum>
+      <enum>QFrame::Shadow::Plain</enum>
      </property>
      <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+      <enum>Qt::Orientation::Horizontal</enum>
      </property>
     </widget>
     <widget class="QLineEdit" name="scorer_data_process_lineedit">
@@ -1852,7 +1852,7 @@ QScrollBar::sub-page:vertical {
       <number>0</number>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
      <property name="readOnly">
       <bool>false</bool>
@@ -1895,7 +1895,7 @@ QScrollBar::sub-page:vertical {
       <number>0</number>
      </property>
      <property name="sizeAdjustPolicy">
-      <enum>QComboBox::AdjustToContentsOnFirstShow</enum>
+      <enum>QComboBox::SizeAdjustPolicy::AdjustToContentsOnFirstShow</enum>
      </property>
      <item>
       <property name="text">
@@ -1962,7 +1962,7 @@ QScrollBar::sub-page:vertical {
       <string notr="true">CONVERT CSV FILES TO H5</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -1972,7 +1972,7 @@ QScrollBar::sub-page:vertical {
      <property name="geometry">
       <rect>
        <x>102</x>
-       <y>360</y>
+       <y>373</y>
        <width>131</width>
        <height>31</height>
       </rect>
@@ -2067,7 +2067,7 @@ QCheckBox::indicator{
       <string notr="true">What is the extension of the frames?</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -2107,7 +2107,7 @@ QCheckBox::indicator{
       <string notr="true">Type here the scorer name to put in the csv files</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -2163,7 +2163,7 @@ QCheckBox::indicator{
       <string notr="true">ANALYZE FRAMES IN FOLDER</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -2192,7 +2192,7 @@ QCheckBox::indicator{
       <string notr="true">NETWORK SETTINGS</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
     <widget class="QPushButton" name="get_config_path_data_process_button">
@@ -2254,17 +2254,17 @@ QCheckBox::indicator{
       <string notr="true">color: rgb(96, 96, 96)</string>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Plain</enum>
+      <enum>QFrame::Shadow::Plain</enum>
      </property>
      <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+      <enum>Qt::Orientation::Horizontal</enum>
      </property>
     </widget>
     <widget class="QPushButton" name="get_frames_path_data_process_button">
      <property name="geometry">
       <rect>
        <x>217</x>
-       <y>307</y>
+       <y>310</y>
        <width>91</width>
        <height>20</height>
       </rect>
@@ -2291,7 +2291,7 @@ QCheckBox::indicator{
      <property name="geometry">
       <rect>
        <x>28</x>
-       <y>333</y>
+       <y>346</y>
        <width>285</width>
        <height>16</height>
       </rect>
@@ -2321,7 +2321,7 @@ QCheckBox::indicator{
       <number>0</number>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
      <property name="readOnly">
       <bool>true</bool>
@@ -2364,7 +2364,7 @@ QCheckBox::indicator{
       <string notr="true">Path to the config.yaml file </string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
     </widget>
     <zorder>log_data_process_lineedit</zorder>
@@ -2433,7 +2433,7 @@ QCheckBox::indicator{
       <string notr="true">Source folder</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -2528,10 +2528,10 @@ QScrollBar::sub-page:vertical {
 }</string>
      </property>
      <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
+      <enum>QFrame::Shape::StyledPanel</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Plain</enum>
+      <enum>QFrame::Shadow::Plain</enum>
      </property>
      <property name="readOnly">
       <bool>true</bool>
@@ -2606,7 +2606,7 @@ QScrollBar::sub-page:vertical {
       <string notr="true">COPY FOLDERS USING ROBOCOPY</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -2654,7 +2654,7 @@ QScrollBar::sub-page:vertical {
       <string notr="true">Folder containing the frames to analyze</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -2697,7 +2697,7 @@ QScrollBar::sub-page:vertical {
       <number>0</number>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
      <property name="readOnly">
       <bool>false</bool>
@@ -2778,7 +2778,7 @@ QScrollBar::sub-page:vertical {
       <number>0</number>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
      <property name="readOnly">
       <bool>true</bool>
@@ -2848,7 +2848,7 @@ QScrollBar::sub-page:vertical {
       <number>0</number>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
      <property name="readOnly">
       <bool>true</bool>
@@ -2891,7 +2891,7 @@ QScrollBar::sub-page:vertical {
       <number>0</number>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
      <property name="readOnly">
       <bool>true</bool>
@@ -2961,7 +2961,7 @@ QScrollBar::sub-page:vertical {
       <string notr="true">Destination Folder</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -3017,7 +3017,7 @@ QScrollBar::sub-page:vertical {
       <string notr="true">CROP VIDEOS IN A FOLDER</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -3100,7 +3100,7 @@ QCheckBox::indicator{
     </rect>
    </property>
    <property name="layoutDirection">
-    <enum>Qt::LeftToRight</enum>
+    <enum>Qt::LayoutDirection::LeftToRight</enum>
    </property>
    <property name="text">
     <string/>
@@ -3112,7 +3112,7 @@ QCheckBox::indicator{
     <bool>true</bool>
    </property>
    <property name="alignment">
-    <set>Qt::AlignCenter</set>
+    <set>Qt::AlignmentFlag::AlignCenter</set>
    </property>
   </widget>
  </widget>
