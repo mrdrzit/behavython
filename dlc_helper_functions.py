@@ -897,84 +897,168 @@ def folder_structure_check_function(self):
 
 
 def dlc_video_analyze_function(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
-    text_signal.emit(("clear_unused_files_lineedit", "clear_lineedit"))
-    if DLC_ENABLE:
-        text_signal.emit((f"Using DeepLabCut version {deeplabcut.__version__}", "clear_unused_files_lineedit"))
-    config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
-    videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
-    if (config_path == "") or (videos == ""):
-        text_signal.emit(("Both the config file and the videos folder must be selected.", "clear_unused_files_lineedit"))
-        return
-    video_list = [
-        os.path.join(videos, file)
-        for file in os.listdir(videos)
-        if file.endswith(".mp4") or file.endswith(".avi") or file.endswith(".mov") or file.endswith(".mkv") or file.endswith(".flv") or file.endswith(".webm")
-    ]
-    file_extension = False
-    valid_extensions = [".mp4", ".avi", ".mov"]
-    invalid_files = [file for file in video_list if not any(file.endswith(ext) for ext in valid_extensions)]
+    if self.interface.analyze_from_file_button.isEnabled():
+        paths_file = self.interface.analyze_from_file_lineedit.text()
+        videos_from_txt = [path[0] for path in pd.read_csv(paths_file, delimiter = "\t", header = None).values.tolist()]
+        video_list = videos_from_txt
+        
+        text_signal.emit(("clear_unused_files_lineedit", "clear_lineedit"))
+        if DLC_ENABLE:
+            text_signal.emit((f"Using DeepLabCut version {deeplabcut.__version__}", "clear_unused_files_lineedit"))
+        config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
 
-    for file in video_list:
-        if invalid_files:
-            title = "Video extension error"
-            message = "Videos must have the extension '.mp4', '.avi' or '.mov'.\n Please, check the videos folder and try again."
-            warning_message.emit((title, message))
+        file_extension = False
+        valid_extensions = [".mp4", ".avi", ".mov"]
+        invalid_files = [file for file in video_list if not any(file.endswith(ext) for ext in valid_extensions)]
+
+        for file in video_list:
+            if invalid_files:
+                title = "Video extension error"
+                message = "Videos must have the extension '.mp4', '.avi' or '.mov'.\n Please, check the videos folder and try again."
+                warning_message.emit((title, message))
+                return
+            if (".mp4" in file or ".avi" in file or ".mov" in file) and (not file_extension):
+                file_extension = file.split(".")[-1]
+            elif file_extension and (file.split(".")[-1] != file_extension):
+                title = "Video extension error"
+                message = "All videos must have the same extension.\n Please, check the videos folder and try again."
+                warning_message.emit((title, message))
+
+        continue_analysis = self.resume_message_function(video_list)
+        if not continue_analysis:
+            text_signal.emit(("clear_lineedit", "clear_unused_files_lineedit"))
+            text_signal.emit(("Analysis canceled.", "clear_unused_files_lineedit"))
             return
-        if (".mp4" in file or ".avi" in file or ".mov" in file) and (not file_extension):
-            file_extension = file.split(".")[-1]
-        elif file_extension and (file.split(".")[-1] != file_extension):
-            title = "Video extension error"
-            message = "All videos must have the same extension.\n Please, check the videos folder and try again."
-            warning_message.emit((title, message))
+        text_signal.emit(("Analyzing videos...", "clear_unused_files_lineedit"))
+        list_of_videos = [file for file in video_list]
+        if DLC_ENABLE:
+            deeplabcut.analyze_videos(config_path, list_of_videos, videotype=file_extension, shuffle=1, trainingsetindex=0, gputouse=0, allow_growth=True, save_as_csv=True)
+        text_signal.emit(("Done analyzing videos.", "clear_unused_files_lineedit"))
 
-    continue_analysis = self.resume_message_function(video_list)
-    if not continue_analysis:
-        text_signal.emit(("clear_lineedit", "clear_unused_files_lineedit"))
-        text_signal.emit(("Analysis canceled.", "clear_unused_files_lineedit"))
-        return
-    text_signal.emit(("Analyzing videos...", "clear_unused_files_lineedit"))
-    list_of_videos = [file for file in video_list]
-    if DLC_ENABLE:
-        deeplabcut.analyze_videos(config_path, list_of_videos, videotype=file_extension, shuffle=1, trainingsetindex=0, gputouse=0, allow_growth=True, save_as_csv=True)
-    text_signal.emit(("Done analyzing videos.", "clear_unused_files_lineedit"))
+        text_signal.emit(("Filtering data files and saving as CSV...", "clear_unused_files_lineedit"))
+        if DLC_ENABLE:
+            deeplabcut.filterpredictions(
+                config_path,
+                list_of_videos,
+                videotype=file_extension,
+                shuffle=1,
+                trainingsetindex=0,
+                filtertype="median",
+                windowlength=5,
+                p_bound=0.001,
+                ARdegree=3,
+                MAdegree=1,
+                alpha=0.01,
+                save_as_csv=True,
+            )
 
-    text_signal.emit(("Filtering data files and saving as CSV...", "clear_unused_files_lineedit"))
-    if DLC_ENABLE:
-        deeplabcut.filterpredictions(
-            config_path,
-            videos,
-            videotype=file_extension,
-            shuffle=1,
-            trainingsetindex=0,
-            filtertype="median",
-            windowlength=5,
-            p_bound=0.001,
-            ARdegree=3,
-            MAdegree=1,
-            alpha=0.01,
-            save_as_csv=True,
-        )
+        if DLC_ENABLE:
+            deeplabcut.plot_trajectories(
+                config_path,
+                list_of_videos,
+                videotype=file_extension,
+                showfigures=False,
+                filtered=True,
+            )
+        # if DLC_ENABLE:
+        #     os.rename(os.path.join(list_of_videos, "plot-poses"), os.path.join(list_of_videos, "accuracy_check_plots"))
 
-    if DLC_ENABLE:
-        deeplabcut.plot_trajectories(
-            config_path,
-            videos,
-            videotype=file_extension,
-            showfigures=False,
-            filtered=True,
-        )
-    if DLC_ENABLE:
-        os.rename(os.path.join(videos, "plot-poses"), os.path.join(videos, "accuracy_check_plots"))
+        text_signal.emit(("Plots to visualize prediction accuracy were saved.", "clear_unused_files_lineedit"))
+        text_signal.emit(("Done filtering data files", "clear_unused_files_lineedit"))
+    else:
+        text_signal.emit(("clear_unused_files_lineedit", "clear_lineedit"))
+        if DLC_ENABLE:
+            text_signal.emit((f"Using DeepLabCut version {deeplabcut.__version__}", "clear_unused_files_lineedit"))
+        config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
+        videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
+        if (config_path == "") or (videos == ""):
+            text_signal.emit(("Both the config file and the videos folder must be selected.", "clear_unused_files_lineedit"))
+            return
+        video_list = [
+            os.path.join(videos, file)
+            for file in os.listdir(videos)
+            if file.endswith(".mp4") or file.endswith(".avi") or file.endswith(".mov") or file.endswith(".mkv") or file.endswith(".flv") or file.endswith(".webm")
+        ]
+        file_extension = False
+        valid_extensions = [".mp4", ".avi", ".mov"]
+        invalid_files = [file for file in video_list if not any(file.endswith(ext) for ext in valid_extensions)]
 
-    text_signal.emit(("Plots to visualize prediction accuracy were saved.", "clear_unused_files_lineedit"))
-    text_signal.emit(("Done filtering data files", "clear_unused_files_lineedit"))
+        for file in video_list:
+            if invalid_files:
+                title = "Video extension error"
+                message = "Videos must have the extension '.mp4', '.avi' or '.mov'.\n Please, check the videos folder and try again."
+                warning_message.emit((title, message))
+                return
+            if (".mp4" in file or ".avi" in file or ".mov" in file) and (not file_extension):
+                file_extension = file.split(".")[-1]
+            elif file_extension and (file.split(".")[-1] != file_extension):
+                title = "Video extension error"
+                message = "All videos must have the same extension.\n Please, check the videos folder and try again."
+                warning_message.emit((title, message))
+
+        continue_analysis = self.resume_message_function(video_list)
+        if not continue_analysis:
+            text_signal.emit(("clear_lineedit", "clear_unused_files_lineedit"))
+            text_signal.emit(("Analysis canceled.", "clear_unused_files_lineedit"))
+            return
+        text_signal.emit(("Analyzing videos...", "clear_unused_files_lineedit"))
+        list_of_videos = [file for file in video_list]
+        if DLC_ENABLE:
+            deeplabcut.analyze_videos(config_path, list_of_videos, videotype=file_extension, shuffle=1, trainingsetindex=0, gputouse=0, allow_growth=True, save_as_csv=True)
+        text_signal.emit(("Done analyzing videos.", "clear_unused_files_lineedit"))
+
+        text_signal.emit(("Filtering data files and saving as CSV...", "clear_unused_files_lineedit"))
+        if DLC_ENABLE:
+            deeplabcut.filterpredictions(
+                config_path,
+                list_of_videos,
+                videotype=file_extension,
+                shuffle=1,
+                trainingsetindex=0,
+                filtertype="median",
+                windowlength=5,
+                p_bound=0.001,
+                ARdegree=3,
+                MAdegree=1,
+                alpha=0.01,
+                save_as_csv=True,
+            )
+
+        if DLC_ENABLE:
+            deeplabcut.plot_trajectories(
+                config_path,
+                list_of_videos,
+                videotype=file_extension,
+                showfigures=False,
+                filtered=True,
+            )
+        if DLC_ENABLE:
+            if not os.path.exists(os.path.join(videos, "accuracy_check_plots")):
+                os.rename(os.path.join(videos, "plot-poses"), os.path.join(videos, "accuracy_check_plots"))
+            else:
+                text_signal.emit(("The accuracy_check_plots folder already exists. Skipping", "clear_unused_files_lineedit"))
+
+        text_signal.emit(("Plots to visualize prediction accuracy were saved.", "clear_unused_files_lineedit"))
+        text_signal.emit(("Done filtering data files", "clear_unused_files_lineedit"))
 
 
 def get_frames_function(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
+    # debugpy.debug_this_thread()
     text_signal.emit(("clear_lineedit", "clear_unused_files_lineedit"))
     videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
-    _, _, file_list = [entry for entry in os.walk(videos)][0]
-    video_list = [os.path.join(videos, file) for file in os.listdir(videos) if file.endswith(".mp4") or file.endswith(".avi") or file.endswith(".mov")]
+    current_working_dir = os.path.dirname(__file__)
+    task_duration = int(self.interface.task_duration_lineedit.text())
+    fps = int(self.interface.frames_per_second_lineedit.text())
+    where_to_extract = int((task_duration * fps) * 0.5)
+
+    if self.interface.analyze_from_file_button.isEnabled():
+        paths_file = self.interface.analyze_from_file_lineedit.text()
+        videos_from_txt = [path[0] for path in pd.read_csv(paths_file, delimiter = "\t", header = None).values.tolist()]
+        video_list = videos_from_txt
+    else:
+        _, _, file_list = [entry for entry in os.walk(videos)][0]
+        video_list = [os.path.join(videos, file) for file in os.listdir(videos) if file.endswith(".mp4") or file.endswith(".avi") or file.endswith(".mov")]
+    
     file_extension = False
     valid_extensions = [".mp4", ".avi", ".mov"]
     invalid_files = [file for file in video_list if not any(file.endswith(ext) for ext in valid_extensions)]
@@ -991,20 +1075,34 @@ def get_frames_function(self, text_signal=None, progress=None, warning_message=N
             title = "Video extension error"
             message = "All videos must have the same extension.\n Please, check the videos folder and try again."
             warning_message.emit((title, message))
-
-    for filename in file_list:
-        if filename.endswith(file_extension):
-            video_path = os.path.join(videos, filename)
-            output_path = os.path.splitext(video_path)[0] + ".jpg"
-            if not os.path.isfile(output_path):
-                text_signal.emit((f"Getting a frame of {filename}", "clear_unused_files_lineedit"))
-                subprocess.run(
-                    "ffmpeg -sseof -1000 -i " + '"' + video_path + '"' + " -update 1 -q:v 1 " + '"' + output_path + '"',
-                    shell=True,
-                )
-            else:
-                text_signal.emit((f"Last frame of {filename} already exists.", "clear_unused_files_lineedit"))
-    pass
+    
+    if self.interface.analyze_from_file_button.isEnabled():
+        for filename in video_list:
+            if filename.endswith(file_extension):
+                output_path = os.path.splitext(filename)[0] + ".jpg"
+                if not os.path.isfile(output_path):
+                    text_signal.emit((f"Getting a frame of {filename}", "clear_unused_files_lineedit"))
+                    subprocess.run(
+                        f'ffmpeg -i "{video_path}" -vf "select=eq(n\,{where_to_extract})" -vsync vfr -update 1 -frames:v 1 "{output_path}"',
+                        shell=True,
+                        cwd=os.path.join(current_working_dir, "ffmpeg", "bin"),
+                    )
+                else:
+                    text_signal.emit((f"Frame of {filename} already exists.", "clear_unused_files_lineedit"))
+    else:
+        for filename in file_list:
+            if filename.endswith(file_extension):
+                video_path = os.path.join(videos, filename)
+                output_path = os.path.splitext(video_path)[0] + ".jpg"
+                if not os.path.isfile(output_path):
+                    text_signal.emit((f"Getting a frame of {filename}", "clear_unused_files_lineedit"))
+                    subprocess.run(
+                        f'ffmpeg -i "{video_path}" -vf "select=eq(n\,{where_to_extract})" -vsync vfr -update 1 -frames:v 1 "{output_path}"',
+                        shell=True,
+                        cwd=os.path.join(current_working_dir, "ffmpeg", "bin"),
+                    )
+                else:
+                    text_signal.emit((f"Frame of {filename} already exists.", "clear_unused_files_lineedit"))
 
 
 def extract_skeleton_function(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
@@ -1016,6 +1114,25 @@ def extract_skeleton_function(self, text_signal=None, progress=None, warning_mes
     videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
 
     text_signal.emit(("Extracting skeleton...", "clear_unused_files_lineedit"))
+    if self.interface.analyze_from_file_button.isEnabled():
+        paths_file = self.interface.analyze_from_file_lineedit.text()
+        videos_from_txt = [path[0] for path in pd.read_csv(paths_file, delimiter = "\t", header = None).values.tolist()]
+        videos = videos_from_txt
+
+    deeplabcut.filterpredictions(
+        config_path,
+        videos,
+        videotype=".mp4",
+        shuffle=1,
+        trainingsetindex=0,
+        filtertype="median",
+        windowlength=5,
+        p_bound=0.001,
+        ARdegree=3,
+        MAdegree=1,
+        alpha=0.01,
+        save_as_csv=True,
+    )
     deeplabcut.analyzeskeleton(config_path, videos, shuffle=1, trainingsetindex=0, filtered=True, save_as_csv=True)
     text_signal.emit(("Done extracting skeleton.", "clear_unused_files_lineedit"))
 
@@ -1023,6 +1140,12 @@ def extract_skeleton_function(self, text_signal=None, progress=None, warning_mes
 def clear_unused_files_function(self):
     self.interface.clear_unused_files_lineedit.clear()
     videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
+
+    if self.interface.analyze_from_file_button.isEnabled():
+        paths_file = self.interface.analyze_from_file_lineedit.text()
+        videos_from_txt = [path[0] for path in pd.read_csv(paths_file, delimiter = "\t", header = None).values.tolist()]
+        videos = videos_from_txt
+
     unwanted_folder = os.path.join(videos, "unwanted_files")
 
     if not os.path.exists(unwanted_folder):
@@ -1167,6 +1290,18 @@ def get_folder_path_function(self, lineedit_name):
         file_explorer.call("wm", "attributes", ".", "-topmost", True)
         folder = str(Path(filedialog.askdirectory(title="Select the destination folder", mustexist=True)))
         self.interface.destination_folder_path_video_editing_lineedit.setText(folder)
+    elif "file_to_analyze" == lineedit_name.lower():
+        file_explorer = tk.Tk()
+        file_explorer.withdraw()
+        file_explorer.call("wm", "attributes", ".", "-topmost", True)
+        file = str(Path(filedialog.askopenfilename(title="Select the file to analyze", multiple=False)))
+        self.interface.analyze_from_file_lineedit.setText(file)
+    elif "create_roi_automatically" == lineedit_name.lower():
+        file_explorer = tk.Tk()
+        file_explorer.withdraw()
+        file_explorer.call("wm", "attributes", ".", "-topmost", True)
+        folder = str(Path(filedialog.askdirectory(title="Select the folder", mustexist=True)))
+        self.interface.folder_to_get_create_roi_lineedit.setText(folder)
 
 
 def check_roi_files(roi):
@@ -2086,6 +2221,164 @@ def save_crop_coordinates(self):
             writer.writerow([name] + list(coordinate))
     self.interface.log_video_editing_lineedit.append(f"[INFO]: Crop coordinates saved to {csv_file_path}.")
 
+def create_rois_automatically(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
+    """
+    Automatically creates ROIs (Region of Interest) for images in a specified folder using Deeplabcut.
+    Args:
+        text_signal (function, optional): Signal to emit text messages. Defaults to None.
+        progress (function, optional): Signal to emit progress updates. Defaults to None.
+        warning_message (function, optional): Signal to emit warning messages. Defaults to None.
+        resume_message (function, optional): Signal to emit resume messages. Defaults to None.
+    Returns:
+        None
+    """
+
+    roi_network_config = os.path.join(os.path.dirname(__file__), "roi_network", "config.yaml")
+    folder_with_analyzed_files = self.interface.folder_to_get_create_roi_lineedit.text()
+    if folder_with_analyzed_files == "":
+        text_signal.emit(("[ERROR]: Please select a folder.", "log_video_editing_lineedit"))
+        return
+
+    images_in_folder = [os.path.join(folder_with_analyzed_files, file) for file in os.listdir(folder_with_analyzed_files) if file.endswith(".jpg")]
+    videos_in_folder = [os.path.join(folder_with_analyzed_files, file) for file in os.listdir(folder_with_analyzed_files) if file.endswith(".mp4")]
+
+    images_in_folder_names = [file for file in os.listdir(folder_with_analyzed_files) if file.endswith(".jpg")]
+
+    image_not_in_tmp_folder = []
+    without_roi = []
+
+    if len(images_in_folder) != len(videos_in_folder):
+        text_signal.emit((f"Number of PNGs and videos in the folder do not match: {len(images_in_folder)} PNGs and {len(videos_in_folder)} videos.", "log_create_roi_lineedit"))
+        image_names = [file for file in os.listdir(folder_with_analyzed_files) if file.endswith(".jpg")]
+        video_names = [file for file in os.listdir(folder_with_analyzed_files) if file.endswith(".mp4")]
+        if not all([name in video_names for name in image_names]):
+            text_signal.emit(("The following files are missing:", "log_video_editing_lineedit"))
+            text_signal.emit(([name for name in image_names if name not in video_names], "log_video_editing_lineedit"))
+
+    config_path = roi_network_config
+    tmp_folder = os.path.join(folder_with_analyzed_files, "tmp")
+
+    try:
+        os.mkdir(tmp_folder)
+    except FileExistsError:
+        text_signal.emit(("Temporary folder already exists.", "log_video_editing_lineedit"))
+
+    # Check if all images are in the tmp folder
+    images_in_tmp_folder = [file for file in os.listdir(tmp_folder) if file.endswith(".jpg")]
+    roi_files_in_tmp_folder = [file for file in os.listdir(tmp_folder) if file.endswith("_roi.csv")]
+    if not ((len(images_in_tmp_folder) == len(roi_files_in_tmp_folder))) or not (len(images_in_tmp_folder) == len(images_in_folder)):
+        for image in images_in_folder_names:
+            name = image.split(".")[0]
+            if f"{name}.jpg" not in images_in_tmp_folder:
+                image_not_in_tmp_folder.append(image)
+        if image_not_in_tmp_folder:
+            text_signal.emit(("Copying missing/unanalyzed images to tmp folder.", "log_video_editing_lineedit"))
+            for image in image_not_in_tmp_folder:
+                shutil.copy(os.path.join(folder_with_analyzed_files, image), os.path.join(tmp_folder, image))
+
+    images_in_tmp_folder = [file for file in os.listdir(tmp_folder) if file.endswith(".jpg")]
+    for image in images_in_tmp_folder:
+        if not os.path.exists(os.path.join(tmp_folder, f"{image.split('.')[0]}_roi.csv")):
+            without_roi.append(image)
+
+    # Use Deeplabcut to extract circle coordinates
+    dlc_files = [os.path.join(tmp_folder, file) for file in os.listdir(tmp_folder) if "DLC_resnet" in file]
+    extensions = [ext.split(".")[-1] for ext in dlc_files]
+    analyze = False
+    if not any([ext in "h5" for ext in extensions]):
+        analyze = True
+    elif image_not_in_tmp_folder:
+        analyze = True
+
+    if analyze:
+        for file in dlc_files:
+            os.remove(file)
+        deeplabcut.analyze_time_lapse_frames(config_path, tmp_folder, ".jpg", save_as_csv=True)
+    # Search the folder for the h5 file generated by Deeplabcut
+    h5_file = [file for file in os.listdir(tmp_folder) if file.endswith(".h5")][0]
+
+    coordinates_list = pd.read_hdf(os.path.join(tmp_folder, h5_file))
+    columns_to_drop = [col for col in coordinates_list.columns if "likelihood" in col]
+    coordinates_list_clean = coordinates_list.drop(columns=columns_to_drop)
+
+    # Loop through each image and create a generate a csv with the x, y, width and height of the circle
+    for coordinates, image_name in zip(coordinates_list_clean.values, coordinates_list_clean.index.to_list()):
+        if image_name in without_roi:
+            x_coords_list = [coordinates[0], coordinates[2], coordinates[4], coordinates[6]]
+            y_coords_list = [coordinates[1], coordinates[3], coordinates[5], coordinates[7]]
+
+            x_mean = np.mean(x_coords_list)
+            y_mean = np.mean(y_coords_list)
+
+            diagonal = np.sqrt(np.square(x_coords_list[2] - x_coords_list[0]) + np.square(y_coords_list[2] - y_coords_list[0]))
+            radius = int(diagonal/2)
+            center = (int(x_mean), int(y_mean))
+
+            file_name = image_name.split(".")[0]
+
+            csv_data = {
+                'X': x_mean,
+                'Y': y_mean,
+                'BX': int(x_mean),
+                'BY': int(y_mean),
+                'Width': radius * 2,
+                'Height': radius * 2
+            }
+
+            roi_dataframe = pd.DataFrame(csv_data, index=[0])
+            file = os.path.join(tmp_folder, f"{file_name}_roi.csv")
+            if os.path.exists(file):
+                text_signal.emit((f"Roi: {file} already exists.", "log_video_editing_lineedit"))
+                continue
+            roi_dataframe.to_csv(file, index=False)
+
+    # Move the roi files to the folder with the analyzed files
+    roi_files_in_tmp_folder = [file for file in os.listdir(tmp_folder) if file.endswith("_roi.csv")]
+    for roi_file in roi_files_in_tmp_folder:
+        if os.path.exists(os.path.join(folder_with_analyzed_files, roi_file)):
+            text_signal.emit((f"Roi file {roi_file} already exists.", "log_video_editing_lineedit"))
+            continue
+        shutil.copy(os.path.join(tmp_folder, roi_file), folder_with_analyzed_files)
+
+    # Check the ROI for each image
+    images_in_tmp_folder = [file for file in os.listdir(tmp_folder) if file.endswith(".jpg")]
+    for image_file in images_in_tmp_folder:
+        roi_file = os.path.join(tmp_folder, f"{image_file.split('.')[0]}_roi.csv")
+        if not os.path.exists(roi_file):
+            text_signal.emit((f"Roi for image {image_file} was not found.", "log_video_editing_lineedit"))
+            continue
+        roi_data = pd.read_csv(roi_file)
+        center = (int(roi_data['X'][0]), int(roi_data['Y'][0]))
+        radius = int(roi_data['Width'][0] / 2)
+        try:
+            image = cv2.imread(os.path.join(tmp_folder, image_file))
+        except Exception as e:
+            text_signal.emit((f"Error reading image {image_file}.", "log_video_editing_lineedit"))
+            text_signal.emit(("The error occurred: when using cv2.imread."))
+            text_signal.emit(("The image might be corrupted."))        
+            print(e)
+            continue
+        thickness = 1
+
+        fig, ax = plt.subplots()
+        ax.imshow(image)
+        circle = plt.Circle(center, radius, color='red', fill=False, linewidth=thickness)
+        ax.add_patch(circle)  # Add the circle to the axes
+        ax.axis('off')
+        ax.set_title(f"ROI for {image_file}")
+        fig.set_tight_layout('tight')
+
+        roi_check_folder = os.path.join(folder_with_analyzed_files, "auto_roi_check")
+        if not os.path.exists(roi_check_folder):
+            os.mkdir(roi_check_folder)
+        image = os.path.join(roi_check_folder, f"{image_file.split('.')[0]}_roi_check.jpg")
+        if os.path.exists(image):
+            text_signal.emit((f"Image to check the ROI for {image_file} already exists.", "log_video_editing_lineedit"))
+            continue
+        else:
+            text_signal.emit((f"Saving image {image_file}_roi_check.jpg", "log_video_editing_lineedit"))
+            fig.savefig(image)
+        plt.close(fig)
 
 def get_message():
     a = b"V2VsY29tZSB0byBCZWhhdnl0aG9uIFRvb2xzOiB3aGVyZSB5b3VyIG1pc3Rha2VzIGJlY29tZSBvdXIgZW50ZXJ0YWlubWVudCxDb25ncmF0dWxhdGlvbnMgb24gY2hvb3NpbmcgQmVoYXZ5dGhvbiBUb29sczogeW91ciBzaG9ydGN1dCB0byBjb2RlIGluZHVjZWQgaGVhZGFjaGVzLEJlaGF2eXRob24gVG9vbHM6IEJlY2F1c2UgZGVidWdnaW5nIGlzIGZvciB0aGUgd2VhayxEaXZlIGludG8gQmVoYXZ5dGhvbiBUb29sczogd2hlcmUgdXNlciBmcmllbmRseSBpcyBqdXN0IGEgbXl0aCxXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IFlvdXIgcGVyc29uYWwgdG91ciBvZiBwcm9ncmFtbWluZyBwdXJnYXRvcnksQmVoYXZ5dGhvbiBUb29sczogUGVyZmVjdCBmb3IgdGhvc2Ugd2hvIGxvdmUgdGhlIHNtZWxsIG9mIGZhaWx1cmUgaW4gdGhlIG1vcm5pbmcsU3RhcnQgcXVlc3Rpb25pbmcgeW91ciBsaWZlIGNob2ljZXM6IFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29scyxCZWhhdnl0aG9uIFRvb2xzOiBNYWtpbmcgc2ltcGxlIHRhc2tzIGltcG9zc2libHkgY29tcGxpY2F0ZWQgc2luY2UgWWVhciB6ZXJvLEVuam95IEJlaGF2eXRob24gVG9vbHM6IHdlIHByb21pc2UgeW91IHdpbGwgcmVncmV0IGl0LFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogVGhlIHBsYWNlIHdoZXJlIGJ1Z3MgZmVlbCBhdCBob21lLEJlaGF2eXRob24gVG9vbHM6IEJlY2F1c2Ugd2hhdCBpcyBsaWZlIHdpdGhvdXQgYSBsaXR0bGUgdG9ydHVyZSxQcmVwYXJlIGZvciBhIHJpZGUgdGhyb3VnaCBjaGFvcyB3aXRoIEJlaGF2eXRob24gVG9vbHMsQmVoYXZ5dGhvbiBUb29sczogV2hlcmUgc2FuaXR5IGdvZXMgdG8gZGllLFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogdGhlIGVwaXRvbWUgb2YgaW5lZmZpY2llbmN5LEJlaGF2eXRob24gVG9vbHM6IE1ha2luZyBzdXJlIHlvdSBuZXZlciBnZXQgdG9vIGNvbWZvcnRhYmxlLFN0ZXAgcmlnaHQgdXAgdG8gQmVoYXZ5dGhvbiBUb29sczogWW91ciBmYXN0IHRyYWNrIHRvIGZydXN0cmF0aW9uLEJlaGF2eXRob24gVG9vbHM6IFR1cm5pbmcgZHJlYW1zIGludG8gbmlnaHRtYXJlcyxXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IHlvdXIgZGFpbHkgZG9zZSBvZiBkaWdpdGFsIGRpc2FwcG9pbnRtZW50LEJlaGF2eXRob24gVG9vbHM6IFdoZW4geW91IHdhbnQgdG8gbWFrZSB5b3VyIHByb2JsZW1zIHdvcnNlLFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogd2hlcmUgZXZlcnkgZmVhdHVyZSBpcyBhIG5ldyBmb3JtIG9mIGFnb255LEJlbSB2aW5kbyBjb21wYW5oZWlybyBkZSBkaWFzIG1hbGRpdG9z"

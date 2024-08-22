@@ -41,6 +41,9 @@ class behavython_gui(QWidget):
         self.interface.extract_skeleton_button.clicked.connect(lambda: self.run_worker(extract_skeleton_function, self))
         self.interface.get_frames_button.clicked.connect(lambda: self.run_worker(get_frames_function, self))
         self.interface.clear_unused_files_button.clicked.connect(lambda: clear_unused_files_function(self))
+        self.interface.get_file_to_analyze_button.clicked.connect(lambda: get_folder_path_function(self, "file_to_analyze"))
+        self.interface.analyze_from_file_lineedit.textChanged.connect(lambda: self.toggle_analyze_from_file_button())
+        self.interface.analyze_from_file_button.clicked.connect(lambda: self.run_worker(dlc_video_analyze_function, self))
 
         # Data process tab
         self.interface.get_config_path_data_process_button.clicked.connect(lambda: get_folder_path_function(self, "config_path_data_process"))
@@ -56,6 +59,8 @@ class behavython_gui(QWidget):
         self.interface.save_cropped_dimensions_video_editing_button.clicked.connect(lambda: save_crop_coordinates(self))
         self.interface.crop_videos_button_video_editing_button.clicked.connect(lambda: self.run_worker(crop_videos, self))
         self.interface.copy_files_with_robocopy_video_editing_button.clicked.connect(lambda: self.run_worker(copy_folder_robocopy, self))
+        self.interface.folder_to_get_create_roi_button.clicked.connect(lambda: get_folder_path_function(self, "create_roi_automatically"))
+        self.interface.cread_roi_automatically_button.clicked.connect(lambda: self.run_worker(create_rois_automatically, self))
 
     def resume_message_function(self, file_list):
         text = "Check the videos to be analyzed: "
@@ -108,6 +113,8 @@ class behavython_gui(QWidget):
             self.interface.log_video_editing_lineedit.append(text)
         elif "log_data_process_lineedit" == lineedit:
             self.interface.log_data_process_lineedit.append(text)
+        elif "log_video_editing_lineedit" == lineedit:
+            self.interface.log_video_editing_lineedit.append(text)
 
     def handle_warning_message(self, results):
         title, text = results
@@ -125,7 +132,23 @@ class behavython_gui(QWidget):
             configuration = json.load(open(config_path))
             load_configuration_file(self, configuration)
             self.interface.resume_lineedit.setText("Configuration file loaded successfully!")
-
+    
+    def toggle_analyze_from_file_button(self):
+        if self.interface.analyze_from_file_lineedit.text() == "":
+            self.interface.resume_lineedit.clear()
+            self.interface.resume_lineedit.setText("Please select a file to analyze.")
+            self.interface.analyze_from_file_button.setEnabled(False)
+        elif not os.path.exists(self.interface.analyze_from_file_lineedit.text()):
+            self.interface.resume_lineedit.clear()
+            self.interface.resume_lineedit.setText("The file selected does not exist.")
+            self.interface.analyze_from_file_button.setEnabled(False)
+        elif not self.interface.analyze_from_file_lineedit.text().endswith(".txt"):
+            self.interface.resume_lineedit.clear()
+            self.interface.resume_lineedit.setText("The file selected is not a .txt file.")
+            self.interface.analyze_from_file_button.setEnabled(False)
+        else:
+            self.interface.analyze_from_file_button.setEnabled(True)
+            self.interface.resume_lineedit.clear()
 
 def main():
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts)

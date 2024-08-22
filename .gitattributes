@@ -1,0 +1,4 @@
+E:/Matheus/GITHUB/behavython/roi_network/dlc-models/iteration-0/find_cup_circleAug21-trainset95shuffle1/train/snapshot-600000.data-00000-of-00001 filter=lfs diff=lfs merge=lfs -text
+E:/Matheus/GITHUB/behavython/ffmpeg/bin/ffmpeg.exe filter=lfs diff=lfs merge=lfs -text
+*.data-00000-of-00001 filter=lfs diff=lfs merge=lfs -text
+*.exe filter=lfs diff=lfs merge=lfs -text
