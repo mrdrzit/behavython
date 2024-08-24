@@ -53,6 +53,9 @@ class behavython_gui(QWidget):
         self.interface.get_destination_folder_path_button_video_editing_button.clicked.connect(lambda: get_folder_path_function(self, "destination_folder"))
         self.interface.convert_csv_to_h5_data_process_button.clicked.connect(lambda: self.run_worker(convert_csv_to_h5, self))
         self.interface.analyze_frames_data_process_button.clicked.connect(lambda: self.run_worker(analyze_folder_with_frames, self))
+        self.interface.enable_bout_analysis_checkbox.stateChanged.connect(lambda: self.enable_bout_analysis())
+        self.interface.run_bout_analysis_button.clicked.connect(lambda: self.run_worker(bout_analysis, self))
+        self.interface.get_bout_analysis_folder_button.clicked.connect(lambda: get_folder_path_function(self, "get_bout_analysis_folder"))
 
         # Video editing tab
         self.interface.get_video_coordinates_video_editing_button.clicked.connect(lambda: self.run_worker(get_crop_coordinates, self))
@@ -115,6 +118,25 @@ class behavython_gui(QWidget):
             self.interface.log_data_process_lineedit.append(text)
         elif "log_video_editing_lineedit" == lineedit:
             self.interface.log_video_editing_lineedit.append(text)
+        elif "log_data_process_lineedit" == lineedit:
+            self.interface.log_bout_analysis_lineedit.append(text)
+
+    def enable_bout_analysis(self):
+        analysis_check_box_is_enabled = self.interface.enable_bout_analysis_checkbox.isChecked()
+        if analysis_check_box_is_enabled:
+            self.interface.get_bout_analysis_folder_button.setEnabled(True)
+        else:
+            self.interface.get_bout_analysis_folder_button.setEnabled(False)
+
+        if analysis_check_box_is_enabled:
+            self.interface.run_bout_analysis_button.setEnabled(True)
+        else:
+            self.interface.run_bout_analysis_button.setEnabled(False)
+
+        if analysis_check_box_is_enabled:
+            self.interface.path_to_bout_analysis_folder_lineedit.setEnabled(True)
+        else:
+            self.interface.path_to_bout_analysis_folder_lineedit.setEnabled(False)
 
     def handle_warning_message(self, results):
         title, text = results

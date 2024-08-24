@@ -34,7 +34,7 @@
   <widget class="QTabWidget" name="tabWidget">
    <property name="geometry">
     <rect>
-     <x>10</x>
+     <x>11</x>
      <y>70</y>
      <width>331</width>
      <height>821</height>
@@ -91,7 +91,7 @@ QTabBar::tab:selected {
     <enum>QTabWidget::Rounded</enum>
    </property>
    <property name="currentIndex">
-    <number>3</number>
+    <number>2</number>
    </property>
    <property name="iconSize">
     <size>
@@ -695,7 +695,7 @@ to see the help text</string>
       <rect>
        <x>180</x>
        <y>206</y>
-       <width>81</width>
+       <width>121</width>
        <height>16</height>
       </rect>
      </property>
@@ -704,6 +704,18 @@ to see the help text</string>
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>121</width>
+       <height>16</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>121</width>
+       <height>16</height>
+      </size>
      </property>
      <property name="cursor">
       <cursorShape>PointingHandCursor</cursorShape>
@@ -980,7 +992,7 @@ QScrollBar::sub-page:vertical {
     <widget class="QPushButton" name="get_frames_button">
      <property name="geometry">
       <rect>
-       <x>190</x>
+       <x>187</x>
        <y>337</y>
        <width>131</width>
        <height>31</height>
@@ -999,10 +1011,10 @@ QScrollBar::sub-page:vertical {
     <widget class="QTextEdit" name="clear_unused_files_lineedit">
      <property name="geometry">
       <rect>
-       <x>30</x>
-       <y>550</y>
-       <width>291</width>
-       <height>211</height>
+       <x>10</x>
+       <y>580</y>
+       <width>311</width>
+       <height>181</height>
       </rect>
      </property>
      <property name="minimumSize">
@@ -1013,8 +1025,8 @@ QScrollBar::sub-page:vertical {
      </property>
      <property name="maximumSize">
       <size>
-       <width>291</width>
-       <height>351</height>
+       <width>311</width>
+       <height>181</height>
       </size>
      </property>
      <property name="font">
@@ -1067,8 +1079,8 @@ QScrollBar::sub-page:vertical {
     <widget class="QLabel" name="extract_skeleton_title">
      <property name="geometry">
       <rect>
-       <x>30</x>
-       <y>309</y>
+       <x>26</x>
+       <y>310</y>
        <width>151</width>
        <height>16</height>
       </rect>
@@ -1101,9 +1113,9 @@ QScrollBar::sub-page:vertical {
     <widget class="QLabel" name="network_tab_title">
      <property name="geometry">
       <rect>
-       <x>20</x>
+       <x>10</x>
        <y>20</y>
-       <width>291</width>
+       <width>311</width>
        <height>20</height>
       </rect>
      </property>
@@ -1310,9 +1322,9 @@ QScrollBar::sub-page:vertical {
     <widget class="QLabel" name="data_refining_title">
      <property name="geometry">
       <rect>
-       <x>40</x>
+       <x>20</x>
        <y>275</y>
-       <width>271</width>
+       <width>301</width>
        <height>20</height>
       </rect>
      </property>
@@ -1329,7 +1341,7 @@ QScrollBar::sub-page:vertical {
     <widget class="QLabel" name="get_frames_label">
      <property name="geometry">
       <rect>
-       <x>15</x>
+       <x>10</x>
        <y>335</y>
        <width>161</width>
        <height>30</height>
@@ -1443,8 +1455,8 @@ QScrollBar::sub-page:vertical {
     <widget class="QLabel" name="clear_unused_files_title">
      <property name="geometry">
       <rect>
-       <x>30</x>
-       <y>383</y>
+       <x>25</x>
+       <y>407</y>
        <width>151</width>
        <height>16</height>
       </rect>
@@ -1477,7 +1489,7 @@ QScrollBar::sub-page:vertical {
     <widget class="QPushButton" name="extract_skeleton_button">
      <property name="geometry">
       <rect>
-       <x>190</x>
+       <x>187</x>
        <y>298</y>
        <width>131</width>
        <height>31</height>
@@ -1578,7 +1590,7 @@ QScrollBar::sub-page:vertical {
      <property name="geometry">
       <rect>
        <x>190</x>
-       <y>377</y>
+       <y>402</y>
        <width>131</width>
        <height>31</height>
       </rect>
@@ -1600,7 +1612,7 @@ QScrollBar::sub-page:vertical {
      <property name="geometry">
       <rect>
        <x>85</x>
-       <y>500</y>
+       <y>528</y>
        <width>161</width>
        <height>31</height>
       </rect>
@@ -1623,11 +1635,17 @@ QPushButton:disabled {
     <widget class="QLabel" name="analyze_from_file_label">
      <property name="geometry">
       <rect>
-       <x>15</x>
-       <y>417</y>
+       <x>10</x>
+       <y>445</y>
        <width>311</width>
        <height>20</height>
       </rect>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>311</width>
+       <height>20</height>
+      </size>
      </property>
      <property name="styleSheet">
       <string notr="true">QLabel{border:#969696;background-color:#2C53A1;border-radius:8px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
@@ -1643,7 +1661,7 @@ QPushButton:disabled {
      <property name="geometry">
       <rect>
        <x>235</x>
-       <y>447</y>
+       <y>475</y>
        <width>81</width>
        <height>20</height>
       </rect>
@@ -1673,7 +1691,7 @@ QPushButton:disabled {
      <property name="geometry">
       <rect>
        <x>29</x>
-       <y>473</y>
+       <y>501</y>
        <width>285</width>
        <height>20</height>
       </rect>
@@ -1719,7 +1737,7 @@ QPushButton:disabled {
      <property name="geometry">
       <rect>
        <x>30</x>
-       <y>450</y>
+       <y>478</y>
        <width>170</width>
        <height>16</height>
       </rect>
@@ -1749,6 +1767,90 @@ QPushButton:disabled {
       <string notr="true">Path to the txt file containing the paths</string>
      </property>
     </widget>
+    <widget class="QLineEdit" name="override_frame_extraction_lineedit">
+     <property name="geometry">
+      <rect>
+       <x>188</x>
+       <y>375</y>
+       <width>81</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>81</width>
+       <height>20</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+     </property>
+     <property name="text">
+      <string notr="true">4500</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+    <widget class="QLabel" name="override_frame_extraction_label">
+     <property name="geometry">
+      <rect>
+       <x>-2</x>
+       <y>368</y>
+       <width>171</width>
+       <height>30</height>
+      </rect>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>100</width>
+       <height>30</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>300</width>
+       <height>100</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+     </property>
+     <property name="text">
+      <string notr="true">Override frame extraction</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="override_frame_extraction_checkbox">
+     <property name="geometry">
+      <rect>
+       <x>273</x>
+       <y>376</y>
+       <width>61</width>
+       <height>17</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QCheckBox::indicator{width:15px;height:15px;background-color:#606060;border-radius:4px;}QCheckBox::indicator:checked{background-color:#A21F27;}</string>
+     </property>
+     <property name="text">
+      <string>Enable</string>
+     </property>
+     <property name="checked">
+      <bool>false</bool>
+     </property>
+    </widget>
    </widget>
    <widget class="QWidget" name="data_process">
     <attribute name="title">
@@ -1757,11 +1859,17 @@ QPushButton:disabled {
     <widget class="QTextEdit" name="log_data_process_lineedit">
      <property name="geometry">
       <rect>
-       <x>22</x>
-       <y>421</y>
-       <width>290</width>
-       <height>341</height>
+       <x>6</x>
+       <y>600</y>
+       <width>321</width>
+       <height>181</height>
       </rect>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>321</width>
+       <height>341</height>
+      </size>
      </property>
      <property name="font">
       <font>
@@ -1816,10 +1924,10 @@ QScrollBar::sub-page:vertical {
      </property>
      <property name="geometry">
       <rect>
-       <x>28</x>
+       <x>22</x>
        <y>73</y>
-       <width>285</width>
-       <height>16</height>
+       <width>291</width>
+       <height>20</height>
       </rect>
      </property>
      <property name="minimumSize">
@@ -2395,10 +2503,10 @@ QCheckBox::indicator{
     <widget class="QLineEdit" name="video_folder_data_process_lineedit">
      <property name="geometry">
       <rect>
-       <x>28</x>
-       <y>346</y>
-       <width>285</width>
-       <height>16</height>
+       <x>22</x>
+       <y>342</y>
+       <width>291</width>
+       <height>20</height>
       </rect>
      </property>
      <property name="minimumSize">
@@ -2469,6 +2577,263 @@ QCheckBox::indicator{
       <string notr="true">Path to the config.yaml file </string>
      </property>
     </widget>
+    <widget class="QLabel" name="analyze_frames_data_process_label_2">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>414</y>
+       <width>291</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>70</width>
+       <height>10</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>291</width>
+       <height>20</height>
+      </size>
+     </property>
+     <property name="font">
+      <font>
+       <family>DejaVu Sans</family>
+       <pointsize>7</pointsize>
+       <italic>false</italic>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{
+    border:#969696;
+    background-color:#2C53A1;
+    border-radius:8px;
+    color:#FFFFFF;
+    font:7pt&quot;DejaVu Sans&quot;;
+    font-weight:bold;
+}
+</string>
+     </property>
+     <property name="text">
+      <string notr="true">BOUT ANALYSIS</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="enable_bout_analysis_checkbox">
+     <property name="geometry">
+      <rect>
+       <x>246</x>
+       <y>457</y>
+       <width>81</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QCheckBox::indicator{width:15px;height:15px;background-color:#606060;border-radius:4px;}QCheckBox::indicator:checked{background-color:#A21F27;}</string>
+     </property>
+     <property name="text">
+      <string>Confirm</string>
+     </property>
+     <property name="checked">
+      <bool>false</bool>
+     </property>
+    </widget>
+    <widget class="QLabel" name="bout_analysis_confirmation_label">
+     <property name="geometry">
+      <rect>
+       <x>22</x>
+       <y>438</y>
+       <width>211</width>
+       <height>60</height>
+      </rect>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>100</width>
+       <height>30</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>260</width>
+       <height>60</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+     </property>
+     <property name="text">
+      <string notr="true">By checking this box i confirm that i checked everything in the analysis tab before continuing with the analysis</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="get_bout_analysis_folder_button">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>231</x>
+       <y>497</y>
+       <width>81</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>DejaVu Sans</family>
+       <pointsize>8</pointsize>
+       <italic>false</italic>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="cursor">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton{font:10pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}
+QPushButton:disabled {
+    background-color: gray;
+    color: white; /* Optional: change text color */
+    border: 2px solid darkgray; /* Optional: customize border */
+}</string>
+     </property>
+     <property name="text">
+      <string notr="true">GET FOLDER</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="bout_analysis_label">
+     <property name="geometry">
+      <rect>
+       <x>21</x>
+       <y>501</y>
+       <width>170</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>170</width>
+       <height>16</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>200</width>
+       <height>16</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{color:#FFFFFF;font:6pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+     </property>
+     <property name="text">
+      <string notr="true">Get the path to analysis folder</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="path_to_bout_analysis_folder_lineedit">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>21</x>
+       <y>524</y>
+       <width>291</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>285</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>500</width>
+       <height>20</height>
+      </size>
+     </property>
+     <property name="mouseTracking">
+      <bool>false</bool>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+     </property>
+     <property name="text">
+      <string notr="true"/>
+     </property>
+     <property name="frame">
+      <bool>false</bool>
+     </property>
+     <property name="cursorPosition">
+      <number>0</number>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+     <property name="placeholderText">
+      <string>path\to\analysis\folder</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="run_bout_analysis_button">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>99</x>
+       <y>552</y>
+       <width>131</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="cursor">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton{font:10pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}
+QPushButton:disabled {
+    background-color: gray;
+    color: white; /* Optional: change text color */
+    border: 2px solid darkgray; /* Optional: customize border */
+}</string>
+     </property>
+     <property name="text">
+      <string notr="true">RUN BOUT ANALYSIS</string>
+     </property>
+    </widget>
     <zorder>log_data_process_lineedit</zorder>
     <zorder>config_path_data_process_lineedit</zorder>
     <zorder>frames_folder_data_process_label</zorder>
@@ -2488,6 +2853,13 @@ QCheckBox::indicator{
     <zorder>video_folder_data_process_lineedit</zorder>
     <zorder>config_path_data_process_label</zorder>
     <zorder>frames_extensions_combobox</zorder>
+    <zorder>analyze_frames_data_process_label_2</zorder>
+    <zorder>enable_bout_analysis_checkbox</zorder>
+    <zorder>bout_analysis_confirmation_label</zorder>
+    <zorder>get_bout_analysis_folder_button</zorder>
+    <zorder>bout_analysis_label</zorder>
+    <zorder>path_to_bout_analysis_folder_lineedit</zorder>
+    <zorder>run_bout_analysis_button</zorder>
    </widget>
    <widget class="QWidget" name="video_editing">
     <attribute name="title">

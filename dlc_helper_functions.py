@@ -19,10 +19,12 @@ import csv
 from PIL import Image
 import seaborn as sns
 from pathlib import Path
+import matplotlib.cm as cm
+import re
+from matplotlib import colors as mcolors
 from matplotlib import pyplot as plt
 from matplotlib.collections import LineCollection
 from scipy import stats
-from pathlib import Path
 from PySide6.QtWidgets import QMessageBox, QFileDialog, QDialog, QVBoxLayout, QLabel, QPushButton, QScrollArea, QWidget
 from PySide6.QtGui import QFontMetrics
 from PySide6.QtCore import QRunnable, Slot, Signal, QObject
@@ -501,7 +503,7 @@ class Animal:
         # The following line is necessary to convert the column names to lowercase
         # The data is stored in a MultiIndex dataframe, so the column names are tuples with the bodypart name and the axis/likelihood
         # The following line converts the tuples to lowercase strings
-        extracted_data.columns = pd.MultiIndex.from_frame(extracted_data.columns.to_frame().applymap(str.lower))
+        extracted_data.columns = pd.MultiIndex.from_frame(extracted_data.columns.to_frame().map(str.lower))
         self.bodyparts[bodypart] = {
             "x": extracted_data[bodypart, "x"],
             "y": extracted_data[bodypart, "y"],
@@ -531,7 +533,7 @@ class Animal:
         # The following line is necessary to convert the column names to lowercase
         # The data is stored in a MultiIndex dataframe, so the column names are tuples with the bodypart name and the axis/likelihood
         # The following line converts the tuples to lowercase strings
-        extracted_data.columns = pd.MultiIndex.from_frame(extracted_data.columns.to_frame().applymap(str.lower))
+        extracted_data.columns = pd.MultiIndex.from_frame(extracted_data.columns.to_frame().map(str.lower))
         try:
             self.skeleton[bone] = {
                 "length": extracted_data[bone, "length"],
@@ -1050,6 +1052,13 @@ def get_frames_function(self, text_signal=None, progress=None, warning_message=N
     task_duration = int(self.interface.task_duration_lineedit.text())
     fps = int(self.interface.frames_per_second_lineedit.text())
     where_to_extract = int((task_duration * fps) * 0.5)
+    if self.interface.override_frame_extraction_checkbox.isChecked():
+        where_to_extract = int(self.interface.override_frame_extraction_lineedit.text())
+        if where_to_extract > task_duration * fps:
+            title = "Frame extraction error"
+            message = "The frame to be extracted is beyond the video duration.\n Please, check the frame to be extracted and try again."
+            warning_message.emit((title, message))
+            return
 
     if self.interface.analyze_from_file_button.isEnabled():
         paths_file = self.interface.analyze_from_file_lineedit.text()
@@ -1083,7 +1092,7 @@ def get_frames_function(self, text_signal=None, progress=None, warning_message=N
                 if not os.path.isfile(output_path):
                     text_signal.emit((f"Getting a frame of {filename}", "clear_unused_files_lineedit"))
                     subprocess.run(
-                        f'ffmpeg -i "{video_path}" -vf "select=eq(n\,{where_to_extract})" -vsync vfr -update 1 -frames:v 1 "{output_path}"',
+                        f'ffmpeg -i "{filename}" -vf "select=eq(n\,{where_to_extract})" -fps_mode vfr -update 1 -frames:v 1 "{output_path}"',
                         shell=True,
                         cwd=os.path.join(current_working_dir, "ffmpeg", "bin"),
                     )
@@ -1097,7 +1106,7 @@ def get_frames_function(self, text_signal=None, progress=None, warning_message=N
                 if not os.path.isfile(output_path):
                     text_signal.emit((f"Getting a frame of {filename}", "clear_unused_files_lineedit"))
                     subprocess.run(
-                        f'ffmpeg -i "{video_path}" -vf "select=eq(n\,{where_to_extract})" -vsync vfr -update 1 -frames:v 1 "{output_path}"',
+                        f'ffmpeg -i "{video_path}" -vf "select=eq(n\,{where_to_extract})" -fps_mode vfr -update 1 -frames:v 1 "{output_path}"',
                         shell=True,
                         cwd=os.path.join(current_working_dir, "ffmpeg", "bin"),
                     )
@@ -1302,12 +1311,18 @@ def get_folder_path_function(self, lineedit_name):
         file_explorer.call("wm", "attributes", ".", "-topmost", True)
         folder = str(Path(filedialog.askdirectory(title="Select the folder", mustexist=True)))
         self.interface.folder_to_get_create_roi_lineedit.setText(folder)
+    elif "get_bout_analysis_folder" == lineedit_name.lower():
+        file_explorer = tk.Tk()
+        file_explorer.withdraw()
+        file_explorer.call("wm", "attributes", ".", "-topmost", True)
+        folder = str(Path(filedialog.askdirectory(title="Select the folder", mustexist=True)))
+        self.interface.path_to_bout_analysis_folder_lineedit.setText(folder)
 
 
 def check_roi_files(roi):
     extracted_data = pd.read_csv(roi, sep=",")
     must_have = ["x", "y", "width", "height"]
-    header = extracted_data.columns.to_frame().applymap(str.lower).to_numpy()
+    header = extracted_data.columns.to_frame().map(str.lower).to_numpy()
     return all(elem in header for elem in must_have)
 
 
@@ -1496,7 +1511,6 @@ def on_worker_finished(options):
 
 def get_options(self):
     options = {}
-    self.interface.resume_lineedit.clear()
     options["arena_width"] = int(self.interface.arena_width_lineedit.text())
     options["arena_height"] = int(self.interface.arena_height_lineedit.text())
     options["frames_per_second"] = int(self.interface.frames_per_second_lineedit.text())
@@ -2379,6 +2393,365 @@ def create_rois_automatically(self, text_signal=None, progress=None, warning_mes
             text_signal.emit((f"Saving image {image_file}_roi_check.jpg", "log_video_editing_lineedit"))
             fig.savefig(image)
         plt.close(fig)
+
+
+def bout_analysis(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
+    debugpy.debug_this_thread()
+
+    analysis_folder = self.interface.path_to_bout_analysis_folder_lineedit.text()
+    # data_files = QFileDialog.getOpenFileNames(self, "Select the files to analyze", analysis_folder, "DLC Analysis files (*_filtered.csv *_filtered_skeleton.csv *_roi.csv *.jpg)")[0]
+    
+    options = {}
+    options["arena_width"] = int(self.interface.arena_width_lineedit.text())
+    options["arena_height"] = int(self.interface.arena_height_lineedit.text())
+    options["frames_per_second"] = int(self.interface.frames_per_second_lineedit.text())
+    options["experiment_type"] = self.interface.type_combobox.currentText().lower().strip().replace(" ", "_")
+    options["max_fig_res"] = str(self.interface.fig_max_size.currentText()).replace(" ", "").replace("x", ",").split(",")
+    options["algo_type"] = self.interface.algo_type_combobox.currentText().lower().strip()
+    if self.interface.animal_combobox.currentIndex() == 0:
+        options["threshold"] = 0.0267
+    else:
+        options["threshold"] = 0.0667
+    options["task_duration"] = int(self.interface.task_duration_lineedit.text())
+    options["trim_amount"] = int(self.interface.crop_video_time_lineedit.text())
+    options["crop_video"] = self.interface.crop_video_checkbox.isChecked()
+    options["save_folder"] = self.interface.recent_analysis_directory_lineedit.text()
+    options["plot_options"] = "plotting_enabled" if self.interface.plot_data_checkbox.isChecked() else "plotting_disabled"
+
+    analysis_folder = self.interface.path_to_bout_analysis_folder_lineedit.text()
+    figures_folder = os.path.join(analysis_folder, "bout_analysis")
+    if not os.path.exists(figures_folder):
+        os.mkdir(figures_folder)
+    
+    data = DataFiles()
+    animals = []
+    all_results = {}
+    
+    get_files(self, [], data, animals)
+
+    for animal in animals:
+        collision_data = []
+        # dimensions = animal.exp_dimensions()
+        focinho_x = animal.bodyparts["focinho"]["x"]
+        focinho_y = animal.bodyparts["focinho"]["y"]
+        orelha_esq_x = animal.bodyparts["orelhae"]["x"]
+        orelha_esq_y = animal.bodyparts["orelhae"]["y"]
+        orelha_dir_x = animal.bodyparts["orelhad"]["x"]
+        orelha_dir_y = animal.bodyparts["orelhad"]["y"]
+        centro_x = animal.bodyparts["centro"]["x"]
+        centro_y = animal.bodyparts["centro"]["y"]
+        roi_X = []
+        roi_Y = []
+        roi_D = []
+        roi_NAME = []
+        # roi_regex = re.compile(r"\\([^\\]+)\.")
+        number_of_filled_rois = sum(1 for roi in animal.rois if roi["x"])
+        for i in range(number_of_filled_rois):
+            # Finds the name of the roi in the file name
+            roi_name = Path(animal.rois[i]["file"]).stem.split("_")[0]
+            roi_NAME.append(roi_name)
+            roi_X.append(animal.rois[i]["x"])
+            roi_Y.append(animal.rois[i]["y"])
+            roi_D.append((animal.rois[i]["width"] + animal.rois[i]["height"]) / 2)
+        # ---------------------------------------------------------------
+
+        # General data
+        # arena_width = options["arena_width"]
+        # arena_height = options["arena_height"]
+        frames_per_second = options["frames_per_second"]
+        max_analysis_time = options["task_duration"]
+        # threshold = options["threshold"]
+        # max_video_height = int(options["max_fig_res"][0])
+        # max_video_width = int(options["max_fig_res"][1])
+        # plot_options = True
+        # trim_amount = int(options["trim_amount"] * frames_per_second)
+        # video_height, video_width, _ = dimensions
+        # factor_width = arena_width / video_width
+        # factor_height = arena_height / video_height
+        # number_of_frames = animal.exp_length()
+
+        # ----------------------------------------------------------------------------------------------------------
+
+        runtime = range(int(max_analysis_time * frames_per_second))
+
+        # Try to clean the animal name from the date and time timestamp
+        clean_animal_name = None
+        try:
+            # Replace the date and time timestamp with the an empty string
+            # Replace all remaining underscores, spcaces and dashes with a single underscore
+            new_key = re.sub(r"\d{4}-\d{2}-\d{2} \d{2}-\d{2}-\d{2}", "", animal.name)
+            new_key = re.sub(r"[_\s-]+", "_", new_key)
+            clean_animal_name = new_key
+        except:
+            text_signal.emit((f"Could not find the date and time timestamp for the animal {animal.name}", "log_data_process_lineedit"))
+            text_signal.emit(("Using the complete animal name instead.", "log_data_process_lineedit"))
+            clean_animal_name = animal.name
+
+        for i in runtime:
+            # Calculate the area of the mice's head
+            Side1 = np.sqrt(((orelha_esq_x[i] - focinho_x[i]) ** 2) + ((orelha_esq_y[i] - focinho_y[i]) ** 2))
+            Side2 = np.sqrt(((orelha_dir_x[i] - orelha_esq_x[i]) ** 2) + ((orelha_dir_y[i] - orelha_esq_y[i]) ** 2))
+            Side3 = np.sqrt(((focinho_x[i] - orelha_dir_x[i]) ** 2) + ((focinho_y[i] - orelha_dir_y[i]) ** 2))
+            S = (Side1 + Side2 + Side3) / 2
+            mice_head_area = np.sqrt(S * (S - Side1) * (S - Side2) * (S - Side3))
+            # ------------------------------------------------------------------------------------------------------
+
+            # Calculate the exploration threshold in front of the mice's nose
+            A = np.array([focinho_x[i], focinho_y[i]])
+            B = np.array([orelha_esq_x[i], orelha_esq_y[i]])
+            C = np.array([orelha_dir_x[i], orelha_dir_y[i]])
+            P, Q = line_trough_triangle_vertex(A, B, C)
+            # ------------------------------------------------------------------------------------------------------
+
+            # Calculate the collisions between the ROI and the mice's nose
+            for ii in range(number_of_filled_rois):
+                collision = detect_collision([Q[0], Q[1]], [P[0], P[1]], [roi_X[ii], roi_Y[ii]], roi_D[ii] / 2)
+                if collision:
+                    collision_data.append([1, collision, mice_head_area, roi_NAME[ii]])
+                else:
+                    collision_data.append([0, None, mice_head_area, None])
+
+        # ----------------------------------------------------------------------------------------------------------
+        corrected_runtime_last_frame = runtime[-1] + 1
+        corrected_first_frame = runtime[1] - 1
+        # ----------------------------------------------------------------------------------------------------------
+        ## TODO: #43 If there is no collision, the collision_data will be empty and the code will break. Throw an error and print a message to the user explaining what is a collision.
+        collisions = pd.DataFrame(collision_data)
+        xy_data = collisions[1].dropna()
+
+        # The following line substitutes these lines:
+        #   t = xy_data.to_list()
+        #   t = [item for sublist in t for item in sublist]
+        #   x, y = zip(*t)
+        # Meaning that it flattens the list and then separates the x and y coordinates
+        try:
+            x_collision_data, y_collision_data = zip(*[item for sublist in xy_data.to_list() for item in sublist])
+        except ValueError:
+            x_collision_data, y_collision_data = np.zeros(len(runtime)), np.zeros(len(runtime))  # If there is no collision, the x and y collision data will be 0
+            print("\n")
+            print(f"---------------------- WARNING FOR ANIMAL {animal.name} ----------------------")
+            print(f"Something went wrong with the animal's {animal.name} exploration data.\nThere are no exploration data in the video for this animal.")
+            print(f"Please check the video for this animal: {animal.name}")
+            print("-------------------------------------------------------------------------------\n")
+
+        # ----------------------------------------------------------------------------------------------------------
+
+        # Calculate the total exploration time
+        exploration_mask = collisions[0] > 0
+        exploration_mask = exploration_mask.astype(int)
+
+        # get sections
+        exploration_bouts = find_sections(collisions, frames_per_second)
+        exploration_bouts = exploration_bouts[exploration_bouts["duration"] > (1 / frames_per_second) * 2].reset_index(drop=True)
+
+        # Save excel file with the exploration bouts
+        exploration_bouts_sec = exploration_bouts.copy(deep=True)
+        exploration_bouts_sec["start"] = exploration_bouts_sec["start"] / frames_per_second
+        exploration_bouts_sec["end"] = exploration_bouts_sec["end"] / frames_per_second
+        exploration_bouts_sec = exploration_bouts_sec.astype(float).round(2)
+        exploration_bouts_sec = exploration_bouts_sec.rename(columns={"start": "start (s)", "end": "end (s)", "duration": "duration (s)"})
+        text_signal.emit((f"Saving the exploration bouts data for {clean_animal_name}...", "log_data_process_lineedit"))
+        exploration_bouts_sec.to_excel(os.path.join(figures_folder, f"{clean_animal_name}_exploration_bouts.xlsx"))
+        durations = np.array(exploration_bouts["duration"])
+
+        # Normalize durations and map to colors
+        cmap = plt.get_cmap("afmhot")
+        half_cmap = mcolors.LinearSegmentedColormap.from_list(f"half_{cmap.name}", cmap(np.linspace(0.1, 0.5, 256)))
+        norm = mcolors.Normalize(vmin=durations.min(), vmax=durations.max(), clip=True)
+        mapper = cm.ScalarMappable(norm=norm, cmap=half_cmap)
+        colors = [mapper.to_rgba(duration) for duration in durations]
+        x_positions = np.linspace(0, len(runtime) / frames_per_second, len(runtime))
+
+        plt.close("all")
+        fig, ax = plt.subplots(2, 2, figsize=(15, 7.5), gridspec_kw={"width_ratios": [1, 0.025]})
+        [axi[1].set_axis_off() for axi in ax]
+        plt.subplots_adjust(wspace=0.1, hspace=1)
+
+        # Calculate the center positions for each line
+        mid_points = [(start + end) / 2 for start, end in zip(exploration_bouts["start"], exploration_bouts["end"])]
+
+        # Create horizontal event lines at y positions [0, 1, 2, ..., len(durations)-1]
+        y_offset = 0
+        positions = np.zeros(len(durations)) + y_offset
+        transposed_positions = (np.array(positions)[:, np.newaxis]) / frames_per_second
+        transposed_mid_points = np.array(mid_points)[:, np.newaxis] / frames_per_second
+        x_points_sec = len(x_positions) / frames_per_second
+
+        # Plot event lines
+        ax[0][0].eventplot(transposed_mid_points, orientation="horizontal", colors="k", lineoffsets=transposed_positions, linelengths=durations)
+        ax[0][0].set_xlim(0, x_points_sec)
+        ax[0][0].set_ylim(y_offset - max(durations), y_offset + max(durations))
+        ax[0][0].set_xlabel("Time (s)")
+        ax[0][0].legend(["Exploration bouts"], loc="upper right", prop={"size": 6})
+        ax[0][0].set_title(f"Duration mapped by size")
+
+        ax[1][0].eventplot(transposed_mid_points, orientation="horizontal", colors=colors, lineoffsets=transposed_positions, linelengths=max(durations), linewidths=durations)
+        ax[1][0].set_xlim(0, x_points_sec)
+        ax[1][0].set_ylim(y_offset - max(durations), y_offset + max(durations))
+        ax[1][0].set_xlabel("Time (s)")
+        ax[1][0].legend(["Exploration bouts"], loc="upper right", prop={"size": 6})
+        ax[1][0].set_title(f"Duration mapped by color and linewidth")
+
+        for axi in [ax[1]]:
+            cbar = fig.colorbar(mapper, ax=axi[1], location="right", ticks=np.around(np.linspace(0, max(durations), 6), 1))
+            cbar.set_label("Duration (s)")
+        [ax[0].set_yticks([]) for ax in ax]
+        fig.text(0.10, 0.5, f"Exploration bouts for animal {clean_animal_name}", va="center", rotation="vertical", fontsize=14)
+        text_signal.emit((f"Saving the exploration bouts comparison figure for {animal.name}...", "log_data_process_lineedit"))
+        fig.savefig(os.path.join(figures_folder, f"{clean_animal_name}_exploration_bouts.png"))
+
+        plt.close("all")
+        fig, ax = plt.subplots(figsize=(13, 4))
+        unique, counts = np.unique(np.round(durations, decimals=1), return_counts=True)
+        histogram_values = dict(zip(unique, counts))
+        positions = range(len(unique))
+        xticklabels = [str(val) for val in unique]
+        ax.set_axisbelow(True)
+        ax.grid(color="gray", linestyle="dashed", alpha=0.2, zorder=0)
+        ax.bar(positions, counts, color="r", alpha=0.5, zorder=3)
+        ax.set_title(f"Exploration bout duration histogram for animal {clean_animal_name}")
+        ax.set_xlabel("Duration (s)")
+        ax.set_ylabel("Frequency")
+        ax.set_xticks(positions)
+        ax.set_xticklabels(xticklabels, rotation=60)
+        fig.tight_layout()
+        
+        text_signal.emit((f"Saving the exploration bouts histogram for {clean_animal_name}...", "log_data_process_lineedit"))
+        fig.savefig(os.path.join(figures_folder, f"{clean_animal_name}_exploration_bouts_histogram.png"))
+
+        plt.close("all")
+        fig, ax = plt.subplots(figsize=(18, 4))
+        ax.plot(x_positions, np.zeros(len(x_positions)), color="k", alpha=0.8, linewidth=10)
+        for index, row in exploration_bouts.iterrows():
+            ax.plot(
+                [row["start"] / 30, row["end"] / 30],
+                np.zeros(len([row["start"], row["end"]])),
+                color="lightsalmon",
+                alpha=0.5,
+                linewidth=10,
+                label="Exploration bouts" if index == 0 else "",
+            )
+        ax.set_title(f"Exploration bouts - Time series - Animal {clean_animal_name}")
+        ax.set_xlabel("Time (s)")
+        ax.set_yticks([0])
+        ax.set_yticklabels([animal.name])
+        ax.legend()
+        fig.tight_layout()
+        text_signal.emit((f"Saving the exploration bouts time series for {clean_animal_name}...", "log_data_process_lineedit"))
+        fig.savefig(os.path.join(figures_folder, f"{clean_animal_name}_exploration_bouts_time_series.png"))
+
+        plt.close("all")
+        fig, ax = plt.subplots(figsize=(10, 10))
+        analysis_runtime = int(max_analysis_time * frames_per_second)
+        plt.plot(centro_x.iloc[0:analysis_runtime], centro_y.iloc[0:analysis_runtime], label="x coordinates")
+        for _, row in exploration_bouts.iterrows():
+            start_idx = row["start"]
+            end_idx = row["end"]
+            was_inside = False
+            for x, y in zip(centro_x[start_idx:end_idx], centro_y[start_idx:end_idx]):
+                if is_inside_circle(x, y, roi_X[0], roi_Y[0], roi_D[0]):
+                    was_inside = True
+                    break
+            if was_inside:
+                continue
+            plt.plot(centro_x[start_idx:end_idx], centro_y[start_idx:end_idx], color="red", linewidth=2)
+        plt.xlabel("X Coordinate")
+        plt.ylabel("Y Coordinate")
+        plt.title(f"2D Plot of Coordinates with Highlighted Segments for Animal {clean_animal_name}")
+        plt.tight_layout()
+
+        text_signal.emit((f"Saving the 2D plot of coordinates with highlighted segments for {clean_animal_name}...", "log_data_process_lineedit"))
+        fig.savefig(os.path.join(figures_folder, f"{clean_animal_name}_2D_plot_of_coordinates_with_highlighted_segments.png"))
+
+        plt.close("all")
+        fig, ax = plt.subplots(figsize=(23, 2))
+        time_in_seconds = np.arange(0, max_analysis_time, 1 / frames_per_second)
+        time_in_seconds = time_in_seconds[: len(centro_x.iloc[0 : max_analysis_time * frames_per_second])]
+
+        plt.plot(time_in_seconds, centro_x.iloc[0 : max_analysis_time * frames_per_second], label="x coordinates", color="b", linewidth=2)
+        for _, row in exploration_bouts_sec.iterrows():
+            start_time = row["start (s)"]
+            end_time = row["end (s)"]
+            start_idx = int(start_time * frames_per_second)
+            end_idx = int(end_time * frames_per_second)
+            plt.plot(time_in_seconds[start_idx:end_idx], centro_x[start_idx:end_idx], color="r", linewidth=2)
+        ax.set_xlabel("Time (s)")
+        ax.set_ylabel("X Coordinates")
+        ax.set_title(f"X Coordinates with Highlighted Segments for Animal {clean_animal_name}")
+        fig.tight_layout()
+
+        text_signal.emit((f"Saving the X coordinates with highlighted segments for {clean_animal_name}...", "log_data_process_lineedit"))
+        fig.savefig(os.path.join(figures_folder, f"{clean_animal_name}_X_coordinates_with_highlighted_segments.png"))
+
+        plt.close("all")
+        fig, ax = plt.subplots(figsize=(23, 2))
+        time_in_seconds = np.arange(0, max_analysis_time, 1 / frames_per_second)
+        time_in_seconds = time_in_seconds[: len(centro_y.iloc[0 : max_analysis_time * frames_per_second])]
+
+        plt.plot(time_in_seconds, centro_y.iloc[0 : max_analysis_time * frames_per_second], label="x coordinates", color="b", linewidth=2)
+        for _, row in exploration_bouts_sec.iterrows():
+            start_time = row["start (s)"]
+            end_time = row["end (s)"]
+            start_idx = int(start_time * frames_per_second)
+            end_idx = int(end_time * frames_per_second)
+            plt.plot(time_in_seconds[start_idx:end_idx], centro_y[start_idx:end_idx], color="r", linewidth=2)
+        ax.set_xlabel("Time (s)")
+        ax.set_ylabel("Y Coordinates")
+        ax.set_title(f"Y Coordinates with Highlighted Segments for Animal {clean_animal_name}")
+        fig.tight_layout()
+
+        text_signal.emit((f"Saving the Y coordinates with highlighted segments for {clean_animal_name}...", "log_data_process_lineedit"))
+        fig.savefig(os.path.join(figures_folder, f"{clean_animal_name}_Y_coordinates_with_highlighted_segments.png"))
+        plt.close("all")
+        all_results[animal.name] = exploration_bouts_sec
+
+    cleaned_results = {}
+    for key in all_results.keys():
+        date_time_timestamp_regex = re.compile(r"\d{4}-\d{2}-\d{2} \d{2}-\d{2}-\d{2}")
+        try:
+            # Replace the date and time timestamp with the an empty string
+            # Replace all remaining underscores, spcaces and dashes with a single underscore
+            new_key = re.sub(r"\d{4}-\d{2}-\d{2} \d{2}-\d{2}-\d{2}", "", key)
+            new_key = re.sub(r"[_\s-]+", "_", new_key)
+            cleaned_results[new_key] = all_results[key]
+        except AttributeError:
+            print(f"Could not find the date and time timestamp for the animal {key}")
+            print("Using the complete animal name instead.")
+            cleaned_results[key] = key
+
+    with pd.ExcelWriter(os.path.join(figures_folder, "Combined_results_by_sheet.xlsx"), engine="openpyxl") as writer:
+        for animal_name, animal_df in cleaned_results.items():
+            animal_df.to_excel(writer, sheet_name=animal_name, index=False)
+
+def find_sections(dataframe, framerate):
+    in_interval = False
+    start_idx = None
+    intervals = pd.DataFrame(columns=["start", "end", "duration"])
+    for idx, row in dataframe.iterrows():
+        value = row[0]
+        if value == 1 and not in_interval:
+            start_idx = idx
+            in_interval = True
+        elif value == 0 and in_interval:
+            duration = (idx - (start_idx - 1)) * (1 / framerate)
+            new_dataframe = pd.DataFrame(data=[[start_idx, idx, duration]], columns=["start", "end", "duration"])
+            intervals = pd.concat([intervals, new_dataframe])
+            in_interval = False
+
+    if in_interval:
+        duration = (idx - (start_idx - 1)) * (1 / framerate)
+        intervals = pd.concat([intervals, pd.DataFrame({"start": [start_idx], "end": [idx], "duration": [duration]})], ignore_index=True)
+    return intervals
+
+def is_inside_circle(x, y, roi_X, roi_Y, roi_D):
+    # Calculate the radius
+    radius = roi_D / 2.0
+
+    # Calculate the distance between the point and the circle center
+    distance = math.sqrt((x - roi_X) ** 2 + (y - roi_Y) ** 2)
+
+    # Check if the distance is less than or equal to the radius
+    return distance <= radius
 
 def get_message():
     a = b"V2VsY29tZSB0byBCZWhhdnl0aG9uIFRvb2xzOiB3aGVyZSB5b3VyIG1pc3Rha2VzIGJlY29tZSBvdXIgZW50ZXJ0YWlubWVudCxDb25ncmF0dWxhdGlvbnMgb24gY2hvb3NpbmcgQmVoYXZ5dGhvbiBUb29sczogeW91ciBzaG9ydGN1dCB0byBjb2RlIGluZHVjZWQgaGVhZGFjaGVzLEJlaGF2eXRob24gVG9vbHM6IEJlY2F1c2UgZGVidWdnaW5nIGlzIGZvciB0aGUgd2VhayxEaXZlIGludG8gQmVoYXZ5dGhvbiBUb29sczogd2hlcmUgdXNlciBmcmllbmRseSBpcyBqdXN0IGEgbXl0aCxXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IFlvdXIgcGVyc29uYWwgdG91ciBvZiBwcm9ncmFtbWluZyBwdXJnYXRvcnksQmVoYXZ5dGhvbiBUb29sczogUGVyZmVjdCBmb3IgdGhvc2Ugd2hvIGxvdmUgdGhlIHNtZWxsIG9mIGZhaWx1cmUgaW4gdGhlIG1vcm5pbmcsU3RhcnQgcXVlc3Rpb25pbmcgeW91ciBsaWZlIGNob2ljZXM6IFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29scyxCZWhhdnl0aG9uIFRvb2xzOiBNYWtpbmcgc2ltcGxlIHRhc2tzIGltcG9zc2libHkgY29tcGxpY2F0ZWQgc2luY2UgWWVhciB6ZXJvLEVuam95IEJlaGF2eXRob24gVG9vbHM6IHdlIHByb21pc2UgeW91IHdpbGwgcmVncmV0IGl0LFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogVGhlIHBsYWNlIHdoZXJlIGJ1Z3MgZmVlbCBhdCBob21lLEJlaGF2eXRob24gVG9vbHM6IEJlY2F1c2Ugd2hhdCBpcyBsaWZlIHdpdGhvdXQgYSBsaXR0bGUgdG9ydHVyZSxQcmVwYXJlIGZvciBhIHJpZGUgdGhyb3VnaCBjaGFvcyB3aXRoIEJlaGF2eXRob24gVG9vbHMsQmVoYXZ5dGhvbiBUb29sczogV2hlcmUgc2FuaXR5IGdvZXMgdG8gZGllLFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogdGhlIGVwaXRvbWUgb2YgaW5lZmZpY2llbmN5LEJlaGF2eXRob24gVG9vbHM6IE1ha2luZyBzdXJlIHlvdSBuZXZlciBnZXQgdG9vIGNvbWZvcnRhYmxlLFN0ZXAgcmlnaHQgdXAgdG8gQmVoYXZ5dGhvbiBUb29sczogWW91ciBmYXN0IHRyYWNrIHRvIGZydXN0cmF0aW9uLEJlaGF2eXRob24gVG9vbHM6IFR1cm5pbmcgZHJlYW1zIGludG8gbmlnaHRtYXJlcyxXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IHlvdXIgZGFpbHkgZG9zZSBvZiBkaWdpdGFsIGRpc2FwcG9pbnRtZW50LEJlaGF2eXRob24gVG9vbHM6IFdoZW4geW91IHdhbnQgdG8gbWFrZSB5b3VyIHByb2JsZW1zIHdvcnNlLFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogd2hlcmUgZXZlcnkgZmVhdHVyZSBpcyBhIG5ldyBmb3JtIG9mIGFnb255LEJlbSB2aW5kbyBjb21wYW5oZWlybyBkZSBkaWFzIG1hbGRpdG9z"
