@@ -97,7 +97,7 @@ class behavython_gui(QWidget):
         worker.signals.text_signal.connect(self.update_lineedit)
         worker.signals.warning_message.connect(self.handle_warning_message)
         self.threadpool.start(worker)
-
+    
     def update_progress_bar(self, progress):
         self.progress_bar.setValue(progress)
 
@@ -105,8 +105,6 @@ class behavython_gui(QWidget):
         text, lineedit = values
         if "resume_lineedit" == lineedit:
             self.interface.resume_lineedit.append(text)
-        elif "log_data_process_lineedit" == lineedit:
-            self.interface.log_data_process_lineedit.append(text)
         elif "clear_unused_files_lineedit" == lineedit:
             if "clear_lineedit" == text:
                 self.interface.clear_unused_files_lineedit.clear()
@@ -115,11 +113,11 @@ class behavython_gui(QWidget):
         elif "log_video_editing_lineedit" == lineedit:
             self.interface.log_video_editing_lineedit.append(text)
         elif "log_data_process_lineedit" == lineedit:
-            self.interface.log_data_process_lineedit.append(text)
-        elif "log_video_editing_lineedit" == lineedit:
-            self.interface.log_video_editing_lineedit.append(text)
-        elif "log_data_process_lineedit" == lineedit:
-            self.interface.log_bout_analysis_lineedit.append(text)
+            if "clear_lineedit" == text:
+                self.interface.clear_unused_files_lineedit.clear()
+            else:
+                for line in text:
+                    self.interface.log_data_process_lineedit.append(line)
 
     def enable_bout_analysis(self):
         analysis_check_box_is_enabled = self.interface.enable_bout_analysis_checkbox.isChecked()

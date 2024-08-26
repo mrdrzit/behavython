@@ -27,7 +27,7 @@ from matplotlib.collections import LineCollection
 from scipy import stats
 from PySide6.QtWidgets import QMessageBox, QFileDialog, QDialog, QVBoxLayout, QLabel, QPushButton, QScrollArea, QWidget
 from PySide6.QtGui import QFontMetrics
-from PySide6.QtCore import QRunnable, Slot, Signal, QObject
+from PySide6.QtCore import QRunnable, Slot, Signal, QObject, QThread
 from tkinter import filedialog
 
 import debugpy
@@ -150,7 +150,6 @@ class WorkerSignals(QObject):
     text_signal = Signal(tuple)
     warning_message = Signal(object)
     resume_message = Signal(object)
-
 
 class Worker(QRunnable):
     """
