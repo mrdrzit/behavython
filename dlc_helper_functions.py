@@ -1,34 +1,35 @@
 import math
 import os
 import re
-import tkinter as tk
-import itertools as it
-import matplotlib
-import matplotlib.image as mpimg
-import pandas as pd
 import subprocess
-import numpy as np
 import json
 import base64
 import random
 import traceback
 import shutil
-from tqdm import tqdm
 import cv2
 import csv
-from PIL import Image
-import seaborn as sns
-from pathlib import Path
-import matplotlib.cm as cm
 import re
+import matplotlib
+import threading
+import matplotlib.image as mpimg
+import pandas as pd
+import numpy as np
+import tkinter as tk
+import itertools as it
+import seaborn as sns
+import matplotlib.cm as cm
+from tkinter import filedialog
+from tqdm import tqdm
+from PIL import Image
+from scipy import stats
+from pathlib import Path
 from matplotlib import colors as mcolors
 from matplotlib import pyplot as plt
 from matplotlib.collections import LineCollection
-from scipy import stats
 from PySide6.QtWidgets import QMessageBox, QFileDialog, QDialog, QVBoxLayout, QLabel, QPushButton, QScrollArea, QWidget
 from PySide6.QtGui import QFontMetrics
 from PySide6.QtCore import QRunnable, Slot, Signal, QObject, QThread
-from tkinter import filedialog
 
 import debugpy
 
@@ -37,6 +38,9 @@ DLC_ENABLE = True
 if DLC_ENABLE:
     import deeplabcut
 
+data_ready_event = threading.Event()
+def on_data_ready():
+    data_ready_event.set()
 
 class CustomDialog(QDialog):
     def __init__(self, text, info_text, parent=None):
@@ -151,6 +155,7 @@ class WorkerSignals(QObject):
     warning_message = Signal(object)
     resume_message = Signal(object)
     request_files = Signal(str)
+    data_ready = Signal()
 
 class Worker(QRunnable):
     """
@@ -505,6 +510,7 @@ class Animal:
         # The following line is necessary to convert the column names to lowercase
         # The data is stored in a MultiIndex dataframe, so the column names are tuples with the bodypart name and the axis/likelihood
         # The following line converts the tuples to lowercase strings
+
         extracted_data.columns = pd.MultiIndex.from_frame(extracted_data.columns.to_frame().map(str.lower))
         self.bodyparts[bodypart] = {
             "x": extracted_data[bodypart, "x"],
@@ -636,10 +642,8 @@ def get_files(worker, self, line_edit, data: DataFiles, animal_list: list):
     Returns:
         None: The function does not return anything, but it fills the data and animal_list objects
     """
-
     worker.signals.request_files.emit("dlc_files")
-    while worker.stored_data == []:
-        pass
+    data_ready_event.wait()
     data_files = worker.stored_data[0]
     worker.stored_data = []
 
@@ -1039,7 +1043,6 @@ def dlc_video_analyze_function(self, text_signal=None, progress=None, warning_me
 
 
 def get_frames_function(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
-    # debugpy.debug_this_thread()
     text_signal.emit(("clear_lineedit", "clear_unused_files_lineedit"))
     videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
     current_working_dir = os.path.dirname(__file__)
@@ -2534,7 +2537,6 @@ def bout_analysis(worker, self, text_signal=None, progress=None, warning_message
         exploration_bouts_sec["end"] = exploration_bouts_sec["end"] / frames_per_second
         exploration_bouts_sec = exploration_bouts_sec.astype(float).round(2)
         exploration_bouts_sec = exploration_bouts_sec.rename(columns={"start": "start (s)", "end": "end (s)", "duration": "duration (s)"})
-        text_signal.emit((f"Saving the exploration bouts data for {clean_animal_name}...", "log_data_process_lineedit"))
         exploration_bouts_sec.to_excel(os.path.join(figures_folder, f"{clean_animal_name}_exploration_bouts.xlsx"))
         durations = np.array(exploration_bouts["duration"])
 
@@ -2581,7 +2583,6 @@ def bout_analysis(worker, self, text_signal=None, progress=None, warning_message
             cbar.set_label("Duration (s)")
         [ax[0].set_yticks([]) for ax in ax]
         fig.text(0.10, 0.5, f"Exploration bouts for animal {clean_animal_name}", va="center", rotation="vertical", fontsize=14)
-        text_signal.emit((f"Saving the exploration bouts comparison figure for {animal.name}...", "log_data_process_lineedit"))
         fig.savefig(os.path.join(figures_folder, f"{clean_animal_name}_exploration_bouts.png"))
 
         plt.close("all")
@@ -2600,7 +2601,6 @@ def bout_analysis(worker, self, text_signal=None, progress=None, warning_message
         ax.set_xticklabels(xticklabels, rotation=60)
         fig.tight_layout()
         
-        text_signal.emit((f"Saving the exploration bouts histogram for {clean_animal_name}...", "log_data_process_lineedit"))
         fig.savefig(os.path.join(figures_folder, f"{clean_animal_name}_exploration_bouts_histogram.png"))
 
         plt.close("all")
@@ -2621,7 +2621,6 @@ def bout_analysis(worker, self, text_signal=None, progress=None, warning_message
         ax.set_yticklabels([animal.name])
         ax.legend()
         fig.tight_layout()
-        text_signal.emit((f"Saving the exploration bouts time series for {clean_animal_name}...", "log_data_process_lineedit"))
         fig.savefig(os.path.join(figures_folder, f"{clean_animal_name}_exploration_bouts_time_series.png"))
 
         plt.close("all")
@@ -2629,8 +2628,8 @@ def bout_analysis(worker, self, text_signal=None, progress=None, warning_message
         analysis_runtime = int(max_analysis_time * frames_per_second)
         plt.plot(centro_x.iloc[0:analysis_runtime], centro_y.iloc[0:analysis_runtime], label="x coordinates")
         for _, row in exploration_bouts.iterrows():
-            start_idx = row["start"]
-            end_idx = row["end"]
+            start_idx = int(row["start"])
+            end_idx = int(row["end"])
             was_inside = False
             for x, y in zip(centro_x[start_idx:end_idx], centro_y[start_idx:end_idx]):
                 if is_inside_circle(x, y, roi_X[0], roi_Y[0], roi_D[0]):
@@ -2644,7 +2643,6 @@ def bout_analysis(worker, self, text_signal=None, progress=None, warning_message
         plt.title(f"2D Plot of Coordinates with Highlighted Segments for Animal {clean_animal_name}")
         plt.tight_layout()
 
-        text_signal.emit((f"Saving the 2D plot of coordinates with highlighted segments for {clean_animal_name}...", "log_data_process_lineedit"))
         fig.savefig(os.path.join(figures_folder, f"{clean_animal_name}_2D_plot_of_coordinates_with_highlighted_segments.png"))
 
         plt.close("all")
@@ -2664,7 +2662,6 @@ def bout_analysis(worker, self, text_signal=None, progress=None, warning_message
         ax.set_title(f"X Coordinates with Highlighted Segments for Animal {clean_animal_name}")
         fig.tight_layout()
 
-        text_signal.emit((f"Saving the X coordinates with highlighted segments for {clean_animal_name}...", "log_data_process_lineedit"))
         fig.savefig(os.path.join(figures_folder, f"{clean_animal_name}_X_coordinates_with_highlighted_segments.png"))
 
         plt.close("all")
@@ -2684,14 +2681,13 @@ def bout_analysis(worker, self, text_signal=None, progress=None, warning_message
         ax.set_title(f"Y Coordinates with Highlighted Segments for Animal {clean_animal_name}")
         fig.tight_layout()
 
-        text_signal.emit((f"Saving the Y coordinates with highlighted segments for {clean_animal_name}...", "log_data_process_lineedit"))
         fig.savefig(os.path.join(figures_folder, f"{clean_animal_name}_Y_coordinates_with_highlighted_segments.png"))
         plt.close("all")
         all_results[animal.name] = exploration_bouts_sec
+        text_signal.emit((f"Processed {animal.name}...", "log_data_process_lineedit"))
 
     cleaned_results = {}
     for key in all_results.keys():
-        date_time_timestamp_regex = re.compile(r"\d{4}-\d{2}-\d{2} \d{2}-\d{2}-\d{2}")
         try:
             # Replace the date and time timestamp with the an empty string
             # Replace all remaining underscores, spcaces and dashes with a single underscore
@@ -2707,6 +2703,9 @@ def bout_analysis(worker, self, text_signal=None, progress=None, warning_message
         for animal_name, animal_df in cleaned_results.items():
             animal_df.to_excel(writer, sheet_name=animal_name, index=False)
 
+    text_signal.emit(("clear_lineedit", "log_data_process_lineedit"))
+    text_signal.emit(("All animals processed.", "log_data_process_lineedit"))
+    
 def find_sections(dataframe, framerate):
     in_interval = False
     start_idx = None
@@ -2719,7 +2718,10 @@ def find_sections(dataframe, framerate):
         elif value == 0 and in_interval:
             duration = (idx - (start_idx - 1)) * (1 / framerate)
             new_dataframe = pd.DataFrame(data=[[start_idx, idx, duration]], columns=["start", "end", "duration"])
-            intervals = pd.concat([intervals, new_dataframe])
+            if intervals.empty:
+                intervals = new_dataframe
+            else:
+                intervals = pd.concat([intervals, new_dataframe])
             in_interval = False
 
     if in_interval:
@@ -2738,6 +2740,6 @@ def is_inside_circle(x, y, roi_X, roi_Y, roi_D):
     return distance <= radius
 
 def get_message():
-    a = b"V2VsY29tZSB0byBCZWhhdnl0aG9uIFRvb2xzOiB3aGVyZSB5b3VyIG1pc3Rha2VzIGJlY29tZSBvdXIgZW50ZXJ0YWlubWVudCxDb25ncmF0dWxhdGlvbnMgb24gY2hvb3NpbmcgQmVoYXZ5dGhvbiBUb29sczogeW91ciBzaG9ydGN1dCB0byBjb2RlIGluZHVjZWQgaGVhZGFjaGVzLEJlaGF2eXRob24gVG9vbHM6IEJlY2F1c2UgZGVidWdnaW5nIGlzIGZvciB0aGUgd2VhayxEaXZlIGludG8gQmVoYXZ5dGhvbiBUb29sczogd2hlcmUgdXNlciBmcmllbmRseSBpcyBqdXN0IGEgbXl0aCxXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IFlvdXIgcGVyc29uYWwgdG91ciBvZiBwcm9ncmFtbWluZyBwdXJnYXRvcnksQmVoYXZ5dGhvbiBUb29sczogUGVyZmVjdCBmb3IgdGhvc2Ugd2hvIGxvdmUgdGhlIHNtZWxsIG9mIGZhaWx1cmUgaW4gdGhlIG1vcm5pbmcsU3RhcnQgcXVlc3Rpb25pbmcgeW91ciBsaWZlIGNob2ljZXM6IFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29scyxCZWhhdnl0aG9uIFRvb2xzOiBNYWtpbmcgc2ltcGxlIHRhc2tzIGltcG9zc2libHkgY29tcGxpY2F0ZWQgc2luY2UgWWVhciB6ZXJvLEVuam95IEJlaGF2eXRob24gVG9vbHM6IHdlIHByb21pc2UgeW91IHdpbGwgcmVncmV0IGl0LFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogVGhlIHBsYWNlIHdoZXJlIGJ1Z3MgZmVlbCBhdCBob21lLEJlaGF2eXRob24gVG9vbHM6IEJlY2F1c2Ugd2hhdCBpcyBsaWZlIHdpdGhvdXQgYSBsaXR0bGUgdG9ydHVyZSxQcmVwYXJlIGZvciBhIHJpZGUgdGhyb3VnaCBjaGFvcyB3aXRoIEJlaGF2eXRob24gVG9vbHMsQmVoYXZ5dGhvbiBUb29sczogV2hlcmUgc2FuaXR5IGdvZXMgdG8gZGllLFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogdGhlIGVwaXRvbWUgb2YgaW5lZmZpY2llbmN5LEJlaGF2eXRob24gVG9vbHM6IE1ha2luZyBzdXJlIHlvdSBuZXZlciBnZXQgdG9vIGNvbWZvcnRhYmxlLFN0ZXAgcmlnaHQgdXAgdG8gQmVoYXZ5dGhvbiBUb29sczogWW91ciBmYXN0IHRyYWNrIHRvIGZydXN0cmF0aW9uLEJlaGF2eXRob24gVG9vbHM6IFR1cm5pbmcgZHJlYW1zIGludG8gbmlnaHRtYXJlcyxXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IHlvdXIgZGFpbHkgZG9zZSBvZiBkaWdpdGFsIGRpc2FwcG9pbnRtZW50LEJlaGF2eXRob24gVG9vbHM6IFdoZW4geW91IHdhbnQgdG8gbWFrZSB5b3VyIHByb2JsZW1zIHdvcnNlLFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogd2hlcmUgZXZlcnkgZmVhdHVyZSBpcyBhIG5ldyBmb3JtIG9mIGFnb255LEJlbSB2aW5kbyBjb21wYW5oZWlybyBkZSBkaWFzIG1hbGRpdG9z"
+    a = b"QmVoYXZ5dGhvbiBUb29sczogVGhlIHBsYWNlIHdoZXJlIHlvdXIgYnVncyB0aHJpdmUsV2VsY29tZSB0byBCZWhhdnl0aG9uIFRvb2xzOiBCZWNhdXNlIHRoZSBvbmx5IHdheSB0byBzdXJ2aXZlIGlzIHRvIGVtYnJhY2UgdGhlIGNoYW9zLixXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IFVubGVhc2hpbmcgY2hhb3Mgb25lIGJ1ZyBhdCBhIHRpbWUuLEJlaGF2eXRob24gVG9vbHM6IEJlY2F1c2Ugc3RhYmxlIGJ1aWxkcyBhcmUgb3ZlcnJhdGVkLixTdGVwIHJpZ2h0IHVwIHRvIEJlaGF2eXRob24gVG9vbHM6IFdoZXJlIGV2ZW4geW91ciBiZXN0IGNvZGUgY2FuIGdvIHdyb25nLixCZWhhdnl0aG9uIFRvb2xzOiBNYWtpbmcgcHJvZ3Jlc3MgZmVlbCBsaWtlIGEgZ2xpdGNoIGluIHRoZSBtYXRyaXguLEVtYnJhY2UgdGhlIHN0cnVnZ2xlIHdpdGggQmVoYXZ5dGhvbiBUb29sczogUGVyZmVjdGluZyBmcnVzdHJhdGlvbiB3aXRoIGVhY2ggdXBkYXRlLixCZWhhdnl0aG9uIFRvb2xzOiBXaGVyZSBjb2RpbmcgaXMgbW9yZSBhYm91dCBzdXJ2aXZhbCB0aGFuIHN1Y2Nlc3MuLEdldCBjb21mb3J0YWJsZSB3aXRoIEJlaGF2eXRob24gVG9vbHM6IEJlY2F1c2Ugbm90aGluZyB3b3JrcyBvbiB0aGUgZmlyc3QgdHJ5LixXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IFRoZSBhcnQgb2YgdHVybmluZyBlcnJvcnMgaW50byBuZXcgZmVhdHVyZXMuLEJlaGF2eXRob24gVG9vbHM6IFlvdXIgZGFpbHkgZG9zZSBvZiBkaWdpdGFsIG1hc29jaGlzbS4sUHJlcGFyZSBmb3IgQmVoYXZ5dGhvbiBUb29sczogV2hlcmUgdHJvdWJsZXNob290aW5nIHRha2VzIG9uIGEgbGlmZSBvZiBpdHMgb3duLixCZWhhdnl0aG9uIFRvb2xzOiBXaGVyZSBldmVuIHNpbXBsZSB0YXNrcyBiZWNvbWUgY29tcGxleCBwdXp6bGVzLFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogVGhlIHBsYXlncm91bmQgb2YgdW5leHBlY3RlZCBiZWhhdmlvcnMsQmVoYXZ5dGhvbiBUb29sczogV2hlcmUgZXZlcnkgbGluZSBvZiBjb2RlIGlzIGEgcG90ZW50aWFsIG1pbmVmaWVsZCxHZXQgcmVhZHkgZm9yIEJlaGF2eXRob24gVG9vbHM6IFlvdXIgYWR2ZW50dXJlIGluIG5ldmVyLWVuZGluZyBkZWJ1Z2dpbmcsQmVoYXZ5dGhvbiBUb29sczogQmVjYXVzZSBzYW5pdHkgaXMgb3ZlcnJhdGVkLFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogV2hlcmUgbG9naWMgZ29lcyB0byB0YWtlIGEgYnJlYWssQmVoYXZ5dGhvbiBUb29sczogVGhlIHNvZnR3YXJlIHRoYXQgdHVybnMgcm91dGluZSBpbnRvIGEgY2hhbGxlbmdlLEV4cGVjdCB0aGUgdW5leHBlY3RlZCB3aXRoIEJlaGF2eXRob24gVG9vbHM6IFdoZXJlIHN1cnByaXNlcyBhcmUgZ3VhcmFudGVlZCxCZWhhdnl0aG9uIFRvb2xzOiBUaGUgdWx0aW1hdGUgdGVzdCBvZiB5b3VyIHBhdGllbmNlIGFuZCBwZXJzaXN0ZW5jZSxTdXJ2aXZlIEJlaGF2eXRob24gVG9vbHM6IFdoZXJlIHRyaXVtcGggY29tZXMgYWZ0ZXIgY291bnRsZXNzIHJldHJpZXMsV2VsY29tZSB0byBCZWhhdnl0aG9uIFRvb2xzOiBBIGpvdXJuZXkgdGhyb3VnaCB0aGUgbGFuZCBvZiBnbGl0Y2hlcyxCZWhhdnl0aG9uIFRvb2xzOiBUcmFuc2Zvcm1pbmcgYnVncyBpbnRvIHVucGxhbm5lZCBmZWF0dXJlcyxHZXQgbG9zdCBpbiBCZWhhdnl0aG9uIFRvb2xzOiBXaGVyZSBjbGFyaXR5IGlzIGp1c3QgYW4gaWxsdXNpb24sQmVoYXZ5dGhvbiBUb29sczogV2hlcmUgdGhlIG9ubHkgY29uc3RhbnQgaXMgaW5jb25zaXN0ZW5jeSxXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IFRoZSBhcnQgb2YgbWFraW5nIHRoaW5ncyBtb3JlIGRpZmZpY3VsdCxCZWhhdnl0aG9uIFRvb2xzOiBZb3VyIGRhaWx5IHJlbWluZGVyIHRoYXQgbm90aGluZyBpcyBldmVyIHNpbXBsZSxOYXZpZ2F0ZSBjaGFvcyB3aXRoIEJlaGF2eXRob24gVG9vbHM6IFdoZXJlIG9yZGVyIGlzIGEgZGlzdGFudCBkcmVhbSxCZWhhdnl0aG9uIFRvb2xzOiBUaGUgYmVzdCBwbGFjZSB0byB0ZXN0IHlvdXIgd2lsbHBvd2VyLFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogV2hlcmUgZXhwZWN0YXRpb25zIGFuZCByZWFsaXR5IHJhcmVseSBtZWV0LEJlaGF2eXRob24gVG9vbHM6IFR1cm5pbmcgcm91dGluZSBjb2RpbmcgaW50byBhIHJvbGxlcmNvYXN0ZXIgcmlkZVdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogd2hlcmUgeW91ciBtaXN0YWtlcyBiZWNvbWUgb3VyIGVudGVydGFpbm1lbnQsQ29uZ3JhdHVsYXRpb25zIG9uIGNob29zaW5nIEJlaGF2eXRob24gVG9vbHM6IHlvdXIgc2hvcnRjdXQgdG8gY29kZSBpbmR1Y2VkIGhlYWRhY2hlcyxCZWhhdnl0aG9uIFRvb2xzOiBCZWNhdXNlIGRlYnVnZ2luZyBpcyBmb3IgdGhlIHdlYWssRGl2ZSBpbnRvIEJlaGF2eXRob24gVG9vbHM6IHdoZXJlIHVzZXIgZnJpZW5kbHkgaXMganVzdCBhIG15dGgsV2VsY29tZSB0byBCZWhhdnl0aG9uIFRvb2xzOiBZb3VyIHBlcnNvbmFsIHRvdXIgb2YgcHJvZ3JhbW1pbmcgcHVyZ2F0b3J5LEJlaGF2eXRob24gVG9vbHM6IFBlcmZlY3QgZm9yIHRob3NlIHdobyBsb3ZlIHRoZSBzbWVsbCBvZiBmYWlsdXJlIGluIHRoZSBtb3JuaW5nLFN0YXJ0IHF1ZXN0aW9uaW5nIHlvdXIgbGlmZSBjaG9pY2VzOiBXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHMsQmVoYXZ5dGhvbiBUb29sczogTWFraW5nIHNpbXBsZSB0YXNrcyBpbXBvc3NpYmx5IGNvbXBsaWNhdGVkIHNpbmNlIFllYXIgemVybyxFbmpveSBCZWhhdnl0aG9uIFRvb2xzOiB3ZSBwcm9taXNlIHlvdSB3aWxsIHJlZ3JldCBpdCxXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IFRoZSBwbGFjZSB3aGVyZSBidWdzIGZlZWwgYXQgaG9tZSxCZWhhdnl0aG9uIFRvb2xzOiBCZWNhdXNlIHdoYXQgaXMgbGlmZSB3aXRob3V0IGEgbGl0dGxlIHRvcnR1cmUsUHJlcGFyZSBmb3IgYSByaWRlIHRocm91Z2ggY2hhb3Mgd2l0aCBCZWhhdnl0aG9uIFRvb2xzLEJlaGF2eXRob24gVG9vbHM6IFdoZXJlIHNhbml0eSBnb2VzIHRvIGRpZSxXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IHRoZSBlcGl0b21lIG9mIGluZWZmaWNpZW5jeSxCZWhhdnl0aG9uIFRvb2xzOiBNYWtpbmcgc3VyZSB5b3UgbmV2ZXIgZ2V0IHRvbyBjb21mb3J0YWJsZSxTdGVwIHJpZ2h0IHVwIHRvIEJlaGF2eXRob24gVG9vbHM6IFlvdXIgZmFzdCB0cmFjayB0byBmcnVzdHJhdGlvbixCZWhhdnl0aG9uIFRvb2xzOiBUdXJuaW5nIGRyZWFtcyBpbnRvIG5pZ2h0bWFyZXMsV2VsY29tZSB0byBCZWhhdnl0aG9uIFRvb2xzOiB5b3VyIGRhaWx5IGRvc2Ugb2YgZGlnaXRhbCBkaXNhcHBvaW50bWVudCxCZWhhdnl0aG9uIFRvb2xzOiBXaGVuIHlvdSB3YW50IHRvIG1ha2UgeW91ciBwcm9ibGVtcyB3b3JzZSxXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IHdoZXJlIGV2ZXJ5IGZlYXR1cmUgaXMgYSBuZXcgZm9ybSBvZiBhZ29ueSxCZW0gdmluZG8gY29tcGFuaGVpcm8gZGUgZGlhcyBtYWxkaXRvcw=="
     sample = random.sample(base64.b64decode(a).decode().split(","), 1)[0]
     return sample

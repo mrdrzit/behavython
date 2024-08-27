@@ -97,20 +97,22 @@ class behavython_gui(QWidget):
         worker.signals.text_signal.connect(self.update_lineedit)
         worker.signals.warning_message.connect(self.handle_warning_message)
         worker.signals.request_files.connect(lambda file_type: self.get_files(worker, file_type))
+        worker.signals.data_ready.connect(on_data_ready)
         self.threadpool.start(worker)
     
     def get_files(self, worker, file_type):
-        # debugpy.debug_this_thread()
         if file_type == "dlc_files":
             files, _= QFileDialog.getOpenFileNames(self, "Select the analysis files", "", "DLC files (*.csv *.jpg)")
             worker.stored_data.append(files)
+            worker.signals.data_ready.emit()
         elif file_type == "dlc_config":
             files, _= QFileDialog.getOpenFileNames(self, "Select the config file", "", "DLC files (*.yaml)")
             worker.stored_data.append(files)
+            worker.signals.data_ready.emit()
         else:
             print("Bad file request. Please check the file_type argument.")
+            worker.signals.data_ready.emit()
             return
-        
     
     def update_progress_bar(self, progress):
         self.progress_bar.setValue(progress)
@@ -128,7 +130,7 @@ class behavython_gui(QWidget):
             self.interface.log_video_editing_lineedit.append(text)
         elif "log_data_process_lineedit" == lineedit:
             if "clear_lineedit" == text:
-                self.interface.clear_unused_files_lineedit.clear()
+                self.interface.log_data_process_lineedit.clear()
             else:
                 self.interface.log_data_process_lineedit.append(text)
 
