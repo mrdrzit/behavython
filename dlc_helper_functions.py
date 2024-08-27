@@ -150,6 +150,7 @@ class WorkerSignals(QObject):
     text_signal = Signal(tuple)
     warning_message = Signal(object)
     resume_message = Signal(object)
+    request_files = Signal(str)
 
 class Worker(QRunnable):
     """
@@ -170,15 +171,17 @@ class Worker(QRunnable):
         self.args = args
         self.kwargs = kwargs
         self.signals = WorkerSignals()
+        self.stored_data = []
         self.kwargs["progress"] = self.signals.progress
         self.kwargs["text_signal"] = self.signals.text_signal
         self.kwargs["warning_message"] = self.signals.warning_message
         self.kwargs["resume_message"] = self.signals.resume_message
+        self.kwargs["request_files"] = self.signals.request_files
 
     @Slot()
     def run(self):
         try:
-            result = self.function(*self.args, **self.kwargs)
+            result = self.function(self, *self.args, **self.kwargs)
         except Exception as e:
             traceback.print_exc()
             self.signals.error.emit((type(e), str(e), traceback.format_exc()))
@@ -621,7 +624,7 @@ def get_unique_names(file_list, regex):
     return names
 
 
-def get_files(line_edit, data: DataFiles, animal_list: list):
+def get_files(worker, self, line_edit, data: DataFiles, animal_list: list):
     """
     get_files organizes que files to be analyzed in separate dictionaries for each type of file
     where each dictionary has the animal name as key and the file path as value for each file
@@ -633,20 +636,12 @@ def get_files(line_edit, data: DataFiles, animal_list: list):
     Returns:
         None: The function does not return anything, but it fills the data and animal_list objects
     """
-    file_explorer = tk.Tk()
-    file_explorer.withdraw()
-    file_explorer.call("wm", "attributes", ".", "-topmost", True)
-    data_files = filedialog.askopenfilename(
-        title="Select the files to analyze", multiple=True, filetypes=[("DLC Analysis files", "*filtered.csv *filtered_skeleton.csv *_roi.csv *.jpg *.png *.jpeg")]
-    )
 
-    ## Uncomment the following lines to test the code without the GUI
-    # data_files = [
-    #     r"C:\\Users\\uzuna\Documents\\GITHUB\\My_projects\\tests\\Deeplabcut\\data\\C57\\C57_1_downsampled_roi.csv",
-    #     r"C:\\Users\\uzuna\Documents\\GITHUB\\My_projects\\tests\\Deeplabcut\\data\\C57\\C57_1_downsampledDLC_resnet50_C57Feb17shuffle1_145000_filtered.csv",
-    #     r"C:\\Users\\uzuna\Documents\\GITHUB\\My_projects\\tests\\Deeplabcut\\data\\C57\\C57_1_downsampledDLC_resnet50_C57Feb17shuffle1_145000_filtered.png",
-    #     r"C:\\Users\\uzuna\Documents\\GITHUB\\My_projects\\tests\\Deeplabcut\\data\\C57\\C57_1_downsampledDLC_resnet50_C57Feb17shuffle1_145000_filtered_skeleton.csv",
-    # ]
+    worker.signals.request_files.emit("dlc_files")
+    while worker.stored_data == []:
+        pass
+    data_files = worker.stored_data[0]
+    worker.stored_data = []
 
     get_name = re.compile(r"^.*?(?=DLC)|^.*?(?=(\.jpg|\.png|\.bmp|\.jpeg|\.svg))")
     # TODO #38 - Remove this regex and use the list created below to get the roi files4
@@ -2394,12 +2389,8 @@ def create_rois_automatically(self, text_signal=None, progress=None, warning_mes
         plt.close(fig)
 
 
-def bout_analysis(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
-    debugpy.debug_this_thread()
-
+def bout_analysis(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
     analysis_folder = self.interface.path_to_bout_analysis_folder_lineedit.text()
-    # data_files = QFileDialog.getOpenFileNames(self, "Select the files to analyze", analysis_folder, "DLC Analysis files (*_filtered.csv *_filtered_skeleton.csv *_roi.csv *.jpg)")[0]
-    
     options = {}
     options["arena_width"] = int(self.interface.arena_width_lineedit.text())
     options["arena_height"] = int(self.interface.arena_height_lineedit.text())
@@ -2426,7 +2417,7 @@ def bout_analysis(self, text_signal=None, progress=None, warning_message=None, r
     animals = []
     all_results = {}
     
-    get_files(self, [], data, animals)
+    get_files(worker, self, [], data, animals)
 
     for animal in animals:
         collision_data = []
@@ -2443,10 +2434,8 @@ def bout_analysis(self, text_signal=None, progress=None, warning_message=None, r
         roi_Y = []
         roi_D = []
         roi_NAME = []
-        # roi_regex = re.compile(r"\\([^\\]+)\.")
         number_of_filled_rois = sum(1 for roi in animal.rois if roi["x"])
         for i in range(number_of_filled_rois):
-            # Finds the name of the roi in the file name
             roi_name = Path(animal.rois[i]["file"]).stem.split("_")[0]
             roi_NAME.append(roi_name)
             roi_X.append(animal.rois[i]["x"])
@@ -2511,9 +2500,6 @@ def bout_analysis(self, text_signal=None, progress=None, warning_message=None, r
                     collision_data.append([0, None, mice_head_area, None])
 
         # ----------------------------------------------------------------------------------------------------------
-        corrected_runtime_last_frame = runtime[-1] + 1
-        corrected_first_frame = runtime[1] - 1
-        # ----------------------------------------------------------------------------------------------------------
         ## TODO: #43 If there is no collision, the collision_data will be empty and the code will break. Throw an error and print a message to the user explaining what is a collision.
         collisions = pd.DataFrame(collision_data)
         xy_data = collisions[1].dropna()
@@ -2542,7 +2528,6 @@ def bout_analysis(self, text_signal=None, progress=None, warning_message=None, r
         # get sections
         exploration_bouts = find_sections(collisions, frames_per_second)
         exploration_bouts = exploration_bouts[exploration_bouts["duration"] > (1 / frames_per_second) * 2].reset_index(drop=True)
-
         # Save excel file with the exploration bouts
         exploration_bouts_sec = exploration_bouts.copy(deep=True)
         exploration_bouts_sec["start"] = exploration_bouts_sec["start"] / frames_per_second

@@ -96,7 +96,21 @@ class behavython_gui(QWidget):
         worker = Worker(function, *args, **kwargs)
         worker.signals.text_signal.connect(self.update_lineedit)
         worker.signals.warning_message.connect(self.handle_warning_message)
+        worker.signals.request_files.connect(lambda file_type: self.get_files(worker, file_type))
         self.threadpool.start(worker)
+    
+    def get_files(self, worker, file_type):
+        # debugpy.debug_this_thread()
+        if file_type == "dlc_files":
+            files, _= QFileDialog.getOpenFileNames(self, "Select the analysis files", "", "DLC files (*.csv *.jpg)")
+            worker.stored_data.append(files)
+        elif file_type == "dlc_config":
+            files, _= QFileDialog.getOpenFileNames(self, "Select the config file", "", "DLC files (*.yaml)")
+            worker.stored_data.append(files)
+        else:
+            print("Bad file request. Please check the file_type argument.")
+            return
+        
     
     def update_progress_bar(self, progress):
         self.progress_bar.setValue(progress)
@@ -116,8 +130,7 @@ class behavython_gui(QWidget):
             if "clear_lineedit" == text:
                 self.interface.clear_unused_files_lineedit.clear()
             else:
-                for line in text:
-                    self.interface.log_data_process_lineedit.append(line)
+                self.interface.log_data_process_lineedit.append(text)
 
     def enable_bout_analysis(self):
         analysis_check_box_is_enabled = self.interface.enable_bout_analysis_checkbox.isChecked()

@@ -2834,33 +2834,6 @@ QPushButton:disabled {
       <string notr="true">RUN BOUT ANALYSIS</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="TEST_BUTTON">
-     <property name="geometry">
-      <rect>
-       <x>240</x>
-       <y>560</y>
-       <width>81</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <family>DejaVu Sans</family>
-       <pointsize>8</pointsize>
-       <italic>false</italic>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="cursor">
-      <cursorShape>PointingHandCursor</cursorShape>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QPushButton{font:10pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
-     </property>
-     <property name="text">
-      <string notr="true">TEST</string>
-     </property>
-    </widget>
     <zorder>log_data_process_lineedit</zorder>
     <zorder>config_path_data_process_lineedit</zorder>
     <zorder>frames_folder_data_process_label</zorder>
@@ -2887,7 +2860,6 @@ QPushButton:disabled {
     <zorder>bout_analysis_label</zorder>
     <zorder>path_to_bout_analysis_folder_lineedit</zorder>
     <zorder>run_bout_analysis_button</zorder>
-    <zorder>TEST_BUTTON</zorder>
    </widget>
    <widget class="QWidget" name="video_editing">
     <attribute name="title">
