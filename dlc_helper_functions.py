@@ -97,7 +97,6 @@ class CustomDialog(QDialog):
         padding = 200
         self.setFixedWidth(longest_line_width + padding)
 
-
 class files_class:
     def __init__(self):
         self.number = 0
@@ -111,7 +110,6 @@ class files_class:
                 self.name.append(name)
                 self.number = self.number + 1
                 self.directory.append(file[:-4])
-
 
 class experiment_class:
     """
@@ -127,7 +125,6 @@ class experiment_class:
         self.data = []  # Experiment loaded data
         self.last_frame = []  # Experiment last behavior video frame
         self.directory = []  # Experiment directory
-
 
 class WorkerSignals(QObject):
     """
@@ -194,7 +191,6 @@ class Worker(QRunnable):
             self.signals.result.emit((result, self.args[0]))
         finally:
             self.signals.finished.emit()
-
 
 class video_editing_tool:
     """
@@ -322,7 +318,6 @@ class video_editing_tool:
                 cv2.destroyAllWindows()
         print(f"Processed {len(self.modified_images)} images.")
 
-
 class DataFiles:
     """
     This class organizes the files to be analyzed in separate dictionaries for each type of file
@@ -356,7 +351,6 @@ class DataFiles:
 
     def add_roi_file(self, key, file):
         self.roi_files[key] = file
-
 
 class Animal:
     """
@@ -630,7 +624,7 @@ def get_unique_names(file_list, regex):
     return names
 
 
-def get_files(worker, self, line_edit, data: DataFiles, animal_list: list):
+def get_files(self, line_edit, data: DataFiles, animal_list: list, worker=None):
     """
     get_files organizes que files to be analyzed in separate dictionaries for each type of file
     where each dictionary has the animal name as key and the file path as value for each file
@@ -642,10 +636,17 @@ def get_files(worker, self, line_edit, data: DataFiles, animal_list: list):
     Returns:
         None: The function does not return anything, but it fills the data and animal_list objects
     """
-    worker.signals.request_files.emit("dlc_files")
-    data_ready_event.wait()
-    data_files = worker.stored_data[0]
-    worker.stored_data = []
+    # debugpy.debug_this_thread()
+    if worker is not None:
+        worker.signals.request_files.emit("dlc_files")
+        data_ready_event.wait()
+        while not worker.stored_data:
+            pass
+        data_files = worker.stored_data[0]
+        worker.stored_data = []
+        data_ready_event.clear()
+    else:
+        data_files, _ = QFileDialog.getOpenFileNames(self, "Select the files to analyze", "", "DLC files (*.csv *.jpg)")
 
     get_name = re.compile(r"^.*?(?=DLC)|^.*?(?=(\.jpg|\.png|\.bmp|\.jpeg|\.svg))")
     # TODO #38 - Remove this regex and use the list created below to get the roi files4
@@ -896,16 +897,26 @@ def folder_structure_check_function(self):
     return True
 
 
-def dlc_video_analyze_function(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
+def dlc_video_analyze_function(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
+    # debugpy.debug_this_thread()
+    request_files.emit("get_options")
+    data_ready_event.wait()
+    options = worker.stored_data[0]
+    self.options = options
+    worker.stored_data = []
+
     if self.interface.analyze_from_file_button.isEnabled():
         paths_file = self.interface.analyze_from_file_lineedit.text()
         videos_from_txt = [path[0] for path in pd.read_csv(paths_file, delimiter = "\t", header = None).values.tolist()]
         video_list = videos_from_txt
+        config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
+        if (config_path == "") or (video_list == ""):
+            text_signal.emit(("Both the config file and the videos folder must be selected.", "clear_unused_files_lineedit"))
+            return
         
         text_signal.emit(("clear_unused_files_lineedit", "clear_lineedit"))
         if DLC_ENABLE:
             text_signal.emit((f"Using DeepLabCut version {deeplabcut.__version__}", "clear_unused_files_lineedit"))
-        config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
 
         file_extension = False
         valid_extensions = [".mp4", ".avi", ".mov"]
@@ -965,12 +976,14 @@ def dlc_video_analyze_function(self, text_signal=None, progress=None, warning_me
 
         text_signal.emit(("Plots to visualize prediction accuracy were saved.", "clear_unused_files_lineedit"))
         text_signal.emit(("Done filtering data files", "clear_unused_files_lineedit"))
+        self.options = {}
     else:
         text_signal.emit(("clear_unused_files_lineedit", "clear_lineedit"))
         if DLC_ENABLE:
             text_signal.emit((f"Using DeepLabCut version {deeplabcut.__version__}", "clear_unused_files_lineedit"))
         config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
         videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
+        self.options["save_folder"] = videos
         if (config_path == "") or (videos == ""):
             text_signal.emit(("Both the config file and the videos folder must be selected.", "clear_unused_files_lineedit"))
             return
@@ -1040,9 +1053,11 @@ def dlc_video_analyze_function(self, text_signal=None, progress=None, warning_me
 
         text_signal.emit(("Plots to visualize prediction accuracy were saved.", "clear_unused_files_lineedit"))
         text_signal.emit(("Done filtering data files", "clear_unused_files_lineedit"))
+        self.options = {}
 
 
-def get_frames_function(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
+def get_frames_function(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
+    # debugpy.debug_this_thread()
     text_signal.emit(("clear_lineedit", "clear_unused_files_lineedit"))
     videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
     current_working_dir = os.path.dirname(__file__)
@@ -1111,7 +1126,7 @@ def get_frames_function(self, text_signal=None, progress=None, warning_message=N
                     text_signal.emit((f"Frame of {filename} already exists.", "clear_unused_files_lineedit"))
 
 
-def extract_skeleton_function(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
+def extract_skeleton_function(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
     text_signal.emit(("clear_lineedit", "clear_unused_files_lineedit"))
     if DLC_ENABLE:
         text_signal.emit(("Using DeepLabCut version " + deeplabcut.__version__, "clear_unused_files_lineedit"))
@@ -1456,39 +1471,59 @@ def file_selection_function(self):
         return file_dialog.selectedFiles()[0]
 
 
-def run_analysis(self):
+def run_analysis(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
     line_edit = self.interface.resume_lineedit
-    recent_folder = self.interface.recent_analysis_directory_lineedit
-    [experiments, _, _, _] = get_experiments(self, line_edit, recent_folder, "deeplabcut")
-    options = get_options(self)
+    data = DataFiles()
+    selected_folder_to_save = 0
+    experiments = []
+    selected_files = get_files(self, line_edit, data, experiments, worker)
 
-    # Define the worker and connect its signals
-    def analysis_thread(options, experiments, text_signal=None, progress=None, warning_message=None, resume_message=None):
-        results_data_frame = pd.DataFrame()
-        for i, experiment in enumerate(experiments):
-            analysis_results, data_frame = video_analyse(self, options, experiment)
-            results_data_frame = results_data_frame.join(data_frame) if not results_data_frame.empty else data_frame
-            progress.emit(round(((i + 1) / len(experiments)) * 100))
-            if options["plot_options"] == "plotting_enabled":
-                plot_analysis_social_behavior(experiment, analysis_results, options, recent_folder.text())
-        return results_data_frame
+    request_files.emit("save_folder")
+    data_ready_event.wait()
+    selected_folder_to_save = worker.stored_data[0]
+    worker.stored_data = []
+    data_ready_event.clear()
 
-    # Create and start the worker
-    analysis_worker = Worker(analysis_thread, options, experiments)
-    analysis_worker.signals.progress.connect(self.update_progress_bar)
-    analysis_worker.signals.result.connect(handle_results)
-    analysis_worker.signals.error.connect(handle_error)
-    analysis_worker.signals.finished.connect(lambda: on_worker_finished(options))
-    self.threadpool.start(analysis_worker)
+    try:
+        assert selected_folder_to_save != ""
+        assert len(experiments) > 0
+    except AssertionError:
+        if len(selected_files) == 0:
+            line_edit.append(" ERROR: No files selected")
+            return
+        else:
+            line_edit.append(" ERROR: No destination folder selected")
+            return
+
+    request_files.emit("get_options")
+    data_ready_event.wait()
+    options = worker.stored_data[0]
+    self.options = options
+    self.options["save_folder"] = selected_folder_to_save
+    worker.stored_data = []
+    data_ready_event.clear()
+
+    results_data_frame = pd.DataFrame()
+    for i, experiment in enumerate(experiments):
+        analysis_results, data_frame = video_analyse(self, options, experiment)
+        results_data_frame = results_data_frame.join(data_frame) if not results_data_frame.empty else data_frame
+        progress.emit(round(((i + 1) / len(experiments)) * 100))
+        if options["plot_options"] == "plotting_enabled":
+            plot_analysis_social_behavior(experiment, analysis_results, options)
+    return results_data_frame, options
 
 
 def handle_results(results):
-    try:
-        results_data_frame, options = results
-        results_data_frame.T.to_excel(options["save_folder"] + "/analysis_results.xlsx")
-    except:
-        os.system("cls")
-        print("Error saving results")
+    # debugpy.debug_this_thread()
+    if results[0] is None:
+        print("Done!")
+    else:
+        try:
+            results_data_frame, options = results[0]
+            results_data_frame.T.to_excel(options["save_folder"] + "/analysis_results.xlsx")
+        except:
+            os.system("cls")
+            print("Error saving results")
 
 
 def handle_error(error_info):
@@ -1496,7 +1531,10 @@ def handle_error(error_info):
     print(f"Error: {value}")
 
 
-def on_worker_finished(options):
+def on_worker_finished(self):
+    options = self.options
+    if options == {}:
+        return
     config_file_path = options["save_folder"] + "/analysis_configuration.json"
     config_json = options_to_configuration(options)
     with open(config_file_path, "w") as config_file:
@@ -1504,27 +1542,6 @@ def on_worker_finished(options):
     text = "Analysis completed successfully."
     title = "Analysis completed"
     warning_message_function(title, text)
-
-
-def get_options(self):
-    options = {}
-    options["arena_width"] = int(self.interface.arena_width_lineedit.text())
-    options["arena_height"] = int(self.interface.arena_height_lineedit.text())
-    options["frames_per_second"] = int(self.interface.frames_per_second_lineedit.text())
-    options["experiment_type"] = self.interface.type_combobox.currentText().lower().strip().replace(" ", "_")
-    options["max_fig_res"] = str(self.interface.fig_max_size.currentText()).replace(" ", "").replace("x", ",").split(",")
-    options["algo_type"] = self.interface.algo_type_combobox.currentText().lower().strip()
-    if self.interface.animal_combobox.currentIndex() == 0:
-        options["threshold"] = 0.0267
-    else:
-        options["threshold"] = 0.0667
-    options["task_duration"] = int(self.interface.task_duration_lineedit.text())
-    options["trim_amount"] = int(self.interface.crop_video_time_lineedit.text())
-    options["crop_video"] = self.interface.crop_video_checkbox.isChecked()
-    options["save_folder"] = self.interface.recent_analysis_directory_lineedit.text()
-    options["plot_options"] = "plotting_enabled" if self.interface.plot_data_checkbox.isChecked() else "plotting_disabled"
-
-    return options
 
 
 def clear_interface(self):
@@ -1662,8 +1679,8 @@ def get_experiments(self, line_edit, recent_analysis_folder_line_edit, algo_type
         selected_folder_to_save = 0
         error = 0
         experiments = []
-        selected_files = get_files(line_edit, data, experiments)
-        selected_folder_to_save = filedialog.askdirectory(title="Select the folder to save the plots", mustexist=True)
+        selected_files = get_files(self, line_edit, data, experiments)
+        selected_folder_to_save = QFileDialog.getExistingDirectory(self, "Select the folder to save the plots")
         try:
             assert selected_folder_to_save != ""
             assert len(experiments) > 0
@@ -1767,7 +1784,6 @@ def video_analyse(self, options, animal=None):
         corrected_first_frame = runtime[1] - 1
         ANALYSIS_RANGE = [corrected_first_frame, corrected_runtime_last_frame]
         # ----------------------------------------------------------------------------------------------------------
-        ## TODO: #43 If there is no collision, the collision_data will be empty and the code will break. Throw an error and print a message to the user explaining what is a collision.
         collisions = pd.DataFrame(collision_data)
         xy_data = collisions[1].dropna()
 
@@ -1927,9 +1943,10 @@ def video_analyse(self, options, animal=None):
         return analysis_results, data_frame
 
 
-def plot_analysis_social_behavior(experiment, analysis_results, options, save_folder):
+def plot_analysis_social_behavior(experiment, analysis_results, options):
     animal_image = experiment.animal_jpg
     animal_name = experiment.name
+    save_folder = options["save_folder"]
     x_pos = analysis_results["x_pos_data"]
     y_pos = analysis_results["y_pos_data"]
     image_height = analysis_results["video_height"]
@@ -2017,7 +2034,7 @@ def option_message_function(self, text, info_text):
         return "no"
 
 
-def convert_csv_to_h5(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
+def convert_csv_to_h5(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
     """
     Converts CSV files to H5 format using DeepLabCut.
 
@@ -2047,7 +2064,7 @@ def convert_csv_to_h5(self, text_signal=None, progress=None, warning_message=Non
     deeplabcut.convertcsv2h5(config, userfeedback=confirm_folders, scorer=scorer)
 
 
-def analyze_folder_with_frames(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
+def analyze_folder_with_frames(sworker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
     """
     Analyzes a folder containing video frames using DeepLabCut.
 
@@ -2090,7 +2107,7 @@ def analyze_folder_with_frames(self, text_signal=None, progress=None, warning_me
     deeplabcut.plot_trajectories(config, video_folder, videotype=frametype, showfigures=False)
 
 
-def get_crop_coordinates(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
+def get_crop_coordinates(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
     """
     Get dimensions to crop videos based on the provided folder path.
 
@@ -2131,7 +2148,7 @@ def get_crop_coordinates(self, text_signal=None, progress=None, warning_message=
     return
 
 
-def crop_videos(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
+def crop_videos(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
     """
     Crop videos based on the provided crop coordinates.
 
@@ -2140,10 +2157,12 @@ def crop_videos(self, text_signal=None, progress=None, warning_message=None, res
     crop coordinates and saves the cropped videos in the same folder.
 
     """
+    # debugpy.debug_this_thread()
     cropped = set()
     folder_path = self.interface.videos_to_crop_folder_video_editing_lineedit.text()
     image_names = [file for file in os.listdir(folder_path) if file.lower().endswith((".png", ".jpg", ".jpeg"))]
     video_list = [os.path.join(folder_path, file) for file in os.listdir(folder_path) if file.lower().endswith((".mp4", ".avi", ".mov")) and not "_cropped" in file]
+    current_working_dir = os.path.dirname(__file__)
     if len(set(video_list)) != len(set(image_names)):
         text_signal.emit(
             ("[ERROR]: There is a mismatch between the video and image files. Please ensure that all videos have corresponding images.", "log_video_editing_lineedit")
@@ -2167,7 +2186,12 @@ def crop_videos(self, text_signal=None, progress=None, warning_message=None, res
 
         if video_name in dictionary_without_extension_in_name:
             origin_x, origin_y, width, height = dictionary_without_extension_in_name[video_name]
-            deeplabcut.CropVideo(video_path, width, height, origin_x, origin_y, "_cropped", outpath=folder_path)
+            out_file = os.path.join(folder_path, f"{video_name}_cropped.mp4")
+            subprocess.run(
+                f'ffmpeg -i "{video_path}" -filter:v "crop={width}:{height}:{origin_x}:{origin_y}" "{out_file}"',
+                shell=True,
+                cwd=os.path.join(current_working_dir, "ffmpeg", "bin"),
+            )
             cropped.add(video_name)
             text_signal.emit((f"[INFO]: Cropped video {video_name} successfully.", "log_video_editing_lineedit"))
             # self.interface.log_video_editing_lineedit.append(f"[INFO]: Cropped video {video_name} successfully.")
@@ -2176,7 +2200,7 @@ def crop_videos(self, text_signal=None, progress=None, warning_message=None, res
             # self.interface.log_video_editing_lineedit.append(f"[WARNING]: No crop coordinates found for video {video_name}.")
 
 
-def copy_folder_robocopy(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
+def copy_folder_robocopy(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
     source = self.interface.source_folder_path_video_editing_lineedit.text()
     destination = self.interface.destination_folder_path_video_editing_lineedit.text()
     # If the destination path contains spaces, change the directory name to use underscores
@@ -2232,7 +2256,8 @@ def save_crop_coordinates(self):
             writer.writerow([name] + list(coordinate))
     self.interface.log_video_editing_lineedit.append(f"[INFO]: Crop coordinates saved to {csv_file_path}.")
 
-def create_rois_automatically(self, text_signal=None, progress=None, warning_message=None, resume_message=None):
+
+def create_rois_automatically(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
     """
     Automatically creates ROIs (Region of Interest) for images in a specified folder using Deeplabcut.
     Args:
@@ -2394,22 +2419,13 @@ def create_rois_automatically(self, text_signal=None, progress=None, warning_mes
 
 def bout_analysis(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
     analysis_folder = self.interface.path_to_bout_analysis_folder_lineedit.text()
-    options = {}
-    options["arena_width"] = int(self.interface.arena_width_lineedit.text())
-    options["arena_height"] = int(self.interface.arena_height_lineedit.text())
-    options["frames_per_second"] = int(self.interface.frames_per_second_lineedit.text())
-    options["experiment_type"] = self.interface.type_combobox.currentText().lower().strip().replace(" ", "_")
-    options["max_fig_res"] = str(self.interface.fig_max_size.currentText()).replace(" ", "").replace("x", ",").split(",")
-    options["algo_type"] = self.interface.algo_type_combobox.currentText().lower().strip()
-    if self.interface.animal_combobox.currentIndex() == 0:
-        options["threshold"] = 0.0267
-    else:
-        options["threshold"] = 0.0667
-    options["task_duration"] = int(self.interface.task_duration_lineedit.text())
-    options["trim_amount"] = int(self.interface.crop_video_time_lineedit.text())
-    options["crop_video"] = self.interface.crop_video_checkbox.isChecked()
-    options["save_folder"] = self.interface.recent_analysis_directory_lineedit.text()
-    options["plot_options"] = "plotting_enabled" if self.interface.plot_data_checkbox.isChecked() else "plotting_disabled"
+    request_files.emit("get_options")
+    data_ready_event.wait()
+    options = worker.stored_data[0]
+    self.options = options
+    options["save_folder"] = self.interface.path_to_bout_analysis_folder_lineedit.text()
+    worker.stored_data = []
+    data_ready_event.clear()
 
     analysis_folder = self.interface.path_to_bout_analysis_folder_lineedit.text()
     figures_folder = os.path.join(analysis_folder, "bout_analysis")
@@ -2420,7 +2436,7 @@ def bout_analysis(worker, self, text_signal=None, progress=None, warning_message
     animals = []
     all_results = {}
     
-    get_files(worker, self, [], data, animals)
+    get_files(self, [], data, animals, worker)
 
     for animal in animals:
         collision_data = []
@@ -2705,7 +2721,9 @@ def bout_analysis(worker, self, text_signal=None, progress=None, warning_message
 
     text_signal.emit(("clear_lineedit", "log_data_process_lineedit"))
     text_signal.emit(("All animals processed.", "log_data_process_lineedit"))
-    
+    self.options = {}
+
+
 def find_sections(dataframe, framerate):
     in_interval = False
     start_idx = None
@@ -2729,6 +2747,7 @@ def find_sections(dataframe, framerate):
         intervals = pd.concat([intervals, pd.DataFrame({"start": [start_idx], "end": [idx], "duration": [duration]})], ignore_index=True)
     return intervals
 
+
 def is_inside_circle(x, y, roi_X, roi_Y, roi_D):
     # Calculate the radius
     radius = roi_D / 2.0
@@ -2738,6 +2757,7 @@ def is_inside_circle(x, y, roi_X, roi_Y, roi_D):
 
     # Check if the distance is less than or equal to the radius
     return distance <= radius
+
 
 def get_message():
     a = b"QmVoYXZ5dGhvbiBUb29sczogVGhlIHBsYWNlIHdoZXJlIHlvdXIgYnVncyB0aHJpdmUsV2VsY29tZSB0byBCZWhhdnl0aG9uIFRvb2xzOiBCZWNhdXNlIHRoZSBvbmx5IHdheSB0byBzdXJ2aXZlIGlzIHRvIGVtYnJhY2UgdGhlIGNoYW9zLixXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IFVubGVhc2hpbmcgY2hhb3Mgb25lIGJ1ZyBhdCBhIHRpbWUuLEJlaGF2eXRob24gVG9vbHM6IEJlY2F1c2Ugc3RhYmxlIGJ1aWxkcyBhcmUgb3ZlcnJhdGVkLixTdGVwIHJpZ2h0IHVwIHRvIEJlaGF2eXRob24gVG9vbHM6IFdoZXJlIGV2ZW4geW91ciBiZXN0IGNvZGUgY2FuIGdvIHdyb25nLixCZWhhdnl0aG9uIFRvb2xzOiBNYWtpbmcgcHJvZ3Jlc3MgZmVlbCBsaWtlIGEgZ2xpdGNoIGluIHRoZSBtYXRyaXguLEVtYnJhY2UgdGhlIHN0cnVnZ2xlIHdpdGggQmVoYXZ5dGhvbiBUb29sczogUGVyZmVjdGluZyBmcnVzdHJhdGlvbiB3aXRoIGVhY2ggdXBkYXRlLixCZWhhdnl0aG9uIFRvb2xzOiBXaGVyZSBjb2RpbmcgaXMgbW9yZSBhYm91dCBzdXJ2aXZhbCB0aGFuIHN1Y2Nlc3MuLEdldCBjb21mb3J0YWJsZSB3aXRoIEJlaGF2eXRob24gVG9vbHM6IEJlY2F1c2Ugbm90aGluZyB3b3JrcyBvbiB0aGUgZmlyc3QgdHJ5LixXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IFRoZSBhcnQgb2YgdHVybmluZyBlcnJvcnMgaW50byBuZXcgZmVhdHVyZXMuLEJlaGF2eXRob24gVG9vbHM6IFlvdXIgZGFpbHkgZG9zZSBvZiBkaWdpdGFsIG1hc29jaGlzbS4sUHJlcGFyZSBmb3IgQmVoYXZ5dGhvbiBUb29sczogV2hlcmUgdHJvdWJsZXNob290aW5nIHRha2VzIG9uIGEgbGlmZSBvZiBpdHMgb3duLixCZWhhdnl0aG9uIFRvb2xzOiBXaGVyZSBldmVuIHNpbXBsZSB0YXNrcyBiZWNvbWUgY29tcGxleCBwdXp6bGVzLFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogVGhlIHBsYXlncm91bmQgb2YgdW5leHBlY3RlZCBiZWhhdmlvcnMsQmVoYXZ5dGhvbiBUb29sczogV2hlcmUgZXZlcnkgbGluZSBvZiBjb2RlIGlzIGEgcG90ZW50aWFsIG1pbmVmaWVsZCxHZXQgcmVhZHkgZm9yIEJlaGF2eXRob24gVG9vbHM6IFlvdXIgYWR2ZW50dXJlIGluIG5ldmVyLWVuZGluZyBkZWJ1Z2dpbmcsQmVoYXZ5dGhvbiBUb29sczogQmVjYXVzZSBzYW5pdHkgaXMgb3ZlcnJhdGVkLFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogV2hlcmUgbG9naWMgZ29lcyB0byB0YWtlIGEgYnJlYWssQmVoYXZ5dGhvbiBUb29sczogVGhlIHNvZnR3YXJlIHRoYXQgdHVybnMgcm91dGluZSBpbnRvIGEgY2hhbGxlbmdlLEV4cGVjdCB0aGUgdW5leHBlY3RlZCB3aXRoIEJlaGF2eXRob24gVG9vbHM6IFdoZXJlIHN1cnByaXNlcyBhcmUgZ3VhcmFudGVlZCxCZWhhdnl0aG9uIFRvb2xzOiBUaGUgdWx0aW1hdGUgdGVzdCBvZiB5b3VyIHBhdGllbmNlIGFuZCBwZXJzaXN0ZW5jZSxTdXJ2aXZlIEJlaGF2eXRob24gVG9vbHM6IFdoZXJlIHRyaXVtcGggY29tZXMgYWZ0ZXIgY291bnRsZXNzIHJldHJpZXMsV2VsY29tZSB0byBCZWhhdnl0aG9uIFRvb2xzOiBBIGpvdXJuZXkgdGhyb3VnaCB0aGUgbGFuZCBvZiBnbGl0Y2hlcyxCZWhhdnl0aG9uIFRvb2xzOiBUcmFuc2Zvcm1pbmcgYnVncyBpbnRvIHVucGxhbm5lZCBmZWF0dXJlcyxHZXQgbG9zdCBpbiBCZWhhdnl0aG9uIFRvb2xzOiBXaGVyZSBjbGFyaXR5IGlzIGp1c3QgYW4gaWxsdXNpb24sQmVoYXZ5dGhvbiBUb29sczogV2hlcmUgdGhlIG9ubHkgY29uc3RhbnQgaXMgaW5jb25zaXN0ZW5jeSxXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IFRoZSBhcnQgb2YgbWFraW5nIHRoaW5ncyBtb3JlIGRpZmZpY3VsdCxCZWhhdnl0aG9uIFRvb2xzOiBZb3VyIGRhaWx5IHJlbWluZGVyIHRoYXQgbm90aGluZyBpcyBldmVyIHNpbXBsZSxOYXZpZ2F0ZSBjaGFvcyB3aXRoIEJlaGF2eXRob24gVG9vbHM6IFdoZXJlIG9yZGVyIGlzIGEgZGlzdGFudCBkcmVhbSxCZWhhdnl0aG9uIFRvb2xzOiBUaGUgYmVzdCBwbGFjZSB0byB0ZXN0IHlvdXIgd2lsbHBvd2VyLFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogV2hlcmUgZXhwZWN0YXRpb25zIGFuZCByZWFsaXR5IHJhcmVseSBtZWV0LEJlaGF2eXRob24gVG9vbHM6IFR1cm5pbmcgcm91dGluZSBjb2RpbmcgaW50byBhIHJvbGxlcmNvYXN0ZXIgcmlkZVdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogd2hlcmUgeW91ciBtaXN0YWtlcyBiZWNvbWUgb3VyIGVudGVydGFpbm1lbnQsQ29uZ3JhdHVsYXRpb25zIG9uIGNob29zaW5nIEJlaGF2eXRob24gVG9vbHM6IHlvdXIgc2hvcnRjdXQgdG8gY29kZSBpbmR1Y2VkIGhlYWRhY2hlcyxCZWhhdnl0aG9uIFRvb2xzOiBCZWNhdXNlIGRlYnVnZ2luZyBpcyBmb3IgdGhlIHdlYWssRGl2ZSBpbnRvIEJlaGF2eXRob24gVG9vbHM6IHdoZXJlIHVzZXIgZnJpZW5kbHkgaXMganVzdCBhIG15dGgsV2VsY29tZSB0byBCZWhhdnl0aG9uIFRvb2xzOiBZb3VyIHBlcnNvbmFsIHRvdXIgb2YgcHJvZ3JhbW1pbmcgcHVyZ2F0b3J5LEJlaGF2eXRob24gVG9vbHM6IFBlcmZlY3QgZm9yIHRob3NlIHdobyBsb3ZlIHRoZSBzbWVsbCBvZiBmYWlsdXJlIGluIHRoZSBtb3JuaW5nLFN0YXJ0IHF1ZXN0aW9uaW5nIHlvdXIgbGlmZSBjaG9pY2VzOiBXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHMsQmVoYXZ5dGhvbiBUb29sczogTWFraW5nIHNpbXBsZSB0YXNrcyBpbXBvc3NpYmx5IGNvbXBsaWNhdGVkIHNpbmNlIFllYXIgemVybyxFbmpveSBCZWhhdnl0aG9uIFRvb2xzOiB3ZSBwcm9taXNlIHlvdSB3aWxsIHJlZ3JldCBpdCxXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IFRoZSBwbGFjZSB3aGVyZSBidWdzIGZlZWwgYXQgaG9tZSxCZWhhdnl0aG9uIFRvb2xzOiBCZWNhdXNlIHdoYXQgaXMgbGlmZSB3aXRob3V0IGEgbGl0dGxlIHRvcnR1cmUsUHJlcGFyZSBmb3IgYSByaWRlIHRocm91Z2ggY2hhb3Mgd2l0aCBCZWhhdnl0aG9uIFRvb2xzLEJlaGF2eXRob24gVG9vbHM6IFdoZXJlIHNhbml0eSBnb2VzIHRvIGRpZSxXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IHRoZSBlcGl0b21lIG9mIGluZWZmaWNpZW5jeSxCZWhhdnl0aG9uIFRvb2xzOiBNYWtpbmcgc3VyZSB5b3UgbmV2ZXIgZ2V0IHRvbyBjb21mb3J0YWJsZSxTdGVwIHJpZ2h0IHVwIHRvIEJlaGF2eXRob24gVG9vbHM6IFlvdXIgZmFzdCB0cmFjayB0byBmcnVzdHJhdGlvbixCZWhhdnl0aG9uIFRvb2xzOiBUdXJuaW5nIGRyZWFtcyBpbnRvIG5pZ2h0bWFyZXMsV2VsY29tZSB0byBCZWhhdnl0aG9uIFRvb2xzOiB5b3VyIGRhaWx5IGRvc2Ugb2YgZGlnaXRhbCBkaXNhcHBvaW50bWVudCxCZWhhdnl0aG9uIFRvb2xzOiBXaGVuIHlvdSB3YW50IHRvIG1ha2UgeW91ciBwcm9ibGVtcyB3b3JzZSxXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IHdoZXJlIGV2ZXJ5IGZlYXR1cmUgaXMgYSBuZXcgZm9ybSBvZiBhZ29ueSxCZW0gdmluZG8gY29tcGFuaGVpcm8gZGUgZGlhcyBtYWxkaXRvcw=="

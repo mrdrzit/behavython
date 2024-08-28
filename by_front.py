@@ -29,7 +29,7 @@ class behavython_gui(QWidget):
         self.threadpool = QtCore.QThreadPool.globalInstance()
 
         # Analysis tab
-        self.interface.analysis_button.clicked.connect(lambda: run_analysis(self))
+        self.interface.analysis_button.clicked.connect(lambda: self.run_worker(run_analysis, self))
         self.interface.clear_button.clicked.connect(lambda: clear_interface(self))
         self.interface.load_configuration_button.clicked.connect(lambda: self.load_configuration())
 
@@ -54,6 +54,7 @@ class behavython_gui(QWidget):
         self.interface.convert_csv_to_h5_data_process_button.clicked.connect(lambda: self.run_worker(convert_csv_to_h5, self))
         self.interface.analyze_frames_data_process_button.clicked.connect(lambda: self.run_worker(analyze_folder_with_frames, self))
         self.interface.enable_bout_analysis_checkbox.stateChanged.connect(lambda: self.enable_bout_analysis())
+        self.interface.config_path_data_process_lineedit.textChanged.connect(lambda: self.enable_bout_analysis())
         self.interface.run_bout_analysis_button.clicked.connect(lambda: self.run_worker(bout_analysis, self))
         self.interface.get_bout_analysis_folder_button.clicked.connect(lambda: get_folder_path_function(self, "get_bout_analysis_folder"))
 
@@ -97,17 +98,34 @@ class behavython_gui(QWidget):
         worker.signals.text_signal.connect(self.update_lineedit)
         worker.signals.warning_message.connect(self.handle_warning_message)
         worker.signals.request_files.connect(lambda file_type: self.get_files(worker, file_type))
+        worker.signals.progress.connect(self.update_progress_bar)
+        worker.signals.result.connect(handle_results)
+        worker.signals.error.connect(handle_error)
+        worker.signals.finished.connect(lambda: on_worker_finished(self))
         worker.signals.data_ready.connect(on_data_ready)
         self.threadpool.start(worker)
     
     def get_files(self, worker, file_type):
         if file_type == "dlc_files":
+            worker.stored_data = []
             files, _= QFileDialog.getOpenFileNames(self, "Select the analysis files", "", "DLC files (*.csv *.jpg)")
             worker.stored_data.append(files)
             worker.signals.data_ready.emit()
         elif file_type == "dlc_config":
+            worker.stored_data = []
             files, _= QFileDialog.getOpenFileNames(self, "Select the config file", "", "DLC files (*.yaml)")
             worker.stored_data.append(files)
+            worker.signals.data_ready.emit()
+        elif file_type == "save_folder":
+            worker.stored_data = []
+            folder = QFileDialog.getExistingDirectory(self, "Select the folder to save the results")
+            worker.stored_data.append(folder)
+            worker.signals.data_ready.emit()
+        elif file_type == "get_options":
+            worker.stored_data = []
+            options = self.get_options()
+            self.options = options
+            worker.stored_data.append(options)
             worker.signals.data_ready.emit()
         else:
             print("Bad file request. Please check the file_type argument.")
@@ -136,20 +154,22 @@ class behavython_gui(QWidget):
 
     def enable_bout_analysis(self):
         analysis_check_box_is_enabled = self.interface.enable_bout_analysis_checkbox.isChecked()
-        if analysis_check_box_is_enabled:
-            self.interface.get_bout_analysis_folder_button.setEnabled(True)
-        else:
-            self.interface.get_bout_analysis_folder_button.setEnabled(False)
+        self.interface.log_data_process_lineedit.clear()
+
+        elements_to_toggle = [
+            self.interface.get_bout_analysis_folder_button,
+            self.interface.run_bout_analysis_button,
+            self.interface.path_to_bout_analysis_folder_lineedit
+        ]
+
+        for element in elements_to_toggle:
+            element.setEnabled(True if analysis_check_box_is_enabled and self.interface.config_path_data_process_lineedit.text().endswith(".yaml") else False)
 
         if analysis_check_box_is_enabled:
-            self.interface.run_bout_analysis_button.setEnabled(True)
-        else:
-            self.interface.run_bout_analysis_button.setEnabled(False)
+            if not self.interface.config_path_data_process_lineedit.text().endswith(".yaml"):
+                self.interface.log_data_process_lineedit.clear()
+                self.interface.log_data_process_lineedit.append("Please select a config file to run the bout analysis.")
 
-        if analysis_check_box_is_enabled:
-            self.interface.path_to_bout_analysis_folder_lineedit.setEnabled(True)
-        else:
-            self.interface.path_to_bout_analysis_folder_lineedit.setEnabled(False)
 
     def handle_warning_message(self, results):
         title, text = results
@@ -184,6 +204,26 @@ class behavython_gui(QWidget):
         else:
             self.interface.analyze_from_file_button.setEnabled(True)
             self.interface.resume_lineedit.clear()
+
+    def get_options(self):
+        options = {}
+        options["arena_width"] = int(self.interface.arena_width_lineedit.text())
+        options["arena_height"] = int(self.interface.arena_height_lineedit.text())
+        options["frames_per_second"] = int(self.interface.frames_per_second_lineedit.text())
+        options["experiment_type"] = self.interface.type_combobox.currentText().lower().strip().replace(" ", "_")
+        options["max_fig_res"] = str(self.interface.fig_max_size.currentText()).replace(" ", "").replace("x", ",").split(",")
+        options["algo_type"] = self.interface.algo_type_combobox.currentText().lower().strip()
+        if self.interface.animal_combobox.currentIndex() == 0:
+            options["threshold"] = 0.0267
+        else:
+            options["threshold"] = 0.0667
+        options["task_duration"] = int(self.interface.task_duration_lineedit.text())
+        options["trim_amount"] = int(self.interface.crop_video_time_lineedit.text())
+        options["crop_video"] = self.interface.crop_video_checkbox.isChecked()
+        options["save_folder"] = ""
+        options["plot_options"] = "plotting_enabled" if self.interface.plot_data_checkbox.isChecked() else "plotting_disabled"
+
+        return options
 
 def main():
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts)

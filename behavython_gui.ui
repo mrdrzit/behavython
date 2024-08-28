@@ -763,9 +763,9 @@ to see the help text</string>
      <property name="geometry">
       <rect>
        <x>15</x>
-       <y>450</y>
+       <y>400</y>
        <width>301</width>
-       <height>301</height>
+       <height>351</height>
       </rect>
      </property>
      <property name="styleSheet">
@@ -848,89 +848,6 @@ QScrollBar::sub-page:vertical {
       <string notr="true">ANALYZE</string>
      </property>
     </widget>
-    <widget class="QLabel" name="config_path_2">
-     <property name="geometry">
-      <rect>
-       <x>26</x>
-       <y>391</y>
-       <width>200</width>
-       <height>16</height>
-      </rect>
-     </property>
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>200</width>
-       <height>16</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>200</width>
-       <height>16</height>
-      </size>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
-     </property>
-     <property name="text">
-      <string notr="true">Most recent analysis directory</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-     </property>
-    </widget>
-    <widget class="QLineEdit" name="recent_analysis_directory_lineedit">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="geometry">
-      <rect>
-       <x>24</x>
-       <y>411</y>
-       <width>285</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>285</width>
-       <height>0</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>500</width>
-       <height>20</height>
-      </size>
-     </property>
-     <property name="mouseTracking">
-      <bool>false</bool>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
-     </property>
-     <property name="text">
-      <string notr="true"/>
-     </property>
-     <property name="frame">
-      <bool>false</bool>
-     </property>
-     <property name="cursorPosition">
-      <number>0</number>
-     </property>
-     <property name="readOnly">
-      <bool>true</bool>
-     </property>
-     <property name="placeholderText">
-      <string/>
-     </property>
-    </widget>
     <widget class="QCheckBox" name="plot_data_checkbox">
      <property name="geometry">
       <rect>
@@ -981,8 +898,6 @@ QScrollBar::sub-page:vertical {
     <zorder>analysis_button</zorder>
     <zorder>progress_bar</zorder>
     <zorder>resume_lineedit</zorder>
-    <zorder>config_path_2</zorder>
-    <zorder>recent_analysis_directory_lineedit</zorder>
     <zorder>plot_data_checkbox</zorder>
    </widget>
    <widget class="QWidget" name="dlc_tab">
