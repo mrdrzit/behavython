@@ -1,0 +1,116 @@
+    # Project definitions (do not edit)
+Task: find_cup_circle
+scorer: matheus
+date: Aug21
+multianimalproject: false
+identity:
+
+    # Project path (change when moving around)
+project_path: E:\Matheus\GITHUB\behavython\roi_network
+
+    # Annotation data set configuration (and individual video cropping parameters)
+video_sets:
+  E:\Matheus\Deeplabcut_networks\find_cup_circle-matheus-2024-08-21\videos\2024-08-17_09-12-55-A1CX1.mp4:
+    crop: 0, 640, 0, 642
+  E:\Matheus\Deeplabcut_networks\find_cup_circle-matheus-2024-08-21\videos\2024-08-17_09-33-34-A5CX1.mp4:
+    crop: 0, 640, 0, 642
+  E:\Matheus\Deeplabcut_networks\find_cup_circle-matheus-2024-08-21\videos\2024-08-17_09-55-14-A2CX1.mp4:
+    crop: 0, 640, 0, 642
+  E:\Matheus\Deeplabcut_networks\find_cup_circle-matheus-2024-08-21\videos\2024-08-17_10-17-11-A1CX2.mp4:
+    crop: 0, 640, 0, 642
+  E:\Matheus\Deeplabcut_networks\find_cup_circle-matheus-2024-08-21\videos\2024-08-17_11-02-43-A3CX1.mp4:
+    crop: 0, 640, 0, 642
+  E:\Matheus\Deeplabcut_networks\find_cup_circle-matheus-2024-08-21\videos\2024-08-17_13-45-02-A1CX3.mp4:
+    crop: 0, 640, 0, 642
+  E:\Matheus\Deeplabcut_networks\find_cup_circle-matheus-2024-08-21\videos\2024-08-17_14-30-03-A3CX2.mp4:
+    crop: 0, 640, 0, 642
+  E:\Matheus\Deeplabcut_networks\find_cup_circle-matheus-2024-08-21\videos\2024-08-17_10-40-11-A4CX2.mp4:
+    crop: 0, 640, 0, 642
+  E:\Matheus\Deeplabcut_networks\find_cup_circle-matheus-2024-08-21\videos\2024-08-17_17-06-39-A5CX4.mp4:
+    crop: 0, 640, 0, 642
+  E:\Matheus\Deeplabcut_networks\find_cup_circle-matheus-2024-08-21\videos\A1RE 2024-07-18_09-14-31.mp4:
+    crop: 0, 648, 0, 650
+  E:\Matheus\Deeplabcut_networks\find_cup_circle-matheus-2024-08-21\videos\A4RE 2024-07-18_10-50-32.mp4:
+    crop: 0, 648, 0, 650
+  E:\Matheus\Deeplabcut_networks\find_cup_circle-matheus-2024-08-21\videos\A5RE 2024-07-18_11-23-36.mp4:
+    crop: 0, 648, 0, 650
+  E:\Matheus\Deeplabcut_networks\find_cup_circle-matheus-2024-08-21\videos\A5TR 2024-07-17_11-39-09.mp4:
+    crop: 0, 648, 0, 650
+  E:\Matheus\Deeplabcut_networks\find_cup_circle-matheus-2024-08-21\videos\A8RE 2024-07-18_14-39-53.mp4:
+    crop: 0, 648, 0, 650
+  E:\Matheus\Deeplabcut_networks\find_cup_circle-matheus-2024-08-21\videos\A11TR 2024-07-17_15-49-33.mp4:
+    crop: 0, 648, 0, 650
+  E:\Matheus\Deeplabcut_networks\find_cup_circle-matheus-2024-08-21\videos\A12TR 2024-07-17_16-20-32.mp4:
+    crop: 0, 648, 0, 650
+  E:\Matheus\Deeplabcut_networks\find_cup_circle-matheus-2024-08-21\videos\A14TR 2024-07-17_17-23-21.mp4:
+    crop: 0, 648, 0, 650
+  E:\Matheus\Deeplabcut_networks\find_cup_circle-matheus-2024-08-21\videos\animal_2.mp4:
+    crop: 0, 648, 0, 650
+bodyparts:
+- top
+- right
+- bottom
+- left
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+start: 0
+stop: 1
+numframes2pick: 5
+
+    # Plotting configuration
+skeleton:
+- - top
+  - bottom
+- - left
+  - right
+
+skeleton_color: black
+pcutoff: 0.6
+dotsize: 6
+alphavalue: 0.7
+colormap: rainbow
+
+    # Training,Evaluation and Analysis configuration
+TrainingFraction:
+- 0.95
+iteration: 0
+default_net_type: resnet_50
+default_augmenter: default
+snapshotindex: -1
+batch_size: 8
+
+    # Cropping Parameters (for analysis and outlier frame detection)
+cropping: false
+    #if cropping is true for analysis, then set the values here:
+x1: 0
+x2: 640
+y1: 277
+y2: 624
+
+    # Refinement configuration (parameters from annotation dataset configuration also relevant in this stage)
+corner2move2:
+- 50
+- 50
+move2corner: true
