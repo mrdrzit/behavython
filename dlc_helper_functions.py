@@ -45,6 +45,14 @@ def on_data_ready():
     data_ready_event.set()
 
 class CustomDialog(QDialog):
+    """
+    A custom dialog widget for displaying a warning message with scrollable content.
+    Args:
+        text (str): The main text to be displayed in the dialog.
+        info_text (str): Additional information text to be displayed in the dialog.
+        parent (QWidget, optional): The parent widget. Defaults to None.
+    """
+        # Rest of the code...
     def __init__(self, text, info_text, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Warning")
@@ -100,12 +108,32 @@ class CustomDialog(QDialog):
         self.setFixedWidth(longest_line_width + padding)
 
 class files_class:
+    """
+    A class representing a collection of files.
+    Attributes:
+        number (int): The number of files in the collection.
+        directory (list): A list of directories where the files are located.
+        name (list): A list of names of the files.
+    Methods:
+        add_files(selected_files): Adds files to the collection.
+            Parameters:
+                selected_files (list): A list of file paths to be added.
+    """
     def __init__(self):
         self.number = 0
         self.directory = []
         self.name = []
 
     def add_files(self, selected_files):
+        """
+        Adds the selected files to the object's name, number, and directory attributes.
+
+        Parameters:
+        - selected_files (list): A list of file paths to be added.
+
+        Returns:
+        - None
+        """
         for file in selected_files:
             name = os.path.basename(file)[:-4]
             if name not in self.name:
@@ -818,6 +846,16 @@ def detect_collision(line_segment_start, line_segment_end, circle_center, circle
 
 
 def warning_message_function(title, text):
+    """
+    Displays a warning message box with the given title and text.
+
+    Args:
+        title (str): The title of the warning message box.
+        text (str): The text to be displayed in the warning message box.
+
+    Returns:
+        None
+    """
     warning = QMessageBox()  # Create the message box
     warning.setWindowTitle(title)  # Message box title
     warning.setText(text)  # Message box text
@@ -834,6 +872,12 @@ def warning_message_function(title, text):
 
 
 def folder_structure_check_function(self):
+    """
+    Checks the folder structure for the required folders and files.
+    Returns:
+        bool: True if the folder structure is correct, False otherwise.
+    """
+    pass
     self.interface.clear_unused_files_lineedit.clear()
     folder_path = os.path.dirname(self.interface.config_path_lineedit.text().replace('"', "").replace("'", ""))
     if folder_path == "":
@@ -897,6 +941,19 @@ def folder_structure_check_function(self):
 
 
 def dlc_video_analyze_function(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
+    """
+    Analyzes videos using DeepLabCut.
+    Args:
+        worker: The worker object.
+        self: The self object.
+        text_signal: The text signal object. (default: None)
+        progress: The progress object. (default: None)
+        warning_message: The warning message object. (default: None)
+        resume_message: The resume message object. (default: None)
+        request_files: The request files object. (default: None)
+    Returns:
+        None
+    """
     request_files.emit("get_options")
     data_ready_event.wait()
     options = worker.stored_data[0]
@@ -1054,6 +1111,18 @@ def dlc_video_analyze_function(worker, self, text_signal=None, progress=None, wa
 
 
 def get_frames_function(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
+    """
+    Extract frames from videos.
+    Args:
+        worker: The worker object.
+        self: The self object.
+        text_signal: The signal for updating the text.
+        progress: The progress signal.
+        warning_message: The warning message signal.
+        resume_message: The resume message signal.
+        request_files: The request files signal.
+    """
+    pass
     text_signal.emit(("clear_lineedit", "clear_unused_files_lineedit"))
     videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
     current_working_dir = os.path.dirname(__file__)
@@ -1123,6 +1192,17 @@ def get_frames_function(worker, self, text_signal=None, progress=None, warning_m
 
 
 def extract_skeleton_function(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
+    """
+    Extracts skeleton from videos using DeepLabCut.
+    Args:
+        worker: The worker object.
+        self: The self object.
+        text_signal: The text signal object (default: None).
+        progress: The progress object (default: None).
+        warning_message: The warning message object (default: None).
+        resume_message: The resume message object (default: None).
+        request_files: The request files object (default: None).
+    """
     text_signal.emit(("clear_lineedit", "clear_unused_files_lineedit"))
     if DLC_ENABLE:
         text_signal.emit(("Using DeepLabCut version " + deeplabcut.__version__, "clear_unused_files_lineedit"))
@@ -1155,6 +1235,12 @@ def extract_skeleton_function(worker, self, text_signal=None, progress=None, war
 
 
 def clear_unused_files_function(self):
+    """
+    Clears unused files in the specified folder based on certain conditions.
+    Args:
+        self: The object instance.
+    """
+
     self.interface.clear_unused_files_lineedit.clear()
     videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
 
@@ -1259,6 +1345,13 @@ def clear_unused_files_function(self):
 
 
 def get_folder_path_function(self, lineedit_name):
+    """
+    Opens a file explorer dialog to select a folder or file path based on the given lineedit_name.
+    Args:
+        self: The instance of the class.
+        lineedit_name (str): The name of the line edit widget.
+    """
+
     if "config_path" == lineedit_name.lower():
         file_explorer = tk.Tk()
         file_explorer.withdraw()
@@ -1334,9 +1427,17 @@ def get_folder_path_function(self, lineedit_name):
 
 
 def check_roi_files(roi):
+    """
+    Checks if the given ROI (Region of Interest) file contains all the required columns.
+    Args:
+        roi (str): The file path of the ROI file.
+    Returns:
+        bool: True if the ROI file contains all the required columns, False otherwise.
+    """
     extracted_data = pd.read_csv(roi, sep=",")
     must_have = ["x", "y", "width", "height"]
     header = extracted_data.columns.to_frame().map(str.lower).to_numpy()
+
     return all(elem in header for elem in must_have)
 
 
@@ -1394,6 +1495,46 @@ def create_frequency_grid(x_values, y_values, bin_size, analysis_range, *extra_d
 
 
 def options_to_configuration(configuration):
+    """
+    Converts options to configuration dictionary.
+    Args:
+        configuration (dict): The dictionary containing the options.
+    Returns:
+        dict: The converted configuration dictionary.
+    Raises:
+        KeyError: If the 'Experimental Animal' key is not present in the configuration dictionary.
+    Examples:
+        >>> configuration = {
+        ...     "algo_type": "Algorithm Type",
+        ...     "arena_height": "Arena height",
+        ...     "arena_width": "Arena width",
+        ...     "crop_video": "Crop video",
+        ...     "experiment_type": "Experiment Type",
+        ...     "frames_per_second": "Video framerate",
+        ...     "max_fig_res": "Plot resolution",
+        ...     "plot_options": "Plot option",
+        ...     "save_folder": "Saved data folder",
+        ...     "task_duration": "Task Duration",
+        ...     "threshold": "Experimental Animal",
+        ...     "trim_amount": "Amount to trim",
+        ... }
+        >>> options_to_configuration(configuration)
+        {
+            "Algorithm Type": "Algorithm Type",
+            "Arena height": "Arena height",
+            "Arena width": "Arena width",
+            "Crop video": "Crop video",
+            "Experiment Type": "Experiment Type",
+            "Video framerate": "Video framerate",
+            "Plot resolution": "Plot resolution",
+            "Plot option": "Plot option",
+            "Saved data folder": "Saved data folder",
+            "Task Duration": "Task Duration",
+            "Experimental Animal": "mouse",
+            "Amount to trim": "Amount to trim",
+    """
+    # Function implementation
+    ...
     # Define mapping for key conversions
     options_to_configuration = {
         "algo_type": "Algorithm Type",
@@ -1426,6 +1567,46 @@ def options_to_configuration(configuration):
 
 
 def configuration_to_options(configuration):
+    """
+    Converts a configuration dictionary to options dictionary using predefined mappings.
+    Args:
+        configuration (dict): The configuration dictionary containing key-value pairs.
+    Returns:
+        dict: The options dictionary with converted keys based on the predefined mappings.
+    Raises:
+        KeyError: If a key in the configuration dictionary is not found in the predefined mappings.
+    Examples:
+        >>> configuration = {
+        ...     "Algorithm Type": "algo_type",
+        ...     "Arena height": "arena_height",
+        ...     "Arena width": "arena_width",
+        ...     "Crop video": "crop_video",
+        ...     "Experiment Type": "experiment_type",
+        ...     "Video framerate": "frames_per_second",
+        ...     "Plot resolution": "max_fig_res",
+        ...     "Plot option": "plot_options",
+        ...     "Saved data folder": "save_folder",
+        ...     "Task Duration": "task_duration",
+        ...     "Experimental Animal": "threshold",
+        ...     "Amount to trim": "trim_amount",
+        ... }
+        >>> configuration_to_options(configuration)
+        {
+            "algo_type": ...,
+            "arena_height": ...,
+            "arena_width": ...,
+            "crop_video": ...,
+            "experiment_type": ...,
+            "frames_per_second": ...,
+            "max_fig_res": ...,
+            "plot_options": ...,
+            "save_folder": ...,
+            "task_duration": ...,
+            "threshold": ...,
+            "trim_amount": ...,
+    """
+    # Implementation goes here
+    pass
     configuration_to_options = {
         "Algorithm Type": "algo_type",
         "Arena height": "arena_height",
@@ -1457,6 +1638,15 @@ def configuration_to_options(configuration):
 
 
 def test_configuration_file(config_path):
+    """
+    Tests the configuration file.
+
+    Args:
+        config_path (str): The path to the configuration file.
+
+    Returns:
+        dict_or_bool: The configuration dictionary if the file is successfully loaded, False otherwise.
+    """
     try:
         with open(config_path, "r") as file:
             configuration = json.load(file)
@@ -1474,6 +1664,22 @@ def file_selection_function(self):
 
 
 def run_analysis(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
+    """
+    Runs the analysis on selected files and returns the results.
+    Args:
+        worker: The worker object.
+        self: The self object.
+        text_signal: The text signal object (default: None).
+        progress: The progress object (default: None).
+        warning_message: The warning message object (default: None).
+        resume_message: The resume message object (default: None).
+        request_files: The request files object (default: None).
+    Returns:
+        Tuple: A tuple containing the results data frame and the options.
+    Raises:
+        AssertionError: If no destination folder is selected or no files are selected.
+    """
+
     line_edit = self.interface.resume_lineedit
     data = DataFiles()
     selected_folder_to_save = 0
@@ -1516,6 +1722,23 @@ def run_analysis(worker, self, text_signal=None, progress=None, warning_message=
 
 
 def handle_results(results):
+    """
+    Handles the results obtained from a computation.
+
+    Args:
+        results (tuple): A tuple containing the results data frame and options.
+
+    Returns:
+        None
+
+    Raises:
+        None
+
+    Notes:
+        - If the first element of the results tuple is None, it prints "Done!".
+        - Otherwise, it tries to save the results data frame as an Excel file.
+        - If an error occurs during the saving process, it prints "Error saving results".
+    """
     if results[0] is None:
         print("Done!")
     else:
@@ -1528,11 +1751,33 @@ def handle_results(results):
 
 
 def handle_error(error_info):
+    """
+    Handles and prints the error information.
+
+    Args:
+        error_info (tuple): A tuple containing the exception type, value, and traceback.
+
+    Returns:
+        None
+    """
     exctype, value, traceback_str = error_info
     print(f"Error: {value}")
 
 
 def on_worker_finished(self):
+    """
+    Saves the analysis configuration to a JSON file and displays a warning message.
+
+    This method is called when the worker finishes its task. It saves the analysis configuration
+    specified in the `options` dictionary to a JSON file named "analysis_configuration.json".
+    The JSON file is saved in the folder specified by the "save_folder" key in the `options` dictionary.
+
+    Parameters:
+        self (object): The instance of the class.
+
+    Returns:
+        None
+    """
     options = self.options
     if options == {}:
         return
@@ -1546,23 +1791,71 @@ def on_worker_finished(self):
 
 
 def clear_interface(self):
+    """
+    Clears the interface by resetting all the options and input fields to their default values.
+    Args:
+        self: The object instance.
+    """
     self.options = {}
+
+    # Analysis tab
+    self.interface.type_combobox.setCurrentIndex(0)
+    self.interface.algo_type_combobox.setCurrentIndex(0)
     self.interface.arena_width_lineedit.setText("30")
     self.interface.arena_height_lineedit.setText("30")
-    self.interface.type_combobox.setCurrentIndex(0)
     self.interface.frames_per_second_lineedit.setText("30")
     self.interface.animal_combobox.setCurrentIndex(0)
-    self.interface.algo_type_combobox.setCurrentIndex(0)
     self.interface.clear_unused_files_lineedit.clear()
-    self.interface.resume_lineedit.clear()
     self.interface.task_duration_lineedit.setText("300")
     self.interface.crop_video_time_lineedit.setText("0")
-    self.interface.crop_video_checkbox.setChecked(False)
     self.interface.fig_max_size.setCurrentIndex(1)
+    self.interface.crop_video_checkbox.setChecked(False)
     self.interface.plot_data_checkbox.setChecked(True)
+    self.interface.resume_lineedit.clear()
+
+    # Deeplabcut tab
+    self.interface.config_path_lineedit.clear()
+    self.interface.video_folder_lineedit.clear()
+    self.interface.analyze_from_file_lineedit.clear()
+    self.interface.folder_to_create_annotated_video_lineedit.clear()
+    self.interface.clear_unused_files_lineedit.clear()
+
+    # Data processing tab
+    self.interface.config_path_data_process_lineedit.clear()
+    self.interface.video_folder_data_process_lineedit.clear()
+    self.interface.path_to_bout_analysis_folder_lineedit.clear()
+    self.interface.enable_bout_analysis_checkbox.setChecked(False)
+
+    # Video editing tab
+    self.interface.videos_to_crop_folder_video_editing_lineedit.clear()
+    self.interface.source_folder_path_video_editing_lineedit.clear()
+    self.interface.destination_folder_path_video_editing_lineedit.clear()
+    self.interface.folder_to_get_create_roi_lineedit.clear()
 
 
 def load_configuration_file(self, configuration={}):
+    """
+    Loads the configuration file and sets the corresponding values in the user interface.
+    Args:
+        self: The instance of the class.
+        configuration (dict): The configuration dictionary containing the experiment settings.
+    Notes:
+        - The configuration dictionary should have the following keys:
+            - "Experiment Type": The type of experiment.
+            - "Algorithm Type": The type of algorithm.
+            - "Arena width": The width of the arena.
+            - "Arena height": The height of the arena.
+            - "Video framerate": The framerate of the video.
+            - "Experimental Animal": The type of experimental animal.
+            - "Task Duration": The duration of the task.
+            - "Amount to trim": The amount to trim from the video.
+            - "Plot resolution": The resolution of the plot.
+            - "Plot option": The option for plotting.
+            - "Crop video": The option for cropping the video.
+        - The function sets the values in the user interface based on the configuration dictionary.
+        - If the configuration is invalid, a warning message is displayed and the user interface is cleared.
+    """
+    # code implementation
     if configuration:
         if configuration["Experiment Type"].lower().strip().replace(" ", "_") == "njr":
             self.interface.type_combobox.setCurrentIndex(0)
@@ -1674,6 +1967,25 @@ def load_configuration_file(self, configuration={}):
 
 
 def get_experiments(self, line_edit, recent_analysis_folder_line_edit, algo_type="deeplabcut"):
+    """
+    Retrieves a list of experiments based on the provided parameters.
+
+    Args:
+        self: The instance of the class.
+        line_edit: The line edit widget for displaying error messages.
+        recent_analysis_folder_line_edit: The line edit widget for displaying the selected folder to save the plots.
+        algo_type (optional): The type of algorithm. Defaults to "deeplabcut".
+
+    Returns:
+        experiments: A list of experiments.
+        selected_folder_to_save: The selected folder to save the plots.
+        error: An error code (0 for no error, 1 for no files selected, 2 for no destination folder selected).
+        inexistent_file: The number of inexistent files.
+
+    Raises:
+        AssertionError: If the selected folder to save is empty or if no experiments are selected.
+
+    """
     if algo_type == "deeplabcut":
         data = DataFiles()
         inexistent_file = 0
@@ -1698,6 +2010,34 @@ def get_experiments(self, line_edit, recent_analysis_folder_line_edit, algo_type
 
 
 def video_analyse(self, options, animal=None):
+    """
+    Analyzes a video based on the given options and animal data.
+    Args:
+        self: The instance of the class.
+        options (dict): A dictionary containing the analysis options.
+        animal (object, optional): An object representing the animal. Defaults to None.
+    Returns:
+        tuple: A tuple containing the analysis results and a data frame.
+    Notes:
+        - This function performs various calculations and analysis on a video.
+        - The analysis results include position data, collision data, exploration time, velocity, distance traveled, and more.
+        - The data frame contains the analysis results in a tabular format.
+    Example:
+        options = {
+            "algo_type": "deeplabcut",
+            "arena_width": 100,
+            "arena_height": 100,
+            "frames_per_second": 30,
+            "task_duration": 10,
+            "threshold": 5,
+            "max_fig_res": [1920, 1080],
+            "trim_amount": 0.5,
+            "crop_video": True,
+            "experiment_type": "njr"
+        animal = Animal()
+        results, df = video_analyse(options, animal)
+    """
+
     if options["algo_type"] == "deeplabcut":
         collision_data = []
         dimensions = animal.exp_dimensions()
@@ -1945,6 +2285,16 @@ def video_analyse(self, options, animal=None):
 
 
 def plot_analysis_social_behavior(experiment, analysis_results, options):
+    """
+    Plots various analysis results related to social behavior.
+    Args:
+        experiment (Experiment): The experiment object containing information about the animal and video.
+        analysis_results (dict): A dictionary containing the analysis results including position data, collision data, etc.
+        options (dict): A dictionary containing various options for plotting.
+    Notes:
+        - This function plots the overall heatmap of the mice's nose position, exploration map by ROI, distance accumulated over time, and animal movement in the arena.
+
+    """
     animal_image = experiment.animal_jpg
     animal_name = experiment.name
     save_folder = options["save_folder"]
@@ -2024,8 +2374,14 @@ def plot_analysis_social_behavior(experiment, analysis_results, options):
 def option_message_function(self, text, info_text):
     """
     Displays a custom dialog box with the given text and info_text.
-    Returns "yes" if the user accepts the dialog, "no" otherwise.
+    Args:
+        self (object): The instance of the class.
+        text (str): The main text to be displayed in the dialog box.
+        info_text (str): Additional information to be displayed in the dialog box.
+    Returns:
+        str: The user's choice. Returns "yes" if the user accepts the dialog, and "no" otherwise.
     """
+
     dialog = CustomDialog(text, info_text, self.interface)
     result = dialog.exec()
 
@@ -2037,17 +2393,15 @@ def option_message_function(self, text, info_text):
 
 def convert_csv_to_h5(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
     """
-    Converts CSV files to H5 format using DeepLabCut.
-
-    This function takes the values from the `config_path_lineedit` and `scorer_lineedit` fields of the `interface` object.
-    It also checks the value of the `confirm_folders_checkbox` to determine whether to prompt the user for confirmation.
-
-    If the `config` field is empty, an error message is displayed in the `log_lineedit` field and the function returns.
-    If the `scorer` field is empty, an error message is displayed in the `log_lineedit` field and the function returns.
-
-    Parameters:
-        self (object): The instance of the class containing the function.
-
+    Converts a CSV file to an H5 file using DeepLabCut.
+    Args:
+        worker: The worker object.
+        self: The self object.
+        text_signal: A signal for emitting text messages.
+        progress: A progress indicator.
+        warning_message: A warning message.
+        resume_message: A resume message.
+        request_files: A list of requested files.
     Returns:
         None
     """
@@ -2067,18 +2421,18 @@ def convert_csv_to_h5(worker, self, text_signal=None, progress=None, warning_mes
 
 def analyze_folder_with_frames(sworker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
     """
-    Analyzes a folder containing video frames using DeepLabCut.
-
-    This function prompts the user to select a config file and a video folder. It then displays a message with the list
-    of files in the video folder and asks the user to confirm if they want to proceed with the analysis. If the user
-    confirms, it calls the `analyze_time_lapse_frames` function from DeepLabCut to perform pose inference on the frames.
-
+    Analyzes a folder containing frames using DeepLabCut.
     Args:
-        self: The instance of the class containing the function.
-
-    Returns:
-        None
+        sworker: The sworker object.
+        self: The self object.
+        text_signal: A signal for emitting text messages. (default: None)
+        progress: A progress bar for displaying progress. (default: None)
+        warning_message: A warning message to display. (default: None)
+        resume_message: A resume message to display. (default: None)
+        request_files: A list of requested files. (default: None)
     """
+    # code implementation...
+
     config = self.interface.config_path_data_process_lineedit.text()
     video_folder = self.interface.video_folder_data_process_lineedit.text()
     frametype = self.interface.frames_extensions_combobox.currentText().strip().lower()
@@ -2120,9 +2474,19 @@ def get_crop_coordinates(worker, self, text_signal=None, progress=None, warning_
     Finally, the function iterates over the `crop_coordinates` dictionary and appends the crop coordinates for each image
     to the `log_lineedit_page_2` text field of the interface.
 
+    
+    Args:
+        worker: The worker object.
+        self: The object itself.
+        text_signal: A signal for emitting text messages.
+        progress: The progress of the operation.
+        warning_message: A warning message to display.
+        resume_message: A message to resume the operation.
+        request_files: The requested files.
     note: The `crop_coordinates` attribute is stored in the `self` object for later use in ffmpeg cropping.
 
     """
+    ...
     folder_path = self.interface.videos_to_crop_folder_video_editing_lineedit.text()
     image_names = [file for file in os.listdir(folder_path) if file.lower().endswith((".png", ".jpg", ".jpeg"))]
     video_list = [os.path.join(folder_path, file) for file in os.listdir(folder_path) if file.lower().endswith((".mp4", ".avi", ".mov")) and not "_cropped" in file]
@@ -2135,12 +2499,10 @@ def get_crop_coordinates(worker, self, text_signal=None, progress=None, warning_
         if len(set(video_list)) == len(set(temp_coordinates)):
             if set(image_names) == set(temp_coordinates.keys()):
                 text_signal.emit(("[INFO]: Crop coordinates found. Loading from csv.", "log_video_editing_lineedit"))
-                # self.interface.log_video_editing_lineedit.append("[INFO]: Crop coordinates found. Loading from csv.")
                 self.crop_coordinates = temp_coordinates
                 return
     else:
-        text_signal.emit(("[ERROR]: No crop coordinates found. Defaulting to manual cropping.", "log_video_editing_lineedit"))
-        # self.interface.log_video_editing_lineedit.append("[ERROR]: The saved csv does not contain crop coordinates for all images. Defaulting to manual cropping.")
+        text_signal.emit(("[WARNING]: No crop coordinates found. Defaulting to manual cropping.", "log_video_editing_lineedit"))
         image_list = [os.path.join(folder_path, image) for image in image_names]
         crop_tool = video_editing_tool(image_list, image_names)
         crop_tool.process_images()
@@ -2157,6 +2519,14 @@ def crop_videos(worker, self, text_signal=None, progress=None, warning_message=N
     stored in the `self.coordinates` dictionary. It crops each video using the corresponding
     crop coordinates and saves the cropped videos in the same folder.
 
+    Args:
+        worker: The worker object.
+        self: The self object.
+        text_signal: The text signal object. (default: None)
+        progress: The progress object. (default: None)
+        warning_message: The warning message object. (default: None)
+        resume_message: The resume message object. (default: None)
+        request_files: The request files object. (default: None)
     """
     cropped = set()
     folder_path = self.interface.videos_to_crop_folder_video_editing_lineedit.text()
@@ -2239,9 +2609,15 @@ def copy_folder_robocopy(worker, self, text_signal=None, progress=None, warning_
 def save_crop_coordinates(self):
     """
     Saves the crop coordinates to a CSV file.
+    If no crop coordinates are found, an error message is logged and the function returns.
+    The CSV file is saved in the specified folder path with the name "crop_coordinates.csv".
+    The CSV file contains the following columns: "name", "x_origin", "y_origin", "width", "height".
+    Each row in the CSV file represents a crop coordinate, where the name is the key and the coordinate is the value.
+    Args:
+        self: The instance of the class.
 
-    If no crop coordinates are found, an error message is displayed.
     """
+
     if self.crop_coordinates is None:
         self.interface.log_video_editing_lineedit.append("[ERROR]: No crop coordinates found.")
         return
@@ -2261,12 +2637,16 @@ def create_rois_automatically(worker, self, text_signal=None, progress=None, war
     """
     Automatically creates ROIs (Region of Interest) for images in a specified folder using Deeplabcut.
     Args:
-        text_signal (function, optional): Signal to emit text messages. Defaults to None.
-        progress (function, optional): Signal to emit progress updates. Defaults to None.
-        warning_message (function, optional): Signal to emit warning messages. Defaults to None.
-        resume_message (function, optional): Signal to emit resume messages. Defaults to None.
-    Returns:
-        None
+        worker: The worker object.
+        self: The self object.
+        text_signal: A signal to emit text messages.
+        progress: The progress object.
+        warning_message: A warning message.
+        resume_message: A resume message.
+        request_files: A list of requested files.
+    Raises:
+        FileExistsError: If the temporary folder already exists.
+        Exception: If there is an error reading an image.
     """
 
     roi_network_config = os.path.join(os.path.dirname(__file__), "roi_network", "config.yaml")
@@ -2277,6 +2657,9 @@ def create_rois_automatically(worker, self, text_signal=None, progress=None, war
 
     images_in_folder = [os.path.join(folder_with_analyzed_files, file) for file in os.listdir(folder_with_analyzed_files) if file.endswith(".jpg")]
     videos_in_folder = [os.path.join(folder_with_analyzed_files, file) for file in os.listdir(folder_with_analyzed_files) if file.endswith(".mp4")]
+    if images_in_folder == []:
+        text_signal.emit(("[ERROR]: No images found in the folder.", "log_video_editing_lineedit"))
+        return
 
     images_in_folder_names = [file for file in os.listdir(folder_with_analyzed_files) if file.endswith(".jpg")]
 
@@ -2418,6 +2801,17 @@ def create_rois_automatically(worker, self, text_signal=None, progress=None, war
 
 
 def create_annotated_video(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
+    """
+    Creates an annotated video using DeepLabCut.
+    Args:
+        worker: The worker object.
+        self: The self object.
+        text_signal: The signal for emitting text messages.
+        progress: The progress object.
+        warning_message: The warning message.
+        resume_message: The resume message.
+        request_files: The requested files.
+    """
     folder_with_analyzed_files = self.interface.folder_to_create_annotated_video_lineedit.text()
     config_path = self.interface.config_path_lineedit.text()
     config_options = deeplabcut.auxiliaryfunctions.read_config(config_path)
@@ -2446,6 +2840,18 @@ def create_annotated_video(worker, self, text_signal=None, progress=None, warnin
     
 
 def bout_analysis(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
+    """
+    Performs bout analysis on the given data.
+    Args:
+        worker: The worker object.
+        self: The self object.
+        text_signal: The text signal object (default: None).
+        progress: The progress object (default: None).
+        warning_message: The warning message object (default: None).
+        resume_message: The resume message object (default: None).
+        request_files: The request files object (default: None).
+    """
+
     analysis_folder = self.interface.path_to_bout_analysis_folder_lineedit.text()
     request_files.emit("get_options")
     data_ready_event.wait()
@@ -2490,20 +2896,8 @@ def bout_analysis(worker, self, text_signal=None, progress=None, warning_message
             roi_D.append((animal.rois[i]["width"] + animal.rois[i]["height"]) / 2)
         # ---------------------------------------------------------------
 
-        # General data
-        # arena_width = options["arena_width"]
-        # arena_height = options["arena_height"]
         frames_per_second = options["frames_per_second"]
         max_analysis_time = options["task_duration"]
-        # threshold = options["threshold"]
-        # max_video_height = int(options["max_fig_res"][0])
-        # max_video_width = int(options["max_fig_res"][1])
-        # plot_options = True
-        # trim_amount = int(options["trim_amount"] * frames_per_second)
-        # video_height, video_width, _ = dimensions
-        # factor_width = arena_width / video_width
-        # factor_height = arena_height / video_height
-        # number_of_frames = animal.exp_length()
 
         # ----------------------------------------------------------------------------------------------------------
 
@@ -2632,7 +3026,6 @@ def bout_analysis(worker, self, text_signal=None, progress=None, warning_message
         plt.close("all")
         fig, ax = plt.subplots(figsize=(13, 4))
         unique, counts = np.unique(np.round(durations, decimals=1), return_counts=True)
-        histogram_values = dict(zip(unique, counts))
         positions = range(len(unique))
         xticklabels = [str(val) for val in unique]
         ax.set_axisbelow(True)
@@ -2753,6 +3146,15 @@ def bout_analysis(worker, self, text_signal=None, progress=None, warning_message
 
 
 def find_sections(dataframe, framerate):
+    """
+    Finds sections in a dataframe where the value is 1 and returns the start index, end index, and duration of each section.
+    Args:
+        dataframe (pandas.DataFrame): The input dataframe.
+        framerate (float): The framerate of the data.
+    Returns:
+        pandas.DataFrame: A dataframe containing the start index, end index, and duration of each section.
+    """
+
     in_interval = False
     start_idx = None
     intervals = pd.DataFrame(columns=["start", "end", "duration"])
@@ -2777,6 +3179,17 @@ def find_sections(dataframe, framerate):
 
 
 def is_inside_circle(x, y, roi_X, roi_Y, roi_D):
+    """
+    Determines if a given point (x, y) is inside a circle defined by a region of interest (roi_X, roi_Y, roi_D).
+    Args:
+        x (float): The x-coordinate of the point.
+        y (float): The y-coordinate of the point.
+        roi_X (float): The x-coordinate of the circle center.
+        roi_Y (float): The y-coordinate of the circle center.
+        roi_D (float): The diameter of the circle.
+    Returns:
+        bool: True if the point is inside the circle, False otherwise.
+    """
     # Calculate the radius
     radius = roi_D / 2.0
 
@@ -2788,6 +3201,15 @@ def is_inside_circle(x, y, roi_X, roi_Y, roi_D):
 
 
 def get_message():
+    """
+    Retrieves a random message from a base64 encoded string.
+
+    Returns:
+        str: A random message.
+
+    Raises:
+        IndexError: If the base64 encoded string is empty.
+    """
     a = b"QmVoYXZ5dGhvbiBUb29sczogVGhlIHBsYWNlIHdoZXJlIHlvdXIgYnVncyB0aHJpdmUsV2VsY29tZSB0byBCZWhhdnl0aG9uIFRvb2xzOiBCZWNhdXNlIHRoZSBvbmx5IHdheSB0byBzdXJ2aXZlIGlzIHRvIGVtYnJhY2UgdGhlIGNoYW9zLixXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IFVubGVhc2hpbmcgY2hhb3Mgb25lIGJ1ZyBhdCBhIHRpbWUuLEJlaGF2eXRob24gVG9vbHM6IEJlY2F1c2Ugc3RhYmxlIGJ1aWxkcyBhcmUgb3ZlcnJhdGVkLixTdGVwIHJpZ2h0IHVwIHRvIEJlaGF2eXRob24gVG9vbHM6IFdoZXJlIGV2ZW4geW91ciBiZXN0IGNvZGUgY2FuIGdvIHdyb25nLixCZWhhdnl0aG9uIFRvb2xzOiBNYWtpbmcgcHJvZ3Jlc3MgZmVlbCBsaWtlIGEgZ2xpdGNoIGluIHRoZSBtYXRyaXguLEVtYnJhY2UgdGhlIHN0cnVnZ2xlIHdpdGggQmVoYXZ5dGhvbiBUb29sczogUGVyZmVjdGluZyBmcnVzdHJhdGlvbiB3aXRoIGVhY2ggdXBkYXRlLixCZWhhdnl0aG9uIFRvb2xzOiBXaGVyZSBjb2RpbmcgaXMgbW9yZSBhYm91dCBzdXJ2aXZhbCB0aGFuIHN1Y2Nlc3MuLEdldCBjb21mb3J0YWJsZSB3aXRoIEJlaGF2eXRob24gVG9vbHM6IEJlY2F1c2Ugbm90aGluZyB3b3JrcyBvbiB0aGUgZmlyc3QgdHJ5LixXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IFRoZSBhcnQgb2YgdHVybmluZyBlcnJvcnMgaW50byBuZXcgZmVhdHVyZXMuLEJlaGF2eXRob24gVG9vbHM6IFlvdXIgZGFpbHkgZG9zZSBvZiBkaWdpdGFsIG1hc29jaGlzbS4sUHJlcGFyZSBmb3IgQmVoYXZ5dGhvbiBUb29sczogV2hlcmUgdHJvdWJsZXNob290aW5nIHRha2VzIG9uIGEgbGlmZSBvZiBpdHMgb3duLixCZWhhdnl0aG9uIFRvb2xzOiBXaGVyZSBldmVuIHNpbXBsZSB0YXNrcyBiZWNvbWUgY29tcGxleCBwdXp6bGVzLFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogVGhlIHBsYXlncm91bmQgb2YgdW5leHBlY3RlZCBiZWhhdmlvcnMsQmVoYXZ5dGhvbiBUb29sczogV2hlcmUgZXZlcnkgbGluZSBvZiBjb2RlIGlzIGEgcG90ZW50aWFsIG1pbmVmaWVsZCxHZXQgcmVhZHkgZm9yIEJlaGF2eXRob24gVG9vbHM6IFlvdXIgYWR2ZW50dXJlIGluIG5ldmVyLWVuZGluZyBkZWJ1Z2dpbmcsQmVoYXZ5dGhvbiBUb29sczogQmVjYXVzZSBzYW5pdHkgaXMgb3ZlcnJhdGVkLFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogV2hlcmUgbG9naWMgZ29lcyB0byB0YWtlIGEgYnJlYWssQmVoYXZ5dGhvbiBUb29sczogVGhlIHNvZnR3YXJlIHRoYXQgdHVybnMgcm91dGluZSBpbnRvIGEgY2hhbGxlbmdlLEV4cGVjdCB0aGUgdW5leHBlY3RlZCB3aXRoIEJlaGF2eXRob24gVG9vbHM6IFdoZXJlIHN1cnByaXNlcyBhcmUgZ3VhcmFudGVlZCxCZWhhdnl0aG9uIFRvb2xzOiBUaGUgdWx0aW1hdGUgdGVzdCBvZiB5b3VyIHBhdGllbmNlIGFuZCBwZXJzaXN0ZW5jZSxTdXJ2aXZlIEJlaGF2eXRob24gVG9vbHM6IFdoZXJlIHRyaXVtcGggY29tZXMgYWZ0ZXIgY291bnRsZXNzIHJldHJpZXMsV2VsY29tZSB0byBCZWhhdnl0aG9uIFRvb2xzOiBBIGpvdXJuZXkgdGhyb3VnaCB0aGUgbGFuZCBvZiBnbGl0Y2hlcyxCZWhhdnl0aG9uIFRvb2xzOiBUcmFuc2Zvcm1pbmcgYnVncyBpbnRvIHVucGxhbm5lZCBmZWF0dXJlcyxHZXQgbG9zdCBpbiBCZWhhdnl0aG9uIFRvb2xzOiBXaGVyZSBjbGFyaXR5IGlzIGp1c3QgYW4gaWxsdXNpb24sQmVoYXZ5dGhvbiBUb29sczogV2hlcmUgdGhlIG9ubHkgY29uc3RhbnQgaXMgaW5jb25zaXN0ZW5jeSxXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IFRoZSBhcnQgb2YgbWFraW5nIHRoaW5ncyBtb3JlIGRpZmZpY3VsdCxCZWhhdnl0aG9uIFRvb2xzOiBZb3VyIGRhaWx5IHJlbWluZGVyIHRoYXQgbm90aGluZyBpcyBldmVyIHNpbXBsZSxOYXZpZ2F0ZSBjaGFvcyB3aXRoIEJlaGF2eXRob24gVG9vbHM6IFdoZXJlIG9yZGVyIGlzIGEgZGlzdGFudCBkcmVhbSxCZWhhdnl0aG9uIFRvb2xzOiBUaGUgYmVzdCBwbGFjZSB0byB0ZXN0IHlvdXIgd2lsbHBvd2VyLFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogV2hlcmUgZXhwZWN0YXRpb25zIGFuZCByZWFsaXR5IHJhcmVseSBtZWV0LEJlaGF2eXRob24gVG9vbHM6IFR1cm5pbmcgcm91dGluZSBjb2RpbmcgaW50byBhIHJvbGxlcmNvYXN0ZXIgcmlkZVdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogd2hlcmUgeW91ciBtaXN0YWtlcyBiZWNvbWUgb3VyIGVudGVydGFpbm1lbnQsQ29uZ3JhdHVsYXRpb25zIG9uIGNob29zaW5nIEJlaGF2eXRob24gVG9vbHM6IHlvdXIgc2hvcnRjdXQgdG8gY29kZSBpbmR1Y2VkIGhlYWRhY2hlcyxCZWhhdnl0aG9uIFRvb2xzOiBCZWNhdXNlIGRlYnVnZ2luZyBpcyBmb3IgdGhlIHdlYWssRGl2ZSBpbnRvIEJlaGF2eXRob24gVG9vbHM6IHdoZXJlIHVzZXIgZnJpZW5kbHkgaXMganVzdCBhIG15dGgsV2VsY29tZSB0byBCZWhhdnl0aG9uIFRvb2xzOiBZb3VyIHBlcnNvbmFsIHRvdXIgb2YgcHJvZ3JhbW1pbmcgcHVyZ2F0b3J5LEJlaGF2eXRob24gVG9vbHM6IFBlcmZlY3QgZm9yIHRob3NlIHdobyBsb3ZlIHRoZSBzbWVsbCBvZiBmYWlsdXJlIGluIHRoZSBtb3JuaW5nLFN0YXJ0IHF1ZXN0aW9uaW5nIHlvdXIgbGlmZSBjaG9pY2VzOiBXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHMsQmVoYXZ5dGhvbiBUb29sczogTWFraW5nIHNpbXBsZSB0YXNrcyBpbXBvc3NpYmx5IGNvbXBsaWNhdGVkIHNpbmNlIFllYXIgemVybyxFbmpveSBCZWhhdnl0aG9uIFRvb2xzOiB3ZSBwcm9taXNlIHlvdSB3aWxsIHJlZ3JldCBpdCxXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IFRoZSBwbGFjZSB3aGVyZSBidWdzIGZlZWwgYXQgaG9tZSxCZWhhdnl0aG9uIFRvb2xzOiBCZWNhdXNlIHdoYXQgaXMgbGlmZSB3aXRob3V0IGEgbGl0dGxlIHRvcnR1cmUsUHJlcGFyZSBmb3IgYSByaWRlIHRocm91Z2ggY2hhb3Mgd2l0aCBCZWhhdnl0aG9uIFRvb2xzLEJlaGF2eXRob24gVG9vbHM6IFdoZXJlIHNhbml0eSBnb2VzIHRvIGRpZSxXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IHRoZSBlcGl0b21lIG9mIGluZWZmaWNpZW5jeSxCZWhhdnl0aG9uIFRvb2xzOiBNYWtpbmcgc3VyZSB5b3UgbmV2ZXIgZ2V0IHRvbyBjb21mb3J0YWJsZSxTdGVwIHJpZ2h0IHVwIHRvIEJlaGF2eXRob24gVG9vbHM6IFlvdXIgZmFzdCB0cmFjayB0byBmcnVzdHJhdGlvbixCZWhhdnl0aG9uIFRvb2xzOiBUdXJuaW5nIGRyZWFtcyBpbnRvIG5pZ2h0bWFyZXMsV2VsY29tZSB0byBCZWhhdnl0aG9uIFRvb2xzOiB5b3VyIGRhaWx5IGRvc2Ugb2YgZGlnaXRhbCBkaXNhcHBvaW50bWVudCxCZWhhdnl0aG9uIFRvb2xzOiBXaGVuIHlvdSB3YW50IHRvIG1ha2UgeW91ciBwcm9ibGVtcyB3b3JzZSxXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IHdoZXJlIGV2ZXJ5IGZlYXR1cmUgaXMgYSBuZXcgZm9ybSBvZiBhZ29ueSxCZW0gdmluZG8gY29tcGFuaGVpcm8gZGUgZGlhcyBtYWxkaXRvcw=="
     sample = random.sample(base64.b64decode(a).decode().split(","), 1)[0]
     return sample

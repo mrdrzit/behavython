@@ -43,6 +43,8 @@ class behavython_gui(QWidget):
         self.interface.clear_unused_files_button.clicked.connect(lambda: clear_unused_files_function(self))
         self.interface.get_file_to_analyze_button.clicked.connect(lambda: get_folder_path_function(self, "file_to_analyze"))
         self.interface.analyze_from_file_lineedit.textChanged.connect(lambda: self.toggle_analyze_from_file_button())
+        self.interface.video_folder_lineedit.textChanged.connect(lambda: self.enable_analysis_buttons())
+        self.interface.config_path_lineedit.textChanged.connect(lambda: self.enable_analysis())
         self.interface.analyze_from_file_button.clicked.connect(lambda: self.run_worker(dlc_video_analyze_function, self))
         self.interface.create_annotated_video_button.clicked.connect(lambda: self.run_worker(create_annotated_video, self))
         self.interface.config_path_lineedit.textChanged.connect(lambda: self.enable_annotated_video_creation())
@@ -184,6 +186,25 @@ class behavython_gui(QWidget):
                 self.interface.log_data_process_lineedit.clear()
                 self.interface.log_data_process_lineedit.append("Please select a config file to run the bout analysis.")
 
+    def enable_analysis_buttons(self):
+        elements_to_toggle = [
+            self.interface.extract_skeleton_button,
+            self.interface.get_frames_button,
+            self.interface.clear_unused_files_button,
+        ]
+
+        for element in elements_to_toggle:
+            element.setEnabled(True if not self.interface.video_folder_lineedit.text() == "." else False)
+
+    def enable_analysis(self):
+        elements_to_toggle = [
+            self.interface.dlc_video_analyze_button,
+            self.interface.folder_structure_check_button
+        ]
+
+        for element in elements_to_toggle:
+            element.setEnabled(True if self.interface.config_path_lineedit.text().endswith(".yaml") else False)
+
     def handle_warning_message(self, results):
         title, text = results
         warning_message_function(title, text)
@@ -246,7 +267,6 @@ def main():
     startup = get_message()
     os.system(f"echo {startup}")
     app.exec()  # Start the application
-
 
 if __name__ == "__main__":
     show = main()
