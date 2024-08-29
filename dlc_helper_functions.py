@@ -640,8 +640,6 @@ def get_files(self, line_edit, data: DataFiles, animal_list: list, worker=None):
     if worker is not None:
         worker.signals.request_files.emit("dlc_files")
         data_ready_event.wait()
-        while not worker.stored_data:
-            pass
         data_files = worker.stored_data[0]
         worker.stored_data = []
         data_ready_event.clear()
@@ -902,8 +900,9 @@ def dlc_video_analyze_function(worker, self, text_signal=None, progress=None, wa
     request_files.emit("get_options")
     data_ready_event.wait()
     options = worker.stored_data[0]
-    self.options = options
     worker.stored_data = []
+    data_ready_event.clear()
+    self.options = options
 
     if self.interface.analyze_from_file_button.isEnabled():
         paths_file = self.interface.analyze_from_file_lineedit.text()
@@ -1329,6 +1328,12 @@ def get_folder_path_function(self, lineedit_name):
         file_explorer.call("wm", "attributes", ".", "-topmost", True)
         folder = str(Path(filedialog.askdirectory(title="Select the folder", mustexist=True)))
         self.interface.path_to_bout_analysis_folder_lineedit.setText(folder)
+    elif "get_annotated_video_folder" == lineedit_name.lower():
+        file_explorer = tk.Tk()
+        file_explorer.withdraw()
+        file_explorer.call("wm", "attributes", ".", "-topmost", True)
+        folder = str(Path(filedialog.askdirectory(title="Select the folder", mustexist=True)))
+        self.interface.folder_to_create_annotated_video_lineedit.setText(folder)
 
 
 def check_roi_files(roi):
@@ -1498,10 +1503,10 @@ def run_analysis(worker, self, text_signal=None, progress=None, warning_message=
     request_files.emit("get_options")
     data_ready_event.wait()
     options = worker.stored_data[0]
-    self.options = options
-    self.options["save_folder"] = selected_folder_to_save
     worker.stored_data = []
     data_ready_event.clear()
+    self.options = options
+    self.options["save_folder"] = selected_folder_to_save
 
     results_data_frame = pd.DataFrame()
     for i, experiment in enumerate(experiments):
@@ -2417,15 +2422,44 @@ def create_rois_automatically(worker, self, text_signal=None, progress=None, war
         plt.close(fig)
 
 
+def create_annotated_video(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
+    folder_with_analyzed_files = self.interface.folder_to_create_annotated_video_lineedit.text()
+    config_path = self.interface.config_path_lineedit.text()
+    config_options = deeplabcut.auxiliaryfunctions.read_config(config_path)
+    skeleton = config_options["skeleton"]
+    unwanted_files_folder = os.path.join(folder_with_analyzed_files, "unwanted_files")
+    necessary_files = [os.path.join(unwanted_files_folder, file) for file in os.listdir(unwanted_files_folder) if file.endswith(("_filtered.h5", "_meta.pickle"))]
+
+    if not os.path.exists(unwanted_files_folder):
+        text_signal.emit(("[INFO]: To do this, you will need the filtered.h5 and _meta.pickle files.", "log_video_editing_lineedit"))
+    elif necessary_files == []:
+        text_signal.emit(("[INFO]: The filtered.h5 and _meta.pickle files are not present in the folder.", "log_video_editing_lineedit"))
+        text_signal.emit(("[INFO]: Please run the analysis again first.", "log_video_editing_lineedit"))
+    if folder_with_analyzed_files == "":
+        text_signal.emit(("[ERROR]: Please select a folder.", "log_video_editing_lineedit"))
+        return
+    elif skeleton == "":
+        text_signal.emit(("[ERROR]: No skeleton was extracted. Please finish the video processing and return later.", "log_video_editing_lineedit"))
+        return
+    
+    # Copy the files to the analysis directory
+    for file in necessary_files:
+        shutil.copy(file, folder_with_analyzed_files)
+
+
+    deeplabcut.create_labeled_video(config_path, folder_with_analyzed_files, videotype='.mp4', filtered=True, draw_skeleton = True)
+    
+
 def bout_analysis(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
+    # debugpy.debug_this_thread()
     analysis_folder = self.interface.path_to_bout_analysis_folder_lineedit.text()
     request_files.emit("get_options")
     data_ready_event.wait()
     options = worker.stored_data[0]
-    self.options = options
-    options["save_folder"] = self.interface.path_to_bout_analysis_folder_lineedit.text()
     worker.stored_data = []
     data_ready_event.clear()
+    self.options = options
+    options["save_folder"] = self.interface.path_to_bout_analysis_folder_lineedit.text()
 
     analysis_folder = self.interface.path_to_bout_analysis_folder_lineedit.text()
     figures_folder = os.path.join(analysis_folder, "bout_analysis")
@@ -2642,7 +2676,7 @@ def bout_analysis(worker, self, text_signal=None, progress=None, warning_message
         plt.close("all")
         fig, ax = plt.subplots(figsize=(10, 10))
         analysis_runtime = int(max_analysis_time * frames_per_second)
-        plt.plot(centro_x.iloc[0:analysis_runtime], centro_y.iloc[0:analysis_runtime], label="x coordinates")
+        plt.plot(centro_x.iloc[0:analysis_runtime], centro_y.iloc[0:analysis_runtime], label="x coordinates", alpha=0.4)
         for _, row in exploration_bouts.iterrows():
             start_idx = int(row["start"])
             end_idx = int(row["end"])

@@ -26,7 +26,7 @@ class behavython_gui(QWidget):
         self.progress_bar = self.interface.progress_bar
 
         # Create a QThreadPool instance
-        self.threadpool = QtCore.QThreadPool.globalInstance()
+        self.threadpool = QtCore.QThreadPool()
 
         # Analysis tab
         self.interface.analysis_button.clicked.connect(lambda: self.run_worker(run_analysis, self))
@@ -44,6 +44,9 @@ class behavython_gui(QWidget):
         self.interface.get_file_to_analyze_button.clicked.connect(lambda: get_folder_path_function(self, "file_to_analyze"))
         self.interface.analyze_from_file_lineedit.textChanged.connect(lambda: self.toggle_analyze_from_file_button())
         self.interface.analyze_from_file_button.clicked.connect(lambda: self.run_worker(dlc_video_analyze_function, self))
+        self.interface.create_annotated_video_button.clicked.connect(lambda: self.run_worker(create_annotated_video, self))
+        self.interface.config_path_lineedit.textChanged.connect(lambda: self.enable_annotated_video_creation())
+        self.interface.folder_to_create_annotated_video_button.clicked.connect(lambda: get_folder_path_function(self, "get_annotated_video_folder"))
 
         # Data process tab
         self.interface.get_config_path_data_process_button.clicked.connect(lambda: get_folder_path_function(self, "config_path_data_process"))
@@ -65,6 +68,7 @@ class behavython_gui(QWidget):
         self.interface.copy_files_with_robocopy_video_editing_button.clicked.connect(lambda: self.run_worker(copy_folder_robocopy, self))
         self.interface.folder_to_get_create_roi_button.clicked.connect(lambda: get_folder_path_function(self, "create_roi_automatically"))
         self.interface.cread_roi_automatically_button.clicked.connect(lambda: self.run_worker(create_rois_automatically, self))
+
 
     def resume_message_function(self, file_list):
         text = "Check the videos to be analyzed: "
@@ -152,6 +156,16 @@ class behavython_gui(QWidget):
             else:
                 self.interface.log_data_process_lineedit.append(text)
 
+    def enable_annotated_video_creation(self):
+        elements_to_toggle = [
+            self.interface.folder_to_create_annotated_video_button,
+            self.interface.folder_to_create_annotated_video_lineedit,
+            self.interface.create_annotated_video_button
+        ]
+
+        for element in elements_to_toggle:
+            element.setEnabled(True if self.interface.config_path_lineedit.text().endswith(".yaml") else False)
+        
     def enable_bout_analysis(self):
         analysis_check_box_is_enabled = self.interface.enable_bout_analysis_checkbox.isChecked()
         self.interface.log_data_process_lineedit.clear()
@@ -169,7 +183,6 @@ class behavython_gui(QWidget):
             if not self.interface.config_path_data_process_lineedit.text().endswith(".yaml"):
                 self.interface.log_data_process_lineedit.clear()
                 self.interface.log_data_process_lineedit.append("Please select a config file to run the bout analysis.")
-
 
     def handle_warning_message(self, results):
         title, text = results
