@@ -31,12 +31,14 @@ from PySide6.QtWidgets import QMessageBox, QFileDialog, QDialog, QVBoxLayout, QL
 from PySide6.QtGui import QFontMetrics
 from PySide6.QtCore import QRunnable, Slot, Signal, QObject, QThread
 
-import debugpy
-
 matplotlib.use("agg")
 DLC_ENABLE = True
+DEBUG = False
+
 if DLC_ENABLE:
     import deeplabcut
+if DEBUG == True:
+    import debugpy
 
 data_ready_event = threading.Event()
 def on_data_ready():
@@ -636,7 +638,6 @@ def get_files(self, line_edit, data: DataFiles, animal_list: list, worker=None):
     Returns:
         None: The function does not return anything, but it fills the data and animal_list objects
     """
-    # debugpy.debug_this_thread()
     if worker is not None:
         worker.signals.request_files.emit("dlc_files")
         data_ready_event.wait()
@@ -896,7 +897,6 @@ def folder_structure_check_function(self):
 
 
 def dlc_video_analyze_function(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
-    # debugpy.debug_this_thread()
     request_files.emit("get_options")
     data_ready_event.wait()
     options = worker.stored_data[0]
@@ -970,8 +970,6 @@ def dlc_video_analyze_function(worker, self, text_signal=None, progress=None, wa
                 showfigures=False,
                 filtered=True,
             )
-        # if DLC_ENABLE:
-        #     os.rename(os.path.join(list_of_videos, "plot-poses"), os.path.join(list_of_videos, "accuracy_check_plots"))
 
         text_signal.emit(("Plots to visualize prediction accuracy were saved.", "clear_unused_files_lineedit"))
         text_signal.emit(("Done filtering data files", "clear_unused_files_lineedit"))
@@ -1056,7 +1054,6 @@ def dlc_video_analyze_function(worker, self, text_signal=None, progress=None, wa
 
 
 def get_frames_function(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
-    # debugpy.debug_this_thread()
     text_signal.emit(("clear_lineedit", "clear_unused_files_lineedit"))
     videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
     current_working_dir = os.path.dirname(__file__)
@@ -1519,7 +1516,6 @@ def run_analysis(worker, self, text_signal=None, progress=None, warning_message=
 
 
 def handle_results(results):
-    # debugpy.debug_this_thread()
     if results[0] is None:
         print("Done!")
     else:
@@ -2162,7 +2158,6 @@ def crop_videos(worker, self, text_signal=None, progress=None, warning_message=N
     crop coordinates and saves the cropped videos in the same folder.
 
     """
-    # debugpy.debug_this_thread()
     cropped = set()
     folder_path = self.interface.videos_to_crop_folder_video_editing_lineedit.text()
     image_names = [file for file in os.listdir(folder_path) if file.lower().endswith((".png", ".jpg", ".jpeg"))]
@@ -2451,7 +2446,6 @@ def create_annotated_video(worker, self, text_signal=None, progress=None, warnin
     
 
 def bout_analysis(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
-    # debugpy.debug_this_thread()
     analysis_folder = self.interface.path_to_bout_analysis_folder_lineedit.text()
     request_files.emit("get_options")
     data_ready_event.wait()
