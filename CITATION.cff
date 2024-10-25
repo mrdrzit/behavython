@@ -1,0 +1,42 @@
+cff-version: 1.2.0
+title: Behavyton
+message: >-
+  If you use this software, please cite it using these
+  metadata.
+type: software
+authors:
+  - given-names: Matheus
+    name-particle: Costa
+    family-names: Passos
+    email: matheuscosta@gmail.com
+    affiliation: Universidade Federal de Minas Gerais
+    orcid: 'https://orcid.org/0009-0005-8838-9210'
+  - given-names: João
+    name-particle: Pedro
+    family-names: Carvalho Moreira
+    email: mcjpedro@gmail.com
+    affiliation: Universidade Federal de Minas Gerais
+    orcid: 'https://orcid.org/0000-0002-9208-4250'
+repository-code: 'https://github.com/mrdrzit/behavython'
+abstract: >-
+
+  Behavython is an open-source Python-based toolkit designed
+  for streamlined analysis and processing of behavioral
+  data, with a particular focus on social behavior and
+  phenotyping in neuroscience research. Its modular
+  framework includes tools for video processing, machine
+  learning-based behavior tracking (such as DeepLabCut
+  integration), and bout analysis to facilitate rigorous
+  data management and analysis workflows. Behavython aims to
+  simplify complex behavioral analysis tasks, offering a
+  user-friendly GUI and a multi-threaded backend to improve
+  performance.
+keywords:
+  - Phenotyping
+  - Machine Learning
+  - Behavioral analysis
+  - Neuroscience
+license: GPL-3.0
+commit: 29b051677ef2e81c882241761557760a5c0a3fa1
+version: 0.7.0
+date-released: '2024-02-13'
