@@ -21,6 +21,7 @@ import numpy as np
 import tkinter as tk
 import itertools as it
 import seaborn as sns
+import debugpy
 import matplotlib.cm as cm
 from tkinter import filedialog
 from tqdm import tqdm
@@ -36,13 +37,9 @@ from PySide6.QtCore import QRunnable, Slot, Signal, QObject, QThread
 
 matplotlib.use("agg")
 DLC_ENABLE = True
-DEBUG = False
 
 if DLC_ENABLE:
     import deeplabcut
-
-if DEBUG == True:
-    import debugpy
 
 data_ready_event = threading.Event()
 def on_data_ready():
@@ -949,6 +946,10 @@ def dlc_video_analyze_function(worker, self, text_signal=None, progress=None, wa
     Returns:
         None
     """
+    if self.debug_mode:
+        import debugpy
+        debugpy.debug_this_thread()
+        debugpy.breakpoint()
     request_files.emit("get_options")
     data_ready_event.wait()
     options = worker.stored_data[0]
@@ -999,20 +1000,16 @@ def dlc_video_analyze_function(worker, self, text_signal=None, progress=None, wa
 
         text_signal.emit(("Filtering data files and saving as CSV...", "clear_unused_files_lineedit"))
         if DLC_ENABLE:
-            deeplabcut.filterpredictions(
-                config_path,
-                list_of_videos,
-                videotype=file_extension,
-                shuffle=1,
-                trainingsetindex=0,
-                filtertype="median",
-                windowlength=5,
-                p_bound=0.001,
-                ARdegree=3,
-                MAdegree=1,
-                alpha=0.01,
-                save_as_csv=True,
-            )
+            for video in list_of_videos: # For some reason, deeplabcut does not filter the videos when passing a list of videos
+                # So we have to filter each video separately
+                deeplabcut.filterpredictions(
+                    config_path,
+                    video,
+                    videotype=file_extension,
+                    shuffle=1,
+                    trainingsetindex=0,
+                    filtertype="median"
+                )
 
         if DLC_ENABLE:
             deeplabcut.plot_trajectories(
@@ -1078,11 +1075,6 @@ def dlc_video_analyze_function(worker, self, text_signal=None, progress=None, wa
                 shuffle=1,
                 trainingsetindex=0,
                 filtertype="median",
-                windowlength=5,
-                p_bound=0.001,
-                ARdegree=3,
-                MAdegree=1,
-                alpha=0.01,
                 save_as_csv=True,
             )
 
@@ -1107,6 +1099,7 @@ def dlc_video_analyze_function(worker, self, text_signal=None, progress=None, wa
 def get_frames_function(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
     """
     Extract frames from videos.
+
     Args:
         worker: The worker object.
         self: The self object.
@@ -1116,73 +1109,123 @@ def get_frames_function(worker, self, text_signal=None, progress=None, warning_m
         resume_message: The resume message signal.
         request_files: The request files signal.
     """
-    pass
-    text_signal.emit(("clear_lineedit", "clear_unused_files_lineedit"))
-    videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
-    current_working_dir = os.path.dirname(__file__)
-    task_duration = int(self.interface.task_duration_lineedit.text())
-    fps = int(self.interface.frames_per_second_lineedit.text())
-    where_to_extract = int((task_duration * fps) * 0.5)
-    if self.interface.override_frame_extraction_checkbox.isChecked():
-        where_to_extract = int(self.interface.override_frame_extraction_lineedit.text())
-        if where_to_extract > task_duration * fps:
-            title = "Frame extraction error"
-            message = "The frame to be extracted is beyond the video duration.\n Please, check the frame to be extracted and try again."
-            warning_message.emit((title, message))
-            return
+    def get_extraction_point(video_path):
+        video_duration = get_video_duration(video_path, text_signal)
+        fps = get_video_fps(video_path, text_signal)
+        where_to_extract = int((video_duration * fps) * 0.5)
+        
+        if self.interface.override_frame_extraction_checkbox.isChecked():
+            where_to_extract = int(self.interface.override_frame_extraction_lineedit.text())
+            if where_to_extract > video_duration * fps:
+                show_warning(
+                    "Frame extraction error",
+                    "The frame to be extracted is beyond the video duration.\nPlease check the frame to be extracted and try again."
+                )
+                return None
+        return where_to_extract
 
-    if self.interface.analyze_from_file_button.isEnabled():
-        paths_file = self.interface.analyze_from_file_lineedit.text()
-        videos_from_txt = [path[0] for path in pd.read_csv(paths_file, delimiter = "\t", header = None).values.tolist()]
-        video_list = videos_from_txt
-    else:
-        _, _, file_list = [entry for entry in os.walk(videos)][0]
-        video_list = [os.path.join(videos, file) for file in os.listdir(videos) if file.endswith(".mp4") or file.endswith(".avi") or file.endswith(".mov")]
-    
-    file_extension = False
-    valid_extensions = [".mp4", ".avi", ".mov"]
-    invalid_files = [file for file in video_list if not any(file.endswith(ext) for ext in valid_extensions)]
-
-    for file in video_list:
+    def show_warning(title, message, invalid_files=None):
         if invalid_files:
-            title = "Video extension error"
-            message = "Videos must have the extension '.mp4', '.avi' or '.mov'.\n Please, check the videos folder and try again."
-            warning_message.emit((title, message))
-            return
-        if (".mp4" in file or ".avi" in file or ".mov" in file) and (not file_extension):
-            file_extension = file.split(".")[-1]
-        elif file_extension and (file.split(".")[-1] != file_extension):
-            title = "Video extension error"
-            message = "All videos must have the same extension.\n Please, check the videos folder and try again."
-            warning_message.emit((title, message))
-    
+            message += f"\nInvalid files: {', '.join(invalid_files)}"
+        warning_message.emit((title, message))
+
+    def validate_video_list(video_list):
+        is_valid, file_extension, invalid_files = validate_video_files(video_list)
+        if not is_valid:
+            show_warning(
+                "Video extension error",
+                "Videos must have the extension '.mp4', '.avi' or '.mov'.\nPlease check the videos folder and try again.",
+                invalid_files
+            )
+            return None, None
+        return video_list, file_extension
+
+    def get_videos_from_file():
+        paths_file = self.interface.analyze_from_file_lineedit.text()
+        videos_from_txt = [path[0] for path in pd.read_csv(paths_file, delimiter="\t", header=None).values.tolist()]
+        return validate_video_list(videos_from_txt)
+
+    def get_videos_from_folder():
+        analysis_folder = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
+        analysis_status = get_analysis_report(analysis_folder)
+        
+        video_list = []
+        for folder in analysis_status["analyzed_folders"]:
+            if not os.path.isdir(folder):
+                text_signal.emit((f"The folder {folder} does not exist.", "clear_unused_files_lineedit"))
+                continue
+            
+            folder_videos, file_extension = validate_video_list(
+                [os.path.join(folder, f) for f in os.listdir(folder) 
+                 if f.endswith((".mp4", ".avi", ".mov"))]
+            )
+            if folder_videos is None:
+                return None, None
+            video_list.extend(folder_videos)
+        
+        return video_list, file_extension
+
+    def extract_frame(input_path, output_path, frame_number):
+        name = extract_base_filename(input_path)
+        if not os.path.isfile(output_path):
+            text_signal.emit((f"Extracting frame from {name}...", "clear_unused_files_lineedit"))
+            video_fps = get_video_fps(input_path, text_signal)
+            timestamp = frame_number / video_fps
+
+            ffmpeg_cmd = [
+                'ffmpeg',
+                '-ss', str(timestamp),
+                '-i', input_path,
+                '-frames:v', '1',
+                '-q:v', '2',
+                '-y',
+                output_path
+            ]
+
+            try:
+                subprocess.run(
+                    ffmpeg_cmd,
+                    cwd=os.path.join(os.path.dirname(__file__), "ffmpeg", "bin"),
+                    check=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE
+                )
+                if not os.path.isfile(output_path):
+                    text_signal.emit((f"Failed to extract frame from {name}", "clear_unused_files_lineedit"))
+            except subprocess.CalledProcessError as e:
+                text_signal.emit((f"FFmpeg error: {e.stderr.decode()}", "clear_unused_files_lineedit"))
+        else:
+            text_signal.emit((f"Frame of {name} already exists.", "clear_unused_files_lineedit"))
+
+    text_signal.emit(("clear_lineedit", "clear_unused_files_lineedit"))
+
     if self.interface.analyze_from_file_button.isEnabled():
-        for filename in video_list:
-            if filename.endswith(file_extension):
-                output_path = os.path.splitext(filename)[0] + ".jpg"
-                if not os.path.isfile(output_path):
-                    text_signal.emit((f"Getting a frame of {filename}", "clear_unused_files_lineedit"))
-                    subprocess.run(
-                        f'ffmpeg -i "{filename}" -vf "select=eq(n\,{where_to_extract})" -fps_mode vfr -update 1 -frames:v 1 "{output_path}"',
-                        shell=True,
-                        cwd=os.path.join(current_working_dir, "ffmpeg", "bin"),
-                    )
-                else:
-                    text_signal.emit((f"Frame of {filename} already exists.", "clear_unused_files_lineedit"))
+        video_list, file_extension = get_videos_from_file()
     else:
-        for filename in file_list:
-            if filename.endswith(file_extension):
-                video_path = os.path.join(videos, filename)
-                output_path = os.path.splitext(video_path)[0] + ".jpg"
-                if not os.path.isfile(output_path):
-                    text_signal.emit((f"Getting a frame of {filename}", "clear_unused_files_lineedit"))
-                    subprocess.run(
-                        f'ffmpeg -i "{video_path}" -vf "select=eq(n\,{where_to_extract})" -fps_mode vfr -update 1 -frames:v 1 "{output_path}"',
-                        shell=True,
-                        cwd=os.path.join(current_working_dir, "ffmpeg", "bin"),
-                    )
-                else:
-                    text_signal.emit((f"Frame of {filename} already exists.", "clear_unused_files_lineedit"))
+        video_list, file_extension = get_videos_from_folder()
+    
+    if video_list is None:
+        return
+
+    # Check all files have the same extension
+    for file in video_list:
+        if file.split(".")[-1] != file_extension:
+            show_warning(
+                "Video extension error",
+                "All videos must have the same extension.\nPlease check the videos folder and try again."
+            )
+            return
+
+    # Process all videos
+    for video_path in video_list:
+        where_to_extract = get_extraction_point(video_path)
+        if where_to_extract is None:
+            name = extract_base_filename(video_path)
+            text_signal.emit((f"Frame extraction canceled for {name}", "clear_unused_files_lineedit"))
+            continue
+            
+        output_path = os.path.splitext(video_path)[0] + ".jpg"
+        extract_frame(video_path, output_path, where_to_extract)
 
 def extract_skeleton_function(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
     """
@@ -1201,7 +1244,8 @@ def extract_skeleton_function(worker, self, text_signal=None, progress=None, war
         text_signal.emit(("Using DeepLabCut version " + deeplabcut.__version__, "clear_unused_files_lineedit"))
         # self.interface.clear_unused_files_lineedit.append(f"Using DeepLabCut version {deeplabcut.__version__}")
     config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
-    videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
+    analysis_folder = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
+    analysis_status = get_analysis_report(analysis_folder)
 
     text_signal.emit(("Extracting skeleton...", "clear_unused_files_lineedit"))
     if self.interface.analyze_from_file_button.isEnabled():
@@ -1209,21 +1253,55 @@ def extract_skeleton_function(worker, self, text_signal=None, progress=None, war
         videos_from_txt = [path[0] for path in pd.read_csv(paths_file, delimiter = "\t", header = None).values.tolist()]
         videos = videos_from_txt
 
-    deeplabcut.filterpredictions(
-        config_path,
-        videos,
-        videotype=".mp4",
-        shuffle=1,
-        trainingsetindex=0,
-        filtertype="median",
-        windowlength=5,
-        p_bound=0.001,
-        ARdegree=3,
-        MAdegree=1,
-        alpha=0.01,
-        save_as_csv=True,
-    )
-    deeplabcut.analyzeskeleton(config_path, videos, shuffle=1, trainingsetindex=0, filtered=True, save_as_csv=True)
+        is_valid, file_extension, invalid_files = validate_video_files(videos)
+        if not is_valid:
+            title = "Video extension error"
+            message = "Videos must have the extension '.mp4', '.avi' or '.mov'.\n Please, check the videos folder and try again."
+            if invalid_files:
+                message += f"\nInvalid files: {', '.join(invalid_files)}"
+            warning_message.emit((title, message))
+            return
+
+        for video in videos:
+            deeplabcut.filterpredictions(
+                config_path,
+                video,
+                videotype=f".{file_extension}",
+                shuffle=1,
+                trainingsetindex=0,
+                filtertype="median",
+                save_as_csv=True,
+            )
+            deeplabcut.analyzeskeleton(config_path, video, shuffle=1, trainingsetindex=0, filtered=True, save_as_csv=True)
+    else:
+        for video_folder in analysis_status["analyzed_folders"]:
+            if not os.path.isdir(video_folder):
+                text_signal.emit((f"The folder {video_folder} does not exist.", "clear_unused_files_lineedit"))
+                continue
+
+            videos = [os.path.join(video_folder, path) for path in os.listdir(video_folder) if path.endswith(".mp4") or path.endswith(".avi") or path.endswith(".mov")]
+
+            is_valid, file_extension, invalid_files = validate_video_files(videos)
+            if not is_valid:
+                title = "Video extension error"
+                message = "Videos must have the extension '.mp4', '.avi' or '.mov'.\n Please, check the videos folder and try again."
+                if invalid_files:
+                    message += f"\nInvalid files: {', '.join(invalid_files)}"
+                warning_message.emit((title, message))
+                return
+
+            for video in videos:
+                deeplabcut.filterpredictions(
+                    config_path,
+                    video,
+                    videotype=f".{file_extension}",
+                    shuffle=1,
+                    trainingsetindex=0,
+                    filtertype="median",
+                    save_as_csv=True,
+                )
+                deeplabcut.analyzeskeleton(config_path, video, shuffle=1, trainingsetindex=0, filtered=True, save_as_csv=True)
+
     text_signal.emit(("Done extracting skeleton.", "clear_unused_files_lineedit"))
 
 def clear_unused_files_function(self):
@@ -1342,7 +1420,6 @@ def get_folder_path_function(self, lineedit_name):
         self: The instance of the class.
         lineedit_name (str): The name of the line edit widget.
     """
-
     if "config_path" == lineedit_name.lower():
         file_explorer = tk.Tk()
         file_explorer.withdraw()
@@ -2385,7 +2462,6 @@ def convert_csv_to_h5(worker, self, text_signal=None, progress=None, warning_mes
     Returns:
         None
     """
-
     config = self.interface.config_path_data_process_lineedit.text()
     scorer = self.interface.scorer_data_process_lineedit.text()
     confirm_folders = self.interface.confirm_folders_checkbox.isChecked()
@@ -2410,22 +2486,80 @@ def analyze_folder_with_frames(worker, self, text_signal=None, progress=None, wa
         resume_message: A resume message to display. (default: None)
         request_files: A list of requested files. (default: None)
     """
+    if self.debug_mode:
+        debugpy.debug_this_thread()
+        breakpoint()
     config = self.interface.config_path_data_process_lineedit.text()
     video_folder = self.interface.video_folder_data_process_lineedit.text()
     frametype = self.interface.frames_extensions_combobox.currentText().strip().lower()
     generate_annotated_frames = self.interface.enable_frame_creation_checkbox.isChecked()
     extract_frames = self.interface.enable_frame_extraction_checkbox.isChecked()
+    number_of_frames = int(self.interface.frame_extraction_number_lineedit.text()) if self.interface.frame_extraction_number_lineedit.text() != "" else None
 
     if config == "":
-        text_signal.emit(("[ERROR]: Please select a config file.", "clear_unused_files_lineedit"))
+        text_signal.emit(("[ERROR]: Please select a config file.", "log_data_process_lineedit"))
         return
     elif video_folder == "":
-        text_signal.emit(("[ERROR]: Please select a folder.", "clear_unused_files_lineedit"))
+        text_signal.emit(("[ERROR]: Please select a folder.", "log_data_process_lineedit"))
         return
     
     if generate_annotated_frames:
         final_folder = self.interface.video_folder_data_process_lineedit.text()
-        create_custom_labelled_frames(config, final_folder, frametype, extract_frames)
+        analyzed_folders = create_custom_labelled_frames(config, final_folder, frametype, extract_frames, number_of_frames)
+        text_signal.emit(("[INFO]: Annotated frames created successfully.", "log_data_process_lineedit"))
+
+        for analyzed_folder in analyzed_folders:
+            frames = [os.path.abspath(os.path.join(analyzed_folder, file)) for file in os.listdir(analyzed_folder) if file.lower().endswith(frametype)]
+            generated_position_data = [os.path.abspath(os.path.join(analyzed_folder, file)) for file in os.listdir(analyzed_folder) if file.lower().endswith(".h5")]
+
+            if len(frames) == 0:
+                text_signal.emit(("[ERROR]: No frames found in the folder.", "log_data_process_lineedit"))
+                return
+            if len(generated_position_data) == 0:
+                text_signal.emit(("[ERROR]: No position data found in the folder.", "log_data_process_lineedit"))
+                return
+            
+            generated_position_data = pd.read_hdf(generated_position_data[0])
+            scorer, _, _ = generated_position_data.columns[0]
+            generated_data_length = len(generated_position_data) ## CHANGE THIS. THERE PROBABLY IS A BETTER WAY TO DO THIS
+
+            if len(frames) != generated_data_length:
+                text_signal.emit(("[ERROR]: The number of frames and generated data do not match.", "log_data_process_lineedit"))
+                return
+            text_signal.emit(("[INFO]: The number of frames and generated data match.", "log_data_process_lineedit"))
+
+            focinho_x = generated_position_data[scorer, "Focinho", "x"]
+            focinho_y = generated_position_data[scorer, "Focinho", "y"]
+            orelha_esq_x = generated_position_data[scorer, "OrelhaE", "x"]
+            orelha_esq_y = generated_position_data[scorer, "OrelhaE", "y"]
+            orelha_dir_x = generated_position_data[scorer, "OrelhaD", "x"]
+            orelha_dir_y = generated_position_data[scorer, "OrelhaD", "y"]
+            centro_x = generated_position_data[scorer, "Centro", "x"]
+            centro_y = generated_position_data[scorer, "Centro", "y"]
+            rabo_x = generated_position_data[scorer, "Rabo", "x"]
+            rabo_y = generated_position_data[scorer, "Rabo", "y"]
+
+            if any(len(focinho_x) != len(x) for x in [focinho_y, orelha_esq_x, orelha_esq_y, orelha_dir_x, orelha_dir_y, centro_x, centro_y, rabo_x, rabo_y]):
+                text_signal.emit(("[ERROR]: The length of the position data does not match.", "log_data_process_lineedit"))
+                return
+            
+            ## Generate frames with the animal's position to be used as a verification tool
+            for frame_path, focinho_x_pos, focinho_y_pos, orelha_esq_x_pos, orelha_esq_y_pos, orelha_dir_x_pos, orelha_dir_y_pos, centro_x_pos, centro_y_pos, rabo_x_pos, rabo_y_pos in zip(
+                frames, focinho_x, focinho_y, orelha_esq_x, orelha_esq_y, orelha_dir_x, orelha_dir_y, centro_x, centro_y, rabo_x, rabo_y):
+
+                image = mpimg.imread(frames[0])
+                fig, ax = plt.subplots()
+                ax.imshow(image)
+                ax.plot(focinho_x_pos, focinho_y_pos, "rP", label="Focinho")
+                ax.plot(orelha_esq_x_pos, orelha_esq_y_pos, "gP", label="Orelha Esquerda")
+                ax.plot(orelha_dir_x_pos, orelha_dir_y_pos, "bP", label="Orelha Direita")
+                ax.plot(centro_x_pos, centro_y_pos, "yP", label="Centro")
+                ax.plot(rabo_x_pos, rabo_y_pos, "mP", label="Rabo")
+                ax.legend()
+                ax.set_title("Animal Position")
+                ax.axis("off")
+                fig.savefig(os.path.join(analyzed_folder, os.path.basename(frame_path).replace(frametype, "_annotated.png")))
+                plt.close(fig)
         return
 
     deeplabcut.analyze_time_lapse_frames(config, video_folder, frametype, save_as_csv=True)
@@ -2551,6 +2685,9 @@ def crop_videos(worker, self, text_signal=None, progress=None, warning_message=N
             # self.interface.log_video_editing_lineedit.append(f"[WARNING]: No crop coordinates found for video {video_name}.")
 
 def copy_folder_robocopy(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
+    if self.debug_mode:
+        debugpy.debug_this_thread()
+        breakpoint()
     source = self.interface.source_folder_path_video_editing_lineedit.text()
     destination = self.interface.destination_folder_path_video_editing_lineedit.text()
     # If the destination path contains spaces, change the directory name to use underscores
@@ -2559,20 +2696,27 @@ def copy_folder_robocopy(worker, self, text_signal=None, progress=None, warning_
         return
 
     exclude_files = self.interface.exclude_files_checkbox.isChecked()
+    include_files = self.interface.include_files_checkbox.isChecked()
+
+    if include_files and exclude_files:
+        text_signal.emit(("[ERROR]: You cannot select both include and exclude files.", "log_video_editing_lineedit"))
+        return
 
     if source == "":
         text_signal.emit(("[ERROR]: Please select a source folder.", "log_video_editing_lineedit"))
-        # self.interface.source_folder_path_video_editing_lineedit.append("[ERROR]: Please select a source folder.")
         return
     elif destination == "":
         text_signal.emit(("[ERROR]: Please select a destination folder.", "log_video_editing_lineedit"))
-        # self.interface.source_folder_path_video_editing_lineedit.append("[ERROR]: Please select a destination folder.")
         return
 
     if exclude_files:
         extensions_to_exclude = self.interface.file_exclusion_video_editing_lineedit.text().lower().strip().split(",")
         extensions_str = " ".join([f'"*{ext.strip()}"' for ext in extensions_to_exclude])
         command = f'robocopy "{source}" "{destination}" /e /zb /copyall /xf {extensions_str}'
+    elif include_files:
+        extensions_to_include = self.interface.file_inclusion_video_editing_lineedit.text().lower().strip().split(",")
+        extensions_str = " ".join([f'"*{ext.strip()}"' for ext in extensions_to_include])
+        command = f'robocopy "{source}" "{destination}" /e /zb /copyall /if {extensions_str}'
     else:
         command = f'robocopy "{source}" "{destination}" /e /zb /copyall'
 
@@ -2811,7 +2955,6 @@ def create_annotated_video(worker, self, text_signal=None, progress=None, warnin
     # Copy the files to the analysis directory
     for file in necessary_files:
         shutil.copy(file, folder_with_analyzed_files)
-
 
     deeplabcut.create_labeled_video(config_path, folder_with_analyzed_files, videotype='.mp4', filtered=True, draw_skeleton = True)
 
@@ -3224,7 +3367,6 @@ def process_frames(final_frames_path, temporary_frames_path, config_path, filety
     logger.info("Analyzing the images...")
     try:
         deeplabcut.analyze_time_lapse_frames(config_path, temporary_frames_path, filetype)
-        os.system("cls")  # Clear the console (Windows-specific)
         logger.info("Analyzed the images")
     except Exception as e:
         logger.error(f"Error analyzing the images: {e}")
@@ -3290,266 +3432,340 @@ def extract_frames_from_video(config, mode = "automatic",  algo='kmeans', videos
     deeplabcut.extract_frames(config, mode=mode, algo=algo, userfeedback=False, videos_list=videos_list)
     return 
 
-def create_custom_labelled_frames(inference_config_file = None, final_frames_path = None, filetype = None, extract_frames = None):
+def create_custom_labelled_frames(inference_config_file = None, final_frames_path = None, filetype = None, extract_frames = None, number_of_frames = None):
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
     logger = logging.getLogger(__name__)
-    temporary_frames_object = tempfile.TemporaryDirectory()
-    temporary_frames_path = temporary_frames_object.name
-
     try:
-        config_path = os.path.abspath(os.path.join(final_frames_path, "..", "..", "config.yaml"))
-        with open(config_path) as file:
-            config_dict = yaml.safe_load(file)
-        logger.info(f"Read the config file {config_path}")
+        if inference_config_file is not None:
+            config_path = inference_config_file
+            with open(config_path) as file:
+                original_config_data = yaml.safe_load(file)
+            logger.info(f"Read the config file {config_path}")
+        else:
+            config_path = os.path.abspath(os.path.join(final_frames_path, "..", "..", "config.yaml"))
+            with open(config_path) as file:
+                original_config_data = yaml.safe_load(file)
+            logger.info(f"Read the config file {config_path}")
     except Exception as e:
         logger.error(f"Error reading the config file: {e}")
         return
     
-
     if extract_frames:
-        video_file = final_frames_path.replace("labeled-data", "videos") + ".mp4"
+        video_list = [os.path.join(final_frames_path, file) for file in os.listdir(final_frames_path) if file.endswith((".mp4", ".avi"))]
+        if not video_list:
+            logger.error("No video files found in the final frames folder")
+            return
+        logger.info(f"Found {len(video_list)} video files in the final frames folder")
         # Check if video can be opened and read
-        try:
-            video = cv2.VideoCapture(video_file)
-            if not video.isOpened():
-                logger.error(f"Error opening the video file {video_file}")
+        for video_file in video_list:
+            try:
+                video = cv2.VideoCapture(video_file)
+                if not video.isOpened():
+                    logger.error(f"Error opening the video file {video_file}")
+                    return
+                video.release()
+            except Exception as e:
+                logger.error(f"Error reading the video file: {e}")
                 return
-            video.release()
-        except Exception as e:
-            logger.error(f"Error reading the video file: {e}")
-            return
         
-        extract_frames_from_video(config_path, videos_list=[video_file])
+        ## Little hack to make the deeplabcut extraction work with any video file anywhere in the system
+        with open(config_path) as file:
+            config_data = yaml.safe_load(file)
 
-    logger.info("Reading the files...")
+        # Add new video paths to video_sets (replace with your actual paths and data)
+        new_videos = {
+            video: {
+                "crop": ", ".join(map(str, [0, 640, 277, 624])),
+            }
+            for video in video_list
+        }
 
-    h5_files = [file for file in os.listdir(final_frames_path) if file.endswith(".h5") and ("CollectedData_" in file)]
-    original_h5 = os.path.join(final_frames_path, h5_files[0]) if h5_files else None
+        # Update the video_sets dictionary and video_fraction
+        original_start, original_stop = config_data['start'], config_data['stop']
+        original_numframes2pick = config_data['numframes2pick']
+        config_data['video_sets'].update(new_videos)
+        config_data['start'] = 0.2
+        config_data['stop'] = 0.8
+        config_data['numframes2pick'] = number_of_frames if number_of_frames is not None else 10
 
-    csv_files = [file for file in os.listdir(final_frames_path) if file.endswith(".csv") and ("CollectedData_" in file)]
-    original_csv = os.path.join(final_frames_path, csv_files[0]) if csv_files else None
+        # Save the modified data back to the YAML file
+        with open(config_path, 'w') as file:
+            yaml.dump(config_data, file, default_flow_style=False, sort_keys=False)
 
-    inference_files = [file for file in os.listdir(final_frames_path) if file.endswith(".h5") and ("resnet50" in file) and ("shuffle" in file)]
-    inference_frames = os.path.join(final_frames_path, inference_files[0]) if inference_files else None
+        extract_frames_from_video(config_path, videos_list=video_list)
 
-    is_new_folder = False
+        # Move frames to final destination
+        frames_in_network_folder_path = os.path.abspath(os.path.join(config_path, "..", "labeled-data"))
+        folders_to_analyze = []
+        for video_path in video_list:
+            video_name = Path(video_path).stem
+            frames_folder_path = os.path.join(frames_in_network_folder_path, video_name)
+            final_video_frames_path = os.path.join(final_frames_path, video_name)
+            if not os.path.exists(final_video_frames_path):
+                os.makedirs(final_video_frames_path)
+            for file in os.listdir(frames_folder_path):
+                if file.endswith(filetype):
+                    shutil.move(os.path.join(frames_folder_path, file), final_video_frames_path)
+            folders_to_analyze.append(final_video_frames_path)
+            logger.info(f"Moved frames from {frames_folder_path} to {final_video_frames_path}")
+            
+            # Remove the frames folder after moving
+            shutil.rmtree(frames_folder_path)
+            logger.info(f"Removed the frames folder {frames_folder_path}")
 
-    if any([(not original_h5) or (not original_csv)]):
-        logger.error("Original files not found")
-        logger.info("Resorting to custom file names based on the script directory")
-        is_new_folder = True
+        # Remove videos from config file
+        for video in video_list:
+            if video in config_data['video_sets']:
+                del config_data['video_sets'][video]
 
-    if not is_new_folder:
-        if not inference_frames:
-            logger.error("Inference frames file not found")
-            logger.info("Creating a new inference frames file with deeplabcut...")
+        # Restore original start and stop values
+        config_data['start'] = original_start
+        config_data['stop'] = original_stop
+        config_data['numframes2pick'] = original_numframes2pick
 
-            inference_frames = process_frames(final_frames_path, temporary_frames_path, inference_config_file, filetype, logger, is_new_folder)
-        # Read the data
-        try:
-            original_h5_dataframe = pd.read_hdf(original_h5)
-            logger.info(f"Read the original h5 file {original_h5} with shape {original_h5_dataframe.shape}")
-            inference_frames_dataframe = pd.read_hdf(inference_frames)
-            logger.info(f"Read the inference frames h5 file {inference_frames} with shape {inference_frames_dataframe.shape}")
-        except Exception as e:
-            logger.error(f"Error reading files: {e}")
-            return
-
-        # Make backup of original files
-        backup_folder = os.path.join(final_frames_path, "backup")
-        if not os.path.exists(backup_folder):
-            os.makedirs(backup_folder)
-
-        # Make copies of the original files into the backup folder
-        backup_original_h5 = os.path.join(backup_folder, "CollectedData_matheus.h5")
-        backup_original_csv = os.path.join(backup_folder, "CollectedData_matheus.csv")
-        backup_inference_frames = os.path.join(backup_folder, "test_framesDLC_resnet50_cd1_networkFeb24shuffle1_1100000.h5")
-
-        try:
-            shutil.move(original_h5, backup_original_h5)
-            shutil.move(original_csv, backup_original_csv)
-            shutil.move(inference_frames, backup_inference_frames)
-            logger.info(f"Backed up the original files to the folder {backup_folder}")
-        except Exception as e:
-            logger.error(f"Error during backup: {e}")
-            return
-
-        # Drop the likelihood column
-        try:
-            inference_frames_dataframe = inference_frames_dataframe.drop('likelihood', level='coords', axis=1)
-            logger.info("Dropped the likelihood column from the inference frames dataframe")
-        except Exception as e:
-            logger.error(f"Error dropping likelihood column: {e}")
-            return
-
-        # Add the experiment names
-        try:
-            new_level = original_h5_dataframe.index.levels[1][0]
-            new_index = pd.MultiIndex.from_arrays(
-                [
-                    ["labeled-data"] * len(inference_frames_dataframe),
-                    [new_level] * len(inference_frames_dataframe),
-                    inference_frames_dataframe.index.get_level_values(-1).to_list()
-                ],
-                names=['dataset', 'experiment', 'image']
-            )
-            inference_frames_dataframe.index = new_index
-            logger.info(f"Added the experiment names to the inference frames dataframe")
-        except Exception as e:
-            logger.error(f"Error adding experiment names: {e}")
-            return
-
-        # Change the scorer name
-        try:
-            new_scorer = original_h5_dataframe.columns.levels[0][0]
-            new_columns = pd.MultiIndex.from_tuples(
-                [(new_scorer, bodypart, coord) for (_, bodypart, coord) in inference_frames_dataframe.columns],
-                names=inference_frames_dataframe.columns.names
-            )
-            inference_frames_dataframe.columns = new_columns
-            logger.info(f"Changed the scorer name to {new_scorer} in the inference frames dataframe")
-        except Exception as e:
-            logger.error(f"Error changing scorer name: {e}")
-            return
-
-        # Concatenate the dataframes
-        try:
-            new_dataframe = pd.concat([original_h5_dataframe, inference_frames_dataframe], sort=False)
-            logger.info(f"Concatenated the dataframes with shape {new_dataframe.shape}")
-        except Exception as e:
-            logger.error(f"Error concatenating dataframes: {e}")
-            return
-        
-        # Remove duplicates if they exist
-        try:
-            new_dataframe = new_dataframe[~new_dataframe.index.duplicated(keep='first')]
-            logger.info("Removed duplicates from the new dataframe")
-        except Exception as e:
-            logger.error(f"Error removing duplicates: {e}")
-            return
-
-        # Save the new dataframe as a new h5 file
-        try:
-            new_h5 = os.path.join(final_frames_path, "CollectedData_matheus.h5")
-            new_dataframe.to_hdf(new_h5, key='df_with_missing', mode='w')
-            logger.info(f"Saved the new h5 file {new_h5}")
-        except Exception as e:
-            logger.error(f"Error saving new h5 file: {e}")
-            return
-
-        # Save the new dataframe as a new csv file
-        try:
-            new_csv = os.path.join(final_frames_path, "CollectedData_matheus.csv")
-            new_dataframe.to_csv(new_csv)
-            logger.info(f"Saved the new csv file {new_csv}")
-        except Exception as e:
-            logger.error(f"Error saving new csv file: {e}")
-            return
-        
-        # Delete temporary folder
-        try:
-            temporary_frames_object.cleanup()
-            logger.info("Cleanup the temporary folder")
-        except Exception as e:
-            logger.error(f"Error deleting the temporary folder: {e}")
-            return
+        # Save back to YAML
+        with open(config_path, 'w') as file:
+            yaml.dump(config_data, file, default_flow_style=False, sort_keys=False)
     else:
-        logger.info("New folder detected")
-        logger.info("Copying images to temporary folder...")
+        folders_to_analyze = [final_frames_path]
 
-        if not inference_frames:
-            logger.error("Inference frames file not found")
-            logger.info("Creating a new inference frames file with deeplabcut...")
+    for final_frames_path in folders_to_analyze:
+        temporary_frames_object = tempfile.TemporaryDirectory()
+        temporary_frames_path = temporary_frames_object.name
+        
+        logger.info(f"Processing frames in {final_frames_path}...")
+        logger.info("Reading the files...")
 
-            inference_frames = process_frames(final_frames_path, temporary_frames_path, inference_config_file, filetype, logger, is_new_folder)
+        h5_files = [file for file in os.listdir(final_frames_path) if file.endswith(".h5") and ("CollectedData_" in file)]
+        original_h5 = os.path.join(final_frames_path, h5_files[0]) if h5_files else None
 
-        # Read the data
-        try:
-            inference_frames_dataframe = pd.read_hdf(inference_frames)
-            logger.info(f"Read the inference frames h5 file {inference_frames} with shape {inference_frames_dataframe.shape}")
-        except Exception as e:
-            logger.error(f"Error reading files: {e}")
-            return
+        csv_files = [file for file in os.listdir(final_frames_path) if file.endswith(".csv") and ("CollectedData_" in file)]
+        original_csv = os.path.join(final_frames_path, csv_files[0]) if csv_files else None
 
-        # Make backup of original files
-        backup_folder = os.path.join(final_frames_path, "backup")
-        if not os.path.exists(backup_folder):
-            os.makedirs(backup_folder)
+        inference_files = [file for file in os.listdir(final_frames_path) if file.endswith(".h5") and ("resnet50" in file) and ("shuffle" in file)]
+        inference_frames = os.path.join(final_frames_path, inference_files[0]) if inference_files else None
 
-        # Make copies of the original files into the backup folder
-        backup_inference_frames = os.path.join(backup_folder, [file for file in os.listdir(final_frames_path) if file.endswith(".h5") and ("resnet50" in file) and ("shuffle" in file)][0])
+        is_new_folder = False
 
-        try:
-            shutil.move(inference_frames, backup_inference_frames)
-            logger.info(f"Backed up the original files to the folder {backup_folder}")
-        except Exception as e:
-            logger.error(f"Error during backup: {e}")
-            return
+        if any([(not original_h5) or (not original_csv)]):
+            logger.error("Original files not found")
+            logger.info("Resorting to custom file names based on the script directory")
+            is_new_folder = True
 
-        # Drop the likelihood column
-        try:
-            inference_frames_dataframe = inference_frames_dataframe.drop('likelihood', level='coords', axis=1)
-            logger.info("Dropped the likelihood column from the inference frames dataframe")
-        except Exception as e:
-            logger.error(f"Error dropping likelihood column: {e}")
-            return
+        if not is_new_folder:
+            if not inference_frames:
+                logger.error("Inference frames file not found")
+                logger.info("Creating a new inference frames file with deeplabcut...")
 
-        # Add the experiment names
-        try:
-            new_level = final_frames_path.split(os.path.sep)[-1]
-            new_index = pd.MultiIndex.from_arrays(
-                [
-                    ["labeled-data"] * len(inference_frames_dataframe),
-                    [new_level] * len(inference_frames_dataframe),
-                    inference_frames_dataframe.index.get_level_values(-1).to_list()
-                ],
-            )
-            inference_frames_dataframe.index = new_index
-            logger.info(f"Trying to set the experiment name to {new_level}")
-            logger.info(f"Added the experiment names to the inference frames dataframe")
-        except Exception as e:
-            logger.error(f"Error adding experiment names: {e}")
-            return
+                inference_frames = process_frames(final_frames_path, temporary_frames_path, inference_config_file, filetype, logger, is_new_folder)
+            # Read the data
+            try:
+                original_h5_dataframe = pd.read_hdf(original_h5)
+                logger.info(f"Read the original h5 file {original_h5} with shape {original_h5_dataframe.shape}")
+                inference_frames_dataframe = pd.read_hdf(inference_frames)
+                logger.info(f"Read the inference frames h5 file {inference_frames} with shape {inference_frames_dataframe.shape}")
+            except Exception as e:
+                logger.error(f"Error reading files: {e}")
+                return
 
-        # Change the scorer name
-        try:
-            new_scorer = get_new_experimenter_name_from_config_file(config_path, logger)
+            # Make backup of original files
+            backup_folder = os.path.join(final_frames_path, "backup")
+            if not os.path.exists(backup_folder):
+                os.makedirs(backup_folder)
 
-            new_columns = pd.MultiIndex.from_tuples(
-                [(new_scorer, bodypart, coord) for (_, bodypart, coord) in inference_frames_dataframe.columns],
-                names=inference_frames_dataframe.columns.names
-            )
-            inference_frames_dataframe.columns = new_columns
-            logger.info(f"Changed the scorer name to {new_scorer} in the inference frames dataframe")
-        except Exception as e:
-            logger.error(f"Error changing scorer name: {e}")
-            return
+            # Make copies of the original files into the backup folder
+            backup_original_h5 = os.path.join(backup_folder, f"CollectedData_{original_config_data['scorer']}.h5")
+            backup_original_csv = os.path.join(backup_folder, f"CollectedData_{original_config_data['scorer']}.csv")
+            backup_inference_frames_name = [Path(file).stem for file in os.listdir(final_frames_path) if file.endswith(".h5") and ("resnet50" in file) and ("shuffle" in file)][0]
+            backup_inference_frames = os.path.join(backup_folder, f"{backup_inference_frames_name}.h5")
 
-        # Save the new dataframe as a new h5 file
-        try:
-            new_h5 = os.path.join(final_frames_path, f"CollectedData_{new_scorer}.h5")
-            inference_frames_dataframe.to_hdf(new_h5, key='df_with_missing', mode='w')
-            logger.info(f"Saved the new h5 file {new_h5}")
-        except Exception as e:
-            logger.error(f"Error saving new h5 file: {e}")
-            return
+            try:
+                shutil.move(original_h5, backup_original_h5)
+                shutil.move(original_csv, backup_original_csv)
+                shutil.move(inference_frames, backup_inference_frames)
+                logger.info(f"Backed up the original files to the folder {backup_folder}")
+            except Exception as e:
+                logger.error(f"Error during backup: {e}")
+                return
 
-        # Save the new dataframe as a new csv file
-        try:
-            new_csv = os.path.join(final_frames_path, f"CollectedData_{new_scorer}.csv")
-            inference_frames_dataframe.to_csv(new_csv)
-            logger.info(f"Saved the new csv file {new_csv}")
-        except Exception as e:
-            logger.error(f"Error saving new csv file: {e}")
-            return
+            # Drop the likelihood column
+            try:
+                inference_frames_dataframe = inference_frames_dataframe.drop('likelihood', level='coords', axis=1)
+                logger.info("Dropped the likelihood column from the inference frames dataframe")
+            except Exception as e:
+                logger.error(f"Error dropping likelihood column: {e}")
+                return
 
-        # Delete temporary folder
-        try:
-            temporary_frames_object.cleanup()
-            logger.info("Cleanup the temporary folder")
-        except Exception as e:
-            logger.error(f"Error deleting the temporary folder: {e}")
-            return
+            # Add the experiment names
+            try:
+                new_level = original_h5_dataframe.index.levels[1][0]
+                new_index = pd.MultiIndex.from_arrays(
+                    [
+                        ["labeled-data"] * len(inference_frames_dataframe),
+                        [new_level] * len(inference_frames_dataframe),
+                        inference_frames_dataframe.index.get_level_values(-1).to_list()
+                    ],
+                    names=['dataset', 'experiment', 'image']
+                )
+                inference_frames_dataframe.index = new_index
+                logger.info(f"Added the experiment names to the inference frames dataframe")
+            except Exception as e:
+                logger.error(f"Error adding experiment names: {e}")
+                return
+
+            # Change the scorer name
+            try:
+                new_scorer = original_h5_dataframe.columns.levels[0][0]
+                new_columns = pd.MultiIndex.from_tuples(
+                    [(new_scorer, bodypart, coord) for (_, bodypart, coord) in inference_frames_dataframe.columns],
+                    names=inference_frames_dataframe.columns.names
+                )
+                inference_frames_dataframe.columns = new_columns
+                logger.info(f"Changed the scorer name to {new_scorer} in the inference frames dataframe")
+            except Exception as e:
+                logger.error(f"Error changing scorer name: {e}")
+                return
+
+            # Concatenate the dataframes
+            try:
+                new_dataframe = pd.concat([original_h5_dataframe, inference_frames_dataframe], sort=False)
+                logger.info(f"Concatenated the dataframes with shape {new_dataframe.shape}")
+            except Exception as e:
+                logger.error(f"Error concatenating dataframes: {e}")
+                return
+            
+            # Remove duplicates if they exist
+            try:
+                new_dataframe = new_dataframe[~new_dataframe.index.duplicated(keep='first')]
+                logger.info("Removed duplicates from the new dataframe")
+            except Exception as e:
+                logger.error(f"Error removing duplicates: {e}")
+                return
+
+            # Save the new dataframe as a new h5 file
+            try:
+                new_h5 = os.path.join(final_frames_path, f"CollectedData_{new_scorer}.h5")
+                new_dataframe.to_hdf(new_h5, key='df_with_missing', mode='w')
+                logger.info(f"Saved the new h5 file {new_h5}")
+            except Exception as e:
+                logger.error(f"Error saving new h5 file: {e}")
+                return
+
+            # Save the new dataframe as a new csv file
+            try:
+                new_csv = os.path.join(final_frames_path, f"CollectedData_{new_scorer}.csv")
+                new_dataframe.to_csv(new_csv)
+                logger.info(f"Saved the new csv file {new_csv}")
+            except Exception as e:
+                logger.error(f"Error saving new csv file: {e}")
+                return
+            
+            # Delete temporary folder
+            try:
+                temporary_frames_object.cleanup()
+                logger.info("Cleanup the temporary folder")
+            except Exception as e:
+                logger.error(f"Error deleting the temporary folder: {e}")
+                return
+        else:
+            logger.info("New folder detected")
+            logger.info("Copying images to temporary folder...")
+
+            if not inference_frames:
+                logger.error("Inference frames file not found")
+                logger.info("Creating a new inference frames file with deeplabcut...")
+
+                inference_frames = process_frames(final_frames_path, temporary_frames_path, inference_config_file, filetype, logger, is_new_folder)
+
+            # Read the data
+            try:
+                inference_frames_dataframe = pd.read_hdf(inference_frames)
+                logger.info(f"Read the inference frames h5 file {inference_frames} with shape {inference_frames_dataframe.shape}")
+            except Exception as e:
+                logger.error(f"Error reading files: {e}")
+                return
+
+            # Make backup of original files
+            backup_folder = os.path.join(final_frames_path, "backup")
+            if not os.path.exists(backup_folder):
+                os.makedirs(backup_folder)
+
+            # Make copies of the original files into the backup folder
+            backup_inference_frames = os.path.join(backup_folder, [file for file in os.listdir(final_frames_path) if file.endswith(".h5") and ("resnet50" in file) and ("shuffle" in file)][0])
+
+            try:
+                shutil.move(inference_frames, backup_inference_frames)
+                logger.info(f"Backed up the original files to the folder {backup_folder}")
+            except Exception as e:
+                logger.error(f"Error during backup: {e}")
+                return
+
+            # Drop the likelihood column
+            try:
+                inference_frames_dataframe = inference_frames_dataframe.drop('likelihood', level='coords', axis=1)
+                logger.info("Dropped the likelihood column from the inference frames dataframe")
+            except Exception as e:
+                logger.error(f"Error dropping likelihood column: {e}")
+                return
+
+            # Add the experiment names
+            try:
+                new_level = final_frames_path.split(os.path.sep)[-1]
+                new_index = pd.MultiIndex.from_arrays(
+                    [
+                        ["labeled-data"] * len(inference_frames_dataframe),
+                        [new_level] * len(inference_frames_dataframe),
+                        inference_frames_dataframe.index.get_level_values(-1).to_list()
+                    ],
+                )
+                inference_frames_dataframe.index = new_index
+                logger.info(f"Trying to set the experiment name to {new_level}")
+                logger.info(f"Added the experiment names to the inference frames dataframe")
+            except Exception as e:
+                logger.error(f"Error adding experiment names: {e}")
+                return
+
+            # Change the scorer name
+            try:
+                new_scorer = get_new_experimenter_name_from_config_file(config_path, logger)
+
+                new_columns = pd.MultiIndex.from_tuples(
+                    [(new_scorer, bodypart, coord) for (_, bodypart, coord) in inference_frames_dataframe.columns],
+                    names=inference_frames_dataframe.columns.names
+                )
+                inference_frames_dataframe.columns = new_columns
+                logger.info(f"Changed the scorer name to {new_scorer} in the inference frames dataframe")
+            except Exception as e:
+                logger.error(f"Error changing scorer name: {e}")
+                return
+
+            # Save the new dataframe as a new h5 file
+            try:
+                new_h5 = os.path.join(final_frames_path, f"CollectedData_{new_scorer}.h5")
+                inference_frames_dataframe.to_hdf(new_h5, key='df_with_missing', mode='w')
+                logger.info(f"Saved the new h5 file {new_h5}")
+            except Exception as e:
+                logger.error(f"Error saving new h5 file: {e}")
+                return
+
+            # Save the new dataframe as a new csv file
+            try:
+                new_csv = os.path.join(final_frames_path, f"CollectedData_{new_scorer}.csv")
+                inference_frames_dataframe.to_csv(new_csv)
+                logger.info(f"Saved the new csv file {new_csv}")
+            except Exception as e:
+                logger.error(f"Error saving new csv file: {e}")
+                return
+
+            # Delete temporary folder
+            try:
+                temporary_frames_object.cleanup()
+                logger.info("Cleanup the temporary folder")
+            except Exception as e:
+                logger.error(f"Error deleting the temporary folder: {e}")
+                return
+            
+    return folders_to_analyze
         
 def get_message():
     """
@@ -3564,3 +3780,186 @@ def get_message():
     a = b"QmVoYXZ5dGhvbiBUb29sczogVGhlIHBsYWNlIHdoZXJlIHlvdXIgYnVncyB0aHJpdmUsV2VsY29tZSB0byBCZWhhdnl0aG9uIFRvb2xzOiBCZWNhdXNlIHRoZSBvbmx5IHdheSB0byBzdXJ2aXZlIGlzIHRvIGVtYnJhY2UgdGhlIGNoYW9zLixXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IFVubGVhc2hpbmcgY2hhb3Mgb25lIGJ1ZyBhdCBhIHRpbWUuLEJlaGF2eXRob24gVG9vbHM6IEJlY2F1c2Ugc3RhYmxlIGJ1aWxkcyBhcmUgb3ZlcnJhdGVkLixTdGVwIHJpZ2h0IHVwIHRvIEJlaGF2eXRob24gVG9vbHM6IFdoZXJlIGV2ZW4geW91ciBiZXN0IGNvZGUgY2FuIGdvIHdyb25nLixCZWhhdnl0aG9uIFRvb2xzOiBNYWtpbmcgcHJvZ3Jlc3MgZmVlbCBsaWtlIGEgZ2xpdGNoIGluIHRoZSBtYXRyaXguLEVtYnJhY2UgdGhlIHN0cnVnZ2xlIHdpdGggQmVoYXZ5dGhvbiBUb29sczogUGVyZmVjdGluZyBmcnVzdHJhdGlvbiB3aXRoIGVhY2ggdXBkYXRlLixCZWhhdnl0aG9uIFRvb2xzOiBXaGVyZSBjb2RpbmcgaXMgbW9yZSBhYm91dCBzdXJ2aXZhbCB0aGFuIHN1Y2Nlc3MuLEdldCBjb21mb3J0YWJsZSB3aXRoIEJlaGF2eXRob24gVG9vbHM6IEJlY2F1c2Ugbm90aGluZyB3b3JrcyBvbiB0aGUgZmlyc3QgdHJ5LixXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IFRoZSBhcnQgb2YgdHVybmluZyBlcnJvcnMgaW50byBuZXcgZmVhdHVyZXMuLEJlaGF2eXRob24gVG9vbHM6IFlvdXIgZGFpbHkgZG9zZSBvZiBkaWdpdGFsIG1hc29jaGlzbS4sUHJlcGFyZSBmb3IgQmVoYXZ5dGhvbiBUb29sczogV2hlcmUgdHJvdWJsZXNob290aW5nIHRha2VzIG9uIGEgbGlmZSBvZiBpdHMgb3duLixCZWhhdnl0aG9uIFRvb2xzOiBXaGVyZSBldmVuIHNpbXBsZSB0YXNrcyBiZWNvbWUgY29tcGxleCBwdXp6bGVzLFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogVGhlIHBsYXlncm91bmQgb2YgdW5leHBlY3RlZCBiZWhhdmlvcnMsQmVoYXZ5dGhvbiBUb29sczogV2hlcmUgZXZlcnkgbGluZSBvZiBjb2RlIGlzIGEgcG90ZW50aWFsIG1pbmVmaWVsZCxHZXQgcmVhZHkgZm9yIEJlaGF2eXRob24gVG9vbHM6IFlvdXIgYWR2ZW50dXJlIGluIG5ldmVyLWVuZGluZyBkZWJ1Z2dpbmcsQmVoYXZ5dGhvbiBUb29sczogQmVjYXVzZSBzYW5pdHkgaXMgb3ZlcnJhdGVkLFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogV2hlcmUgbG9naWMgZ29lcyB0byB0YWtlIGEgYnJlYWssQmVoYXZ5dGhvbiBUb29sczogVGhlIHNvZnR3YXJlIHRoYXQgdHVybnMgcm91dGluZSBpbnRvIGEgY2hhbGxlbmdlLEV4cGVjdCB0aGUgdW5leHBlY3RlZCB3aXRoIEJlaGF2eXRob24gVG9vbHM6IFdoZXJlIHN1cnByaXNlcyBhcmUgZ3VhcmFudGVlZCxCZWhhdnl0aG9uIFRvb2xzOiBUaGUgdWx0aW1hdGUgdGVzdCBvZiB5b3VyIHBhdGllbmNlIGFuZCBwZXJzaXN0ZW5jZSxTdXJ2aXZlIEJlaGF2eXRob24gVG9vbHM6IFdoZXJlIHRyaXVtcGggY29tZXMgYWZ0ZXIgY291bnRsZXNzIHJldHJpZXMsV2VsY29tZSB0byBCZWhhdnl0aG9uIFRvb2xzOiBBIGpvdXJuZXkgdGhyb3VnaCB0aGUgbGFuZCBvZiBnbGl0Y2hlcyxCZWhhdnl0aG9uIFRvb2xzOiBUcmFuc2Zvcm1pbmcgYnVncyBpbnRvIHVucGxhbm5lZCBmZWF0dXJlcyxHZXQgbG9zdCBpbiBCZWhhdnl0aG9uIFRvb2xzOiBXaGVyZSBjbGFyaXR5IGlzIGp1c3QgYW4gaWxsdXNpb24sQmVoYXZ5dGhvbiBUb29sczogV2hlcmUgdGhlIG9ubHkgY29uc3RhbnQgaXMgaW5jb25zaXN0ZW5jeSxXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IFRoZSBhcnQgb2YgbWFraW5nIHRoaW5ncyBtb3JlIGRpZmZpY3VsdCxCZWhhdnl0aG9uIFRvb2xzOiBZb3VyIGRhaWx5IHJlbWluZGVyIHRoYXQgbm90aGluZyBpcyBldmVyIHNpbXBsZSxOYXZpZ2F0ZSBjaGFvcyB3aXRoIEJlaGF2eXRob24gVG9vbHM6IFdoZXJlIG9yZGVyIGlzIGEgZGlzdGFudCBkcmVhbSxCZWhhdnl0aG9uIFRvb2xzOiBUaGUgYmVzdCBwbGFjZSB0byB0ZXN0IHlvdXIgd2lsbHBvd2VyLFdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogV2hlcmUgZXhwZWN0YXRpb25zIGFuZCByZWFsaXR5IHJhcmVseSBtZWV0LEJlaGF2eXRob24gVG9vbHM6IFR1cm5pbmcgcm91dGluZSBjb2RpbmcgaW50byBhIHJvbGxlcmNvYXN0ZXIgcmlkZVdlbGNvbWUgdG8gQmVoYXZ5dGhvbiBUb29sczogd2hlcmUgeW91ciBtaXN0YWtlcyBiZWNvbWUgb3VyIGVudGVydGFpbm1lbnQsQ29uZ3JhdHVsYXRpb25zIG9uIGNob29zaW5nIEJlaGF2eXRob24gVG9vbHM6IHlvdXIgc2hvcnRjdXQgdG8gY29kZSBpbmR1Y2VkIGhlYWRhY2hlcyxCZWhhdnl0aG9uIFRvb2xzOiBCZWNhdXNlIGRlYnVnZ2luZyBpcyBmb3IgdGhlIHdlYWssRGl2ZSBpbnRvIEJlaGF2eXRob24gVG9vbHM6IHdoZXJlIHVzZXIgZnJpZW5kbHkgaXMganVzdCBhIG15dGgsV2VsY29tZSB0byBCZWhhdnl0aG9uIFRvb2xzOiBZb3VyIHBlcnNvbmFsIHRvdXIgb2YgcHJvZ3JhbW1pbmcgcHVyZ2F0b3J5LEJlaGF2eXRob24gVG9vbHM6IFBlcmZlY3QgZm9yIHRob3NlIHdobyBsb3ZlIHRoZSBzbWVsbCBvZiBmYWlsdXJlIGluIHRoZSBtb3JuaW5nLFN0YXJ0IHF1ZXN0aW9uaW5nIHlvdXIgbGlmZSBjaG9pY2VzOiBXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHMsQmVoYXZ5dGhvbiBUb29sczogTWFraW5nIHNpbXBsZSB0YXNrcyBpbXBvc3NpYmx5IGNvbXBsaWNhdGVkIHNpbmNlIFllYXIgemVybyxFbmpveSBCZWhhdnl0aG9uIFRvb2xzOiB3ZSBwcm9taXNlIHlvdSB3aWxsIHJlZ3JldCBpdCxXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IFRoZSBwbGFjZSB3aGVyZSBidWdzIGZlZWwgYXQgaG9tZSxCZWhhdnl0aG9uIFRvb2xzOiBCZWNhdXNlIHdoYXQgaXMgbGlmZSB3aXRob3V0IGEgbGl0dGxlIHRvcnR1cmUsUHJlcGFyZSBmb3IgYSByaWRlIHRocm91Z2ggY2hhb3Mgd2l0aCBCZWhhdnl0aG9uIFRvb2xzLEJlaGF2eXRob24gVG9vbHM6IFdoZXJlIHNhbml0eSBnb2VzIHRvIGRpZSxXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IHRoZSBlcGl0b21lIG9mIGluZWZmaWNpZW5jeSxCZWhhdnl0aG9uIFRvb2xzOiBNYWtpbmcgc3VyZSB5b3UgbmV2ZXIgZ2V0IHRvbyBjb21mb3J0YWJsZSxTdGVwIHJpZ2h0IHVwIHRvIEJlaGF2eXRob24gVG9vbHM6IFlvdXIgZmFzdCB0cmFjayB0byBmcnVzdHJhdGlvbixCZWhhdnl0aG9uIFRvb2xzOiBUdXJuaW5nIGRyZWFtcyBpbnRvIG5pZ2h0bWFyZXMsV2VsY29tZSB0byBCZWhhdnl0aG9uIFRvb2xzOiB5b3VyIGRhaWx5IGRvc2Ugb2YgZGlnaXRhbCBkaXNhcHBvaW50bWVudCxCZWhhdnl0aG9uIFRvb2xzOiBXaGVuIHlvdSB3YW50IHRvIG1ha2UgeW91ciBwcm9ibGVtcyB3b3JzZSxXZWxjb21lIHRvIEJlaGF2eXRob24gVG9vbHM6IHdoZXJlIGV2ZXJ5IGZlYXR1cmUgaXMgYSBuZXcgZm9ybSBvZiBhZ29ueSxCZW0gdmluZG8gY29tcGFuaGVpcm8gZGUgZGlhcyBtYWxkaXRvcw=="
     sample = random.sample(base64.b64decode(a).decode().split(","), 1)[0]
     return sample
+
+def scan_dlc_analysis(root_path):
+    """
+    Returns:
+    - analyzed_folders: set of folders containing ANY analysis files
+    - video_status: dict of {video_path: has_analysis (bool)}
+    """
+    analyzed_folders = set()
+    video_status = {}
+    
+    for root, _, files in os.walk(root_path):
+        for file in files:
+            if file.lower().endswith(('.mp4', '.avi', '.mov')):
+                video_path = str(Path(root) / file)
+                video_status[video_path] = False
+    
+    for video_path in video_status.keys():
+        video_dir = os.path.dirname(video_path)
+        video_name = os.path.splitext(os.path.basename(video_path))[0]
+        
+        analysis_files = [
+            f for f in os.listdir(video_dir) 
+            if (video_name in f) and 
+            any(f.endswith(ext) for ext in ('.h5', '.csv', '.pickle'))
+        ]
+        
+        if analysis_files:
+            video_status[video_path] = True
+            analyzed_folders.add(video_dir)
+    
+    return analyzed_folders, video_status
+
+def get_analysis_report(root_path):
+    analyzed_folders, video_status = scan_dlc_analysis(root_path)
+    
+    analyzed_videos = [v for v, has_analysis in video_status.items() if has_analysis]
+    orphan_videos = [v for v, has_analysis in video_status.items() if not has_analysis]
+    
+    orphan_only_folders = set()
+    for video in orphan_videos:
+        folder = os.path.dirname(video)
+        if folder not in analyzed_folders:
+            orphan_only_folders.add(folder)
+    
+    return {
+        'analyzed_folders': sorted(analyzed_folders),
+        'analyzed_videos': sorted(analyzed_videos),
+        'orphan_videos': sorted(orphan_videos),
+        'orphan_only_folders': sorted(orphan_only_folders)
+    }
+
+def validate_video_files(video_list):
+    """
+    Validates a list of video files to ensure they have the correct extensions.
+
+    Args:
+        video_list (list): A list of video file paths.
+
+    Returns:
+        tuple: A tuple containing:
+            - bool: True if all files have valid and matching extensions, False otherwise
+            - str: File extension (without the dot) if all files match, or False if not
+            - list: List of invalid files that don't have allowed extensions
+    """
+    valid_extensions = [".mp4", ".avi", ".mov"]
+    invalid_files = [file for file in video_list if not any(file.endswith(ext) for ext in valid_extensions)]
+    
+    if invalid_files:
+        return False, False, invalid_files
+    
+    file_extensions = {file.split(".")[-1] for file in video_list}
+    if len(file_extensions) > 1:
+        return False, False, []
+    
+    file_extension = list(file_extensions)[0]
+    return True, file_extension, []
+
+def extract_base_filename(file_path_or_name):
+    """
+    Only returns the base name of the file, and, if the file name contains more than 30 characters, it will only return the first 20 characters.
+    Culling the name with three dots
+
+    Args:
+        file_path_or_name (str): The full path or name of the file.
+
+    Returns:
+        str: The base name of the file without the extension and any leading directories.
+
+    Example:
+        >>> extract_base_filename("/path/to/file/DLC_ExperimentName_12345.h5")
+        'ExperimentName_12345'
+        >>> extract_base_filename("DLC_ExperimentName_12345.h5")
+        'ExperimentName_12345'
+        >>> extract_base_filename("DLC_ExperimentName_123456789012345678901234567890.h5")
+        'ExperimentName_12345678901234567890...'
+    """
+    filename = os.path.basename(file_path_or_name)
+    filename = Path(filename).stem
+    parts = filename.split('DLC_')
+    base_name = parts[0]
+    base_name = base_name.rstrip('_')
+    
+    if len(base_name) > 20:
+        base_name = base_name[:20] + "..."
+        
+    return base_name
+
+def get_video_fps(input_path, text_signal=None, default_fps=30.0):
+    """
+    Extracts the FPS of a video using ffprobe.
+    Args:
+        input_path (str): Path to the video file.
+        text_signal (QSignal, optional): Signal for status updates. Defaults to None.
+        default_fps (float, optional): Fallback FPS if detection fails. Defaults to 30.0.
+    Returns:
+        float: Detected or default FPS.
+    """
+    cmd = [
+        'ffprobe',
+        '-v', 'error',
+        '-select_streams', 'v:0',
+        '-show_entries', 'stream=avg_frame_rate',
+        '-of', 'default=noprint_wrappers=1:nokey=1',
+        input_path
+    ]
+    
+    try:
+        result = subprocess.run(
+            cmd,
+            cwd=os.path.join(os.path.dirname(__file__), "ffmpeg", "bin"),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True
+        )
+        numerator, denominator = map(float, result.stdout.strip().split('/'))
+        return numerator / denominator
+    except (subprocess.CalledProcessError, ValueError) as e:
+        if text_signal:
+            text_signal.emit((
+                f"Could not detect FPS for {os.path.basename(input_path)}. Using default {default_fps} FPS.",
+                "clear_unused_files_lineedit"
+            ))
+        return default_fps
+
+def get_video_duration(input_path, text_signal=None, default_duration=1.0):
+    """
+    Extracts the duration (in seconds) of a video using ffprobe.
+    Args:
+        input_path (str): Path to the video file.
+        text_signal (QSignal, optional): Signal for status updates. Defaults to None.
+        default_duration (float, optional): Fallback duration if detection fails. Defaults to 1.0.
+    Returns:
+        float: Detected or default duration in seconds.
+    """
+    cmd = [
+        'ffprobe',
+        '-v', 'error',
+        '-show_entries', 'format=duration',
+        '-of', 'default=noprint_wrappers=1:nokey=1',
+        input_path
+    ]
+    
+    try:
+        result = subprocess.run(
+            cmd,
+            cwd=os.path.join(os.path.dirname(__file__), "ffmpeg", "bin"),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True
+        )
+        duration = float(result.stdout.strip())
+        if duration <= 0:
+            raise ValueError("Invalid duration (<= 0)")
+        return duration
+    except (subprocess.CalledProcessError, ValueError) as e:
+        if text_signal:
+            text_signal.emit((
+                f"Could not detect duration for {os.path.basename(input_path)}. Using default {default_duration} sec.",
+                "clear_unused_files_lineedit"
+            ))
+        return default_duration

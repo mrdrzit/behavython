@@ -24,6 +24,7 @@ class behavython_gui(QWidget):
         self.interface.show()
         self.options = {}
         self.progress_bar = self.interface.progress_bar
+        self.debug_mode = False
 
         # Create a QThreadPool instance
         self.threadpool = QtCore.QThreadPool()
@@ -46,6 +47,8 @@ class behavython_gui(QWidget):
         self.interface.video_folder_lineedit.textChanged.connect(lambda: self.enable_analysis_buttons())
         self.interface.config_path_lineedit.textChanged.connect(lambda: self.enable_analysis())
         self.interface.analyze_from_file_button.clicked.connect(lambda: self.run_worker(dlc_video_analyze_function, self))
+        self.interface.analyze_from_file_extract_skeleton_button.clicked.connect(lambda: self.run_worker(extract_skeleton_function, self))
+        self.interface.analyze_from_file_get_frames_button.clicked.connect(lambda: self.run_worker(get_frames_function, self))
         self.interface.create_annotated_video_button.clicked.connect(lambda: self.run_worker(create_annotated_video, self))
         self.interface.config_path_lineedit.textChanged.connect(lambda: self.enable_annotated_video_creation())
         self.interface.folder_to_create_annotated_video_button.clicked.connect(lambda: get_folder_path_function(self, "get_annotated_video_folder"))
@@ -70,7 +73,7 @@ class behavython_gui(QWidget):
         self.interface.copy_files_with_robocopy_video_editing_button.clicked.connect(lambda: self.run_worker(copy_folder_robocopy, self))
         self.interface.folder_to_get_create_roi_button.clicked.connect(lambda: get_folder_path_function(self, "create_roi_automatically"))
         self.interface.cread_roi_automatically_button.clicked.connect(lambda: self.run_worker(create_rois_automatically, self))
-
+        self.interface.enable_debugging_mode_checkbox.stateChanged.connect(lambda: self.toggle_debug_mode())
 
     def resume_message_function(self, file_list):
         text = "Check the videos to be analyzed: "
@@ -142,21 +145,51 @@ class behavython_gui(QWidget):
         self.progress_bar.setValue(progress)
 
     def update_lineedit(self, values):
-        text, lineedit = values
-        if "resume_lineedit" == lineedit:
-            self.interface.resume_lineedit.append(text)
-        elif "clear_unused_files_lineedit" == lineedit:
-            if "clear_lineedit" == text:
-                self.interface.clear_unused_files_lineedit.clear()
-            else:
-                self.interface.clear_unused_files_lineedit.append(text)
-        elif "log_video_editing_lineedit" == lineedit:
-            self.interface.log_video_editing_lineedit.append(text)
-        elif "log_data_process_lineedit" == lineedit:
-            if "clear_lineedit" == text:
-                self.interface.log_data_process_lineedit.clear()
-            else:
-                self.interface.log_data_process_lineedit.append(text)
+        """Handle multiple line edits with clear/append functionality
+        
+        Args:
+            values (tuple): Can be either:
+                - ("clear_lineedit", "lineedit_name") to clear a specific line edit
+                - ("clear_all_lineedits") to clear all line edits
+                - (text, "lineedit_name") to append text to a specific line edit
+        """
+        if not values:
+            print("No values provided to update_lineedit.")
+            return
+            
+        if values[0] == "clear_all_lineedits":
+            lineedits = [
+                self.interface.clear_unused_files_lineedit,
+                self.interface.log_video_editing_lineedit,
+                self.interface.log_data_process_lineedit,
+                self.interface.resume_lineedit,
+            ]
+            for lineedit in lineedits:
+                lineedit.clear()
+            return
+        
+        if len(values) < 2:
+            print("Not enough values provided to update_lineedit.")
+            return
+            
+        text, lineedit_name = values[:2]
+        
+        lineedit_map = {
+            "resume_lineedit": self.interface.resume_lineedit,
+            "clear_unused_files_lineedit": self.interface.clear_unused_files_lineedit,
+            "log_video_editing_lineedit": self.interface.log_video_editing_lineedit,
+            "log_data_process_lineedit": self.interface.log_data_process_lineedit,
+        }
+        
+        lineedit = lineedit_map.get(lineedit_name)
+        if lineedit is None:
+            print(f"Lineedit '{lineedit_name}' not found.")
+            return
+        
+        if text == "clear_lineedit":
+            lineedit.clear()
+        else:
+            lineedit.append(text)
 
     def enable_annotated_video_creation(self):
         elements_to_toggle = [
@@ -227,16 +260,24 @@ class behavython_gui(QWidget):
             self.interface.resume_lineedit.clear()
             self.interface.resume_lineedit.setText("Please select a file to analyze.")
             self.interface.analyze_from_file_button.setEnabled(False)
+            self.interface.analyze_from_file_extract_skeleton_button.setEnabled(False)
+            self.interface.analyze_from_file_get_frames_button.setEnabled(False)
         elif not os.path.exists(self.interface.analyze_from_file_lineedit.text()):
             self.interface.resume_lineedit.clear()
             self.interface.resume_lineedit.setText("The file selected does not exist.")
             self.interface.analyze_from_file_button.setEnabled(False)
+            self.interface.analyze_from_file_extract_skeleton_button.setEnabled(False)
+            self.interface.analyze_from_file_get_frames_button.setEnabled(False)
         elif not self.interface.analyze_from_file_lineedit.text().endswith(".txt"):
             self.interface.resume_lineedit.clear()
             self.interface.resume_lineedit.setText("The file selected is not a .txt file.")
             self.interface.analyze_from_file_button.setEnabled(False)
+            self.interface.analyze_from_file_extract_skeleton_button.setEnabled(False)
+            self.interface.analyze_from_file_get_frames_button.setEnabled(False)
         else:
             self.interface.analyze_from_file_button.setEnabled(True)
+            self.interface.analyze_from_file_extract_skeleton_button.setEnabled(True)
+            self.interface.analyze_from_file_get_frames_button.setEnabled(True)
             self.interface.resume_lineedit.clear()
 
     def get_options(self):
@@ -258,6 +299,42 @@ class behavython_gui(QWidget):
         options["plot_options"] = "plotting_enabled" if self.interface.plot_data_checkbox.isChecked() else "plotting_disabled"
 
         return options
+    
+    def toggle_debug_mode(self):
+        """Toggle debug mode and visual indicators"""
+        debug_mode = self.interface.enable_debugging_mode_checkbox.isChecked()
+        
+        # Change window color based on debug state
+        if debug_mode:
+            self.debug_mode = True
+            
+            # Apply orange background
+            self.interface.setStyleSheet("""
+                QWidget {
+                    background-color: #598d96;
+                    color: #FFFFFF;
+                }
+            """)
+            
+            self.update_lineedit(("clear_all_lineedits",))
+            self.update_lineedit(("🐞 Debug mode active", "resume_lineedit"))
+            self.update_lineedit(("🐞 Debug mode active", "clear_unused_files_lineedit"))
+            self.update_lineedit(("🐞 Debug mode active", "log_video_editing_lineedit"))
+            self.update_lineedit(("🐞 Debug mode active", "log_data_process_lineedit"))
+        else:
+            # Revert to normal styling
+            self.interface.setStyleSheet("""
+                QWidget {
+                    background-color: #4B4B4B;
+                    color: #FFFFFF;
+                }
+            """)
+            self.update_lineedit(("clear_all_lineedits",))
+            self.update_lineedit(("🔧 Debug mode deactivated", "resume_lineedit"))
+            self.update_lineedit(("🔧 Debug mode deactivated", "clear_unused_files_lineedit"))
+            self.update_lineedit(("🔧 Debug mode deactivated", "log_video_editing_lineedit"))
+            self.update_lineedit(("🔧 Debug mode deactivated", "log_data_process_lineedit"))
+            self.debug_mode = False
 
 def main():
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts)
