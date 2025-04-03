@@ -36,7 +36,7 @@ from PySide6.QtGui import QFontMetrics
 from PySide6.QtCore import QRunnable, Slot, Signal, QObject, QThread
 
 matplotlib.use("agg")
-DLC_ENABLE = True
+DLC_ENABLE = False
 
 if DLC_ENABLE:
     import deeplabcut
@@ -1420,84 +1420,107 @@ def get_folder_path_function(self, lineedit_name):
         self: The instance of the class.
         lineedit_name (str): The name of the line edit widget.
     """
-    if "config_path" == lineedit_name.lower():
+    # Create a mapping of lineedit names to their configurations
+    path_configs = {
+        "config_path": {
+            "dialog_type": "file",
+            "title": "Select the config.yaml file",
+            "target_widget": "config_path_lineedit"
+        },
+        "videos_path": {
+            "dialog_type": "folder",
+            "title": "Select the folder",
+            "target_widget": "video_folder_lineedit"
+        },
+        "config_path_data_process": {
+            "dialog_type": "file",
+            "title": "Select the config.yaml file",
+            "target_widget": "config_path_data_process_lineedit"
+        },
+        "videos_path_data_process": {
+            "dialog_type": "folder",
+            "title": "Select the folder",
+            "target_widget": "video_folder_data_process_lineedit"
+        },
+        "crop_path": {
+            "dialog_type": "folder",
+            "title": "Select the folder",
+            "target_widget": "videos_to_crop_folder_lineedit"
+        },
+        "crop_path_video_editing": {
+            "dialog_type": "folder",
+            "title": "Select the folder",
+            "target_widget": "videos_to_crop_folder_video_editing_lineedit"
+        },
+        "source_folder": {
+            "dialog_type": "folder",
+            "title": "Select the source folder",
+            "target_widget": "source_folder_path_video_editing_lineedit"
+        },
+        "destination_folder": {
+            "dialog_type": "folder",
+            "title": "Select the destination folder",
+            "target_widget": "destination_folder_path_video_editing_lineedit"
+        },
+        "file_to_analyze": {
+            "dialog_type": "file",
+            "title": "Select the file to analyze",
+            "target_widget": "analyze_from_file_lineedit"
+        },
+        "create_roi_automatically": {
+            "dialog_type": "folder",
+            "title": "Select the folder",
+            "target_widget": "folder_to_get_create_roi_lineedit"
+        },
+        "get_bout_analysis_folder": {
+            "dialog_type": "folder",
+            "title": "Select the folder",
+            "target_widget": "path_to_bout_analysis_folder_lineedit"
+        },
+        "get_annotated_video_folder": {
+            "dialog_type": "folder",
+            "title": "Select the folder",
+            "target_widget": "folder_to_create_annotated_video_lineedit"
+        },
+        "temp_video_folder_data_process_lineedit": {
+            "dialog_type": "folder",
+            "title": "Select the folder",
+            "target_widget": "temp_video_folder_data_process_lineedit"
+        },
+        "generated_frames_source_data_process_lineedit": {
+            "dialog_type": "folder",
+            "title": "Select the folder where the generated frames will be taken from",
+            "target_widget": "generated_frames_source_data_process_lineedit"
+        },
+        "generated_frames_destination_data_process_lineedit": {
+            "dialog_type": "folder",
+            "title": "Select the folder where the generated frames will be saved",
+            "target_widget": "generated_frames_destination_data_process_lineedit"
+        },
+        "generated_frames_network_destination_data_process_lineedit": {
+            "dialog_type": "file",
+            "title": "Select the config.yaml for the network to be refined",
+            "target_widget": "generated_frames_network_destination_data_process_lineedit"
+        },
+    }
+    
+    # Get the configuration for the requested lineedit
+    config = path_configs.get(lineedit_name.lower())
+    
+    if config:
+        # Set up the file explorer
         file_explorer = tk.Tk()
         file_explorer.withdraw()
         file_explorer.call("wm", "attributes", ".", "-topmost", True)
-        config_file = str(Path(filedialog.askopenfilename(title="Select the config.yaml file", multiple=False)))
-        self.interface.config_path_lineedit.setText(config_file)
-    elif "videos_path" == lineedit_name.lower():
-        file_explorer = tk.Tk()
-        file_explorer.withdraw()
-        file_explorer.call("wm", "attributes", ".", "-topmost", True)
-        folder = str(Path(filedialog.askdirectory(title="Select the folder", mustexist=True)))
-        self.interface.video_folder_lineedit.setText(folder)
-    elif "config_path_data_process" == lineedit_name.lower():
-        file_explorer = tk.Tk()
-        file_explorer.withdraw()
-        file_explorer.call("wm", "attributes", ".", "-topmost", True)
-        config_file = str(Path(filedialog.askopenfilename(title="Select the config.yaml file", multiple=False)))
-        self.interface.config_path_data_process_lineedit.setText(config_file)
-    elif "videos_path_data_process" == lineedit_name.lower():
-        file_explorer = tk.Tk()
-        file_explorer.withdraw()
-        file_explorer.call("wm", "attributes", ".", "-topmost", True)
-        folder = str(Path(filedialog.askdirectory(title="Select the folder", mustexist=True)))
-        self.interface.video_folder_data_process_lineedit.setText(folder)
-    elif "crop_path" == lineedit_name.lower():
-        file_explorer = tk.Tk()
-        file_explorer.withdraw()
-        file_explorer.call("wm", "attributes", ".", "-topmost", True)
-        folder = str(Path(filedialog.askdirectory(title="Select the folder", mustexist=True)))
-        self.interface.videos_to_crop_folder_lineedit.setText(folder)
-    elif "crop_path_video_editing" == lineedit_name.lower():
-        file_explorer = tk.Tk()
-        file_explorer.withdraw()
-        file_explorer.call("wm", "attributes", ".", "-topmost", True)
-        folder = str(Path(filedialog.askdirectory(title="Select the folder", mustexist=True)))
-        self.interface.videos_to_crop_folder_video_editing_lineedit.setText(folder)
-    elif "source_folder" == lineedit_name.lower():
-        file_explorer = tk.Tk()
-        file_explorer.withdraw()
-        file_explorer.call("wm", "attributes", ".", "-topmost", True)
-        folder = str(Path(filedialog.askdirectory(title="Select the source folder", mustexist=True)))
-        self.interface.source_folder_path_video_editing_lineedit.setText(folder)
-    elif "destination_folder" == lineedit_name.lower():
-        file_explorer = tk.Tk()
-        file_explorer.withdraw()
-        file_explorer.call("wm", "attributes", ".", "-topmost", True)
-        folder = str(Path(filedialog.askdirectory(title="Select the destination folder", mustexist=True)))
-        self.interface.destination_folder_path_video_editing_lineedit.setText(folder)
-    elif "file_to_analyze" == lineedit_name.lower():
-        file_explorer = tk.Tk()
-        file_explorer.withdraw()
-        file_explorer.call("wm", "attributes", ".", "-topmost", True)
-        file = str(Path(filedialog.askopenfilename(title="Select the file to analyze", multiple=False)))
-        self.interface.analyze_from_file_lineedit.setText(file)
-    elif "create_roi_automatically" == lineedit_name.lower():
-        file_explorer = tk.Tk()
-        file_explorer.withdraw()
-        file_explorer.call("wm", "attributes", ".", "-topmost", True)
-        folder = str(Path(filedialog.askdirectory(title="Select the folder", mustexist=True)))
-        self.interface.folder_to_get_create_roi_lineedit.setText(folder)
-    elif "get_bout_analysis_folder" == lineedit_name.lower():
-        file_explorer = tk.Tk()
-        file_explorer.withdraw()
-        file_explorer.call("wm", "attributes", ".", "-topmost", True)
-        folder = str(Path(filedialog.askdirectory(title="Select the folder", mustexist=True)))
-        self.interface.path_to_bout_analysis_folder_lineedit.setText(folder)
-    elif "get_annotated_video_folder" == lineedit_name.lower():
-        file_explorer = tk.Tk()
-        file_explorer.withdraw()
-        file_explorer.call("wm", "attributes", ".", "-topmost", True)
-        folder = str(Path(filedialog.askdirectory(title="Select the folder", mustexist=True)))
-        self.interface.folder_to_create_annotated_video_lineedit.setText(folder)
-    elif "temp_video_folder_data_process_lineedit" == lineedit_name.lower():
-        file_explorer = tk.Tk()
-        file_explorer.withdraw()
-        file_explorer.call("wm", "attributes", ".", "-topmost", True)
-        folder = str(Path(filedialog.askdirectory(title="Select the folder", mustexist=True)))
-        self.interface.temp_video_folder_data_process_lineedit.setText(folder)
+        
+        # Get the path based on dialog type
+        if config["dialog_type"] == "file":
+            path = str(Path(filedialog.askopenfilename(title=config["title"], multiple=False)))
+        else:  # folder
+            path = str(Path(filedialog.askdirectory(title=config["title"], mustexist=True)))
+        
+        # Set the path to the appropriate widget
+        getattr(self.interface, config["target_widget"]).setText(path)
 
 def check_roi_files(roi):
     """
@@ -2509,6 +2532,14 @@ def analyze_folder_with_frames(worker, self, text_signal=None, progress=None, wa
         text_signal.emit(("[INFO]: Annotated frames created successfully.", "log_data_process_lineedit"))
 
         for analyzed_folder in analyzed_folders:
+            annotated_frames_folder = os.path.abspath(os.path.join(analyzed_folder, "annotated_frames"))
+            if not os.path.exists(annotated_frames_folder):
+                try:
+                    os.makedirs(annotated_frames_folder)
+                except OSError as e:
+                    text_signal.emit(("[ERROR]: Failed to create annotated frames folder.", "log_data_process_lineedit"))
+                    text_signal.emit(("Saving to the default folder.", "log_data_process_lineedit"))
+            text_signal.emit(("[INFO]: Annotated frames folder created successfully.", "log_data_process_lineedit"))
             frames = [os.path.abspath(os.path.join(analyzed_folder, file)) for file in os.listdir(analyzed_folder) if file.lower().endswith(frametype)]
             generated_position_data = [os.path.abspath(os.path.join(analyzed_folder, file)) for file in os.listdir(analyzed_folder) if file.lower().endswith(".h5")]
 
@@ -2558,7 +2589,10 @@ def analyze_folder_with_frames(worker, self, text_signal=None, progress=None, wa
                 ax.legend()
                 ax.set_title("Animal Position")
                 ax.axis("off")
-                fig.savefig(os.path.join(analyzed_folder, os.path.basename(frame_path).replace(frametype, "_annotated.png")))
+                if os.path.exists(annotated_frames_folder):
+                    fig.savefig(os.path.join(annotated_frames_folder, os.path.basename(frame_path).replace(frametype, "_annotated.png")))
+                else:
+                    fig.savefig(os.path.join(analyzed_folder, os.path.basename(frame_path).replace(frametype, "_annotated.png")))
                 plt.close(fig)
         return
 
@@ -4027,3 +4061,270 @@ def get_recently_created_files(directory, num_files=None):
 
     # Return the requested number of files
     return [file[0] for file in files[:num_files]]
+
+def merge_generated_frames(self):
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+    logger = logging.getLogger(__name__)
+    image_file_extension = self.interface.frames_extensions_combobox.currentText()
+    logger.info("Merging generated frames...")
+    config_file = self.interface.generated_frames_network_destination_data_process_lineedit.text()
+    source_folder = self.interface.generated_frames_source_data_process_lineedit.text()
+    destination_folder = self.interface.generated_frames_destination_data_process_lineedit.text()
+
+    if any(not path for path in [config_file, source_folder, destination_folder]):
+        logger.error("Please select all paths: config file, source folder, and destination folder.")
+        return
+
+    if not destination_folder:
+        logger.error(f"Network folder labeled-data does not exist: {destination_folder}")
+        return
+    
+    existing_labeled_data_folders = [os.path.join(destination_folder, folder) for folder in os.listdir(destination_folder) if os.path.isdir(os.path.join(destination_folder, folder))]
+    if not existing_labeled_data_folders:
+        logger.error("No labeled-data folders found in the network folder.")
+        logger.info("Trying to fill the folder with the generated frames...")
+    
+    ## Case 1: We are adding frames from a video that was not part of the original dataset and the frames are not in the .h5 file
+    # Get the state of the default directory
+    network_folder_labeled_data_folder_state = scan_labeled_data_directory(destination_folder)
+    generated_frames_directory_state = scan_generated_frames_directory(source_folder)
+
+    # Check if the generated frames folder exists
+    if not generated_frames_directory_state['generated_frames_folder_exists']:
+        logger.error("The generated frames folder does not exist.")
+        return
+    # Check if the generated frames folder is empty
+    if not generated_frames_directory_state['generated_frames']:
+        logger.error("The generated frames folder is empty.")
+        return
+    # Check if the network folder labeled-data folder exists
+    if not os.path.exists(destination_folder):
+        logger.error("The network folder labeled-data folder does not exist.")
+        return
+    # Check if the network folder labeled-data folder is empty
+    if not network_folder_labeled_data_folder_state['video_folders']:
+        logger.error("The network folder labeled-data folder is empty.")
+        return
+    
+    number_of_videos_to_process_frames = len(generated_frames_directory_state['videos'])
+
+    for video_name, video_data in generated_frames_directory_state['generated_frames'].items():
+        number_of_frames_to_copy_over = len(video_data['frames'])
+        if number_of_frames_to_copy_over == 0:
+            logger.error(f"No frames found for video {video_name}.")
+            continue
+        if not video_data["has_backup"] or not video_data["collected_data_h5"] or not video_data["collected_data_csv"]:
+            logger.error(f"Missing backup or collected data files for video {video_name}.")
+            continue
+
+        # Now we know that the backup data, collected data, and frames are all present, proceed to copy the frames
+        # But first check if the video is already in the labeled-data folder
+        labeled_data_video_folder = os.path.join(destination_folder, video_name)
+        video_exists_in_labeled_data = os.path.exists(labeled_data_video_folder)
+        # Here we branch into two cases:
+        # Case 1: The video is not in the labeled-data folder
+        # Case 2: The video is already in the labeled-data folder
+
+        # Case 1: The video is not in the labeled-data folder
+        if not video_exists_in_labeled_data:
+            logger.info(f"Video {video_name} is not in the labeled-data folder. Copying frames...")
+            # Create the video folder in the labeled-data folder
+            os.makedirs(labeled_data_video_folder, exist_ok=True)
+            # Copy the frames to the video folder
+            for frame in video_data['frames']:
+                source_frame_path = os.path.join(source_folder, video_name, frame)
+                destination_frame_path = os.path.join(labeled_data_video_folder, frame)
+                shutil.copy2(source_frame_path, destination_frame_path)
+                logger.info(f"Copied frame {frame} to {labeled_data_video_folder}.")
+            # Copy the collected data files to the video folder
+            if video_data['collected_data_h5']:
+                source_collected_data_h5_path = os.path.join(source_folder, video_name, video_data['collected_data_h5'])
+                destination_collected_data_h5_path = os.path.join(labeled_data_video_folder, video_data['collected_data_h5'])
+                shutil.copy2(source_collected_data_h5_path, destination_collected_data_h5_path)
+                logger.info(f"Copied collected data h5 file to {labeled_data_video_folder}.")
+            if video_data['collected_data_csv']:
+                source_collected_data_csv_path = os.path.join(source_folder, video_name, video_data['collected_data_csv'])
+                destination_collected_data_csv_path = os.path.join(labeled_data_video_folder, video_data['collected_data_csv'])
+                shutil.copy2(source_collected_data_csv_path, destination_collected_data_csv_path)
+                logger.info(f"Copied collected data csv file to {labeled_data_video_folder}.")
+
+        # Case 2: The video is already in the labeled-data folder
+        # This is trickier because we need to check if the frames are already there and merge them if they are not, modifying the already
+        # existing h5 and csv files to include the new frames
+        elif video_exists_in_labeled_data:
+            logger.info(f"Video {video_name} is already in the labeled-data folder. Merging frames...")
+            # Get the video folder in the labeled-data folder
+            labeled_data_video_folder = os.path.join(destination_folder, video_name)
+            # Get the collected data files in the video folder
+            original_collected_data_h5_path = os.path.join(labeled_data_video_folder, video_data['collected_data_h5'])
+            original_collected_data_csv_path = os.path.join(labeled_data_video_folder, video_data['collected_data_csv'])
+            # Check if the collected data files exist
+            if not os.path.exists(original_collected_data_h5_path) or not os.path.exists(original_collected_data_csv_path):
+                logger.error(f"Missing collected data files for video {video_name}.")
+                continue
+
+            # Check if there are any matching frames in the destination folder (if so, we will not copy them over)
+            matching_frames = []
+            for frame in video_data['frames']:
+                generated_frame_path = os.path.join(labeled_data_video_folder, frame)
+                destination_frame_path = os.path.join(destination_folder, frame)
+                if os.path.exists(generated_frame_path) and os.path.exists(destination_frame_path):
+                    matching_frames.append(frame)
+            
+            # If there are matching frames, we will not copy them over, so remove them from the list of frames to copy over
+            if matching_frames:
+                logger.info(f"Found {len(matching_frames)} matching frames in the destination folder. Not copying them over.")
+                # Remove the matching frames from the list of frames to copy over
+                video_data['frames'] = [frame for frame in video_data['frames'] if frame not in matching_frames]
+            
+            # Copy the remaining frames to the video folder
+            for frame in video_data['frames']:
+                source_frame_path = os.path.join(source_folder, video_name, frame)
+                destination_frame_path = os.path.join(labeled_data_video_folder, frame)
+                shutil.copy2(source_frame_path, destination_frame_path)
+                logger.info(f"Copied frame {frame} to {labeled_data_video_folder}.")
+            
+            # Now we need to merge the collected data files
+            # Load the original collected data files
+            # I'm loading the csv just to check if it exists, but we will not use it for anything
+            # In the end we will save the new csv file using the .h5 file
+            try:
+                original_collected_data_h5 = pd.read_hdf(original_collected_data_h5_path)
+                original_collected_data_csv = pd.read_csv(original_collected_data_csv_path, header=[0, 1, 2], index_col=[0, 1, 2])
+                
+            except Exception as e:
+                logger.error(f"Error loading original collected data files: {e}")
+                return
+        
+            # Try to load the generated frames data files
+            try:
+                generated_frames_h5 = pd.read_hdf(os.path.join(source_folder, video_name, video_data['collected_data_h5']))
+                generated_frames_csv = pd.read_csv(os.path.join(source_folder, video_name, video_data['collected_data_csv']), header=[0, 1, 2], index_col=[0, 1, 2])
+            except Exception as e:
+                logger.error(f"Error loading generated frames data files: {e}")
+                return
+            
+            # Compute difference between h5 dataframes
+            try:
+                original_images = original_collected_data_csv.index.get_level_values(2)
+                generated_images = generated_frames_csv.index.get_level_values(2)
+
+                df1_images = original_collected_data_csv.index.get_level_values(2)
+                df2_images = generated_frames_csv.index.get_level_values(2)
+
+                # Find common images
+                common_images = df1_images.intersection(df2_images)
+
+                # Filter both DataFrames to only common images
+                df1_common = original_collected_data_csv[df1_images.isin(common_images)]
+                df2_common = generated_frames_csv[df2_images.isin(common_images)]
+
+
+            except Exception as e:
+                logger.error(f"Error comparing dataframes: {e}")
+                return
+            
+
+
+def scan_labeled_data_directory(root_path):
+    """
+    Scans the labeled-data directory and returns a structured inventory of its contents.
+    
+    Args:
+        root_path: Path to the DeepLabCut project's labeled-data directory
+        
+    """
+    result = {'video_folders': {}}
+    
+    if not os.path.exists(root_path):
+        raise FileNotFoundError(f"Directory not found: {root_path}")
+    
+    for folder in os.listdir(root_path):
+        folder_path = os.path.join(root_path, folder)
+        if not os.path.isdir(folder_path):
+            continue
+            
+        video_data = {
+            'collected_data_csv': None,
+            'collected_data_h5': None,
+            'inference_frames': []
+        }
+        
+        # Check for collected data files
+        for file in os.listdir(folder_path):
+            if file.startswith('CollectedData_') and file.endswith('.csv'):
+                video_data['collected_data_csv'] = file
+            elif file.startswith('CollectedData_') and file.endswith('.h5'):
+                video_data['collected_data_h5'] = file
+            elif file.endswith(('.png', '.jpg', '.jpeg')):
+                video_data['inference_frames'].append(file)
+        
+        # Only include folders that have either collected data or frames
+        if video_data['collected_data_csv'] or video_data['collected_data_h5'] or video_data['inference_frames']:
+            result['video_folders'][folder] = video_data
+    
+    return result
+
+def scan_generated_frames_directory(root_path):
+    """
+    Scans a directory containing generated frames and returns a structured inventory.
+    
+    Args:
+        root_path: Path to the directory containing videos and generated frames
+        
+    """
+    result = {
+        'videos': [],
+        'generated_frames': {},
+        'generated_frames_folder_exists': False
+    }
+    
+    if not os.path.exists(root_path):
+        return result
+    
+    # Find all video files
+    video_extensions = ('.mp4', '.avi', '.mov', '.mkv')
+    result['videos'] = [
+        f for f in os.listdir(root_path) 
+        if os.path.isfile(os.path.join(root_path, f)) and 
+        f.lower().endswith(video_extensions)
+    ]
+    
+    # Scan for generated frames (organized in video-named subfolders)
+    for video in result['videos']:
+        video_name = os.path.splitext(video)[0]
+        frames_folder = os.path.join(root_path, video_name)
+        
+        if os.path.exists(frames_folder):
+            result['generated_frames_folder_exists'] = True
+            
+            # Initialize video entry
+            video_data = {
+                'frames': [],
+                'has_backup': False,
+                'collected_data_h5': None,
+                'collected_data_csv': None
+            }
+            
+            # Check for backup folder for this specific video
+            video_backup_path = os.path.join(frames_folder, 'backup')
+            video_data['has_backup'] = os.path.exists(video_backup_path)
+            
+            # Get frame files
+            frame_files = [
+                f for f in os.listdir(frames_folder) 
+                if os.path.isfile(os.path.join(frames_folder, f)) and
+                f.lower().endswith(('.png', '.jpg', '.jpeg'))
+            ]
+            video_data['frames'] = sorted(frame_files)
+            
+            # Check for collected data files
+            for file in os.listdir(frames_folder):
+                if file.startswith('CollectedData_') and file.endswith('.csv'):
+                    video_data['collected_data_csv'] = file
+                elif file.startswith('CollectedData_') and file.endswith('.h5'):
+                    video_data['collected_data_h5'] = file
+                
+            result['generated_frames'][video_name] = video_data
+    
+    return result

@@ -56,9 +56,11 @@ class behavython_gui(QWidget):
         # Data process tab
         self.interface.get_config_path_data_process_button.clicked.connect(lambda: get_folder_path_function(self, "config_path_data_process"))
         self.interface.get_frames_path_data_process_button.clicked.connect(lambda: get_folder_path_function(self, "videos_path_data_process"))
-        self.interface.get_videos_path_video_editing_button.clicked.connect(lambda: get_folder_path_function(self, "crop_path_video_editing"))
+        self.interface.generated_frames_source_button.clicked.connect(lambda: get_folder_path_function(self, "generated_frames_source_data_process_lineedit"))
+        self.interface.generated_frames_destination_button.clicked.connect(lambda: get_folder_path_function(self, "generated_frames_destination_data_process_lineedit"))
+        self.interface.generated_frames_network_destination_button.clicked.connect(lambda: get_folder_path_function(self, "generated_frames_network_destination_data_process_lineedit"))
+        self.interface.generated_frames_merge_button.clicked.connect(lambda: merge_generated_frames(self))
         self.interface.get_source_folder_path_button_video_editing_button.clicked.connect(lambda: get_folder_path_function(self, "source_folder"))
-        self.interface.get_destination_folder_path_button_video_editing_button.clicked.connect(lambda: get_folder_path_function(self, "destination_folder"))
         self.interface.convert_csv_to_h5_data_process_button.clicked.connect(lambda: self.run_worker(convert_csv_to_h5, self))
         self.interface.analyze_frames_data_process_button.clicked.connect(lambda: self.run_worker(analyze_folder_with_frames, self))
         self.interface.enable_bout_analysis_checkbox.stateChanged.connect(lambda: self.enable_bout_analysis())
@@ -67,6 +69,8 @@ class behavython_gui(QWidget):
         self.interface.get_bout_analysis_folder_button.clicked.connect(lambda: get_folder_path_function(self, "get_bout_analysis_folder"))
 
         # Video editing tab
+        self.interface.get_destination_folder_path_button_video_editing_button.clicked.connect(lambda: get_folder_path_function(self, "destination_folder"))
+        self.interface.get_videos_path_video_editing_button.clicked.connect(lambda: get_folder_path_function(self, "crop_path_video_editing"))
         self.interface.get_video_coordinates_video_editing_button.clicked.connect(lambda: self.run_worker(get_crop_coordinates, self))
         self.interface.save_cropped_dimensions_video_editing_button.clicked.connect(lambda: save_crop_coordinates(self))
         self.interface.crop_videos_button_video_editing_button.clicked.connect(lambda: self.run_worker(crop_videos, self))
