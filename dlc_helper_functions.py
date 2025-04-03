@@ -2502,7 +2502,7 @@ def analyze_folder_with_frames(worker, self, text_signal=None, progress=None, wa
     elif video_folder == "":
         text_signal.emit(("[ERROR]: Please select a folder.", "log_data_process_lineedit"))
         return
-    
+
     if generate_annotated_frames:
         final_folder = self.interface.video_folder_data_process_lineedit.text()
         analyzed_folders = create_custom_labelled_frames(config, final_folder, frametype, extract_frames, number_of_frames)
@@ -2547,7 +2547,7 @@ def analyze_folder_with_frames(worker, self, text_signal=None, progress=None, wa
             for frame_path, focinho_x_pos, focinho_y_pos, orelha_esq_x_pos, orelha_esq_y_pos, orelha_dir_x_pos, orelha_dir_y_pos, centro_x_pos, centro_y_pos, rabo_x_pos, rabo_y_pos in zip(
                 frames, focinho_x, focinho_y, orelha_esq_x, orelha_esq_y, orelha_dir_x, orelha_dir_y, centro_x, centro_y, rabo_x, rabo_y):
 
-                image = mpimg.imread(frames[0])
+                image = mpimg.imread(frame_path)
                 fig, ax = plt.subplots()
                 ax.imshow(image)
                 ax.plot(focinho_x_pos, focinho_y_pos, "rP", label="Focinho")
@@ -3492,6 +3492,13 @@ def create_custom_labelled_frames(inference_config_file = None, final_frames_pat
         with open(config_path, 'w') as file:
             yaml.dump(config_data, file, default_flow_style=False, sort_keys=False)
 
+        frames_in_network_folder_path = os.path.abspath(os.path.join(config_path, "..", "labeled-data"))
+        folders_with_generated_frames = []
+        generated_frames_in_network_folder = [os.path.join(frames_in_network_folder_path, Path(video_path).stem) for video_path in video_list]
+        for folder in generated_frames_in_network_folder:
+            if os.path.exists(folder):
+                folders_with_generated_frames.append(folder)
+
         extract_frames_from_video(config_path, videos_list=video_list)
 
         # Move frames to final destination
@@ -3501,17 +3508,59 @@ def create_custom_labelled_frames(inference_config_file = None, final_frames_pat
             video_name = Path(video_path).stem
             frames_folder_path = os.path.join(frames_in_network_folder_path, video_name)
             final_video_frames_path = os.path.join(final_frames_path, video_name)
-            if not os.path.exists(final_video_frames_path):
-                os.makedirs(final_video_frames_path)
-            for file in os.listdir(frames_folder_path):
-                if file.endswith(filetype):
-                    shutil.move(os.path.join(frames_folder_path, file), final_video_frames_path)
-            folders_to_analyze.append(final_video_frames_path)
-            logger.info(f"Moved frames from {frames_folder_path} to {final_video_frames_path}")
             
-            # Remove the frames folder after moving
-            shutil.rmtree(frames_folder_path)
-            logger.info(f"Removed the frames folder {frames_folder_path}")
+            # Ensure destination exists
+            os.makedirs(final_video_frames_path, exist_ok=True)
+            
+            if frames_folder_path not in folders_with_generated_frames:
+                # Case 1: New video - move all frames and delete folder
+                moved_files = []
+                for file in os.listdir(frames_folder_path):
+                    if file.endswith(filetype):
+                        src = os.path.join(frames_folder_path, file)
+                        dst = os.path.join(final_video_frames_path, file)
+                        shutil.move(src, dst)
+                        moved_files.append(file)
+                
+                logger.info(f"Moved {len(moved_files)} frames from {frames_folder_path} to {final_video_frames_path}")
+                
+                # Clean up
+                try:
+                    shutil.rmtree(frames_folder_path)
+                    logger.info(f"Removed temporary folder {frames_folder_path}")
+                except Exception as e:
+                    logger.error(f"Error removing folder {frames_folder_path}: {str(e)}")
+                
+                folders_to_analyze.append(final_video_frames_path)
+            else:
+                # Case 2: Existing video - copy only new frames
+                putative_extracted_frames = get_recently_created_files(
+                    frames_folder_path, 
+                    number_of_frames if number_of_frames is not None else 10
+                )
+                copied_files = []
+                removal_errors = []
+                
+                for file_path in putative_extracted_frames:
+                    if str(file_path).endswith(filetype):
+                        try:
+                            dst = os.path.join(final_video_frames_path, os.path.basename(file_path))
+                            shutil.copy(file_path, dst)
+                            copied_files.append(dst)
+                            
+                            # Remove the copied file
+                            os.remove(file_path)
+                        except Exception as e:
+                            removal_errors.append(f"Error processing {file_path}: {str(e)}")
+                
+                logger.info(f"Copied {len(copied_files)} frames from {frames_folder_path} to {final_video_frames_path}")
+                
+                if removal_errors:
+                    logger.error(f"Encountered {len(removal_errors)} errors during cleanup:")
+                    for error in removal_errors:
+                        logger.error(error)
+                
+                folders_to_analyze.append(final_video_frames_path)
 
         # Remove videos from config file
         for video in video_list:
@@ -3963,3 +4012,18 @@ def get_video_duration(input_path, text_signal=None, default_duration=1.0):
                 "clear_unused_files_lineedit"
             ))
         return default_duration
+    
+def get_recently_created_files(directory, num_files=None):
+    """Return the most recently created files in a directory"""
+    files = []
+    for filename in os.listdir(directory):
+        filepath = os.path.join(directory, filename)
+        if os.path.isfile(filepath):
+            ctime = os.path.getctime(filepath)
+            files.append((filepath, ctime))
+
+    # Sort by creation time (newest first)
+    files.sort(key=lambda x: x[1], reverse=True)
+
+    # Return the requested number of files
+    return [file[0] for file in files[:num_files]]
