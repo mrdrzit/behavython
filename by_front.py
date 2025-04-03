@@ -25,6 +25,7 @@ class behavython_gui(QWidget):
         self.options = {}
         self.progress_bar = self.interface.progress_bar
         self.debug_mode = False
+        self.deeplabcut_is_enabled = False
 
         # Create a QThreadPool instance
         self.threadpool = QtCore.QThreadPool()
@@ -36,6 +37,7 @@ class behavython_gui(QWidget):
 
         # Deeplabcut tab
         self.interface.get_config_path_button.clicked.connect(lambda: get_folder_path_function(self, "config_path"))
+        self.interface.config_path_lineedit.textChanged.connect(lambda: self.enable_DLC())
         self.interface.get_videos_path_button.clicked.connect(lambda: get_folder_path_function(self, "videos_path"))
         self.interface.folder_structure_check_button.clicked.connect(lambda: folder_structure_check_function(self))
         self.interface.dlc_video_analyze_button.clicked.connect(lambda: self.run_worker(dlc_video_analyze_function, self))
@@ -65,6 +67,7 @@ class behavython_gui(QWidget):
         self.interface.analyze_frames_data_process_button.clicked.connect(lambda: self.run_worker(analyze_folder_with_frames, self))
         self.interface.enable_bout_analysis_checkbox.stateChanged.connect(lambda: self.enable_bout_analysis())
         self.interface.config_path_data_process_lineedit.textChanged.connect(lambda: self.enable_bout_analysis())
+        self.interface.config_path_data_process_lineedit.textChanged.connect(lambda: self.enable_DLC())
         self.interface.run_bout_analysis_button.clicked.connect(lambda: self.run_worker(bout_analysis, self))
         self.interface.get_bout_analysis_folder_button.clicked.connect(lambda: get_folder_path_function(self, "get_bout_analysis_folder"))
 
@@ -76,6 +79,7 @@ class behavython_gui(QWidget):
         self.interface.crop_videos_button_video_editing_button.clicked.connect(lambda: self.run_worker(crop_videos, self))
         self.interface.copy_files_with_robocopy_video_editing_button.clicked.connect(lambda: self.run_worker(copy_folder_robocopy, self))
         self.interface.folder_to_get_create_roi_button.clicked.connect(lambda: get_folder_path_function(self, "create_roi_automatically"))
+        self.interface.folder_to_get_create_roi_lineedit.textChanged.connect(lambda: self.enable_DLC())
         self.interface.cread_roi_automatically_button.clicked.connect(lambda: self.run_worker(create_rois_automatically, self))
         self.interface.enable_debugging_mode_checkbox.stateChanged.connect(lambda: self.toggle_debug_mode())
 
@@ -339,6 +343,18 @@ class behavython_gui(QWidget):
             self.update_lineedit(("🔧 Debug mode deactivated", "log_video_editing_lineedit"))
             self.update_lineedit(("🔧 Debug mode deactivated", "log_data_process_lineedit"))
             self.debug_mode = False
+
+    def enable_DLC(self):
+        lineedits_to_check = [
+            self.interface.config_path_lineedit,
+            self.interface.config_path_data_process_lineedit,
+            self.interface.folder_to_get_create_roi_lineedit
+        ]
+
+        if any(lineedit.text() != "" for lineedit in lineedits_to_check):
+            self.deeplabcut_is_enabled = True
+        else:
+            self.deeplabcut_is_enabled = False
 
 def main():
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts)

@@ -1,45 +1,49 @@
+import base64
+import csv
+import json
+import logging
 import math
 import os
-import re
-import subprocess
-import json
-import base64
 import random
-import traceback
-import shutil
-import cv2
-import csv
 import re
-import matplotlib
-import threading
-import logging
-import yaml
+import shutil
+import subprocess
 import tempfile
-import matplotlib.image as mpimg
-import pandas as pd
-import numpy as np
-import tkinter as tk
+import threading
+import traceback
+import warnings
+import sys
 import itertools as it
-import seaborn as sns
-import debugpy
-import matplotlib.cm as cm
-from tkinter import filedialog
-from tqdm import tqdm
-from PIL import Image
-from scipy import stats
 from pathlib import Path
+
+# Data processing and visualization
+import cv2
+import debugpy
+import tables
+import matplotlib
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import matplotlib.cm as cm
+import matplotlib.image as mpimg
+import matplotlib.pyplot as plt
+from scipy import stats
 from matplotlib import colors as mcolors
-from matplotlib import pyplot as plt
 from matplotlib.collections import LineCollection
-from PySide6.QtWidgets import QMessageBox, QFileDialog, QDialog, QVBoxLayout, QLabel, QPushButton, QScrollArea, QWidget
+
+# GUI and Qt
+import tkinter as tk
+from tkinter import filedialog
+from PySide6.QtCore import QObject, QRunnable, QThread, Signal, Slot
 from PySide6.QtGui import QFontMetrics
-from PySide6.QtCore import QRunnable, Slot, Signal, QObject, QThread
+from PySide6.QtWidgets import (QDialog, QFileDialog, QLabel, QMessageBox, QPushButton, QScrollArea, QVBoxLayout, QWidget)
+
+# Other utilities
+import yaml
+from PIL import Image
+from tqdm import tqdm
 
 matplotlib.use("agg")
-DLC_ENABLE = False
-
-if DLC_ENABLE:
-    import deeplabcut
 
 data_ready_event = threading.Event()
 def on_data_ready():
@@ -967,7 +971,12 @@ def dlc_video_analyze_function(worker, self, text_signal=None, progress=None, wa
             return
         
         text_signal.emit(("clear_unused_files_lineedit", "clear_lineedit"))
-        if DLC_ENABLE:
+        if self.deeplabcut_is_enabled:
+            text_signal.emit(("Importing DeepLabCut", "clear_unused_files_lineedit"))
+            if "deeplabcut" not in sys.modules:
+                import deeplabcut
+            else:
+                deeplabcut = sys.modules["deeplabcut"]
             text_signal.emit((f"Using DeepLabCut version {deeplabcut.__version__}", "clear_unused_files_lineedit"))
 
         file_extension = False
@@ -994,12 +1003,12 @@ def dlc_video_analyze_function(worker, self, text_signal=None, progress=None, wa
             return
         text_signal.emit(("Analyzing videos...", "clear_unused_files_lineedit"))
         list_of_videos = [file for file in video_list]
-        if DLC_ENABLE:
+        if self.deeplabcut_is_enabled:
             deeplabcut.analyze_videos(config_path, list_of_videos, videotype=file_extension, shuffle=1, trainingsetindex=0, gputouse=0, allow_growth=True, save_as_csv=True)
         text_signal.emit(("Done analyzing videos.", "clear_unused_files_lineedit"))
 
         text_signal.emit(("Filtering data files and saving as CSV...", "clear_unused_files_lineedit"))
-        if DLC_ENABLE:
+        if self.deeplabcut_is_enabled:
             for video in list_of_videos: # For some reason, deeplabcut does not filter the videos when passing a list of videos
                 # So we have to filter each video separately
                 deeplabcut.filterpredictions(
@@ -1011,7 +1020,7 @@ def dlc_video_analyze_function(worker, self, text_signal=None, progress=None, wa
                     filtertype="median"
                 )
 
-        if DLC_ENABLE:
+        if self.deeplabcut_is_enabled:
             deeplabcut.plot_trajectories(
                 config_path,
                 list_of_videos,
@@ -1025,7 +1034,7 @@ def dlc_video_analyze_function(worker, self, text_signal=None, progress=None, wa
         self.options = {}
     else:
         text_signal.emit(("clear_unused_files_lineedit", "clear_lineedit"))
-        if DLC_ENABLE:
+        if self.deeplabcut_is_enabled:
             text_signal.emit((f"Using DeepLabCut version {deeplabcut.__version__}", "clear_unused_files_lineedit"))
         config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
         videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
@@ -1062,12 +1071,12 @@ def dlc_video_analyze_function(worker, self, text_signal=None, progress=None, wa
             return
         text_signal.emit(("Analyzing videos...", "clear_unused_files_lineedit"))
         list_of_videos = [file for file in video_list]
-        if DLC_ENABLE:
+        if self.deeplabcut_is_enabled:
             deeplabcut.analyze_videos(config_path, list_of_videos, videotype=file_extension, shuffle=1, trainingsetindex=0, gputouse=0, allow_growth=True, save_as_csv=True)
         text_signal.emit(("Done analyzing videos.", "clear_unused_files_lineedit"))
 
         text_signal.emit(("Filtering data files and saving as CSV...", "clear_unused_files_lineedit"))
-        if DLC_ENABLE:
+        if self.deeplabcut_is_enabled:
             deeplabcut.filterpredictions(
                 config_path,
                 list_of_videos,
@@ -1078,7 +1087,7 @@ def dlc_video_analyze_function(worker, self, text_signal=None, progress=None, wa
                 save_as_csv=True,
             )
 
-        if DLC_ENABLE:
+        if self.deeplabcut_is_enabled:
             deeplabcut.plot_trajectories(
                 config_path,
                 list_of_videos,
@@ -1086,7 +1095,7 @@ def dlc_video_analyze_function(worker, self, text_signal=None, progress=None, wa
                 showfigures=False,
                 filtered=True,
             )
-        if DLC_ENABLE:
+        if self.deeplabcut_is_enabled:
             if not os.path.exists(os.path.join(videos, "accuracy_check_plots")):
                 os.rename(os.path.join(videos, "plot-poses"), os.path.join(videos, "accuracy_check_plots"))
             else:
@@ -1240,9 +1249,13 @@ def extract_skeleton_function(worker, self, text_signal=None, progress=None, war
         request_files: The request files object (default: None).
     """
     text_signal.emit(("clear_lineedit", "clear_unused_files_lineedit"))
-    if DLC_ENABLE:
+    if self.deeplabcut_is_enabled:
+        text_signal.emit(("Importing DeepLabCut", "clear_unused_files_lineedit"))
+        if "deeplabcut" not in sys.modules:
+            import deeplabcut
+        else:
+            deeplabcut = sys.modules["deeplabcut"]
         text_signal.emit(("Using DeepLabCut version " + deeplabcut.__version__, "clear_unused_files_lineedit"))
-        # self.interface.clear_unused_files_lineedit.append(f"Using DeepLabCut version {deeplabcut.__version__}")
     config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
     analysis_folder = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
     analysis_status = get_analysis_report(analysis_folder)
@@ -2495,6 +2508,12 @@ def convert_csv_to_h5(worker, self, text_signal=None, progress=None, warning_mes
     elif scorer == "":
         text_signal.emit(("[ERROR]: Please select a scorer.", "log_data_process_lineedit"))
         return
+    if self.deeplabcut_is_enabled:
+        text_signal.emit(("Importing DeepLabCut", "log_data_process_lineedit"))
+        if "deeplabcut" not in sys.modules:
+            import deeplabcut
+        else:
+            deeplabcut = sys.modules["deeplabcut"]
     deeplabcut.convertcsv2h5(config, userfeedback=confirm_folders, scorer=scorer)
 
 def analyze_folder_with_frames(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
@@ -2528,7 +2547,7 @@ def analyze_folder_with_frames(worker, self, text_signal=None, progress=None, wa
 
     if generate_annotated_frames:
         final_folder = self.interface.video_folder_data_process_lineedit.text()
-        analyzed_folders = create_custom_labelled_frames(config, final_folder, frametype, extract_frames, number_of_frames)
+        analyzed_folders = create_custom_labelled_frames(self, config, final_folder, frametype, extract_frames, number_of_frames)
         text_signal.emit(("[INFO]: Annotated frames created successfully.", "log_data_process_lineedit"))
 
         for analyzed_folder in analyzed_folders:
@@ -2596,6 +2615,13 @@ def analyze_folder_with_frames(worker, self, text_signal=None, progress=None, wa
                 plt.close(fig)
         return
 
+    if self.deeplabcut_is_enabled:
+        text_signal.emit(("Importing DeepLabCut", "log_data_process_lineedit"))
+        if "deeplabcut" not in sys.modules:
+            import deeplabcut
+        else:
+            deeplabcut = sys.modules["deeplabcut"]
+        text_signal.emit(("[INFO]: Analyzing frames...", "log_data_process_lineedit"))
     deeplabcut.analyze_time_lapse_frames(config, video_folder, frametype, save_as_csv=True)
     deeplabcut.filterpredictions(
         config,
@@ -2868,6 +2894,13 @@ def create_rois_automatically(worker, self, text_signal=None, progress=None, war
     if analyze:
         for file in dlc_files:
             os.remove(file)
+        if self.deeplabcut_is_enabled:
+            text_signal.emit(("Importing DeepLabCut", "log_video_editing_lineedit"))
+            if "deeplabcut" not in sys.modules:
+                import deeplabcut
+            else:
+                deeplabcut = sys.modules["deeplabcut"]
+            text_signal.emit((f"Using deeplabcut version {deeplabcut.__version__}", "log_video_editing_lineedit"))
         deeplabcut.analyze_time_lapse_frames(config_path, tmp_folder, ".jpg", save_as_csv=True)
     # Search the folder for the h5 file generated by Deeplabcut
     h5_file = [file for file in os.listdir(tmp_folder) if file.endswith(".h5")][0]
@@ -2967,6 +3000,14 @@ def create_annotated_video(worker, self, text_signal=None, progress=None, warnin
         resume_message: The resume message.
         request_files: The requested files.
     """
+    if self.deeplabcut_is_enabled:
+        text_signal.emit(("Importing DeepLabCut", "log_video_editing_lineedit"))
+        if "deeplabcut" not in sys.modules:
+            import deeplabcut
+        else:
+            deeplabcut = sys.modules["deeplabcut"]
+            
+        text_signal.emit((f"Using deeplabcut version {deeplabcut.__version__}", "log_video_editing_lineedit"))
     folder_with_analyzed_files = self.interface.folder_to_create_annotated_video_lineedit.text()
     config_path = self.interface.config_path_lineedit.text()
     config_options = deeplabcut.auxiliaryfunctions.read_config(config_path)
@@ -3350,7 +3391,7 @@ def is_inside_circle(x, y, roi_X, roi_Y, roi_D):
     # Check if the distance is less than or equal to the radius
     return distance <= radius
 
-def process_frames(final_frames_path, temporary_frames_path, config_path, filetype, logger, is_new_folder):
+def process_frames(self, final_frames_path, temporary_frames_path, config_path, filetype, logger, is_new_folder):
     """
     Processes frames by copying, analyzing, and managing files.
 
@@ -3398,6 +3439,14 @@ def process_frames(final_frames_path, temporary_frames_path, config_path, filety
         return None
 
     # Analyze the images
+    if self.deeplabcut_is_enabled:
+        logger.info("Importing DeepLabCut")
+        if "deeplabcut" not in sys.modules:
+            import deeplabcut
+        else:
+            deeplabcut = sys.modules["deeplabcut"]
+            
+        logger.info(f"Using deeplabcut version {deeplabcut.__version__}")
     logger.info("Analyzing the images...")
     try:
         deeplabcut.analyze_time_lapse_frames(config_path, temporary_frames_path, filetype)
@@ -3450,7 +3499,7 @@ def get_new_experimenter_name_from_config_file(config_file, logger):
             return
     return new_scorer
 
-def extract_frames_from_video(config, mode = "automatic",  algo='kmeans', videos_list=None):
+def extract_frames_from_video(self, config, mode = "automatic",  algo='kmeans', videos_list=None, logger=None):
     """
     Extracts frames from a video using DeepLabCut.
 
@@ -3463,10 +3512,19 @@ def extract_frames_from_video(config, mode = "automatic",  algo='kmeans', videos
     Returns:
         None
     """
+    if self.deeplabcut_is_enabled:
+        logger.info("Importing DeepLabCut")
+        if "deeplabcut" not in sys.modules:
+            import deeplabcut
+        else:
+            deeplabcut = sys.modules["deeplabcut"]
+
+        logger.info(f"Using deeplabcut version {deeplabcut.__version__}")
+        
     deeplabcut.extract_frames(config, mode=mode, algo=algo, userfeedback=False, videos_list=videos_list)
     return 
 
-def create_custom_labelled_frames(inference_config_file = None, final_frames_path = None, filetype = None, extract_frames = None, number_of_frames = None):
+def create_custom_labelled_frames(self, inference_config_file = None, final_frames_path = None, filetype = None, extract_frames = None, number_of_frames = None):
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
     logger = logging.getLogger(__name__)
     try:
@@ -3533,7 +3591,7 @@ def create_custom_labelled_frames(inference_config_file = None, final_frames_pat
             if os.path.exists(folder):
                 folders_with_generated_frames.append(folder)
 
-        extract_frames_from_video(config_path, videos_list=video_list)
+        extract_frames_from_video(self, config_path, videos_list=video_list, logger=logger)
 
         # Move frames to final destination
         frames_in_network_folder_path = os.path.abspath(os.path.join(config_path, "..", "labeled-data"))
@@ -3640,7 +3698,7 @@ def create_custom_labelled_frames(inference_config_file = None, final_frames_pat
                 logger.error("Inference frames file not found")
                 logger.info("Creating a new inference frames file with deeplabcut...")
 
-                inference_frames = process_frames(final_frames_path, temporary_frames_path, inference_config_file, filetype, logger, is_new_folder)
+                inference_frames = process_frames(self, final_frames_path, temporary_frames_path, inference_config_file, filetype, logger, is_new_folder)
             # Read the data
             try:
                 original_h5_dataframe = pd.read_hdf(original_h5)
@@ -3758,7 +3816,7 @@ def create_custom_labelled_frames(inference_config_file = None, final_frames_pat
                 logger.error("Inference frames file not found")
                 logger.info("Creating a new inference frames file with deeplabcut...")
 
-                inference_frames = process_frames(final_frames_path, temporary_frames_path, inference_config_file, filetype, logger, is_new_folder)
+                inference_frames = process_frames(self, final_frames_path, temporary_frames_path, inference_config_file, filetype, logger, is_new_folder)
 
             # Read the data
             try:
@@ -4063,9 +4121,10 @@ def get_recently_created_files(directory, num_files=None):
     return [file[0] for file in files[:num_files]]
 
 def merge_generated_frames(self):
+    warnings.filterwarnings('ignore', category=tables.NaturalNameWarning)
+    warnings.filterwarnings('ignore', category=pd.io.pytables.PerformanceWarning)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
     logger = logging.getLogger(__name__)
-    image_file_extension = self.interface.frames_extensions_combobox.currentText()
     logger.info("Merging generated frames...")
     config_file = self.interface.generated_frames_network_destination_data_process_lineedit.text()
     source_folder = self.interface.generated_frames_source_data_process_lineedit.text()
@@ -4106,8 +4165,6 @@ def merge_generated_frames(self):
         logger.error("The network folder labeled-data folder is empty.")
         return
     
-    number_of_videos_to_process_frames = len(generated_frames_directory_state['videos'])
-
     for video_name, video_data in generated_frames_directory_state['generated_frames'].items():
         number_of_frames_to_copy_over = len(video_data['frames'])
         if number_of_frames_to_copy_over == 0:
@@ -4135,7 +4192,7 @@ def merge_generated_frames(self):
                 source_frame_path = os.path.join(source_folder, video_name, frame)
                 destination_frame_path = os.path.join(labeled_data_video_folder, frame)
                 shutil.copy2(source_frame_path, destination_frame_path)
-                logger.info(f"Copied frame {frame} to {labeled_data_video_folder}.")
+            logger.info(f"Copied {len(video_data['frames'])} frames to {labeled_data_video_folder}.")
             # Copy the collected data files to the video folder
             if video_data['collected_data_h5']:
                 source_collected_data_h5_path = os.path.join(source_folder, video_name, video_data['collected_data_h5'])
@@ -4155,6 +4212,7 @@ def merge_generated_frames(self):
             logger.info(f"Video {video_name} is already in the labeled-data folder. Merging frames...")
             # Get the video folder in the labeled-data folder
             labeled_data_video_folder = os.path.join(destination_folder, video_name)
+            generated_frames_video_folder = os.path.join(source_folder, video_name)
             # Get the collected data files in the video folder
             original_collected_data_h5_path = os.path.join(labeled_data_video_folder, video_data['collected_data_h5'])
             original_collected_data_csv_path = os.path.join(labeled_data_video_folder, video_data['collected_data_csv'])
@@ -4167,7 +4225,7 @@ def merge_generated_frames(self):
             matching_frames = []
             for frame in video_data['frames']:
                 generated_frame_path = os.path.join(labeled_data_video_folder, frame)
-                destination_frame_path = os.path.join(destination_folder, frame)
+                destination_frame_path = os.path.join(generated_frames_video_folder, frame)
                 if os.path.exists(generated_frame_path) and os.path.exists(destination_frame_path):
                     matching_frames.append(frame)
             
@@ -4178,12 +4236,14 @@ def merge_generated_frames(self):
                 video_data['frames'] = [frame for frame in video_data['frames'] if frame not in matching_frames]
             
             # Copy the remaining frames to the video folder
-            for frame in video_data['frames']:
-                source_frame_path = os.path.join(source_folder, video_name, frame)
-                destination_frame_path = os.path.join(labeled_data_video_folder, frame)
-                shutil.copy2(source_frame_path, destination_frame_path)
-                logger.info(f"Copied frame {frame} to {labeled_data_video_folder}.")
-            
+            if video_data['frames']:
+                for frame in video_data['frames']:
+                    source_frame_path = os.path.join(source_folder, video_name, frame)
+                    destination_frame_path = os.path.join(labeled_data_video_folder, frame)
+                    shutil.copy2(source_frame_path, destination_frame_path)
+                logger.info(f"Copied {len(video_data['frames'])} frames to {labeled_data_video_folder}.")
+            else:
+                logger.info(f"No new frames to copy for video {video_name}.")
             # Now we need to merge the collected data files
             # Load the original collected data files
             # I'm loading the csv just to check if it exists, but we will not use it for anything
@@ -4204,27 +4264,73 @@ def merge_generated_frames(self):
                 logger.error(f"Error loading generated frames data files: {e}")
                 return
             
-            # Compute difference between h5 dataframes
-            try:
-                original_images = original_collected_data_csv.index.get_level_values(2)
-                generated_images = generated_frames_csv.index.get_level_values(2)
+            # Make a backup of the original data files
+            backup_folder = os.path.join(labeled_data_video_folder, "backup")
+            if not os.path.exists(backup_folder):
+                os.makedirs(backup_folder, exist_ok=True)
 
-                df1_images = original_collected_data_csv.index.get_level_values(2)
-                df2_images = generated_frames_csv.index.get_level_values(2)
+            # Clear the backup folder if it exists
+            for file in os.listdir(backup_folder):
+                file_path = os.path.join(backup_folder, file)
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+            
+            # Copy the original collected data files to the backup folder
+            shutil.copy2(original_collected_data_h5_path, os.path.join(backup_folder, video_data['collected_data_h5']))
+            shutil.copy2(original_collected_data_csv_path, os.path.join(backup_folder, video_data['collected_data_csv']))
+            
+            # Check if the index aligns 
+            if original_collected_data_h5.columns.equals(generated_frames_h5.columns):
+                # Try to merge the csv dataframes
+                merged_dataframe = original_collected_data_csv.combine(generated_frames_csv, lambda s1, s2: s1.combine_first(s2))
+                all_indices = generated_frames_csv.index.union(original_collected_data_csv.index)
+                merged_dataframe = pd.DataFrame(index=all_indices, columns=original_collected_data_csv.columns)
 
-                # Find common images
-                common_images = df1_images.intersection(df2_images)
+                # Fill with generated data first
+                merged_dataframe.update(generated_frames_csv)
+                
+                # Then overwrite with original data where available
+                merged_dataframe.update(original_collected_data_csv)
 
-                # Filter both DataFrames to only common images
-                df1_common = original_collected_data_csv[df1_images.isin(common_images)]
-                df2_common = generated_frames_csv[df2_images.isin(common_images)]
+                logger.info(f"Merge summary for csv files of animal {video_name}:")
+                logger.info(f"Original rows: {len(original_collected_data_csv)}")
+                logger.info(f"Generated rows: {len(generated_frames_csv)}")
+                logger.info(f"Merged rows: {len(merged_dataframe)}")
 
+                # Do the same for the h5 files
+                merged_h5_dataframe = original_collected_data_h5.combine(generated_frames_h5, lambda s1, s2: s1.combine_first(s2))
+                all_indices_h5 = generated_frames_h5.index.union(original_collected_data_h5.index)
+                merged_h5_dataframe = pd.DataFrame(index=all_indices_h5, columns=original_collected_data_h5.columns)
 
-            except Exception as e:
-                logger.error(f"Error comparing dataframes: {e}")
+                # Fill with generated data first
+                merged_h5_dataframe.update(generated_frames_h5)
+
+                # Then overwrite with original data where available
+                merged_h5_dataframe.update(original_collected_data_h5)
+
+            else:
+                logger.error("The columns of the original and generated dataframes do not match.")
                 return
             
+            # Save the merged dataframe to the original collected data csv file
+            try:
+                merged_dataframe.to_csv(original_collected_data_csv_path, index=True, header=True)
+                logger.info(f"Saved merged dataframe to {original_collected_data_csv_path}.")
+            except Exception as e:
+                logger.error(f"Error saving merged dataframe: {e}")
+                return
 
+            # Save the merged dataframe to the original collected data h5 file
+            try:
+                merged_h5_dataframe.to_hdf(original_collected_data_h5_path, key="df_with_missing", mode="w")
+                logger.info(f"Saved merged dataframe to {original_collected_data_h5_path}.")
+                logger.info(f"Merge summary for h5 files of animal {video_name}:")
+                logger.info(f"Original rows: {len(original_collected_data_h5)}")
+                logger.info(f"Generated rows: {len(generated_frames_h5)}")
+                logger.info(f"Merged rows: {len(merged_h5_dataframe)}")
+            except Exception as e:
+                logger.error(f"Error saving merged dataframe: {e}")
+                return
 
 def scan_labeled_data_directory(root_path):
     """
