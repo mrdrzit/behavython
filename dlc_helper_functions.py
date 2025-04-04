@@ -967,17 +967,17 @@ def dlc_video_analyze_function(worker, self, text_signal=None, progress=None, wa
         video_list = videos_from_txt
         config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
         if (config_path == "") or (video_list == ""):
-            text_signal.emit(("Both the config file and the videos folder must be selected.", "clear_unused_files_lineedit"))
+            text_signal.emit(("clear_unused_files_lineedit", "Both the config file and the videos folder must be selected."))
             return
         
         text_signal.emit(("clear_unused_files_lineedit", "clear_lineedit"))
         if self.deeplabcut_is_enabled:
-            text_signal.emit(("Importing DeepLabCut", "clear_unused_files_lineedit"))
+            text_signal.emit(("clear_unused_files_lineedit", "Importing DeepLabCut"))
             if "deeplabcut" not in sys.modules:
                 import deeplabcut
             else:
                 deeplabcut = sys.modules["deeplabcut"]
-            text_signal.emit((f"Using DeepLabCut version {deeplabcut.__version__}", "clear_unused_files_lineedit"))
+            text_signal.emit(("clear_unused_files_lineedit", f"Using DeepLabCut version {deeplabcut.__version__}"))
 
         file_extension = False
         valid_extensions = [".mp4", ".avi", ".mov"]
@@ -999,15 +999,15 @@ def dlc_video_analyze_function(worker, self, text_signal=None, progress=None, wa
         continue_analysis = self.resume_message_function(video_list)
         if not continue_analysis:
             text_signal.emit(("clear_lineedit", "clear_unused_files_lineedit"))
-            text_signal.emit(("Analysis canceled.", "clear_unused_files_lineedit"))
+            text_signal.emit(("clear_unused_files_lineedit", "Analysis canceled."))
             return
-        text_signal.emit(("Analyzing videos...", "clear_unused_files_lineedit"))
+        text_signal.emit(("clear_unused_files_lineedit", "Analyzing videos..."))
         list_of_videos = [file for file in video_list]
         if self.deeplabcut_is_enabled:
             deeplabcut.analyze_videos(config_path, list_of_videos, videotype=file_extension, shuffle=1, trainingsetindex=0, gputouse=0, allow_growth=True, save_as_csv=True)
-        text_signal.emit(("Done analyzing videos.", "clear_unused_files_lineedit"))
+        text_signal.emit(("clear_unused_files_lineedit", "Done analyzing videos."))
 
-        text_signal.emit(("Filtering data files and saving as CSV...", "clear_unused_files_lineedit"))
+        text_signal.emit(("clear_unused_files_lineedit", "Filtering data files and saving as CSV..."))
         if self.deeplabcut_is_enabled:
             for video in list_of_videos: # For some reason, deeplabcut does not filter the videos when passing a list of videos
                 # So we have to filter each video separately
@@ -1029,18 +1029,24 @@ def dlc_video_analyze_function(worker, self, text_signal=None, progress=None, wa
                 filtered=True,
             )
 
-        text_signal.emit(("Plots to visualize prediction accuracy were saved.", "clear_unused_files_lineedit"))
-        text_signal.emit(("Done filtering data files", "clear_unused_files_lineedit"))
+        text_signal.emit(("clear_unused_files_lineedit", "Plots to visualize prediction accuracy were saved."))
+        text_signal.emit(("clear_unused_files_lineedit", "Done filtering data files"))
         self.options = {}
     else:
-        text_signal.emit(("clear_unused_files_lineedit", "clear_lineedit"))
         if self.deeplabcut_is_enabled:
-            text_signal.emit((f"Using DeepLabCut version {deeplabcut.__version__}", "clear_unused_files_lineedit"))
+            text_signal.emit(("clear_unused_files_lineedit", "Importing DeepLabCut"))
+            if "deeplabcut" not in sys.modules:
+                import deeplabcut
+            else:
+                deeplabcut = sys.modules["deeplabcut"]
+        text_signal.emit(("clear_lineedit", "clear_unused_files_lineedit"))
+        if self.deeplabcut_is_enabled:
+            text_signal.emit(("clear_unused_files_lineedit", f"Using DeepLabCut version {deeplabcut.__version__}"))
         config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
         videos = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
         self.options["save_folder"] = videos
         if (config_path == "") or (videos == ""):
-            text_signal.emit(("Both the config file and the videos folder must be selected.", "clear_unused_files_lineedit"))
+            text_signal.emit(("clear_unused_files_lineedit", "Both the config file and the videos folder must be selected."))
             return
         video_list = [
             os.path.join(videos, file)
@@ -1066,16 +1072,16 @@ def dlc_video_analyze_function(worker, self, text_signal=None, progress=None, wa
 
         continue_analysis = self.resume_message_function(video_list)
         if not continue_analysis:
-            text_signal.emit(("clear_lineedit", "clear_unused_files_lineedit"))
-            text_signal.emit(("Analysis canceled.", "clear_unused_files_lineedit"))
+            text_signal.emit(("clear_unused_files_lineedit", "clear_lineedit"))
+            text_signal.emit(("clear_unused_files_lineedit", "Analysis canceled."))
             return
-        text_signal.emit(("Analyzing videos...", "clear_unused_files_lineedit"))
+        text_signal.emit(("clear_unused_files_lineedit", "Analyzing videos..."))
         list_of_videos = [file for file in video_list]
         if self.deeplabcut_is_enabled:
             deeplabcut.analyze_videos(config_path, list_of_videos, videotype=file_extension, shuffle=1, trainingsetindex=0, gputouse=0, allow_growth=True, save_as_csv=True)
-        text_signal.emit(("Done analyzing videos.", "clear_unused_files_lineedit"))
+        text_signal.emit(("clear_unused_files_lineedit", "Done analyzing videos."))
 
-        text_signal.emit(("Filtering data files and saving as CSV...", "clear_unused_files_lineedit"))
+        text_signal.emit(("clear_unused_files_lineedit", "Filtering data files and saving as CSV..."))
         if self.deeplabcut_is_enabled:
             deeplabcut.filterpredictions(
                 config_path,
@@ -1099,10 +1105,10 @@ def dlc_video_analyze_function(worker, self, text_signal=None, progress=None, wa
             if not os.path.exists(os.path.join(videos, "accuracy_check_plots")):
                 os.rename(os.path.join(videos, "plot-poses"), os.path.join(videos, "accuracy_check_plots"))
             else:
-                text_signal.emit(("The accuracy_check_plots folder already exists. Skipping", "clear_unused_files_lineedit"))
+                text_signal.emit(("clear_unused_files_lineedit", "The accuracy_check_plots folder already exists. Skipping"))
 
-        text_signal.emit(("Plots to visualize prediction accuracy were saved.", "clear_unused_files_lineedit"))
-        text_signal.emit(("Done filtering data files", "clear_unused_files_lineedit"))
+        text_signal.emit(("clear_unused_files_lineedit", "Plots to visualize prediction accuracy were saved."))
+        text_signal.emit(("clear_unused_files_lineedit", "Done filtering data files"))
         self.options = {}
 
 def get_frames_function(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
@@ -1161,7 +1167,7 @@ def get_frames_function(worker, self, text_signal=None, progress=None, warning_m
         video_list = []
         for folder in analysis_status["analyzed_folders"]:
             if not os.path.isdir(folder):
-                text_signal.emit((f"The folder {folder} does not exist.", "clear_unused_files_lineedit"))
+                text_signal.emit(("clear_unused_files_lineedit", f"The folder {folder} does not exist."))
                 continue
             
             folder_videos, file_extension = validate_video_list(
@@ -1177,7 +1183,7 @@ def get_frames_function(worker, self, text_signal=None, progress=None, warning_m
     def extract_frame(input_path, output_path, frame_number):
         name = extract_base_filename(input_path)
         if not os.path.isfile(output_path):
-            text_signal.emit((f"Extracting frame from {name}...", "clear_unused_files_lineedit"))
+            text_signal.emit(("clear_unused_files_lineedit", f"Extracting frame from {name}..."))
             video_fps = get_video_fps(input_path, text_signal)
             timestamp = frame_number / video_fps
 
@@ -1200,13 +1206,13 @@ def get_frames_function(worker, self, text_signal=None, progress=None, warning_m
                     stderr=subprocess.PIPE
                 )
                 if not os.path.isfile(output_path):
-                    text_signal.emit((f"Failed to extract frame from {name}", "clear_unused_files_lineedit"))
+                    text_signal.emit(("clear_unused_files_lineedit", f"Failed to extract frame from {name}"))
             except subprocess.CalledProcessError as e:
-                text_signal.emit((f"FFmpeg error: {e.stderr.decode()}", "clear_unused_files_lineedit"))
+                text_signal.emit(("clear_unused_files_lineedit", f"FFmpeg error: {e.stderr.decode()}"))
         else:
-            text_signal.emit((f"Frame of {name} already exists.", "clear_unused_files_lineedit"))
+            text_signal.emit(("clear_unused_files_lineedit", f"Frame of {name} already exists."))
 
-    text_signal.emit(("clear_lineedit", "clear_unused_files_lineedit"))
+    text_signal.emit(("clear_unused_files_lineedit", "clear_lineedit"))
 
     if self.interface.analyze_from_file_button.isEnabled():
         video_list, file_extension = get_videos_from_file()
@@ -1230,7 +1236,7 @@ def get_frames_function(worker, self, text_signal=None, progress=None, warning_m
         where_to_extract = get_extraction_point(video_path)
         if where_to_extract is None:
             name = extract_base_filename(video_path)
-            text_signal.emit((f"Frame extraction canceled for {name}", "clear_unused_files_lineedit"))
+            text_signal.emit(("clear_unused_files_lineedit", f"Frame extraction canceled for {name}"))
             continue
             
         output_path = os.path.splitext(video_path)[0] + ".jpg"
@@ -1248,9 +1254,9 @@ def extract_skeleton_function(worker, self, text_signal=None, progress=None, war
         resume_message: The resume message object (default: None).
         request_files: The request files object (default: None).
     """
-    text_signal.emit(("clear_lineedit", "clear_unused_files_lineedit"))
+    text_signal.emit(("clear_unused_files_lineedit", "clear_lineedit"))
     if self.deeplabcut_is_enabled:
-        text_signal.emit(("Importing DeepLabCut", "clear_unused_files_lineedit"))
+        text_signal.emit(("clear_unused_files_lineedit", "Importing DeepLabCut"))
         if "deeplabcut" not in sys.modules:
             import deeplabcut
         else:
@@ -1260,7 +1266,7 @@ def extract_skeleton_function(worker, self, text_signal=None, progress=None, war
     analysis_folder = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
     analysis_status = get_analysis_report(analysis_folder)
 
-    text_signal.emit(("Extracting skeleton...", "clear_unused_files_lineedit"))
+    text_signal.emit(("clear_unused_files_lineedit", "Extracting skeleton..."))
     if self.interface.analyze_from_file_button.isEnabled():
         paths_file = self.interface.analyze_from_file_lineedit.text()
         videos_from_txt = [path[0] for path in pd.read_csv(paths_file, delimiter = "\t", header = None).values.tolist()]
@@ -1289,7 +1295,7 @@ def extract_skeleton_function(worker, self, text_signal=None, progress=None, war
     else:
         for video_folder in analysis_status["analyzed_folders"]:
             if not os.path.isdir(video_folder):
-                text_signal.emit((f"The folder {video_folder} does not exist.", "clear_unused_files_lineedit"))
+                text_signal.emit(("clear_unused_files_lineedit", f"The folder {video_folder} does not exist."))
                 continue
 
             videos = [os.path.join(video_folder, path) for path in os.listdir(video_folder) if path.endswith(".mp4") or path.endswith(".avi") or path.endswith(".mov")]
@@ -1315,7 +1321,7 @@ def extract_skeleton_function(worker, self, text_signal=None, progress=None, war
                 )
                 deeplabcut.analyzeskeleton(config_path, video, shuffle=1, trainingsetindex=0, filtered=True, save_as_csv=True)
 
-    text_signal.emit(("Done extracting skeleton.", "clear_unused_files_lineedit"))
+    text_signal.emit(("clear_unused_files_lineedit", "Done extracting skeleton."))
 
 def clear_unused_files_function(self):
     """
@@ -2503,13 +2509,13 @@ def convert_csv_to_h5(worker, self, text_signal=None, progress=None, warning_mes
     confirm_folders = self.interface.confirm_folders_checkbox.isChecked()
 
     if config == "":
-        text_signal.emit(("[ERROR]: Please select a config file.", "log_data_process_lineedit"))
+        text_signal.emit(("log_data_process_lineedit", "[ERROR]: Please select a config file."))
         return
     elif scorer == "":
-        text_signal.emit(("[ERROR]: Please select a scorer.", "log_data_process_lineedit"))
+        text_signal.emit(("log_data_process_lineedit", "[ERROR]: Please select a scorer."))
         return
     if self.deeplabcut_is_enabled:
-        text_signal.emit(("Importing DeepLabCut", "log_data_process_lineedit"))
+        text_signal.emit(("log_data_process_lineedit", "Importing DeepLabCut"))
         if "deeplabcut" not in sys.modules:
             import deeplabcut
         else:
@@ -2539,16 +2545,16 @@ def analyze_folder_with_frames(worker, self, text_signal=None, progress=None, wa
     number_of_frames = int(self.interface.frame_extraction_number_lineedit.text()) if self.interface.frame_extraction_number_lineedit.text() != "" else None
 
     if config == "":
-        text_signal.emit(("[ERROR]: Please select a config file.", "log_data_process_lineedit"))
+        text_signal.emit(("log_data_process_lineedit", "[ERROR]: Please select a config file."))
         return
     elif video_folder == "":
-        text_signal.emit(("[ERROR]: Please select a folder.", "log_data_process_lineedit"))
+        text_signal.emit(("log_data_process_lineedit", "[ERROR]: Please select a folder."))
         return
 
     if generate_annotated_frames:
         final_folder = self.interface.video_folder_data_process_lineedit.text()
         analyzed_folders = create_custom_labelled_frames(self, config, final_folder, frametype, extract_frames, number_of_frames)
-        text_signal.emit(("[INFO]: Annotated frames created successfully.", "log_data_process_lineedit"))
+        text_signal.emit(("log_data_process_lineedit", "[INFO]: Annotated frames created successfully."))
 
         for analyzed_folder in analyzed_folders:
             annotated_frames_folder = os.path.abspath(os.path.join(analyzed_folder, "annotated_frames"))
@@ -2556,17 +2562,17 @@ def analyze_folder_with_frames(worker, self, text_signal=None, progress=None, wa
                 try:
                     os.makedirs(annotated_frames_folder)
                 except OSError as e:
-                    text_signal.emit(("[ERROR]: Failed to create annotated frames folder.", "log_data_process_lineedit"))
-                    text_signal.emit(("Saving to the default folder.", "log_data_process_lineedit"))
-            text_signal.emit(("[INFO]: Annotated frames folder created successfully.", "log_data_process_lineedit"))
+                    text_signal.emit(("log_data_process_lineedit", "[ERROR]: Failed to create annotated frames folder."))
+                    text_signal.emit(("log_data_process_lineedit", "Saving to the default folder."))
+            text_signal.emit(("log_data_process_lineedit", "[INFO]: Annotated frames folder created successfully."))
             frames = [os.path.abspath(os.path.join(analyzed_folder, file)) for file in os.listdir(analyzed_folder) if file.lower().endswith(frametype)]
             generated_position_data = [os.path.abspath(os.path.join(analyzed_folder, file)) for file in os.listdir(analyzed_folder) if file.lower().endswith(".h5")]
 
             if len(frames) == 0:
-                text_signal.emit(("[ERROR]: No frames found in the folder.", "log_data_process_lineedit"))
+                text_signal.emit(("log_data_process_lineedit", "[ERROR]: No frames found in the folder."))
                 return
             if len(generated_position_data) == 0:
-                text_signal.emit(("[ERROR]: No position data found in the folder.", "log_data_process_lineedit"))
+                text_signal.emit(("log_data_process_lineedit", "[ERROR]: No position data found in the folder."))
                 return
             
             generated_position_data = pd.read_hdf(generated_position_data[0])
@@ -2574,9 +2580,9 @@ def analyze_folder_with_frames(worker, self, text_signal=None, progress=None, wa
             generated_data_length = len(generated_position_data) ## CHANGE THIS. THERE PROBABLY IS A BETTER WAY TO DO THIS
 
             if len(frames) != generated_data_length:
-                text_signal.emit(("[ERROR]: The number of frames and generated data do not match.", "log_data_process_lineedit"))
+                text_signal.emit(("log_data_process_lineedit", "[ERROR]: The number of frames and generated data do not match."))
                 return
-            text_signal.emit(("[INFO]: The number of frames and generated data match.", "log_data_process_lineedit"))
+            text_signal.emit(("log_data_process_lineedit", "[INFO]: The number of frames and generated data match."))
 
             focinho_x = generated_position_data[scorer, "Focinho", "x"]
             focinho_y = generated_position_data[scorer, "Focinho", "y"]
@@ -2590,7 +2596,7 @@ def analyze_folder_with_frames(worker, self, text_signal=None, progress=None, wa
             rabo_y = generated_position_data[scorer, "Rabo", "y"]
 
             if any(len(focinho_x) != len(x) for x in [focinho_y, orelha_esq_x, orelha_esq_y, orelha_dir_x, orelha_dir_y, centro_x, centro_y, rabo_x, rabo_y]):
-                text_signal.emit(("[ERROR]: The length of the position data does not match.", "log_data_process_lineedit"))
+                text_signal.emit(("log_data_process_lineedit", "[ERROR]: The length of the position data does not match."))
                 return
             
             ## Generate frames with the animal's position to be used as a verification tool
@@ -2616,12 +2622,12 @@ def analyze_folder_with_frames(worker, self, text_signal=None, progress=None, wa
         return
 
     if self.deeplabcut_is_enabled:
-        text_signal.emit(("Importing DeepLabCut", "log_data_process_lineedit"))
+        text_signal.emit(("log_data_process_lineedit", "Importing DeepLabCut"))
         if "deeplabcut" not in sys.modules:
             import deeplabcut
         else:
             deeplabcut = sys.modules["deeplabcut"]
-        text_signal.emit(("[INFO]: Analyzing frames...", "log_data_process_lineedit"))
+        text_signal.emit(("log_data_process_lineedit", "[INFO]: Analyzing frames..."))
     deeplabcut.analyze_time_lapse_frames(config, video_folder, frametype, save_as_csv=True)
     deeplabcut.filterpredictions(
         config,
@@ -2674,11 +2680,11 @@ def get_crop_coordinates(worker, self, text_signal=None, progress=None, warning_
 
         if len(set(video_list)) == len(set(temp_coordinates)):
             if set(image_names) == set(temp_coordinates.keys()):
-                text_signal.emit(("[INFO]: Crop coordinates found. Loading from csv.", "log_video_editing_lineedit"))
+                text_signal.emit(("log_video_editing_lineedit", "[INFO]: Crop coordinates found. Loading from csv."))
                 self.crop_coordinates = temp_coordinates
                 return
     else:
-        text_signal.emit(("[WARNING]: No crop coordinates found. Defaulting to manual cropping.", "log_video_editing_lineedit"))
+        text_signal.emit(("log_video_editing_lineedit", "[WARNING]: No crop coordinates found. Defaulting to manual cropping."))
         image_list = [os.path.join(folder_path, image) for image in image_names]
         crop_tool = video_editing_tool(image_list, image_names)
         crop_tool.process_images()
@@ -2709,8 +2715,8 @@ def crop_videos(worker, self, text_signal=None, progress=None, warning_message=N
     video_list = [os.path.join(folder_path, file) for file in os.listdir(folder_path) if file.lower().endswith((".mp4", ".avi", ".mov")) and not "_cropped" in file]
     current_working_dir = os.path.dirname(__file__)
     if len(set(video_list)) != len(set(image_names)):
-        text_signal.emit(
-            ("[ERROR]: There is a mismatch between the video and image files. Please ensure that all videos have corresponding images.", "log_video_editing_lineedit")
+        text_signal.emit("log_video_editing_lineedit",
+            ("[ERROR]: There is a mismatch between the video and image files. Please ensure that all videos have corresponding images.")
         )
         # self.interface.log_video_editing_lineedit.append(
         #     "[ERROR]: There is a mismatch between the video and image files. Please ensure that all videos have corresponding images."
@@ -2719,13 +2725,13 @@ def crop_videos(worker, self, text_signal=None, progress=None, warning_message=N
     dictionary_without_extension_in_name = {key.split(".")[0]: value for key, value in self.crop_coordinates.items()}
 
     for image_name, crop_coordinates in self.crop_coordinates.items():
-        text_signal.emit((f"Crop Coordinates for {image_name}: {crop_coordinates}", "log_video_editing_lineedit"))
+        text_signal.emit(("log_video_editing_lineedit", f"Crop Coordinates for {image_name}: {crop_coordinates}"))
         # self.interface.log_video_editing_lineedit.append(f"Crop Coordinates for {image_name}: {crop_coordinates}")
 
     for video_path in video_list:
         video_name = os.path.splitext(os.path.basename(video_path))[0]
         if video_name in cropped:
-            text_signal.emit((f"[INFO]: {video_name} has already been cropped.", "log_video_editing_lineedit"))
+            text_signal.emit(("log_video_editing_lineedit", f"[INFO]: {video_name} has already been cropped."))
             # self.interface.log_video_editing_lineedit.append(f"[INFO]: {video_name} has already been cropped.")
             continue
 
@@ -2738,10 +2744,10 @@ def crop_videos(worker, self, text_signal=None, progress=None, warning_message=N
                 cwd=os.path.join(current_working_dir, "ffmpeg", "bin"),
             )
             cropped.add(video_name)
-            text_signal.emit((f"[INFO]: Cropped video {video_name} successfully.", "log_video_editing_lineedit"))
+            text_signal.emit(("log_video_editing_lineedit", f"[INFO]: Cropped video {video_name} successfully."))
             # self.interface.log_video_editing_lineedit.append(f"[INFO]: Cropped video {video_name} successfully.")
         else:
-            text_signal.emit((f"[WARNING]: No crop coordinates found for video {video_name}.", "log_video_editing_lineedit"))
+            text_signal.emit(("log_video_editing_lineedit", f"[WARNING]: No crop coordinates found for video {video_name}."))
             # self.interface.log_video_editing_lineedit.append(f"[WARNING]: No crop coordinates found for video {video_name}.")
 
 def copy_folder_robocopy(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
@@ -2759,14 +2765,14 @@ def copy_folder_robocopy(worker, self, text_signal=None, progress=None, warning_
     include_files = self.interface.include_files_checkbox.isChecked()
 
     if include_files and exclude_files:
-        text_signal.emit(("[ERROR]: You cannot select both include and exclude files.", "log_video_editing_lineedit"))
+        text_signal.emit(("log_video_editing_lineedit", "[ERROR]: You cannot select both include and exclude files."))
         return
 
     if source == "":
-        text_signal.emit(("[ERROR]: Please select a source folder.", "log_video_editing_lineedit"))
+        text_signal.emit(("log_video_editing_lineedit", "[ERROR]: Please select a source folder."))
         return
     elif destination == "":
-        text_signal.emit(("[ERROR]: Please select a destination folder.", "log_video_editing_lineedit"))
+        text_signal.emit(("log_video_editing_lineedit", "[ERROR]: Please select a destination folder."))
         return
 
     if exclude_files:
@@ -2786,7 +2792,7 @@ def copy_folder_robocopy(worker, self, text_signal=None, progress=None, warning_
     try:
         subprocess.run(admin_command, check=True, shell=True)
     except subprocess.CalledProcessError as e:
-        text_signal.emit((f"[ERROR]: {str(e)}", "log_video_editing_lineedit"))
+        text_signal.emit(("log_video_editing_lineedit", f"[ERROR]: {str(e)}"))
         self.interface.log_video_editing_lineedit.append(f"[ERROR]: {str(e)}")
 
 def save_crop_coordinates(self):
@@ -2834,13 +2840,13 @@ def create_rois_automatically(worker, self, text_signal=None, progress=None, war
     roi_network_config = os.path.join(os.path.dirname(__file__), "roi_network", "config.yaml")
     folder_with_analyzed_files = self.interface.folder_to_get_create_roi_lineedit.text()
     if folder_with_analyzed_files == "":
-        text_signal.emit(("[ERROR]: Please select a folder.", "log_video_editing_lineedit"))
+        text_signal.emit(("log_video_editing_lineedit", "[ERROR]: Please select a folder."))
         return
 
     images_in_folder = [os.path.join(folder_with_analyzed_files, file) for file in os.listdir(folder_with_analyzed_files) if file.endswith(".jpg")]
     videos_in_folder = [os.path.join(folder_with_analyzed_files, file) for file in os.listdir(folder_with_analyzed_files) if file.endswith(".mp4")]
     if images_in_folder == []:
-        text_signal.emit(("[ERROR]: No images found in the folder.", "log_video_editing_lineedit"))
+        text_signal.emit(("log_video_editing_lineedit", "[ERROR]: No images found in the folder."))
         return
 
     images_in_folder_names = [file for file in os.listdir(folder_with_analyzed_files) if file.endswith(".jpg")]
@@ -2849,11 +2855,11 @@ def create_rois_automatically(worker, self, text_signal=None, progress=None, war
     without_roi = []
 
     if len(images_in_folder) != len(videos_in_folder):
-        text_signal.emit((f"Number of PNGs and videos in the folder do not match: {len(images_in_folder)} PNGs and {len(videos_in_folder)} videos.", "log_create_roi_lineedit"))
+        text_signal.emit(("log_create_roi_lineedit", f"Number of PNGs and videos in the folder do not match: {len(images_in_folder)} PNGs and {len(videos_in_folder)} videos."))
         image_names = [file for file in os.listdir(folder_with_analyzed_files) if file.endswith(".jpg")]
         video_names = [file for file in os.listdir(folder_with_analyzed_files) if file.endswith(".mp4")]
         if not all([name in video_names for name in image_names]):
-            text_signal.emit(("The following files are missing:", "log_video_editing_lineedit"))
+            text_signal.emit(("log_video_editing_lineedit", "The following files are missing:"))
             text_signal.emit(([name for name in image_names if name not in video_names], "log_video_editing_lineedit"))
 
     config_path = roi_network_config
@@ -2862,7 +2868,7 @@ def create_rois_automatically(worker, self, text_signal=None, progress=None, war
     try:
         os.mkdir(tmp_folder)
     except FileExistsError:
-        text_signal.emit(("Temporary folder already exists.", "log_video_editing_lineedit"))
+        text_signal.emit(("log_video_editing_lineedit", "Temporary folder already exists."))
 
     # Check if all images are in the tmp folder
     images_in_tmp_folder = [file for file in os.listdir(tmp_folder) if file.endswith(".jpg")]
@@ -2873,7 +2879,7 @@ def create_rois_automatically(worker, self, text_signal=None, progress=None, war
             if f"{name}.jpg" not in images_in_tmp_folder:
                 image_not_in_tmp_folder.append(image)
         if image_not_in_tmp_folder:
-            text_signal.emit(("Copying missing/unanalyzed images to tmp folder.", "log_video_editing_lineedit"))
+            text_signal.emit(("log_video_editing_lineedit", "Copying missing/unanalyzed images to tmp folder."))
             for image in image_not_in_tmp_folder:
                 shutil.copy(os.path.join(folder_with_analyzed_files, image), os.path.join(tmp_folder, image))
 
@@ -2895,12 +2901,12 @@ def create_rois_automatically(worker, self, text_signal=None, progress=None, war
         for file in dlc_files:
             os.remove(file)
         if self.deeplabcut_is_enabled:
-            text_signal.emit(("Importing DeepLabCut", "log_video_editing_lineedit"))
+            text_signal.emit(("log_video_editing_lineedit", "Importing DeepLabCut"))
             if "deeplabcut" not in sys.modules:
                 import deeplabcut
             else:
                 deeplabcut = sys.modules["deeplabcut"]
-            text_signal.emit((f"Using deeplabcut version {deeplabcut.__version__}", "log_video_editing_lineedit"))
+            text_signal.emit(("log_video_editing_lineedit", f"Using deeplabcut version {deeplabcut.__version__}"))
         deeplabcut.analyze_time_lapse_frames(config_path, tmp_folder, ".jpg", save_as_csv=True)
     # Search the folder for the h5 file generated by Deeplabcut
     h5_file = [file for file in os.listdir(tmp_folder) if file.endswith(".h5")][0]
@@ -2936,7 +2942,7 @@ def create_rois_automatically(worker, self, text_signal=None, progress=None, war
             roi_dataframe = pd.DataFrame(csv_data, index=[0])
             file = os.path.join(tmp_folder, f"{file_name}_roi.csv")
             if os.path.exists(file):
-                text_signal.emit((f"Roi: {file} already exists.", "log_video_editing_lineedit"))
+                text_signal.emit(("log_video_editing_lineedit", f"Roi: {file} already exists."))
                 continue
             roi_dataframe.to_csv(file, index=False)
 
@@ -2944,7 +2950,7 @@ def create_rois_automatically(worker, self, text_signal=None, progress=None, war
     roi_files_in_tmp_folder = [file for file in os.listdir(tmp_folder) if file.endswith("_roi.csv")]
     for roi_file in roi_files_in_tmp_folder:
         if os.path.exists(os.path.join(folder_with_analyzed_files, roi_file)):
-            text_signal.emit((f"Roi file {roi_file} already exists.", "log_video_editing_lineedit"))
+            text_signal.emit(("log_video_editing_lineedit", f"Roi file {roi_file} already exists."))
             continue
         shutil.copy(os.path.join(tmp_folder, roi_file), folder_with_analyzed_files)
 
@@ -2953,7 +2959,7 @@ def create_rois_automatically(worker, self, text_signal=None, progress=None, war
     for image_file in images_in_tmp_folder:
         roi_file = os.path.join(tmp_folder, f"{image_file.split('.')[0]}_roi.csv")
         if not os.path.exists(roi_file):
-            text_signal.emit((f"Roi for image {image_file} was not found.", "log_video_editing_lineedit"))
+            text_signal.emit(("log_video_editing_lineedit", f"Roi for image {image_file} was not found."))
             continue
         roi_data = pd.read_csv(roi_file)
         center = (int(roi_data['X'][0]), int(roi_data['Y'][0]))
@@ -2961,9 +2967,9 @@ def create_rois_automatically(worker, self, text_signal=None, progress=None, war
         try:
             image = cv2.imread(os.path.join(tmp_folder, image_file))
         except Exception as e:
-            text_signal.emit((f"Error reading image {image_file}.", "log_video_editing_lineedit"))
-            text_signal.emit(("The error occurred: when using cv2.imread."))
-            text_signal.emit(("The image might be corrupted."))        
+            text_signal.emit(("log_video_editing_lineedit", f"Error reading image {image_file}."))
+            text_signal.emit(("log_video_editing_lineedit", "The error occurred: when using cv2.imread."))
+            text_signal.emit(("log_video_editing_lineedit", "The image might be corrupted."))        
             print(e)
             continue
         thickness = 1
@@ -2981,10 +2987,10 @@ def create_rois_automatically(worker, self, text_signal=None, progress=None, war
             os.mkdir(roi_check_folder)
         image = os.path.join(roi_check_folder, f"{image_file.split('.')[0]}_roi_check.jpg")
         if os.path.exists(image):
-            text_signal.emit((f"Image to check the ROI for {image_file} already exists.", "log_video_editing_lineedit"))
+            text_signal.emit(("log_video_editing_lineedit", f"Image to check the ROI for {image_file} already exists."))
             continue
         else:
-            text_signal.emit((f"Saving image {image_file}_roi_check.jpg", "log_video_editing_lineedit"))
+            text_signal.emit(("log_video_editing_lineedit", f"Saving image {image_file}_roi_check.jpg"))
             fig.savefig(image)
         plt.close(fig)
 
@@ -3000,14 +3006,17 @@ def create_annotated_video(worker, self, text_signal=None, progress=None, warnin
         resume_message: The resume message.
         request_files: The requested files.
     """
+    if self.debug_mode:
+        debugpy.debug_this_thread()
+        breakpoint()
     if self.deeplabcut_is_enabled:
-        text_signal.emit(("Importing DeepLabCut", "log_video_editing_lineedit"))
+        text_signal.emit(("log_video_editing_lineedit", "Importing DeepLabCut"))
         if "deeplabcut" not in sys.modules:
             import deeplabcut
         else:
             deeplabcut = sys.modules["deeplabcut"]
             
-        text_signal.emit((f"Using deeplabcut version {deeplabcut.__version__}", "log_video_editing_lineedit"))
+        text_signal.emit(("log_video_editing_lineedit", f"Using deeplabcut version {deeplabcut.__version__}"))
     folder_with_analyzed_files = self.interface.folder_to_create_annotated_video_lineedit.text()
     config_path = self.interface.config_path_lineedit.text()
     config_options = deeplabcut.auxiliaryfunctions.read_config(config_path)
@@ -3016,15 +3025,15 @@ def create_annotated_video(worker, self, text_signal=None, progress=None, warnin
     necessary_files = [os.path.join(unwanted_files_folder, file) for file in os.listdir(unwanted_files_folder) if file.endswith(("_filtered.h5", "_meta.pickle"))]
 
     if not os.path.exists(unwanted_files_folder):
-        text_signal.emit(("[INFO]: To do this, you will need the filtered.h5 and _meta.pickle files.", "log_video_editing_lineedit"))
+        text_signal.emit(("log_video_editing_lineedit", "[INFO]: To do this, you will need the filtered.h5 and _meta.pickle files."))
     elif necessary_files == []:
-        text_signal.emit(("[INFO]: The filtered.h5 and _meta.pickle files are not present in the folder.", "log_video_editing_lineedit"))
-        text_signal.emit(("[INFO]: Please run the analysis again first.", "log_video_editing_lineedit"))
+        text_signal.emit(("log_video_editing_lineedit", "[INFO]: The filtered.h5 and _meta.pickle files are not present in the folder."))
+        text_signal.emit(("log_video_editing_lineedit", "[INFO]: Please run the analysis again first."))
     if folder_with_analyzed_files == "":
-        text_signal.emit(("[ERROR]: Please select a folder.", "log_video_editing_lineedit"))
+        text_signal.emit(("log_video_editing_lineedit", "[ERROR]: Please select a folder."))
         return
     elif skeleton == "":
-        text_signal.emit(("[ERROR]: No skeleton was extracted. Please finish the video processing and return later.", "log_video_editing_lineedit"))
+        text_signal.emit(("log_video_editing_lineedit", "[ERROR]: No skeleton was extracted. Please finish the video processing and return later."))
         return
     
     # Copy the files to the analysis directory
@@ -3106,8 +3115,8 @@ def bout_analysis(worker, self, text_signal=None, progress=None, warning_message
             new_key = re.sub(r"[_\s-]+", "_", new_key)
             clean_animal_name = new_key
         except:
-            text_signal.emit((f"Could not find the date and time timestamp for the animal {animal.name}", "log_data_process_lineedit"))
-            text_signal.emit(("Using the complete animal name instead.", "log_data_process_lineedit"))
+            text_signal.emit(("log_data_process_lineedit", f"Could not find the date and time timestamp for the animal {animal.name}"))
+            text_signal.emit(("log_data_process_lineedit", "Using the complete animal name instead."))
             clean_animal_name = animal.name
 
         for i in runtime:
@@ -3315,7 +3324,7 @@ def bout_analysis(worker, self, text_signal=None, progress=None, warning_message
         fig.savefig(os.path.join(figures_folder, f"{clean_animal_name}_Y_coordinates_with_highlighted_segments.png"))
         plt.close("all")
         all_results[animal.name] = exploration_bouts_sec
-        text_signal.emit((f"Processed {animal.name}...", "log_data_process_lineedit"))
+        text_signal.emit(("log_data_process_lineedit", f"Processed {animal.name}..."))
 
     cleaned_results = {}
     for key in all_results.keys():
@@ -3334,8 +3343,8 @@ def bout_analysis(worker, self, text_signal=None, progress=None, warning_message
         for animal_name, animal_df in cleaned_results.items():
             animal_df.to_excel(writer, sheet_name=animal_name, index=False)
 
-    text_signal.emit(("clear_lineedit", "log_data_process_lineedit"))
-    text_signal.emit(("All animals processed.", "log_data_process_lineedit"))
+    text_signal.emit(("log_data_process_lineedit", "clear_lineedit"))
+    text_signal.emit(("log_data_process_lineedit", "All animals processed."))
     self.options = {}
 
 def find_sections(dataframe, framerate):
@@ -4061,8 +4070,8 @@ def get_video_fps(input_path, text_signal=None, default_fps=30.0):
     except (subprocess.CalledProcessError, ValueError) as e:
         if text_signal:
             text_signal.emit((
-                f"Could not detect FPS for {os.path.basename(input_path)}. Using default {default_fps} FPS.",
-                "clear_unused_files_lineedit"
+                "clear_unused_files_lineedit",
+                f"Could not detect FPS for {os.path.basename(input_path)}. Using default {default_fps} FPS."
             ))
         return default_fps
 
@@ -4100,8 +4109,8 @@ def get_video_duration(input_path, text_signal=None, default_duration=1.0):
     except (subprocess.CalledProcessError, ValueError) as e:
         if text_signal:
             text_signal.emit((
-                f"Could not detect duration for {os.path.basename(input_path)}. Using default {default_duration} sec.",
-                "clear_unused_files_lineedit"
+                "clear_unused_files_lineedit",
+                f"Could not detect duration for {os.path.basename(input_path)}. Using default {default_duration} sec."
             ))
         return default_duration
     

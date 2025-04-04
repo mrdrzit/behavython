@@ -157,30 +157,19 @@ class behavython_gui(QWidget):
         
         Args:
             values (tuple): Can be either:
-                - ("clear_lineedit", "lineedit_name") to clear a specific line edit
                 - ("clear_all_lineedits") to clear all line edits
-                - (text, "lineedit_name") to append text to a specific line edit
+                - ("lineedit_name", "clear_lineedit") to clear a specific line edit
+                - ("lineedit_name", text) to append text to a specific line edit
         """
         if not values:
             print("No values provided to update_lineedit.")
             return
-            
-        if values[0] == "clear_all_lineedits":
-            lineedits = [
-                self.interface.clear_unused_files_lineedit,
-                self.interface.log_video_editing_lineedit,
-                self.interface.log_data_process_lineedit,
-                self.interface.resume_lineedit,
-            ]
-            for lineedit in lineedits:
-                lineedit.clear()
-            return
         
-        if len(values) < 2:
-            print("Not enough values provided to update_lineedit.")
+        if len(values) != 2:
+            print("Exactly two values required for update_lineedit.")
             return
             
-        text, lineedit_name = values[:2]
+        first, second = values
         
         lineedit_map = {
             "resume_lineedit": self.interface.resume_lineedit,
@@ -189,15 +178,24 @@ class behavython_gui(QWidget):
             "log_data_process_lineedit": self.interface.log_data_process_lineedit,
         }
         
-        lineedit = lineedit_map.get(lineedit_name)
-        if lineedit is None:
-            print(f"Lineedit '{lineedit_name}' not found.")
+        # Handle clear all case
+        if first == "clear_all_lineedits":
+            for lineedit in lineedit_map.values():
+                if lineedit is not None:
+                    lineedit.clear()
             return
         
-        if text == "clear_lineedit":
+        # Get the lineedit
+        lineedit = lineedit_map.get(first)
+        if lineedit is None:
+            print(f"Lineedit '{first}' not found.")
+            return
+        
+        # Handle clear or append
+        if second == "clear_lineedit":
             lineedit.clear()
         else:
-            lineedit.append(text)
+            lineedit.append(second)
 
     def enable_annotated_video_creation(self):
         elements_to_toggle = [
