@@ -82,6 +82,7 @@ class behavython_gui(QWidget):
         self.interface.folder_to_get_create_roi_lineedit.textChanged.connect(lambda: self.enable_DLC())
         self.interface.cread_roi_automatically_button.clicked.connect(lambda: self.run_worker(create_rois_automatically, self))
         self.interface.enable_debugging_mode_checkbox.stateChanged.connect(lambda: self.toggle_debug_mode())
+        self.interface.create_validation_video_button.clicked.connect(lambda: create_validation_video(self))
 
     def resume_message_function(self, file_list):
         text = "Check the videos to be analyzed: "
