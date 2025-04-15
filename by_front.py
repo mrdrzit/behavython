@@ -322,11 +322,11 @@ class behavython_gui(QWidget):
                 }
             """)
             
-            self.update_lineedit(("clear_all_lineedits",))
-            self.update_lineedit(("🐞 Debug mode active", "resume_lineedit"))
-            self.update_lineedit(("🐞 Debug mode active", "clear_unused_files_lineedit"))
-            self.update_lineedit(("🐞 Debug mode active", "log_video_editing_lineedit"))
-            self.update_lineedit(("🐞 Debug mode active", "log_data_process_lineedit"))
+            self.update_lineedit(("clear_all_lineedits", ""))
+            self.update_lineedit(("resume_lineedit", "🐞 Debug mode active"))
+            self.update_lineedit(("clear_unused_files_lineedit", "🐞 Debug mode active"))
+            self.update_lineedit(("log_video_editing_lineedit", "🐞 Debug mode active"))
+            self.update_lineedit(("log_data_process_lineedit", "🐞 Debug mode active"))
         else:
             # Revert to normal styling
             self.interface.setStyleSheet("""
@@ -335,11 +335,11 @@ class behavython_gui(QWidget):
                     color: #FFFFFF;
                 }
             """)
-            self.update_lineedit(("clear_all_lineedits",))
-            self.update_lineedit(("🔧 Debug mode deactivated", "resume_lineedit"))
-            self.update_lineedit(("🔧 Debug mode deactivated", "clear_unused_files_lineedit"))
-            self.update_lineedit(("🔧 Debug mode deactivated", "log_video_editing_lineedit"))
-            self.update_lineedit(("🔧 Debug mode deactivated", "log_data_process_lineedit"))
+            self.update_lineedit(("clear_all_lineedits", ""))
+            self.update_lineedit(("resume_lineedit", "🔧 Debug mode deactivated"))
+            self.update_lineedit(("clear_unused_files_lineedit", "🔧 Debug mode deactivated"))
+            self.update_lineedit(("log_video_editing_lineedit", "🔧 Debug mode deactivated"))
+            self.update_lineedit(("log_data_process_lineedit", "🔧 Debug mode deactivated"))
             self.debug_mode = False
 
     def enable_DLC(self):
