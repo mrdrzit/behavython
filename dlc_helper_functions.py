@@ -2778,19 +2778,22 @@ def copy_folder_robocopy(worker, self, text_signal=None, progress=None, warning_
     if exclude_files:
         extensions_to_exclude = self.interface.file_exclusion_video_editing_lineedit.text().lower().strip().split(",")
         extensions_str = " ".join([f'"*{ext.strip()}"' for ext in extensions_to_exclude])
-        command = f'robocopy "{source}" "{destination}" /e /zb /copyall /xf {extensions_str}'
+        robocopy_command = f'robocopy "{source}" "{destination}" /e /zb /copyall /xf {extensions_str}'
     elif include_files:
         extensions_to_include = self.interface.file_inclusion_video_editing_lineedit.text().lower().strip().split(",")
         extensions_str = " ".join([f'"*{ext.strip()}"' for ext in extensions_to_include])
-        command = f'robocopy "{source}" "{destination}" /e /zb /copyall /if {extensions_str}'
+        robocopy_command = f'robocopy "{source}" "{destination}" /e /zb /copyall /if {extensions_str}'
     else:
-        command = f'robocopy "{source}" "{destination}" /e /zb /copyall'
+        robocopy_command = f'robocopy "{source}" "{destination}" /e /zb /copyall'
 
-    # Prepare the command to run as administrator
-    admin_command = f"powershell -Command \"Start-Process cmd -ArgumentList '/c {command}' -Verb RunAs\""
+    # Escape the command properly for PowerShell
+    ps_command = f'''
+    $command = '{robocopy_command}'
+    Start-Process cmd -ArgumentList '/c', $command -Verb RunAs -Wait
+    '''
 
     try:
-        subprocess.run(admin_command, check=True, shell=True)
+        subprocess.run(["powershell", "-Command", ps_command], check=True)
     except subprocess.CalledProcessError as e:
         text_signal.emit(("log_video_editing_lineedit", f"[ERROR]: {str(e)}"))
         self.interface.log_video_editing_lineedit.append(f"[ERROR]: {str(e)}")
@@ -3677,7 +3680,14 @@ def create_custom_labelled_frames(self, inference_config_file = None, final_fram
         with open(config_path, 'w') as file:
             yaml.dump(config_data, file, default_flow_style=False, sort_keys=False)
     else:
-        folders_to_analyze = [final_frames_path]
+        folders_to_analyze = []
+        for root, _, files in os.walk(final_frames_path):
+            folders_to_analyze.append(root) if root != final_frames_path else None
+        if not folders_to_analyze:
+            logger.info("No subdirectories to analyze, using the one set in the interface")
+            folders_to_analyze = [final_frames_path]
+        else:
+            logger.info(f"Found {len(folders_to_analyze)} subdirectories to analyze")
 
     for final_frames_path in folders_to_analyze:
         temporary_frames_object = tempfile.TemporaryDirectory()
@@ -4404,7 +4414,18 @@ def scan_generated_frames_directory(root_path):
         if os.path.isfile(os.path.join(root_path, f)) and 
         f.lower().endswith(video_extensions)
     ]
-    
+    if not result['videos']:
+        # Try to find video files one subdirectory above
+        parent_dir = os.path.dirname(root_path)
+        result['videos'] = [
+            f for f in os.listdir(parent_dir) 
+            if os.path.isfile(os.path.join(parent_dir, f)) and 
+            f.lower().endswith(video_extensions)
+        ]
+    elif not result['videos']:
+        print("No video files found in the specified directory or its parent.")
+        return None 
+
     # Scan for generated frames (organized in video-named subfolders)
     for video in result['videos']:
         video_name = os.path.splitext(video)[0]
