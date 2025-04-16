@@ -27,6 +27,7 @@ import seaborn as sns
 import matplotlib.cm as cm
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 from scipy import stats
 from matplotlib import colors as mcolors
 from matplotlib.collections import LineCollection
@@ -4464,3 +4465,232 @@ def scan_generated_frames_directory(root_path):
             result['generated_frames'][video_name] = video_data
     
     return result
+
+def create_validation_video(self):
+
+    def smooth_series(series, zero_threshold=0.001):
+        """Carry forward last non-zero/non-NaN value when current is zero/NaN"""
+        smoothed = series.copy()
+        last_valid = None
+        
+        for i in range(len(series)):
+            if not np.isnan(series[i]) and abs(series[i]) > zero_threshold:
+                last_valid = series[i]
+            elif last_valid is not None:
+                smoothed[i] = last_valid
+            else:
+                smoothed[i] = 0
+        return smoothed
+
+    def compute_locomotion_states(displacement, threshold=0.0267, hysteresis_frames=5):
+        """
+        Compute stable locomotion states with hysteresis:
+        - Requires `hysteresis_frames` of consistent movement to switch to "Moving".
+        - Requires `hysteresis_frames` of no movement to switch back to "Resting".
+        
+        Args:
+            displacement (array): Movement magnitude per frame (cm)
+            threshold (float): Minimum displacement to consider movement
+            hysteresis_frames (int): Frames required to confirm state change
+        Returns:
+            list: ["Resting" or "General Locomotion"] for each frame
+        """
+        states = []
+        current_state = "Resting"
+        counter = 0
+        
+        for d in displacement:
+            if d > threshold:
+                counter = min(hysteresis_frames, counter + 1)  # Moving
+            else:
+                counter = max(0, counter - 1)  # Resting
+            
+            # Update state only if counter reaches hysteresis limit
+            if counter >= hysteresis_frames:
+                current_state = "General Locomotion"
+            elif counter <= 0:
+                current_state = "Resting"
+            
+            states.append(current_state)
+        
+        return states
+
+    matplotlib.use("QtAgg")
+    data = DataFiles()
+    animals = []
+    get_files(self, [], data, animals)
+
+    experimental_animal = animals[0]
+    animal_name = experimental_animal.name
+    animal_roi = experimental_animal.rois[0]
+    roi_X = animal_roi["x"]
+    roi_Y = animal_roi["y"]
+    roi_D = (animal_roi["width"] + animal_roi["height"]) / 2
+
+    cup = plt.Circle((roi_X, roi_Y), roi_D / 2, color="r", fill=False)
+    dimensions = experimental_animal.exp_dimensions()
+
+    # Slice data (starting from frame 300)
+    focinho_x = experimental_animal.bodyparts["focinho"]["x"][300:900]
+    focinho_y = experimental_animal.bodyparts["focinho"]["y"][300:900]
+    orelha_esq_x = experimental_animal.bodyparts["orelhae"]["x"][300:900]
+    orelha_esq_y = experimental_animal.bodyparts["orelhae"]["y"][300:900]
+    orelha_dir_x = experimental_animal.bodyparts["orelhad"]["x"][300:900]
+    orelha_dir_y = experimental_animal.bodyparts["orelhad"]["y"][300:900]
+    centro_x = experimental_animal.bodyparts["centro"]["x"][300:900]
+    centro_y = experimental_animal.bodyparts["centro"]["y"][300:900]
+    rabo_x = experimental_animal.bodyparts["rabo"]["x"][300:900]
+    rabo_y = experimental_animal.bodyparts["rabo"]["y"][300:900]
+
+    # Validate lengths
+    if any([
+        len(focinho_x) != len(focinho_y),
+        len(orelha_esq_x) != len(orelha_esq_y),
+        len(orelha_dir_x) != len(orelha_dir_y),
+        len(centro_x) != len(centro_y),
+        len(rabo_x) != len(rabo_y)
+    ]):
+        raise ValueError("Mismatched x/y coordinates for body parts.")
+
+    # Precompute head area and collisions
+    side_ear_to_snout = np.sqrt((orelha_dir_x - focinho_x)**2 + (orelha_dir_y - focinho_y)**2)
+    side_ear_to_ear = np.sqrt((orelha_dir_x - orelha_esq_x)**2 + (orelha_dir_y - orelha_esq_y)**2)
+    side_snout_to_ear = np.sqrt((focinho_x - orelha_esq_x)**2 + (focinho_y - orelha_esq_y)**2)
+    semi_perimeter = (side_ear_to_snout + side_ear_to_ear + side_snout_to_ear) / 2
+    head_area = np.sqrt(
+        semi_perimeter * 
+        (semi_perimeter - side_ear_to_snout) * 
+        (semi_perimeter - side_ear_to_ear) * 
+        (semi_perimeter - side_snout_to_ear)
+    )
+
+    # Precompute collisions
+    collisions = []
+    snout_line_sequence = []
+    for i in range(len(focinho_x)):
+        A = np.array([focinho_x.iloc[i], focinho_y.iloc[i]])
+        B = np.array([orelha_esq_x.iloc[i], orelha_esq_y.iloc[i]])
+        C = np.array([orelha_dir_x.iloc[i], orelha_dir_y.iloc[i]])
+        P, Q = line_trough_triangle_vertex(A, B, C)
+        snout_line_sequence.append([P, Q])
+        collision = detect_collision([Q[0], Q[1]], [P[0], P[1]], [roi_X, roi_Y], roi_D / 2)
+        collisions.append(collision)
+
+    # Precompute movement vectors
+    threshold = 0.0267
+    dimensions = experimental_animal.exp_dimensions()
+    video_height, video_width, _ = dimensions
+    factor_width = 30 / video_width
+    factor_height = 30 / video_height
+    runtime = len(centro_x)
+    frames_per_second = 30
+    time_vector = np.linspace(0, runtime / frames_per_second, runtime)
+
+    x_axe_cm = centro_x * factor_width
+    y_axe_cm = centro_y * factor_height
+
+    d_x_axe_cm = np.append(0, np.diff(x_axe_cm))
+    d_y_axe_cm = np.append(0, np.diff(y_axe_cm))
+
+    displacement_raw = np.sqrt(np.square(d_x_axe_cm) + np.square(d_y_axe_cm))
+    displacement = displacement_raw
+    displacement[displacement < threshold] = 0
+    displacement[displacement > 55] = 0
+
+    # Calculate the accumulated distance traveled
+    accumulated_distance = np.cumsum(displacement)
+
+    # Ignores the division by zero at runtime
+    # (division by zero is not an error in this case as the are moments when the animal is not moving)
+    np.seterr(divide="ignore", invalid="ignore")
+    animal_speed = np.divide(displacement, np.transpose(np.append(0, np.diff(time_vector))))
+    animal_acceleration = np.divide(np.append(0, np.diff(animal_speed)), np.append(0, np.diff(time_vector)))
+
+    # Set up figure
+    fig, ax = plt.subplots(figsize=(8, 8))
+    ax.set_title(f"Validation Video - {animal_name}", fontsize=16, family="sans-serif", fontweight="bold")
+    ax.set_xlim(0, dimensions[0])
+    ax.set_ylim(0, dimensions[1])
+    ax.invert_yaxis()
+    ax.add_patch(cup)
+
+    smoothed_displacement = smooth_series(displacement, zero_threshold=0)
+    smoothed_acc_distance = smooth_series(accumulated_distance, zero_threshold=0)
+    locomotion_states = compute_locomotion_states(displacement_raw, hysteresis_frames=2)
+
+    exploration_state = []
+    last_collision = False
+    for c in collisions:
+        if c != last_collision:
+            # Only change state after 2 consistent frames
+            last_collision = c
+        exploration_state.append("Exploring" if last_collision else "Not exploring")
+    
+    # Initialize plots
+    focinho_graph = ax.scatter([], [], 10, color=[1, 0, 0], alpha=0.5)
+    orelha_esq_graph = ax.scatter([], [], 10, color=[0, 1, 1], alpha=0.5)
+    orelha_dir_graph = ax.scatter([], [], 10, color=[0, 1, 0.5], alpha=0.5)
+    od_oe, = ax.plot([], [], "b-", alpha=0.3, linewidth=1)
+    fo_oe, = ax.plot([], [], "b-", alpha=0.3, linewidth=1)
+    fo_od, = ax.plot([], [], "b-", alpha=0.3, linewidth=1)
+    linha, = ax.plot([], [], "g-", alpha=0.5, linewidth=1)
+
+    status_text = ax.text(
+        0.02, 0.90, "",
+        transform=ax.transAxes,
+        family="monospace",  # Fixed-width font for consistent sizing
+        fontweight="normal",
+        fontsize=10,
+        verticalalignment="top",
+        bbox=None,  # Explicitly remove bounding box
+        color='black'  # Default color
+    )
+
+    def animate(i):
+        # Update body parts
+        focinho_graph.set_offsets([[focinho_x.iloc[i], focinho_y.iloc[i]]])
+        orelha_esq_graph.set_offsets([[orelha_esq_x.iloc[i], orelha_esq_y.iloc[i]]])
+        orelha_dir_graph.set_offsets([[orelha_dir_x.iloc[i], orelha_dir_y.iloc[i]]])
+
+        # Update lines
+        od_oe.set_data([orelha_dir_x.iloc[i], orelha_esq_x.iloc[i]], [orelha_dir_y.iloc[i], orelha_esq_y.iloc[i]])
+        fo_oe.set_data([focinho_x.iloc[i], orelha_esq_x.iloc[i]], [focinho_y.iloc[i], orelha_esq_y.iloc[i]])
+        fo_od.set_data([focinho_x.iloc[i], orelha_dir_x.iloc[i]], [focinho_y.iloc[i], orelha_dir_y.iloc[i]])
+        P = [snout_line_sequence[i][0][0], snout_line_sequence[i][0][1]]
+        Q = [snout_line_sequence[i][1][0], snout_line_sequence[i][1][1]]
+        linha.set_data([P[0], Q[0]], [P[1], Q[1]])
+
+        # Update status text
+        exploration_status = (
+            f"Exploring at ({collisions[i]})" 
+            if collisions[i] 
+            else "Not exploring"
+        )
+
+        status_str = (
+            f"Exploration: {exploration_status}\n"
+            f"Distance: {smoothed_acc_distance[i]} cm\n"
+            f"Locomotion: {locomotion_states[i]}"
+        )
+        status_text.set_text(status_str)
+
+        if collisions[i]:
+            status_text.set_color("red")
+        elif displacement[i] > 0:
+            status_text.set_color("blue")
+        else:
+            status_text.set_color("black")
+
+        return (focinho_graph, orelha_esq_graph, orelha_dir_graph, od_oe, fo_oe, fo_od, status_text)
+
+    # Use blit=True for faster rendering
+    anime = animation.FuncAnimation(
+        fig, animate, frames=len(focinho_x), 
+        blit=True, interval=33, repeat=True
+    )
+
+    # Save with FFmpeg
+    progress_callback = lambda i, n: print(f'Saving: {i / n * 100:.1f}% complete')    
+    writer = animation.FFMpegWriter(fps=30, codec="libx264", bitrate=2000)
+    anime.save("validation_video.mp4", writer=writer, progress_callback=progress_callback)
+    plt.close(fig)
