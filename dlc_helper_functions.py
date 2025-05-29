@@ -999,7 +999,7 @@ def dlc_video_analyze_function(worker, self, text_signal=None, progress=None, wa
 
         continue_analysis = self.resume_message_function(video_list)
         if not continue_analysis:
-            text_signal.emit(("clear_lineedit", "clear_unused_files_lineedit"))
+            text_signal.emit(("clear_unused_files_lineedit", "clear_lineedit"))
             text_signal.emit(("clear_unused_files_lineedit", "Analysis canceled."))
             return
         text_signal.emit(("clear_unused_files_lineedit", "Analyzing videos..."))
@@ -1040,7 +1040,7 @@ def dlc_video_analyze_function(worker, self, text_signal=None, progress=None, wa
                 import deeplabcut
             else:
                 deeplabcut = sys.modules["deeplabcut"]
-        text_signal.emit(("clear_lineedit", "clear_unused_files_lineedit"))
+        text_signal.emit(("clear_unused_files_lineedit", "clear_lineedit"))
         if self.deeplabcut_is_enabled:
             text_signal.emit(("clear_unused_files_lineedit", f"Using DeepLabCut version {deeplabcut.__version__}"))
         config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
@@ -1164,6 +1164,15 @@ def get_frames_function(worker, self, text_signal=None, progress=None, warning_m
     def get_videos_from_folder():
         analysis_folder = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
         analysis_status = get_analysis_report(analysis_folder)
+
+        if not analysis_status["analyzed_folders"] and analysis_status["orphan_videos"]:
+            show_warning(
+                "Video extension error",
+                "No analyzed folders found.\nExtracting frames only from orphan videos."
+            )
+            text_signal.emit(("clear_unused_files_lineedit", "Extracting frames only from orphan videos."))
+            video_list = analysis_status["orphan_videos"]
+            return validate_video_list(video_list)
         
         video_list = []
         for folder in analysis_status["analyzed_folders"]:
@@ -1214,6 +1223,10 @@ def get_frames_function(worker, self, text_signal=None, progress=None, warning_m
             text_signal.emit(("clear_unused_files_lineedit", f"Frame of {name} already exists."))
 
     text_signal.emit(("clear_unused_files_lineedit", "clear_lineedit"))
+
+    if self.debug_mode:
+        debugpy.debug_this_thread()
+        debugpy.breakpoint()
 
     if self.interface.analyze_from_file_button.isEnabled():
         video_list, file_extension = get_videos_from_file()
