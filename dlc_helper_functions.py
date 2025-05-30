@@ -1225,10 +1225,6 @@ def get_frames_function(worker, self, text_signal=None, progress=None, warning_m
 
     text_signal.emit(("clear_unused_files_lineedit", "clear_lineedit"))
 
-    if self.debug_mode:
-        debugpy.debug_this_thread()
-        debugpy.breakpoint()
-
     if self.interface.analyze_from_file_button.isEnabled():
         video_list, file_extension = get_videos_from_file()
     else:
@@ -2184,6 +2180,8 @@ def video_analyse(self, options, animal=None):
         arena_width = options["arena_width"]
         arena_height = options["arena_height"]
         frames_per_second = options["frames_per_second"]
+        video_time = animal.exp_length()/frames_per_second
+        options["task_duration"] = video_time if options["task_duration"] == 0 else options["task_duration"]
         max_analysis_time = options["task_duration"]
         threshold = options["threshold"]
         # Maximum video height set by user
