@@ -190,6 +190,7 @@ class WorkerSignals(QObject):
     resume_message = Signal(object)
     request_files = Signal(str)
     data_ready = Signal()
+    failed = Signal(object)
 
 class Worker(QRunnable):
     """
@@ -216,6 +217,7 @@ class Worker(QRunnable):
         self.kwargs["warning_message"] = self.signals.warning_message
         self.kwargs["resume_message"] = self.signals.resume_message
         self.kwargs["request_files"] = self.signals.request_files
+        self.kwargs["analysis_failed"] = self.signals.failed
 
     @Slot()
     def run(self):
@@ -1783,7 +1785,7 @@ def file_selection_function(self):
     if file_dialog.exec():
         return file_dialog.selectedFiles()[0]
 
-def run_analysis(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
+def run_analysis(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None, analysis_failed=None):
     """
     Runs the analysis on selected files and returns the results.
     Args:
@@ -1868,7 +1870,7 @@ def handle_results(results):
             os.system("cls")
             print("Error saving results")
 
-def handle_error(error_info):
+def handle_error(self, error_info):
     """
     Handles and prints the error information.
 
@@ -1878,6 +1880,7 @@ def handle_error(error_info):
     Returns:
         None
     """
+    self.interface.analysis_failed = True
     exctype, value, traceback_str = error_info
     print(f"Error: {value}")
 
@@ -1896,6 +1899,13 @@ def on_worker_finished(self):
         None
     """
     options = self.options
+    analysis_failed = self.interface.analysis_failed
+    if analysis_failed:
+        title = "Analysis failed"
+        text = "The analysis has failed. Please, check the log for more details."
+        warning_message_function(title, text)
+        return
+        
     if options == {}:
         return
     config_file_path = options["save_folder"] + "/analysis_configuration.json"

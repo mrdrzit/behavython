@@ -26,6 +26,7 @@ class behavython_gui(QWidget):
         self.progress_bar = self.interface.progress_bar
         self.debug_mode = False
         self.deeplabcut_is_enabled = False
+        self.analysis_failed = False
 
         # Create a QThreadPool instance
         self.threadpool = QtCore.QThreadPool()
@@ -118,7 +119,7 @@ class behavython_gui(QWidget):
         worker.signals.request_files.connect(lambda file_type: self.get_files(worker, file_type))
         worker.signals.progress.connect(self.update_progress_bar)
         worker.signals.result.connect(handle_results)
-        worker.signals.error.connect(handle_error)
+        worker.signals.error.connect(lambda error_info: handle_error(self, error_info))
         worker.signals.finished.connect(lambda: on_worker_finished(self))
         worker.signals.data_ready.connect(on_data_ready)
         self.threadpool.start(worker)
