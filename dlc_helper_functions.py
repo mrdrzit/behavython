@@ -940,7 +940,7 @@ def folder_structure_check_function(self):
     self.interface.clear_unused_files_lineedit.append("The folder structure is correct.")
     return True
 
-def dlc_video_analyze_function(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
+def dlc_video_analyze_function(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None, analysis_failed=None):
     """
     Analyzes videos using DeepLabCut.
     Args:
@@ -1115,7 +1115,7 @@ def dlc_video_analyze_function(worker, self, text_signal=None, progress=None, wa
         text_signal.emit(("clear_unused_files_lineedit", "Done filtering data files"))
         self.options = {}
 
-def get_frames_function(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
+def get_frames_function(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None, analysis_failed=None):
     """
     Extract frames from videos.
 
@@ -1255,7 +1255,7 @@ def get_frames_function(worker, self, text_signal=None, progress=None, warning_m
         output_path = os.path.splitext(video_path)[0] + ".jpg"
         extract_frame(video_path, output_path, where_to_extract)
 
-def extract_skeleton_function(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
+def extract_skeleton_function(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None, analysis_failed=None):
     """
     Extracts skeleton from videos using DeepLabCut.
     Args:
@@ -1880,7 +1880,7 @@ def handle_error(self, error_info):
     Returns:
         None
     """
-    self.interface.analysis_failed = True
+    self.analysis_failed = True
     exctype, value, traceback_str = error_info
     print(f"Error: {value}")
 
@@ -1899,7 +1899,7 @@ def on_worker_finished(self):
         None
     """
     options = self.options
-    analysis_failed = self.interface.analysis_failed
+    analysis_failed = self.analysis_failed
     if analysis_failed:
         title = "Analysis failed"
         text = "The analysis has failed. Please, check the log for more details."
@@ -2511,7 +2511,7 @@ def option_message_function(self, text, info_text):
     else:
         return "no"
 
-def convert_csv_to_h5(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
+def convert_csv_to_h5(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None, analysis_failed=None):
     """
     Converts a CSV file to an H5 file using DeepLabCut.
     Args:
@@ -2543,7 +2543,7 @@ def convert_csv_to_h5(worker, self, text_signal=None, progress=None, warning_mes
             deeplabcut = sys.modules["deeplabcut"]
     deeplabcut.convertcsv2h5(config, userfeedback=confirm_folders, scorer=scorer)
 
-def analyze_folder_with_frames(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
+def analyze_folder_with_frames(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None, analysis_failed=None):
     """
     Analyzes a folder containing frames using DeepLabCut.
     Args:
@@ -2665,7 +2665,7 @@ def analyze_folder_with_frames(worker, self, text_signal=None, progress=None, wa
         save_as_csv=True,
     )
 
-def get_crop_coordinates(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
+def get_crop_coordinates(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None, analysis_failed=None):
     """
     Get dimensions to crop videos based on the provided folder path.
 
@@ -2771,7 +2771,7 @@ def crop_videos(worker, self, text_signal=None, progress=None, warning_message=N
             text_signal.emit(("log_video_editing_lineedit", f"[WARNING]: No crop coordinates found for video {video_name}."))
             # self.interface.log_video_editing_lineedit.append(f"[WARNING]: No crop coordinates found for video {video_name}.")
 
-def copy_folder_robocopy(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
+def copy_folder_robocopy(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None, analysis_failed=None):
     if self.debug_mode:
         debugpy.debug_this_thread()
         breakpoint()
@@ -2845,7 +2845,7 @@ def save_crop_coordinates(self):
             writer.writerow([name] + list(coordinate))
     self.interface.log_video_editing_lineedit.append(f"[INFO]: Crop coordinates saved to {csv_file_path}.")
 
-def create_rois_automatically(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
+def create_rois_automatically(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None, analysis_failed=None):
     """
     Automatically creates ROIs (Region of Interest) for images in a specified folder using Deeplabcut.
     Args:
@@ -3018,7 +3018,7 @@ def create_rois_automatically(worker, self, text_signal=None, progress=None, war
             fig.savefig(image)
         plt.close(fig)
 
-def create_annotated_video(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
+def create_annotated_video(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None, analysis_failed=None):
     """
     Creates an annotated video using DeepLabCut.
     Args:
@@ -3066,7 +3066,7 @@ def create_annotated_video(worker, self, text_signal=None, progress=None, warnin
 
     deeplabcut.create_labeled_video(config_path, folder_with_analyzed_files, videotype='.mp4', filtered=True, draw_skeleton = True)
 
-def bout_analysis(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
+def bout_analysis(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None, analysis_failed=None):
     """
     Performs bout analysis on the given data.
     Args:
