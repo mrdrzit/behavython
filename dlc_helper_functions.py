@@ -42,6 +42,7 @@ from PySide6.QtWidgets import (QDialog, QFileDialog, QLabel, QMessageBox, QPushB
 
 # Other utilities
 import yaml
+import platform
 from PIL import Image
 from tqdm import tqdm
 
@@ -471,7 +472,6 @@ class Animal:
         self.skeleton = {
             "focinho_orelhae": [],
             "focinho_orelhad": [],
-            "orelhad_orelhae": [],
             "orelhae_orelhad": [],
             "orelhad_centro": [],
             "orelhae_centro": [],
@@ -506,20 +506,24 @@ class Animal:
 
         return len(self.bodyparts["focinho"]["x"])
 
-    def add_roi(self, roi_file):
-        rois = []
-        [rois.append(key) for key in roi_file]
-        for i, roi_path in enumerate(rois):
-            roi_data = pd.read_csv(
-                roi_path,
-                sep=",",
-            )
-            self.rois[i]["file"] = roi_path
-            self.rois[i]["x"] = roi_data["X"][0]
-            self.rois[i]["y"] = roi_data["Y"][0]
-            self.rois[i]["width"] = roi_data["Width"][0]
-            self.rois[i]["height"] = roi_data["Height"][0]
-        pass
+    def add_roi(self, roi_files):
+        try:
+            for i, roi_path in enumerate(roi_files):
+                roi_data = pd.read_csv(
+                    roi_path,
+                    sep=",",
+                )
+                self.rois[i]["file"] = roi_path
+                self.rois[i]["x"] = roi_data["X"][0]
+                self.rois[i]["y"] = roi_data["Y"][0]
+                self.rois[i]["width"] = roi_data["Width"][0]
+                self.rois[i]["height"] = roi_data["Height"][0]
+        except:
+            self.rois[i]["file"] = []
+            self.rois[i]["x"] = []
+            self.rois[i]["y"] = []
+            self.rois[i]["width"] = []
+            self.rois[i]["height"] = []
 
     def add_bodypart(self, bodypart):
         """
@@ -532,24 +536,31 @@ class Animal:
             data (DataFiles): A DataFiles object containing the files to be analyzed
             animal_name (str): A string containing the name of the animal to be analyzed
         """
-        extracted_data = pd.read_csv(
-            self.position_file,
-            sep=",",
-            header=[1, 2],
-            index_col=0,
-            skip_blank_lines=False,
-        )
+        try:
+            extracted_data = pd.read_csv(
+                self.position_file,
+                sep=",",
+                header=[1, 2],
+                index_col=0,
+                skip_blank_lines=False,
+            )
 
-        # The following line is necessary to convert the column names to lowercase
-        # The data is stored in a MultiIndex dataframe, so the column names are tuples with the bodypart name and the axis/likelihood
-        # The following line converts the tuples to lowercase strings
+            # The following line is necessary to convert the column names to lowercase
+            # The data is stored in a MultiIndex dataframe, so the column names are tuples with the bodypart name and the axis/likelihood
+            # The following line converts the tuples to lowercase strings
 
-        extracted_data.columns = pd.MultiIndex.from_frame(extracted_data.columns.to_frame().map(str.lower))
-        self.bodyparts[bodypart] = {
-            "x": extracted_data[bodypart, "x"],
-            "y": extracted_data[bodypart, "y"],
-            "likelihood": extracted_data[bodypart, "likelihood"],
-        }
+            extracted_data.columns = pd.MultiIndex.from_frame(extracted_data.columns.to_frame().map(str.lower))
+            self.bodyparts[bodypart] = {
+                "x": extracted_data[bodypart, "x"],
+                "y": extracted_data[bodypart, "y"],
+                "likelihood": extracted_data[bodypart, "likelihood"],
+            }
+        except:
+            self.bodyparts[bodypart] = {
+                "x": [],
+                "y": [],
+                "likelihood": [],
+            }
 
     def add_skeleton(self, bone):
         """
@@ -563,29 +574,37 @@ class Animal:
             data (DataFiles): A DataFiles object containing the files to be analyzed
             animal_name (str): A string containing the name of the animal to be analyzed
         """
-        extracted_data = pd.read_csv(
-            self.skeleton_file,
-            sep=",",
-            header=[0, 1],
-            index_col=0,
-            skip_blank_lines=False,
-        )
-
-        # The following line is necessary to convert the column names to lowercase
-        # The data is stored in a MultiIndex dataframe, so the column names are tuples with the bodypart name and the axis/likelihood
-        # The following line converts the tuples to lowercase strings
-        extracted_data.columns = pd.MultiIndex.from_frame(extracted_data.columns.to_frame().map(str.lower))
         try:
+            extracted_data = pd.read_csv(
+                self.skeleton_file,
+                sep=",",
+                header=[0, 1],
+                index_col=0,
+                skip_blank_lines=False,
+            )
+
+            # The following line is necessary to convert the column names to lowercase
+            # The data is stored in a MultiIndex dataframe, so the column names are tuples with the bodypart name and the axis/likelihood
+            # The following line converts the tuples to lowercase strings
+            extracted_data.columns = pd.MultiIndex.from_frame(extracted_data.columns.to_frame().map(str.lower))
+            try:
+                self.skeleton[bone] = {
+                    "length": extracted_data[bone, "length"],
+                    "orientation": extracted_data[bone, "orientation"],
+                    "likelihood": extracted_data[bone, "likelihood"],
+                }
+            except KeyError:
+                # print(f"\nBone {bone} not found in the skeleton file for the animal {self.name}")
+                # print("Please check the name of the bone in the skeleton file\n")
+                # print("The following bones are available:")
+                # print("focinho_orelhae\nfocinho_orelhad\norelhad_orelhae\norelhae_orelhad\norelhae_rabo\norelhad_rabo\n")
+                return
+        except:
             self.skeleton[bone] = {
-                "length": extracted_data[bone, "length"],
-                "orientation": extracted_data[bone, "orientation"],
-                "likelihood": extracted_data[bone, "likelihood"],
+                "length": [],
+                "orientation": [],
+                "likelihood": [],
             }
-        except KeyError:
-            # print(f"\nBone {bone} not found in the skeleton file for the animal {self.name}")
-            # print("Please check the name of the bone in the skeleton file\n")
-            # print("The following bones are available:")
-            # print("focinho_orelhae\nfocinho_orelhad\norelhad_orelhae\norelhae_orelhad\norelhae_rabo\norelhad_rabo\n")
             return
 
     def add_experiment_jpg(self, image_file):
@@ -601,6 +620,8 @@ class Animal:
             self.animal_jpg = raw_image
         except KeyError:
             print(f"\nJPG file for the animal {self.name} not found.\nPlease, check if the name of the file is correct.\n")
+            raw_image = []
+            self.animal_jpg = raw_image
         return
 
     def add_position_file(self, position_file):
@@ -628,8 +649,12 @@ class Animal:
         Returns:
             tuple: A tuple containing the dimensions of the jpg file
         """
-        return self.animal_jpg.shape
-
+        if not self.animal_jpg:
+            print("JPG file not found in animal object\nWas it loaded properly?\n")
+            return None
+        else:
+            return self.animal_jpg.shape
+        
 def get_unique_names(file_list, regex):
     """
     get_unique_names generates a list of unique names from a list of files
@@ -683,45 +708,49 @@ def get_files(self, line_edit, data: DataFiles, animal_list: list, worker=None):
         data_files, _ = QFileDialog.getOpenFileNames(self, "Select the files to analyze", "", "DLC files (*.csv *.jpg)")
 
     get_name = re.compile(r"^.*?(?=DLC)|^.*?(?=(\.jpg|\.png|\.bmp|\.jpeg|\.svg))")
-    # TODO #38 - Remove this regex and use the list created below to get the roi files4
     get_roi = re.compile(r"\b\w*roi[\w -~]*\.csv$")
     unique_animals = get_unique_names(data_files, get_name)
-    roi_iter_obejct = it.filterfalse(lambda x: not (re.search("roi", x)), data_files)
-    rois = []
-    [rois.append(roi) for roi in roi_iter_obejct]
+    rois = [f for f in data_files if "roi" in Path(f).name.lower()]
 
     for animal in unique_animals:
         for file in data_files:
-            if animal in file:
-                if "skeleton" in file and not data.skeleton_files.get(animal):
-                    line_edit.append("Skeleton file found for " + animal)
-                    data.add_skeleton_file(animal, file)
-                    continue
-                if "filtered" in file and not data.position_files.get(animal):
-                    line_edit.append("Position file found for " + animal)
-                    data.add_pos_file(animal, file)
-                    continue
-                if (file.endswith(".jpg") or file.endswith(".png") or file.endswith(".jpeg")) and not data.experiment_images.get(animal):
-                    line_edit.append("Image file found for " + animal)
-                    data.add_image_file(animal, file)
-                    continue
-                if get_roi.search(file).group(0) in file and not data.roi_files.get(animal):
-                    line_edit.append("ROI file found for " + animal)
-                    data.add_roi_file(animal, file)
-                    continue
-    for exp_number, animal in enumerate(unique_animals):
-        animal_list.append(Animal())
-        animal_list[exp_number].name = animal
-        animal_list[exp_number].add_experiment_jpg(data.experiment_images[animal])
-        animal_list[exp_number].add_position_file(data.position_files[animal])
-        animal_list[exp_number].add_skeleton_file(data.skeleton_files[animal])
-        tmp = it.filterfalse(lambda roi: not (re.search(animal, roi)), rois)
-        animal_list[exp_number].add_roi(tmp)
+            if animal not in file:
+                continue
+            lowercase_file = file.lower()
+            if "skeleton" in lowercase_file and animal not in data.skeleton_files:
+                line_edit.append(f"Skeleton file found for {animal}")
+                data.add_skeleton_file(animal, file)
+                continue
+            if "filtered" in lowercase_file and animal not in data.position_files:
+                line_edit.append(f"Position file found for {animal}")
+                data.add_pos_file(animal, file)
+                continue
+            if file.lower().endswith((".jpg", ".jpeg", ".png", ".bmp")) and animal not in data.experiment_images:
+                line_edit.append(f"Image file found for {animal}")
+                data.add_image_file(animal, file)
+                continue
+            roi_match = get_roi.search(file)
+            if roi_match and animal not in data.roi_files:
+                line_edit.append(f"ROI file found for {animal}")
+                data.add_roi_file(animal, file)
+                continue
 
-        for bodypart in animal_list[exp_number].bodyparts:
-            animal_list[exp_number].add_bodypart(bodypart)
-        for bone in animal_list[exp_number].skeleton:
-            animal_list[exp_number].add_skeleton(bone)
+    for animal in unique_animals:
+        animal_object = Animal()
+        animal_object.name = animal
+        if animal in data.experiment_images:
+            animal_object.add_experiment_jpg(data.experiment_images[animal])
+        if animal in data.position_files:
+            animal_object.add_position_file(data.position_files[animal])
+        if animal in data.skeleton_files:
+            animal_object.add_skeleton_file(data.skeleton_files[animal])
+        animal_rois = [roi for roi in rois if animal in Path(roi).name]
+        animal_object.add_roi(animal_rois)
+        for bodypart in animal_object.bodyparts:
+            animal_object.add_bodypart(bodypart)
+        for bone in animal_object.skeleton:
+            animal_object.add_skeleton(bone)
+        animal_list.append(animal_object)
 
     return data_files
 
