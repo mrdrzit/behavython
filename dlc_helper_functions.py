@@ -1833,6 +1833,12 @@ def run_analysis(worker, self, text_signal=None, progress=None, warning_message=
     self.options = options
     self.options["save_folder"] = selected_folder_to_save
 
+    continue_analysis = check_analysis_files(self, selected_files, data, experiments)
+
+    if not continue_analysis:
+        self.analysis_failed = True
+        return
+
     results_data_frame = pd.DataFrame()
     for i, experiment in enumerate(experiments):
         analysis_results, data_frame = video_analyse(self, options, experiment)
@@ -1861,7 +1867,7 @@ def handle_results(results):
         - If an error occurs during the saving process, it prints "Error saving results".
     """
     if results[0] is None:
-        print("Done!")
+        pass
     else:
         try:
             results_data_frame, options = results[0]
@@ -4620,3 +4626,115 @@ def create_validation_video(self):
     writer = animation.FFMpegWriter(fps=30, codec="libx264", bitrate=2000)
     anime.save("validation_video.mp4", writer=writer, progress_callback=progress_callback)
     plt.close(fig)
+
+def check_analysis_files(self, selected_files=None, animal_data_object=None, experiments_list=None):
+    """
+    Check if the selected analysis files exists for each animal being analyzed.
+    It must contain the following files:
+
+    - A screenshot of each video, containing a frame of the video where there is only the animal and the background.
+    - One or more roi files, containing the roi of the container that usually stays at the center of the video.
+    - A filtered data file containing the filtered location data of the animal.
+    - A filtered skeleton file containing bone data of the animal.
+
+    Args:
+        selected_files (list): List of selected files to check.
+        animal_data_object (AnimalData): Animal data object containing information about the animals.
+        experiments_list (list): List of experiments to check.
+    
+    Returns:
+        bool: True if all files exist, False otherwise.
+    """
+
+    if any([selected_files is None, animal_data_object is None, experiments_list is None]):
+        raise ValueError("All parameters must be provided: selected_files, animal_data_object, experiments_list")
+    
+    animal_names = [animal.name for animal in experiments_list]
+    animal_with_missing_files = {name: [] for name in animal_names}
+    experiment_length = int(self.interface.task_duration_lineedit.text())
+    experiment_fps = int(self.interface.frames_per_second_lineedit.text())
+    experiment_length_in_frames = experiment_length * experiment_fps
+    analysis_type = self.interface.type_combobox.currentText().strip().lower()
+    
+    for animal in experiments_list:
+        animal_jpg = animal.animal_jpg
+        bodyparts = animal.bodyparts
+        name = animal.name
+        position_file = animal.position_file
+        rois = animal.rois
+        skeleton = animal.skeleton
+        skeleton_file = animal.skeleton_file
+
+        # Check if the animal_jpg image representation as 2d list exists
+        if (animal_jpg is None or not isinstance(animal_jpg, np.ndarray) or animal_jpg.size == 0):
+            animal_with_missing_files[name].append(f"Missing or invalid animal_jpg for {name}.")
+
+        if position_file:
+            bodypart_data_ok = True
+            for bodypart in bodyparts:
+                x_data = bodyparts[bodypart].get("x", [])
+                y_data = bodyparts[bodypart].get("y", [])
+                likelyhood_data = bodyparts[bodypart].get("likelihood", [])
+                if len(x_data) < experiment_length_in_frames or len(y_data) < experiment_length_in_frames or len(likelyhood_data) < experiment_length_in_frames:
+                    bodypart_data_ok = False
+                    
+            if not bodypart_data_ok:
+                animal_with_missing_files[name].append(f"Bodypart data for animal {name} is incomplete. Expected at least {experiment_length_in_frames} frames for all bodyparts.")
+        else:
+            animal_with_missing_files[name].append(f"Missing position file for bodyparts for animal {name}.")
+
+        if skeleton_file:
+            skeleton_data_ok = True
+            for skeleton_part in skeleton:
+                length_data = skeleton[skeleton_part].get("length", [])
+                orientation_data = skeleton[skeleton_part].get("orientation", [])
+                likelyhood_data = skeleton[skeleton_part].get("likelihood", [])
+                if len(length_data) < experiment_length_in_frames or len(orientation_data) < experiment_length_in_frames or len(likelyhood_data) < experiment_length_in_frames:
+                    skeleton_data_ok = False
+            if not skeleton_data_ok:
+                animal_with_missing_files[name].append(f"Skeleton data for animal {name} is incomplete. Expected at least {experiment_length_in_frames} frames for all skeleton parts.")
+        else:
+            animal_with_missing_files[name].append(f"Missing skeleton file for bodyparts for animal {name}.")
+
+        # Determine required ROI count
+        required_roi_count = 2 if analysis_type == "njr" else 1 if analysis_type == "social recognition" else 0
+
+        # Check how many valid ROI files exist
+        valid_roi_files = []
+        for roi_dict in rois:
+            roi_file = roi_dict.get("file")
+            if roi_file:
+                if check_roi_files(roi_file):
+                    valid_roi_files.append(roi_file)
+                else:
+                    animal_with_missing_files[name].append(
+                        f"Invalid ROI file: {roi_file}. Must be a valid .csv with columns [X, Y, Width, Height]."
+                    )
+
+        # Check if required number of valid ROIs is present
+        if len(valid_roi_files) < required_roi_count:
+            animal_with_missing_files[name].append(
+                f"Expected at least {required_roi_count} valid ROI file(s) for analysis type '{analysis_type}', but found {len(valid_roi_files)}."
+            )
+
+    animals_with_issues = {k: v for k, v in animal_with_missing_files.items() if v}
+
+    if animals_with_issues:
+        if platform.system() == "Windows":
+            os.system("cls")
+        else:
+            os.system("clear")
+
+        print("=" * 60)
+        print("*** Analysis Files Report ***")
+        print("=" * 60)
+        for animal, issues in animals_with_issues.items():
+            print(f"\nAnimal: {animal}")
+            print("-" * (8 + len(animal)))
+            for issue in issues:
+                print(f"  • {issue}")
+        print("\n" + "=" * 60)
+        print("Fix the above issues before continuing.\n")
+        return False
+
+    return True
