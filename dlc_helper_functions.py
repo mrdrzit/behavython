@@ -2714,7 +2714,7 @@ def get_crop_coordinates(worker, self, text_signal=None, progress=None, warning_
         self.crop_coordinates = coordinates
     return
 
-def crop_videos(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None):
+def crop_videos(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None, analysis_failed=None):
     """
     Crop videos based on the provided crop coordinates.
 
