@@ -1269,7 +1269,7 @@ def extract_skeleton_function(worker, self, text_signal=None, progress=None, war
             import deeplabcut
         else:
             deeplabcut = sys.modules["deeplabcut"]
-        text_signal.emit(("Using DeepLabCut version " + deeplabcut.__version__, "clear_unused_files_lineedit"))
+        text_signal.emit(("clear_unused_files_lineedit", "Using DeepLabCut version " + deeplabcut.__version__))
     config_path = self.interface.config_path_lineedit.text().replace('"', "").replace("'", "")
     analysis_folder = self.interface.video_folder_lineedit.text().replace('"', "").replace("'", "")
     analysis_status = get_analysis_report(analysis_folder)
