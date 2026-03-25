@@ -75,7 +75,7 @@ QTabBar::tab {
     height: 40px;
     padding: 0px;
     color: #FFFFFF;
-    font: 6pt &quot;DejaVu Sans&quot;;
+    font: 6pt &quot;Arial&quot;;
     font-weight: bold;
     margin-left: 2px;
     margin-right: 2px;
@@ -131,7 +131,7 @@ QTabBar::tab:selected {
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QComboBox{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QListView{color:#FFFFFF;font:8pt&quot;Century Gothic&quot;;font-weight:bold;background-color:#969696;border:0px;}QListView{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QComboBox::drop-down{width:20px;border:5px;}QComboBox::down-arrow{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #FFFFFF;width:0.5px;height:1px;border-radius:2px;}QComboBox::down-arrow:hover{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #A21F27;width:0.5px;height:1px;border-radius:2px;}QAbstractItemView{border:2px solid #969696;selection-background-color:#2C53A1;}</string>
+      <string notr="true">QComboBox{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QListView{color:#FFFFFF;font:8pt&quot;Century Gothic&quot;;font-weight:bold;background-color:#969696;border:0px;}QListView{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QComboBox::drop-down{width:20px;border:5px;}QComboBox::down-arrow{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #FFFFFF;width:0.5px;height:1px;border-radius:2px;}QComboBox::down-arrow:hover{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #A21F27;width:0.5px;height:1px;border-radius:2px;}QAbstractItemView{border:2px solid #969696;selection-background-color:#2C53A1;}</string>
      </property>
      <property name="currentText">
       <string notr="true">Social Recognition</string>
@@ -160,7 +160,7 @@ QTabBar::tab:selected {
       </rect>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{border:#969696;background-color:#2C53A1;border-radius:8px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{border:#969696;background-color:#2C53A1;border-radius:8px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">SETTINGS</string>
@@ -185,7 +185,7 @@ QTabBar::tab:selected {
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Arena width</string>
@@ -207,7 +207,7 @@ QTabBar::tab:selected {
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Arena height</string>
@@ -229,7 +229,7 @@ QTabBar::tab:selected {
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Task duration</string>
@@ -246,14 +246,14 @@ QTabBar::tab:selected {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>6</pointsize>
        <italic>false</italic>
        <bold>true</bold>
       </font>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{border:#969696;background-color:#2C53A1;border-radius:8px;color:#FFFFFF;font:6pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{border:#969696;background-color:#2C53A1;border-radius:8px;color:#FFFFFF;font:6pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Obs.: Hover the mouse over the attribute
@@ -273,7 +273,7 @@ to see the help text</string>
       </rect>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Frames per second</string>
@@ -295,7 +295,7 @@ to see the help text</string>
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">How much to trim</string>
@@ -311,7 +311,7 @@ to see the help text</string>
       </rect>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{border:#969696;background-color:#606060;border-bottom-right-radius:6px;border-top-right-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{border:#969696;background-color:#606060;border-bottom-right-radius:6px;border-top-right-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">cm</string>
@@ -330,7 +330,7 @@ to see the help text</string>
       </rect>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">30</string>
@@ -349,7 +349,7 @@ to see the help text</string>
       </rect>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
      </property>
      <property name="text">
       <string notr="true">300</string>
@@ -368,7 +368,7 @@ to see the help text</string>
       </rect>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{border:#969696;background-color:#606060;border-bottom-right-radius:6px;border-top-right-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{border:#969696;background-color:#606060;border-bottom-right-radius:6px;border-top-right-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">fps</string>
@@ -390,7 +390,7 @@ to see the help text</string>
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:14pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:10pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+      <string notr="true">QPushButton{font:14pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:10pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
      </property>
      <property name="text">
       <string notr="true">RESET</string>
@@ -412,7 +412,7 @@ to see the help text</string>
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Experiment type</string>
@@ -434,7 +434,7 @@ to see the help text</string>
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Analysis Engine</string>
@@ -450,7 +450,7 @@ to see the help text</string>
       </rect>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">30</string>
@@ -469,7 +469,7 @@ to see the help text</string>
       </rect>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{border:#969696;background-color:#606060;border-bottom-right-radius:6px;border-top-right-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{border:#969696;background-color:#606060;border-bottom-right-radius:6px;border-top-right-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">sec</string>
@@ -491,7 +491,7 @@ to see the help text</string>
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:14pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:10pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+      <string notr="true">QPushButton{font:14pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:10pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
      </property>
      <property name="text">
       <string notr="true">LOAD CONFIGURATION</string>
@@ -526,7 +526,7 @@ to see the help text</string>
       </rect>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{border:#969696;background-color:#606060;border-bottom-right-radius:6px;border-top-right-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{border:#969696;background-color:#606060;border-bottom-right-radius:6px;border-top-right-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">sec</string>
@@ -545,7 +545,7 @@ to see the help text</string>
       </rect>
      </property>
      <property name="styleSheet">
-      <string notr="true">QProgressBar { border: 2px solid #969696;border-radius:5px;text-align:center;color:#FFFFFF;font:10pt&quot;DejaVu Sans&quot;;font-weight:bold;}QProgressBar::chunk{background-color:#2C53A1;width:20px;}
+      <string notr="true">QProgressBar { border: 2px solid #969696;border-radius:5px;text-align:center;color:#FFFFFF;font:10pt&quot;Arial&quot;;font-weight:bold;}QProgressBar::chunk{background-color:#2C53A1;width:20px;}
 </string>
      </property>
      <property name="value">
@@ -562,7 +562,7 @@ to see the help text</string>
       </rect>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">30</string>
@@ -584,7 +584,7 @@ to see the help text</string>
       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Select the experimental animal used.&lt;/span&gt;&lt;/p&gt;&lt;p align=&quot;justify&quot;&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;Currently the calculations are being made considering these animals:&lt;br/&gt;Mouse = C57BL/6&lt;br/&gt;Rat = Wistar&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Experimental animal</string>
@@ -603,7 +603,7 @@ to see the help text</string>
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QComboBox{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QListView{color:#FFFFFF;font:8pt&quot;Century Gothic&quot;;font-weight:bold;background-color:#969696;border:0px;}QListView{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QComboBox::drop-down{width:20px;border:5px;}QComboBox::down-arrow{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #FFFFFF;width:0.5px;height:1px;border-radius:2px;}QComboBox::down-arrow:hover{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #A21F27;width:0.5px;height:1px;border-radius:2px;}QAbstractItemView{border:2px solid #969696;selection-background-color:#2C53A1;}</string>
+      <string notr="true">QComboBox{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QListView{color:#FFFFFF;font:8pt&quot;Century Gothic&quot;;font-weight:bold;background-color:#969696;border:0px;}QListView{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QComboBox::drop-down{width:20px;border:5px;}QComboBox::down-arrow{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #FFFFFF;width:0.5px;height:1px;border-radius:2px;}QComboBox::down-arrow:hover{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #A21F27;width:0.5px;height:1px;border-radius:2px;}QAbstractItemView{border:2px solid #969696;selection-background-color:#2C53A1;}</string>
      </property>
      <property name="currentText">
       <string notr="true">  DeepLabCut</string>
@@ -627,7 +627,7 @@ to see the help text</string>
       </rect>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{border:#969696;background-color:#606060;border-bottom-right-radius:6px;border-top-right-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{border:#969696;background-color:#606060;border-bottom-right-radius:6px;border-top-right-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">cm</string>
@@ -652,7 +652,7 @@ to see the help text</string>
       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Select the experimental animal used.&lt;/span&gt;&lt;/p&gt;&lt;p align=&quot;justify&quot;&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;Currently the calculations are being made considering these animals:&lt;br/&gt;Mouse = C57BL/6&lt;br/&gt;Rat = Wistar&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="styleSheet">
-      <string notr="true">QComboBox{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QListView{color:#FFFFFF;font:8pt&quot;Century Gothic&quot;;font-weight:bold;background-color:#969696;border:0px;}QListView{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QComboBox::drop-down{width:20px;border:5px;}QComboBox::down-arrow{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #FFFFFF;width:0.5px;height:1px;border-radius:2px;}QComboBox::down-arrow:hover{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #A21F27;width:0.5px;height:1px;border-radius:2px;}QAbstractItemView{border:2px solid #969696;selection-background-color:#2C53A1;}</string>
+      <string notr="true">QComboBox{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QListView{color:#FFFFFF;font:8pt&quot;Century Gothic&quot;;font-weight:bold;background-color:#969696;border:0px;}QListView{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QComboBox::drop-down{width:20px;border:5px;}QComboBox::down-arrow{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #FFFFFF;width:0.5px;height:1px;border-radius:2px;}QComboBox::down-arrow:hover{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #A21F27;width:0.5px;height:1px;border-radius:2px;}QAbstractItemView{border:2px solid #969696;selection-background-color:#2C53A1;}</string>
      </property>
      <property name="currentText">
       <string notr="true">     Mouse</string>
@@ -681,7 +681,7 @@ to see the help text</string>
       </rect>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
      </property>
      <property name="text">
       <string notr="true">0</string>
@@ -727,7 +727,7 @@ to see the help text</string>
       <bool>false</bool>
      </property>
      <property name="styleSheet">
-      <string notr="true">QComboBox{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QListView{color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;background-color:#969696;border:0px;}QListView{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QComboBox::drop-down{width:20px;border:5px;}QComboBox::down-arrow{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #FFFFFF;width:0.5px;height:1px;border-radius:2px;}QComboBox::down-arrow:hover{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #A21F27;width:0.5px;height:1px;border-radius:2px;}QAbstractItemView{border:2px solid #969696;selection-background-color:#2C53A1;}</string>
+      <string notr="true">QComboBox{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QListView{color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;background-color:#969696;border:0px;}QListView{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QComboBox::drop-down{width:20px;border:5px;}QComboBox::down-arrow{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #FFFFFF;width:0.5px;height:1px;border-radius:2px;}QComboBox::down-arrow:hover{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #A21F27;width:0.5px;height:1px;border-radius:2px;}QAbstractItemView{border:2px solid #969696;selection-background-color:#2C53A1;}</string>
      </property>
      <property name="currentText">
       <string notr="true">   1920 x 1080</string>
@@ -769,7 +769,7 @@ to see the help text</string>
       </rect>
      </property>
      <property name="styleSheet">
-      <string notr="true">QTextEdit{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold}
+      <string notr="true">QTextEdit{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold}
 QScrollBar:horizontal {
     background-color: #353535;
     height: 10px;
@@ -820,7 +820,7 @@ QScrollBar::sub-page:vertical {
       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Set the maximum resolution for the resulting figures computed.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;Note that, to maintain aspect ratio of the original file, the final resolution might have &amp;quot;uncommon&amp;quot; sizes and might not match 1:1 the maximum resolution set (if the original image also had &amp;quot;uncommon&amp;quot; resolution).&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Desired figure size</string>
@@ -842,7 +842,7 @@ QScrollBar::sub-page:vertical {
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:10pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:10pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+      <string notr="true">QPushButton{font:10pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:10pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
      </property>
      <property name="text">
       <string notr="true">ANALYZE</string>
@@ -920,7 +920,7 @@ QScrollBar::sub-page:vertical {
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}
+      <string notr="true">QPushButton{font:7pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}
 QPushButton:disabled {
     background-color: gray;
     color: white; /* Optional: change text color */
@@ -954,14 +954,14 @@ QPushButton:disabled {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>8</pointsize>
        <italic>false</italic>
        <bold>false</bold>
       </font>
      </property>
      <property name="styleSheet">
-      <string notr="true">QTextEdit{color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:light}
+      <string notr="true">QTextEdit{color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:light}
 QScrollBar:horizontal {
     background-color: #353535;
     height: 10px;
@@ -1027,7 +1027,7 @@ QScrollBar::sub-page:vertical {
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Extract skeleton data</string>
@@ -1043,7 +1043,7 @@ QScrollBar::sub-page:vertical {
       </rect>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{border:#969696;background-color:#2C53A1;border-radius:8px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{border:#969696;background-color:#2C53A1;border-radius:8px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">NETWORK SETTINGS</string>
@@ -1080,7 +1080,7 @@ QScrollBar::sub-page:vertical {
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:6pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:6pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Path to the config.yaml file </string>
@@ -1108,7 +1108,7 @@ QScrollBar::sub-page:vertical {
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
      </property>
      <property name="text">
       <string notr="true"/>
@@ -1157,7 +1157,7 @@ QScrollBar::sub-page:vertical {
       <bool>false</bool>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
      </property>
      <property name="text">
       <string notr="true"/>
@@ -1194,7 +1194,7 @@ QScrollBar::sub-page:vertical {
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}
+      <string notr="true">QPushButton{font:7pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}
 QPushButton:disabled {
     background-color: gray;
     color: white; /* Optional: change text color */
@@ -1234,14 +1234,14 @@ QPushButton:disabled {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>6</pointsize>
        <italic>false</italic>
        <bold>true</bold>
       </font>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:6pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:6pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Folder containing the videos to analyze</string>
@@ -1260,7 +1260,7 @@ QPushButton:disabled {
       </rect>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{border:#969696;background-color:#2C53A1;border-radius:8px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{border:#969696;background-color:#2C53A1;border-radius:8px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">DATA REFINING</string>
@@ -1297,7 +1297,7 @@ QPushButton:disabled {
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Get a frame from every video</string>
@@ -1337,7 +1337,7 @@ QPushButton:disabled {
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Check if the folder structure is correct</string>
@@ -1374,7 +1374,7 @@ QPushButton:disabled {
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Analyze videos using the network supplied</string>
@@ -1411,7 +1411,7 @@ QPushButton:disabled {
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Remove unnecessary files</string>
@@ -1433,7 +1433,7 @@ QPushButton:disabled {
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}
+      <string notr="true">QPushButton{font:7pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}
 QPushButton:disabled {
     background-color: gray;
     color: white; /* Optional: change text color */
@@ -1455,7 +1455,7 @@ QPushButton:disabled {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>8</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -1465,7 +1465,7 @@ QPushButton:disabled {
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:10pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+      <string notr="true">QPushButton{font:10pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
      </property>
      <property name="text">
       <string notr="true">GET FILE</string>
@@ -1494,7 +1494,7 @@ QPushButton:disabled {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>8</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -1504,7 +1504,7 @@ QPushButton:disabled {
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:6pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+      <string notr="true">QPushButton{font:6pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
      </property>
      <property name="text">
       <string notr="true">GET FOLDER</string>
@@ -1524,7 +1524,7 @@ QPushButton:disabled {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>8</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -1534,7 +1534,7 @@ QPushButton:disabled {
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}
+      <string notr="true">QPushButton{font:7pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}
 QPushButton:disabled {
     background-color: gray;
     color: white; /* Optional: change text color */
@@ -1561,7 +1561,7 @@ QPushButton:disabled {
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}
+      <string notr="true">QPushButton{font:7pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}
 QPushButton:disabled {
     background-color: gray;
     color: white; /* Optional: change text color */
@@ -1586,7 +1586,7 @@ QPushButton:disabled {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>6</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -1597,7 +1597,7 @@ QPushButton:disabled {
      </property>
      <property name="styleSheet">
       <string notr="true">QPushButton {
-	font: 6pt &quot;DejaVu Sans&quot;;
+	font: 6pt &quot;Arial&quot;;
 	font-weight: bold;
     border: 2px solid #a21f27;
     border-radius: 8px;
@@ -1636,7 +1636,7 @@ QPushButton:disabled {
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{border:#969696;background-color:#2C53A1;border-radius:8px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{border:#969696;background-color:#2C53A1;border-radius:8px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">ANALYZE FROM FILE</string>
@@ -1656,7 +1656,7 @@ QPushButton:disabled {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>8</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -1666,7 +1666,7 @@ QPushButton:disabled {
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:10pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+      <string notr="true">QPushButton{font:10pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
      </property>
      <property name="text">
       <string notr="true">GET FILE</string>
@@ -1700,7 +1700,7 @@ QPushButton:disabled {
       <bool>false</bool>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
      </property>
      <property name="text">
       <string notr="true"/>
@@ -1749,7 +1749,7 @@ QPushButton:disabled {
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:6pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:6pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Path to the txt file containing the paths</string>
@@ -1771,7 +1771,7 @@ QPushButton:disabled {
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
      </property>
      <property name="text">
       <string notr="true">4500</string>
@@ -1808,7 +1808,7 @@ QPushButton:disabled {
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Override frame extraction</string>
@@ -1853,7 +1853,7 @@ QPushButton:disabled {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>8</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -1863,7 +1863,7 @@ QPushButton:disabled {
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:10pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}
+      <string notr="true">QPushButton{font:10pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}
 QPushButton:disabled {
     background-color: gray;
     color: white; /* Optional: change text color */
@@ -1899,7 +1899,7 @@ QPushButton:disabled {
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
      </property>
      <property name="text">
       <string notr="true"/>
@@ -1949,7 +1949,7 @@ QPushButton:disabled {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>7</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -1961,7 +1961,7 @@ QPushButton:disabled {
     background-color:#2C53A1;
     border-radius:8px;
     color:#FFFFFF;
-    font:7pt&quot;DejaVu Sans&quot;;
+    font:7pt&quot;Arial&quot;;
     font-weight:bold;
 }
 </string>
@@ -2005,14 +2005,14 @@ QPushButton:disabled {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>7</pointsize>
        <italic>false</italic>
        <bold>true</bold>
       </font>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Folder with analyzed videos</string>
@@ -2037,7 +2037,7 @@ QPushButton:disabled {
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:10pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}
+      <string notr="true">QPushButton{font:10pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}
 QPushButton:disabled {
     background-color: gray;
     color: white; /* Optional: change text color */
@@ -2062,7 +2062,7 @@ QPushButton:disabled {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>6</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -2073,7 +2073,7 @@ QPushButton:disabled {
      </property>
      <property name="styleSheet">
       <string notr="true">QPushButton {
-	font: 6pt &quot;DejaVu Sans&quot;;
+	font: 6pt &quot;Arial&quot;;
 	font-weight: bold;
     border: 2px solid #a21f27;
     border-radius: 8px;
@@ -2110,7 +2110,7 @@ QPushButton:disabled {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>6</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -2121,7 +2121,7 @@ QPushButton:disabled {
      </property>
      <property name="styleSheet">
       <string notr="true">QPushButton {
-	font: 6pt &quot;DejaVu Sans&quot;;
+	font: 6pt &quot;Arial&quot;;
 	font-weight: bold;
     border: 2px solid #a21f27;
     border-radius: 8px;
@@ -2166,14 +2166,14 @@ QPushButton:disabled {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>8</pointsize>
        <italic>false</italic>
        <bold>false</bold>
       </font>
      </property>
      <property name="styleSheet">
-      <string notr="true">QTextEdit{color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:light}
+      <string notr="true">QTextEdit{color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:light}
 QScrollBar:horizontal {
     background-color: #353535;
     height: 10px;
@@ -2239,7 +2239,7 @@ QScrollBar::sub-page:vertical {
       <bool>false</bool>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
      </property>
      <property name="text">
       <string notr="true"/>
@@ -2289,14 +2289,14 @@ QScrollBar::sub-page:vertical {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>7</pointsize>
        <italic>false</italic>
        <bold>true</bold>
       </font>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Folder containing the frames to analyze</string>
@@ -2327,7 +2327,7 @@ QScrollBar::sub-page:vertical {
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
      </property>
      <property name="text">
       <string notr="true"/>
@@ -2385,7 +2385,7 @@ QScrollBar::sub-page:vertical {
       <bool>false</bool>
      </property>
      <property name="styleSheet">
-      <string notr="true">QComboBox{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QListView{color:#FFFFFF;font:8pt&quot;Century Gothic&quot;;font-weight:bold;background-color:#969696;border:0px;}QListView{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QComboBox::drop-down{width:20px;border:5px;}QComboBox::down-arrow{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #FFFFFF;width:0.5px;height:1px;border-radius:2px;}QComboBox::down-arrow:hover{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #A21F27;width:0.5px;height:1px;border-radius:2px;}QAbstractItemView{border:2px solid #969696;selection-background-color:#2C53A1;}</string>
+      <string notr="true">QComboBox{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QListView{color:#FFFFFF;font:8pt&quot;Century Gothic&quot;;font-weight:bold;background-color:#969696;border:0px;}QListView{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QComboBox::drop-down{width:20px;border:5px;}QComboBox::down-arrow{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #FFFFFF;width:0.5px;height:1px;border-radius:2px;}QComboBox::down-arrow:hover{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #A21F27;width:0.5px;height:1px;border-radius:2px;}QAbstractItemView{border:2px solid #969696;selection-background-color:#2C53A1;}</string>
      </property>
      <property name="currentText">
       <string notr="true">        .png</string>
@@ -2441,7 +2441,7 @@ QScrollBar::sub-page:vertical {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>7</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -2453,7 +2453,7 @@ QScrollBar::sub-page:vertical {
     background-color:#2C53A1;
     border-radius:8px;
     color:#FFFFFF;
-    font:7pt&quot;DejaVu Sans&quot;;
+    font:7pt&quot;Arial&quot;;
     font-weight:bold;
 }</string>
      </property>
@@ -2480,7 +2480,7 @@ QScrollBar::sub-page:vertical {
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:14pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+      <string notr="true">QPushButton{font:14pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
      </property>
      <property name="text">
       <string notr="true">ANALYZE FRAMES</string>
@@ -2497,7 +2497,7 @@ QScrollBar::sub-page:vertical {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>8</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -2506,7 +2506,7 @@ QScrollBar::sub-page:vertical {
      <property name="styleSheet">
       <string notr="true">QCheckBox{
      color:#FFFFFF;
-    font:8pt&quot;DejaVu Sans&quot;;
+    font:8pt&quot;Arial&quot;;
     font-weight:bold;
 }
 QCheckBox::indicator{
@@ -2553,14 +2553,14 @@ QCheckBox::indicator{
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>7</pointsize>
        <italic>false</italic>
        <bold>true</bold>
       </font>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">What is the extension of the frames?</string>
@@ -2597,7 +2597,7 @@ QCheckBox::indicator{
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Type here the scorer name to put in the csv files</string>
@@ -2635,7 +2635,7 @@ QCheckBox::indicator{
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>7</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -2647,7 +2647,7 @@ QCheckBox::indicator{
     background-color:#2C53A1;
     border-radius:8px;
     color:#FFFFFF;
-    font:7pt&quot;DejaVu Sans&quot;;
+    font:7pt&quot;Arial&quot;;
     font-weight:bold;
 }
 </string>
@@ -2677,7 +2677,7 @@ QCheckBox::indicator{
     background-color:#2C53A1;
     border-radius:8px;
     color:#FFFFFF;
-    font:7pt&quot;DejaVu Sans&quot;;
+    font:7pt&quot;Arial&quot;;
     font-weight:bold;
 }</string>
      </property>
@@ -2699,7 +2699,7 @@ QCheckBox::indicator{
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>8</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -2709,7 +2709,7 @@ QCheckBox::indicator{
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:10pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+      <string notr="true">QPushButton{font:10pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
      </property>
      <property name="text">
       <string notr="true">GET FILE</string>
@@ -2728,7 +2728,7 @@ QCheckBox::indicator{
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:14pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+      <string notr="true">QPushButton{font:14pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
      </property>
      <property name="text">
       <string notr="true">CONVERT CSV TO H5</string>
@@ -2745,7 +2745,7 @@ QCheckBox::indicator{
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>8</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -2755,7 +2755,7 @@ QCheckBox::indicator{
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:6pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+      <string notr="true">QPushButton{font:6pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
      </property>
      <property name="text">
       <string notr="true">GET FOLDER</string>
@@ -2783,7 +2783,7 @@ QCheckBox::indicator{
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
      </property>
      <property name="text">
       <string notr="true"/>
@@ -2832,7 +2832,7 @@ QCheckBox::indicator{
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Path to the config.yaml file </string>
@@ -2867,7 +2867,7 @@ QCheckBox::indicator{
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>7</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -2879,7 +2879,7 @@ QCheckBox::indicator{
     background-color:#2C53A1;
     border-radius:8px;
     color:#FFFFFF;
-    font:7pt&quot;DejaVu Sans&quot;;
+    font:7pt&quot;Arial&quot;;
     font-weight:bold;
 }
 </string>
@@ -2941,7 +2941,7 @@ QCheckBox::indicator{
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">By checking this box i confirm that i checked everything in the analysis tab before continuing with the analysis</string>
@@ -2964,7 +2964,7 @@ QCheckBox::indicator{
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>8</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -2974,7 +2974,7 @@ QCheckBox::indicator{
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:10pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}
+      <string notr="true">QPushButton{font:10pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}
 QPushButton:disabled {
     background-color: gray;
     color: white; /* Optional: change text color */
@@ -3013,7 +3013,7 @@ QPushButton:disabled {
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:6pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:6pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Get the path to analysis folder</string>
@@ -3047,7 +3047,7 @@ QPushButton:disabled {
       <bool>false</bool>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
      </property>
      <property name="text">
       <string notr="true"/>
@@ -3084,7 +3084,7 @@ QPushButton:disabled {
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:10pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}
+      <string notr="true">QPushButton{font:10pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}
 QPushButton:disabled {
     background-color: gray;
     color: white; /* Optional: change text color */
@@ -3124,14 +3124,14 @@ QPushButton:disabled {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>7</pointsize>
        <italic>false</italic>
        <bold>true</bold>
       </font>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Check this to create annotated frames</string>
@@ -3217,14 +3217,14 @@ QPushButton:disabled {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>7</pointsize>
        <italic>false</italic>
        <bold>true</bold>
       </font>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Extract frames from video (no frames in folder)</string>
@@ -3265,14 +3265,14 @@ QPushButton:disabled {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>7</pointsize>
        <italic>false</italic>
        <bold>true</bold>
       </font>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">If selected to extract frames, how many?</string>
@@ -3306,7 +3306,7 @@ QPushButton:disabled {
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
      </property>
      <property name="text">
       <string notr="true"/>
@@ -3349,7 +3349,7 @@ QPushButton:disabled {
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
      </property>
      <property name="text">
       <string notr="true"/>
@@ -3381,7 +3381,7 @@ QPushButton:disabled {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>8</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -3391,7 +3391,7 @@ QPushButton:disabled {
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:6pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+      <string notr="true">QPushButton{font:6pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
      </property>
      <property name="text">
       <string notr="true">GET FOLDER</string>
@@ -3419,7 +3419,7 @@ QPushButton:disabled {
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
      </property>
      <property name="text">
       <string notr="true"/>
@@ -3451,7 +3451,7 @@ QPushButton:disabled {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>8</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -3461,7 +3461,7 @@ QPushButton:disabled {
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:6pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+      <string notr="true">QPushButton{font:6pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
      </property>
      <property name="text">
       <string notr="true">GET FOLDER</string>
@@ -3480,7 +3480,7 @@ QPushButton:disabled {
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:14pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+      <string notr="true">QPushButton{font:14pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
      </property>
      <property name="text">
       <string notr="true">MERGE DATA</string>
@@ -3508,7 +3508,7 @@ QPushButton:disabled {
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
      </property>
      <property name="text">
       <string notr="true"/>
@@ -3540,7 +3540,7 @@ QPushButton:disabled {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>8</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -3550,7 +3550,7 @@ QPushButton:disabled {
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:6pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+      <string notr="true">QPushButton{font:6pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
      </property>
      <property name="text">
       <string notr="true">GET FOLDER</string>
@@ -3627,14 +3627,14 @@ QPushButton:disabled {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>7</pointsize>
        <italic>false</italic>
        <bold>true</bold>
       </font>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Source folder</string>
@@ -3654,7 +3654,7 @@ QPushButton:disabled {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>8</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -3664,7 +3664,7 @@ QPushButton:disabled {
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:6pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+      <string notr="true">QPushButton{font:6pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
      </property>
      <property name="text">
       <string notr="true">GET FOLDER</string>
@@ -3693,14 +3693,14 @@ QPushButton:disabled {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>8</pointsize>
        <italic>false</italic>
        <bold>false</bold>
       </font>
      </property>
      <property name="styleSheet">
-      <string notr="true">QTextEdit{color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:light}
+      <string notr="true">QTextEdit{color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:light}
 QScrollBar:horizontal {
     background-color: #353535;
     height: 10px;
@@ -3751,7 +3751,7 @@ QScrollBar::sub-page:vertical {
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:14pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+      <string notr="true">QPushButton{font:14pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
      </property>
      <property name="text">
       <string notr="true">GET COORDINATES</string>
@@ -3786,7 +3786,7 @@ QScrollBar::sub-page:vertical {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>7</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -3798,7 +3798,7 @@ QScrollBar::sub-page:vertical {
     background-color:#2C53A1;
     border-radius:8px;
     color:#FFFFFF;
-    font:7pt&quot;DejaVu Sans&quot;;
+    font:7pt&quot;Arial&quot;;
     font-weight:bold;
 }
 </string>
@@ -3842,14 +3842,14 @@ QScrollBar::sub-page:vertical {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>7</pointsize>
        <italic>false</italic>
        <bold>true</bold>
       </font>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Folder containing the frames to analyze</string>
@@ -3883,7 +3883,7 @@ QScrollBar::sub-page:vertical {
       <string>&quot;Enter the file extensions to exclude separated by commas. For example: .txt,.log,.bak&quot;</string>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
      </property>
      <property name="text">
       <string notr="true"/>
@@ -3917,7 +3917,7 @@ QScrollBar::sub-page:vertical {
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:14pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+      <string notr="true">QPushButton{font:14pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
      </property>
      <property name="text">
       <string notr="true">SAVE TO FILE</string>
@@ -3936,7 +3936,7 @@ QScrollBar::sub-page:vertical {
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:14pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+      <string notr="true">QPushButton{font:14pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
      </property>
      <property name="text">
       <string notr="true">COPY FOLDER</string>
@@ -3964,7 +3964,7 @@ QScrollBar::sub-page:vertical {
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
      </property>
      <property name="text">
       <string notr="true"/>
@@ -3996,7 +3996,7 @@ QScrollBar::sub-page:vertical {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>8</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -4006,7 +4006,7 @@ QScrollBar::sub-page:vertical {
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:6pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+      <string notr="true">QPushButton{font:6pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
      </property>
      <property name="text">
       <string notr="true">GET FOLDER</string>
@@ -4034,7 +4034,7 @@ QScrollBar::sub-page:vertical {
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
      </property>
      <property name="text">
       <string notr="true"/>
@@ -4077,7 +4077,7 @@ QScrollBar::sub-page:vertical {
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
      </property>
      <property name="text">
       <string notr="true"/>
@@ -4111,7 +4111,7 @@ QScrollBar::sub-page:vertical {
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:14pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+      <string notr="true">QPushButton{font:14pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
      </property>
      <property name="text">
       <string notr="true">CROP VIDEOS</string>
@@ -4146,14 +4146,14 @@ QScrollBar::sub-page:vertical {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>7</pointsize>
        <italic>false</italic>
        <bold>true</bold>
       </font>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Destination Folder</string>
@@ -4191,7 +4191,7 @@ QScrollBar::sub-page:vertical {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>7</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -4203,7 +4203,7 @@ QScrollBar::sub-page:vertical {
     background-color:#2C53A1;
     border-radius:8px;
     color:#FFFFFF;
-    font:7pt&quot;DejaVu Sans&quot;;
+    font:7pt&quot;Arial&quot;;
     font-weight:bold;
 }
 </string>
@@ -4229,7 +4229,7 @@ QScrollBar::sub-page:vertical {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>8</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -4239,7 +4239,7 @@ QScrollBar::sub-page:vertical {
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:6pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+      <string notr="true">QPushButton{font:6pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
      </property>
      <property name="text">
       <string notr="true">GET FOLDER</string>
@@ -4256,7 +4256,7 @@ QScrollBar::sub-page:vertical {
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>8</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -4265,7 +4265,7 @@ QScrollBar::sub-page:vertical {
      <property name="styleSheet">
       <string notr="true">QCheckBox{
      color:#FFFFFF;
-    font:8pt&quot;DejaVu Sans&quot;;
+    font:8pt&quot;Arial&quot;;
     font-weight:bold;
 }
 QCheckBox::indicator{
@@ -4312,7 +4312,7 @@ QCheckBox::indicator{
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>7</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -4324,7 +4324,7 @@ QCheckBox::indicator{
     background-color:#2C53A1;
     border-radius:8px;
     color:#FFFFFF;
-    font:7pt&quot;DejaVu Sans&quot;;
+    font:7pt&quot;Arial&quot;;
     font-weight:bold;
 }
 </string>
@@ -4350,7 +4350,7 @@ QCheckBox::indicator{
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>8</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -4360,7 +4360,7 @@ QCheckBox::indicator{
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:6pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+      <string notr="true">QPushButton{font:6pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
      </property>
      <property name="text">
       <string notr="true">GET FOLDER</string>
@@ -4388,7 +4388,7 @@ QCheckBox::indicator{
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
      </property>
      <property name="text">
       <string notr="true"/>
@@ -4438,14 +4438,14 @@ QCheckBox::indicator{
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>7</pointsize>
        <italic>false</italic>
        <bold>true</bold>
       </font>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;}</string>
+      <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
       <string notr="true">Folder with analyzed data</string>
@@ -4467,7 +4467,7 @@ QCheckBox::indicator{
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:14pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+      <string notr="true">QPushButton{font:14pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
      </property>
      <property name="text">
       <string notr="true">CREATE ROI AUTOMATICALLY</string>
@@ -4484,7 +4484,7 @@ QCheckBox::indicator{
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>8</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -4493,7 +4493,7 @@ QCheckBox::indicator{
      <property name="styleSheet">
       <string notr="true">QCheckBox{
      color:#FFFFFF;
-    font:8pt&quot;DejaVu Sans&quot;;
+    font:8pt&quot;Arial&quot;;
     font-weight:bold;
 }
 QCheckBox::indicator{
@@ -4522,7 +4522,7 @@ QCheckBox::indicator{
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>8</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -4531,7 +4531,7 @@ QCheckBox::indicator{
      <property name="styleSheet">
       <string notr="true">QCheckBox{
      color:#FFFFFF;
-    font:8pt&quot;DejaVu Sans&quot;;
+    font:8pt&quot;Arial&quot;;
     font-weight:bold;
 }
 QCheckBox::indicator{
@@ -4574,7 +4574,7 @@ QCheckBox::indicator{
       <string>&quot;Enter the file extensions to include separated by commas. For example: .txt,.log,.bak&quot;</string>
      </property>
      <property name="styleSheet">
-      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;DejaVu Sans&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+      <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
      </property>
      <property name="text">
       <string notr="true"/>
@@ -4624,7 +4624,7 @@ QCheckBox::indicator{
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans</family>
+       <family>Arial</family>
        <pointsize>7</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -4636,7 +4636,7 @@ QCheckBox::indicator{
     background-color:#2C53A1;
     border-radius:8px;
     color:#FFFFFF;
-    font:7pt&quot;DejaVu Sans&quot;;
+    font:7pt&quot;Arial&quot;;
     font-weight:bold;
 }
 </string>
@@ -4664,7 +4664,7 @@ QCheckBox::indicator{
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:14pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;DejaVu Sans&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+      <string notr="true">QPushButton{font:14pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
      </property>
      <property name="text">
       <string notr="true">CREATE VALIDATION VIDEO</string>

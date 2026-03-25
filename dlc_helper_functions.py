@@ -4,6 +4,7 @@ import json
 import logging
 import math
 import os
+import pickle
 import random
 import re
 import shutil
@@ -14,7 +15,6 @@ import traceback
 import warnings
 import sys
 import itertools as it
-from pathlib import Path
 
 # Data processing and visualization
 import cv2
@@ -1835,12 +1835,21 @@ def run_analysis(worker, self, text_signal=None, progress=None, warning_message=
         return
 
     results_data_frame = pd.DataFrame()
+    raw_analysis_data = {}
+
     for i, experiment in enumerate(experiments):
         analysis_results, data_frame = video_analyse(self, options, experiment)
+        raw_analysis_data[experiment.name] = analysis_results
         results_data_frame = results_data_frame.join(data_frame) if not results_data_frame.empty else data_frame
         progress.emit(round(((i + 1) / len(experiments)) * 100))
         if options["plot_options"] == "plotting_enabled":
             plot_analysis_social_behavior(experiment, analysis_results, options)
+    
+    # Export pickle file with raw analysis data
+    line_edit.append("Saving raw analysis data...")
+    with open(os.path.join(selected_folder_to_save, "raw_analysis_data.pkl"), "wb") as f:
+        pickle.dump(raw_analysis_data, f)
+
     return results_data_frame, options
 
 def handle_results(results):
@@ -2161,9 +2170,13 @@ def video_analyse(self, options, animal=None):
         animal = Animal()
         results, df = video_analyse(options, animal)
     """
-
+    if self.debug_mode:
+        import debugpy
+        debugpy.debug_this_thread()
     if options["algo_type"] == "deeplabcut":
         collision_data = []
+        prev_distances = {}
+        state_counter = {}
         dimensions = animal.exp_dimensions()
         focinho_x = animal.bodyparts["focinho"]["x"]
         focinho_y = animal.bodyparts["focinho"]["y"]
@@ -2238,19 +2251,54 @@ def video_analyse(self, options, animal=None):
 
             # Calculate the collisions between the ROI and the mice's nose
             for ii in range(number_of_filled_rois):
+
+                # Gaze vector (P -> Q)
+                v_gaze = np.array(Q) - np.array(P)
+
+                # Target vector (nose -> ROI)
+                T = np.array([roi_X[ii], roi_Y[ii]])
+                v_target = T - A
+
+                # Normalize
+                v_gaze_n = v_gaze / np.linalg.norm(v_gaze)
+                v_target_n = v_target / np.linalg.norm(v_target)
+
+                # Angle (degrees)
+                cos_theta = np.clip(np.dot(v_gaze_n, v_target_n), -1.0, 1.0)
+                angle_deg = np.degrees(np.arccos(cos_theta))
+
+                # Distance to ROI center
+                distance = np.linalg.norm(v_target)
+
+                # Store distances per ROI
+                prev_distance = prev_distances.get(ii, None)
+                prev_distances[ii] = distance
+
+                state = "neutral"
+
+                if angle_deg <= 90:
+                    if prev_distance is not None and distance < prev_distance:
+                        state = "approaching"
+                    else:
+                        state = "looking"
+                else:
+                    if prev_distance is not None and distance > prev_distance:
+                        state = "retreating"
+                
+
                 collision = detect_collision([Q[0], Q[1]], [P[0], P[1]], [roi_X[ii], roi_Y[ii]], roi_D[ii] / 2)
                 if collision:
-                    collision_data.append([1, collision, mice_head_area, roi_NAME[ii]])
+                    collision_data.append([1, collision, mice_head_area, roi_NAME[ii], state, angle_deg, distance, i])
                 else:
-                    collision_data.append([0, None, mice_head_area, None])
+                    collision_data.append([0, None, mice_head_area, None, "no interaction", angle_deg, distance, i])
 
         # ----------------------------------------------------------------------------------------------------------
         corrected_runtime_last_frame = runtime[-1] + 1
         corrected_first_frame = runtime[1] - 1
         ANALYSIS_RANGE = [corrected_first_frame, corrected_runtime_last_frame]
         # ----------------------------------------------------------------------------------------------------------
-        collisions = pd.DataFrame(collision_data)
-        xy_data = collisions[1].dropna()
+        collisions = pd.DataFrame(collision_data, columns=["collision_flag", "collision_pos", "head_area", "roi_name", "interaction_state", "angle_to_roi", "distance_to_roi", "frame"])
+        xy_data = collisions["collision_pos"].dropna()
 
         # The following line substitutes these lines:
         #   t = xy_data.to_list()
@@ -2270,13 +2318,13 @@ def video_analyse(self, options, animal=None):
         # ----------------------------------------------------------------------------------------------------------
 
         # Calculate the total exploration time
-        exploration_mask = collisions[0] > 0
+        exploration_mask = collisions["collision_flag"] > 0
         exploration_mask = exploration_mask.astype(int)
         exploration_time = np.sum(exploration_mask) * (1 / frames_per_second)
 
         # Calculate the total exploration time in each ROI
-        filtered_mask_right = collisions[collisions.iloc[:, -1].fillna("").str.contains("roiR")]
-        filtered_mask_left = collisions[collisions.iloc[:, -1].fillna("").str.contains("roiL")]
+        filtered_mask_right = collisions[collisions["roi_name"].fillna("").str.contains("roiR")]
+        filtered_mask_left = collisions[collisions["roi_name"].fillna("").str.contains("roiL")]
         count_right = len(filtered_mask_right)
         count_left = len(filtered_mask_left)
         exploration_time_right = count_right * (1 / frames_per_second)
@@ -2350,6 +2398,7 @@ def video_analyse(self, options, animal=None):
         analysis_results = {
             "y_pos_data": y_axe,
             "x_pos_data": x_axe,
+            "raw_collision_data": collisions,
             "x_collision_data": x_collision_data,
             "y_collision_data": y_collision_data,
             "exploration_time": exploration_time,
