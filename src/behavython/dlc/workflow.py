@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import subprocess
 import shutil
+import logging
 from pathlib import Path
 from behavython.dlc.models import (
     DLCClearUnusedFilesRequest,
@@ -12,6 +13,11 @@ from behavython.dlc.models import (
 )
 from behavython.dlc.validation import validate_config_path, validate_video_paths
 from behavython.services.deeplabcut_service import load_deeplabcut, prepare_dlc_config
+from behavython.services.app_logging import capture_external_output
+
+app_logger = logging.getLogger("behavython")
+dlc_logger = logging.getLogger("behavython.dlc")
+console_logger = logging.getLogger("behavython.console")
 
 
 def _emit_config_repair_logs(original_path: str, usable_path: str, was_repaired: bool, log) -> None:
@@ -31,6 +37,15 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
     if errors:
         raise ValueError("\n".join(errors))
 
+    dlc_logger.info(
+        "Deeplabcut video analysis started for %d video(s). config=%s",
+        len(request.video_paths),
+        request.config_path,
+    )
+
+    if progress:
+        progress.emit(20)
+    
     _, usable_config_path, was_repaired = prepare_dlc_config(request.config_path)
     _emit_config_repair_logs(request.config_path, usable_config_path, was_repaired, log)
 
@@ -43,42 +58,65 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
 
     if log:
         log.emit("dlc", "Analyzing videos...")
-    deeplabcut.analyze_videos(
-        usable_config_path,
-        request.video_paths,
-        videotype=extension,
-        shuffle=1,
-        trainingsetindex=0,
-        gputouse=0,
-        allow_growth=True,
-        save_as_csv=True,
-    )
+    dlc_logger.info("Calling deeplabcut.analyze_videos")
+
+    if progress:
+        progress.emit(40)
+
+    console_logger.info("Starting video analysis with DeepLabCut for %d video(s)", len(request.video_paths))
+    with capture_external_output("behavython.external"):
+        deeplabcut.analyze_videos(
+            usable_config_path,
+            request.video_paths,
+            videotype=extension,
+            shuffle=1,
+            trainingsetindex=0,
+            gputouse=0,
+            allow_growth=True,
+            save_as_csv=True,
+        )
 
     if log:
         log.emit("dlc", "Filtering predictions...")
-    deeplabcut.filterpredictions(
-        usable_config_path,
-        request.video_paths,
-        videotype=extension,
-        shuffle=1,
-        trainingsetindex=0,
-        filtertype="median",
-        save_as_csv=True,
-    )
+    dlc_logger.info("Calling deeplabcut.filterpredictions")
+
+    if progress:
+        progress.emit(60)
+
+    console_logger.info(f"\nFiltering predictions with DeepLabCut for {len(request.video_paths)} video(s)")
+    with capture_external_output("behavython.external"):
+        deeplabcut.filterpredictions(
+            usable_config_path,
+            request.video_paths,
+            videotype=extension,
+            shuffle=1,
+            trainingsetindex=0,
+            filtertype="median",
+            save_as_csv=True,
+        )
 
     if request.create_plots:
         if log:
             log.emit("dlc", "Generating trajectory plots...")
-        deeplabcut.plot_trajectories(
-            usable_config_path,
-            request.video_paths,
-            videotype=extension,
-            showfigures=False,
-            filtered=True,
-        )
+        dlc_logger.info("Calling deeplabcut.plot_trajectories")
+
+        if progress:
+            progress.emit(80)
+
+        console_logger.info("Generating trajectory plots with DeepLabCut for %d video(s)", len(request.video_paths))
+        with capture_external_output("behavython.external"):
+            deeplabcut.plot_trajectories(
+                usable_config_path,
+                request.video_paths,
+                videotype=extension,
+                showfigures=False,
+                filtered=True,
+            )
 
     if progress:
         progress.emit(100)
+
+    dlc_logger.info("run_dlc_video_analysis finished successfully")
 
     return {
         "kind": "dlc_analysis",
@@ -93,6 +131,12 @@ def run_extract_skeleton(request: DLCSkeletonExtractionRequest, progress=None, l
     if errors:
         raise ValueError("\n".join(errors))
 
+    dlc_logger.info(
+        "Skeleton extraction started for %d video(s). config=%s",
+        len(request.video_paths),
+        request.config_path,
+    )
+
     _, usable_config_path, was_repaired = prepare_dlc_config(request.config_path)
     _emit_config_repair_logs(request.config_path, usable_config_path, was_repaired, log)
 
@@ -104,26 +148,30 @@ def run_extract_skeleton(request: DLCSkeletonExtractionRequest, progress=None, l
         log.emit("dlc", "Extracting skeleton...")
 
     for index, video in enumerate(request.video_paths, start=1):
-        deeplabcut.filterpredictions(
-            usable_config_path,
-            video,
-            videotype=extension,
-            shuffle=1,
-            trainingsetindex=0,
-            filtertype="median",
-            save_as_csv=True,
-        )
-        deeplabcut.analyzeskeleton(
-            usable_config_path,
-            video,
-            shuffle=1,
-            trainingsetindex=0,
-            filtered=True,
-            save_as_csv=True,
-        )
+        console_logger.info("Extracting skeleton for video %d/%d: %s", index, len(request.video_paths), video)
+        with capture_external_output("behavython.external"):
+            deeplabcut.filterpredictions(
+                usable_config_path,
+                video,
+                videotype=extension,
+                shuffle=1,
+                trainingsetindex=0,
+                filtertype="median",
+                save_as_csv=True,
+            )
+            deeplabcut.analyzeskeleton(
+                usable_config_path,
+                video,
+                shuffle=1,
+                trainingsetindex=0,
+                filtered=True,
+                save_as_csv=True,
+            )
 
         if progress:
             progress.emit(round((index / len(request.video_paths)) * 100))
+
+    dlc_logger.info("run_extract_skeleton finished successfully")
 
     return {
         "kind": "dlc_skeleton",

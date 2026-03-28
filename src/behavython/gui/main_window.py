@@ -2,9 +2,7 @@ from __future__ import annotations
 
 import os
 import logging
-
 from PySide6.QtWidgets import QWidget
-
 from behavython.analysis.models import analysis_options, analysis_request
 from behavython.analysis.validation import validate_analysis_request
 from behavython.analysis.workflow import run_analysis_workflow
@@ -48,6 +46,7 @@ class BehavythonMainWindow(QWidget):
         self.progress_bar = self.interface.progress_bar
         self.logs = LoggingService(self.interface)
         self.logger = logging.getLogger("behavython")
+        self.console_logger = logging.getLogger("behavython.console")
 
         self.runner = TaskRunner(
             threadpool=self.context.threadpool,
@@ -116,7 +115,8 @@ class BehavythonMainWindow(QWidget):
             return
 
         if not validate_json_config(path):
-            self.logger.warning("Invalid configuration file selected: %s", path)
+            self.logger.info("Invalid configuration file selected: %s", path)
+            
             show_warning(self.interface, "Configuration file", "The selected file is not a valid JSON configuration.")
             return
 
@@ -192,7 +192,7 @@ class BehavythonMainWindow(QWidget):
 
         errors = validate_analysis_request(request)
         if errors:
-            self.logger.warning("Analysis request validation failed: %s", "; ".join(errors))
+            self.logger.info("Analysis request validation failed: %s", "; ".join(errors))
             show_warning(self.interface, "Analysis validation", "\n".join(errors))
             return
 
@@ -279,7 +279,7 @@ class BehavythonMainWindow(QWidget):
             self.logs.append("dlc", message)
 
         if not ok:
-            self.logger.warning("DLC folder structure check failed: %s", " | ".join(messages))
+            self.logger.info("DLC folder structure check failed: %s", " | ".join(messages))
             show_warning(self.interface, "Folder structure", "\n".join(messages))
         else:
             self.logger.info("DLC folder structure check passed for config: %s", config_path)
@@ -347,7 +347,7 @@ class BehavythonMainWindow(QWidget):
         errors = validate_config_path(config_path) + validate_video_paths(resolved_video_input.paths)
 
         if errors:
-            self.logger.warning("DLC validation failed: %s", "; ".join(errors))
+            self.logger.info("DLC validation failed: %s", "; ".join(errors))
             show_warning(self.interface, "DLC validation", "\n".join(errors))
             return
 
@@ -381,7 +381,7 @@ class BehavythonMainWindow(QWidget):
         errors = validate_config_path(config_path) + validate_video_paths(resolved_video_input.paths)
 
         if errors:
-            self.logger.warning("Skeleton extraction validation failed: %s", "; ".join(errors))
+            self.logger.info("Skeleton extraction validation failed: %s", "; ".join(errors))
             show_warning(self.interface, "Skeleton validation", "\n".join(errors))
             return
 
@@ -407,7 +407,7 @@ class BehavythonMainWindow(QWidget):
     def _run_get_frames(self, resolved_video_input: ResolvedVideoInput) -> None:
         errors = validate_video_paths(resolved_video_input.paths)
         if errors:
-            self.logger.warning("Frame extraction validation failed: %s", "; ".join(errors))
+            self.logger.info("Frame extraction validation failed: %s", "; ".join(errors))
             show_warning(self.interface, "Frame extraction validation", "\n".join(errors))
             return
 
@@ -494,7 +494,6 @@ class BehavythonMainWindow(QWidget):
                 )
             else:
                 missing_text = "\n".join(result["missingFiles"])
-                self.logger.warning("Cleanup found missing required files: %s", "; ".join(result["missingFiles"]))
                 show_warning(
                     self.interface,
                     "Missing files",

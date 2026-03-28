@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -7,6 +8,9 @@ from behavython.services.yaml_repair_service import load_or_repair_dlc_yaml
 
 
 def load_deeplabcut():
+    os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
+    os.environ.setdefault("MPLBACKEND", "Agg")
+
     if "deeplabcut" not in sys.modules:
         import deeplabcut  # type: ignore
     else:

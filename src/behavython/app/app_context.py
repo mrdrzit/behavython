@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from PySide6.QtCore import QThreadPool
 from behavython.config.paths import DATA_ROOT, RUNTIME_ROOT
-from behavython.services.app_logging import AppLoggingService
+from behavython.services.app_logging import AppLoggingService, register_logging_service
 from behavython.services.runtime_storage import RuntimeStorage, RuntimeStorageConfig
 
 
@@ -22,4 +22,6 @@ class AppContext:
                 keep_last_sessions=10,
             ),
         )
+
         self.app_logging = AppLoggingService(self.runtime_storage)
+        register_logging_service(self.app_logging)
