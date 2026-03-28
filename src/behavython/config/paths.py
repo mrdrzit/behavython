@@ -1,0 +1,25 @@
+from pathlib import Path
+
+PACKAGE_ROOT = Path(__file__).resolve().parent.parent
+APP_ROOT = PACKAGE_ROOT / "app"
+GUI_ROOT = PACKAGE_ROOT / "gui"
+CONFIG_ROOT = PACKAGE_ROOT / "config"
+
+GUI_RESOURCES_ROOT = GUI_ROOT / "resources"
+GUI_IMAGES_ROOT = GUI_RESOURCES_ROOT / "images"
+GUI_UI_ROOT = GUI_RESOURCES_ROOT / "ui"
+
+UI_FILE = GUI_UI_ROOT / "behavython_gui.ui"
+
+LOGO_PATH = GUI_IMAGES_ROOT / "logo.png"
+ICON_PATH = GUI_IMAGES_ROOT / "VY.ico"
+
+FFMPEG_DIR = PACKAGE_ROOT / "ffmpeg"
+FFMPEG_BIN_DIR = FFMPEG_DIR / "bin"
+
+RUNTIME_ROOT = PACKAGE_ROOT / "runtime"
+DATA_ROOT = PACKAGE_ROOT / "data"
+
+DATA_LOGS_ROOT = DATA_ROOT / "logs"
+DATA_HISTORY_ROOT = DATA_ROOT / "history"
+DATA_CACHE_ROOT = DATA_ROOT / "cache"

@@ -1,0 +1,22 @@
+DEFAULT_ARENA_WIDTH = 30
+DEFAULT_ARENA_HEIGHT = 30
+DEFAULT_FRAMES_PER_SECOND = 30
+DEFAULT_TASK_DURATION_SECONDS = 300
+DEFAULT_TRIM_AMOUNT_SECONDS = 0
+
+DEFAULT_PLOT_ENABLED = True
+DEFAULT_CROP_VIDEO = False
+
+DEFAULT_EXPERIMENT_TYPE_INDEX = 0
+DEFAULT_ALGO_TYPE_INDEX = 0
+DEFAULT_ANIMAL_INDEX = 0
+DEFAULT_FIG_MAX_SIZE_INDEX = 1
+
+ANALYSIS_REQUIRED_SUFFIXES = {
+    "image": (".jpg", ".jpeg", ".png", ".bmp", ".tiff"),
+    "position": ("filtered.csv",),
+    "skeleton": ("filtered_skeleton.csv",),
+    "roi": ("_roi.csv",),
+}
+
+VALID_VIDEO_EXTENSIONS = (".mp4", ".avi", ".mov")
