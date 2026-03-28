@@ -82,9 +82,6 @@ class BehavythonMainWindow(QWidget):
         self.enable_analysis()
         self.toggle_analyze_from_file_button()
 
-        if hasattr(self.interface, "enable_debugging_mode_checkbox"):
-            self.toggle_debug_mode()
-
     def _set_gui_log_message(self, target: str, message: str) -> None:
         self.logs.clear(target)
         if message:
