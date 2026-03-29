@@ -27,7 +27,7 @@ def _group_files_by_animal(paths: list[str]) -> dict[str, list[str]]:
     return dict(grouped)
 
 
-def run_analysis_workflow(request: analysis_request, progress=None, log=None):
+def run_analysis_workflow(request: analysis_request, progress=None, log=None, warning=None) -> dict:
     errors = validate_analysis_request(request)
     if errors:
         raise ValueError("\n".join(errors))

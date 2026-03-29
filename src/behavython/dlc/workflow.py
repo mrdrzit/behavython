@@ -300,38 +300,38 @@ def check_dlc_folder_structure(config_path: str) -> tuple[bool, list[str]]:
     messages.append("The folder structure is correct.")
     return True, messages
 
-def _get_required_files_status(folderPath: Path, taskType: str) -> tuple[dict[str, bool], list[str]]:
-    fileNames = [path.name for path in folderPath.iterdir() if path.is_file()]
-    lowerNames = [name.lower() for name in fileNames]
+def _get_required_files_status(folder_path: Path, task_type: str) -> tuple[dict[str, bool], list[str]]:
+    file_names = [path.name for path in folder_path.iterdir() if path.is_file()]
+    lower_names = [name.lower() for name in file_names]
 
     status = {
-        "hasFilteredCsv": any(name.endswith("filtered.csv") and not name.endswith("filtered_skeleton.csv") for name in lowerNames),
-        "hasSkeletonFilteredCsv": any(name.endswith("filtered_skeleton.csv") for name in lowerNames),
-        "hasImageFile": any(name.endswith((".png", ".jpg", ".jpeg", ".tiff", ".bmp")) for name in lowerNames),
-        "hasRoiFile": any(name.endswith("roi.csv") for name in lowerNames),
-        "hasLeftRoiFile": any(name.endswith("roil.csv") for name in lowerNames),
-        "hasRightRoiFile": any(name.endswith("roir.csv") for name in lowerNames),
+        "hasFilteredCsv": any(name.endswith("filtered.csv") and not name.endswith("filtered_skeleton.csv") for name in lower_names),
+        "hasSkeletonFilteredCsv": any(name.endswith("filtered_skeleton.csv") for name in lower_names),
+        "hasImageFile": any(name.endswith((".png", ".jpg", ".jpeg", ".tiff", ".bmp")) for name in lower_names),
+        "hasRoiFile": any(name.endswith("roi.csv") for name in lower_names),
+        "hasLeftRoiFile": any(name.endswith("roil.csv") for name in lower_names),
+        "hasRightRoiFile": any(name.endswith("roir.csv") for name in lower_names),
     }
 
-    missingFiles: list[str] = []
+    missing_files: list[str] = []
 
     if not status["hasFilteredCsv"]:
-        missingFiles.append(" - filtered.csv")
+        missing_files.append(" - filtered.csv")
     if not status["hasSkeletonFilteredCsv"]:
-        missingFiles.append(" - filtered_skeleton.csv")
+        missing_files.append(" - filtered_skeleton.csv")
     if not status["hasImageFile"]:
-        missingFiles.append(" - screenshot of the video")
+        missing_files.append(" - screenshot of the video")
 
-    if taskType == "njr":
+    if task_type == "njr":
         if not status["hasLeftRoiFile"]:
-            missingFiles.append(" - roiL.csv")
+            missing_files.append(" - roiL.csv")
         if not status["hasRightRoiFile"]:
-            missingFiles.append(" - roiR.csv")
-    elif taskType == "social_recognition":
+            missing_files.append(" - roiR.csv")
+    elif task_type == "social_recognition":
         if not status["hasRoiFile"]:
-            missingFiles.append(" - roi.csv")
+            missing_files.append(" - roi.csv")
 
-    return status, missingFiles
+    return status, missing_files
 
 
 def _build_safe_destination(unwanted_folder: Path, source_path: Path) -> Path:
@@ -356,7 +356,7 @@ def run_clear_unused_files(request: DLCClearUnusedFilesRequest, progress=None, l
     if not folder_path.exists() or not folder_path.is_dir():
         raise ValueError(f"Invalid folder: {folder_path}")
 
-    taskType = request.task_type.strip().lower()
+    task_type = request.task_type.strip().lower()
 
     unwanted_folder = folder_path / "unwanted_files"
     unwanted_folder.mkdir(exist_ok=True)
@@ -365,54 +365,54 @@ def run_clear_unused_files(request: DLCClearUnusedFilesRequest, progress=None, l
     image_suffixed = {".png", ".jpg", ".jpeg", ".tiff", ".bmp"}
 
     entry_list = [path for path in folder_path.iterdir()]
-    movedFiles: list[str] = []
+    moved_files: list[str] = []
 
     total = max(len(entry_list), 1)
 
     protected_folder_names = {"unwanted_files"}
 
-    for index, entryPath in enumerate(entry_list, start=1):
-        lowerName = entryPath.name.lower()
-        keepEntry = False
+    for index, entry_path in enumerate(entry_list, start=1):
+        lower_name = entry_path.name.lower()
+        keep_entry = False
 
-        if entryPath.is_dir():
-            if lowerName in protected_folder_names:
-                keepEntry = True
+        if entry_path.is_dir():
+            if lower_name in protected_folder_names:
+                keep_entry = True
 
-            if not keepEntry:
-                destination = _build_safe_destination(unwanted_folder, entryPath)
-                shutil.move(str(entryPath), str(destination))
-                movedFiles.append(entryPath.name)
+            if not keep_entry:
+                destination = _build_safe_destination(unwanted_folder, entry_path)
+                shutil.move(str(entry_path), str(destination))
+                moved_files.append(entry_path.name)
                 if log:
-                    log.emit("dlc", f"Moved folder {entryPath.name} to unwanted_files")
+                    log.emit("dlc", f"Moved folder {entry_path.name} to unwanted_files")
 
         else:
-            suffix = entryPath.suffix.lower()
+            suffix = entry_path.suffix.lower()
 
             if suffix in video_suffixes:
-                keepEntry = True
+                keep_entry = True
             elif suffix in image_suffixed:
-                keepEntry = True
-            elif "roi" in lowerName and suffix == ".csv":
-                keepEntry = True
-            elif lowerName.endswith("filtered.csv"):
-                keepEntry = True
-            elif lowerName.endswith("filtered_skeleton.csv"):
-                keepEntry = True
+                keep_entry = True
+            elif "roi" in lower_name and suffix == ".csv":
+                keep_entry = True
+            elif lower_name.endswith("filtered.csv"):
+                keep_entry = True
+            elif lower_name.endswith("filtered_skeleton.csv"):
+                keep_entry = True
 
-            if not keepEntry:
-                destination = _build_safe_destination(unwanted_folder, entryPath)
-                shutil.move(str(entryPath), str(destination))
-                movedFiles.append(entryPath.name)
+            if not keep_entry:
+                destination = _build_safe_destination(unwanted_folder, entry_path)
+                shutil.move(str(entry_path), str(destination))
+                moved_files.append(entry_path.name)
                 if log:
-                    log.emit("dlc", f"Moved {entryPath.name} to unwanted_files")
+                    log.emit("dlc", f"Moved {entry_path.name} to unwanted_files")
 
         if progress:
             progress.emit(round((index / total) * 100))
 
-    status, missingFiles = _get_required_files_status(folder_path, taskType)
+    status, missing_files = _get_required_files_status(folder_path, task_type)
 
-    if not missingFiles:
+    if not missing_files:
         if log:
             log.emit("dlc", "All required files are present.")
     else:
@@ -422,7 +422,7 @@ def run_clear_unused_files(request: DLCClearUnusedFilesRequest, progress=None, l
     return {
         "kind": "dlc_clear_unused_files",
         "folderPath": str(folder_path),
-        "movedFiles": movedFiles,
-        "missingFiles": missingFiles,
-        "allRequiredPresent": len(missingFiles) == 0,
+        "movedFiles": moved_files,
+        "missingFiles": missing_files,
+        "allRequiredPresent": len(missing_files) == 0,
     }

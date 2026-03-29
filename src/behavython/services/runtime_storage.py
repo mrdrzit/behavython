@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import shutil
 import tempfile
+from behavython.config.defaults import TOTAL_SESSION_STORAGE_QUOTA
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -11,7 +12,7 @@ from pathlib import Path
 class RuntimeStorageConfig:
     runtime_root: Path
     data_root: Path
-    keep_last_sessions: int = 10
+    keep_last_sessions: int = TOTAL_SESSION_STORAGE_QUOTA
 
 
 class RuntimeStorage:
