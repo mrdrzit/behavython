@@ -4,6 +4,7 @@ import os
 import json
 from behavython.analysis.animal import Animal
 from behavython.analysis.models import analysis_request
+from behavython.analysis.analysis import analyze_animal
 from behavython.analysis.validation import validate_analysis_request
 from behavython.shared.input_resolver import group_analysis_files
 
@@ -34,9 +35,6 @@ def run_analysis_workflow(request: analysis_request, progress=None, log=None, wa
             video_path=files["video"][0] if files["video"] else None,
         )
         animals.append(animal)
-        progress.emit(round((index / len(groups)) * 100))
-        if log:
-            log.emit("resume", f"Processed {animal.id}")
 
     valid_animals = [a for a in animals if a.eligible]
     invalid_animals = [a for a in animals if not a.eligible]
@@ -72,8 +70,23 @@ def run_analysis_workflow(request: analysis_request, progress=None, log=None, wa
                 }
             )
 
-    log_path = None
+    results = []
+    for index, animal in enumerate(valid_animals, start=1):
+        if log:
+            log.emit("resume", f"Analyzing {animal.id}")
 
+        try:
+            result = analyze_animal(animal, request)
+            results.append(result)
+
+        except Exception as e:
+            animal.logs.append({"level": "error", "message": str(e), "context": "analysis"})
+            animal.eligible = False
+
+        if progress:
+            progress.emit(round((index / len(valid_animals)) * 100))
+
+    log_path = None
     if has_issues:
         log_path = os.path.join(request.output_folder, "analysis_log.json")
 
