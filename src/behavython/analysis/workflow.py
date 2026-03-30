@@ -1,30 +1,11 @@
 from __future__ import annotations
 
 import os
-import pandas as pd
-from collections import defaultdict
+import json
+from behavython.analysis.animal import Animal
 from behavython.analysis.models import analysis_request
 from behavython.analysis.validation import validate_analysis_request
-
-
-def _group_files_by_animal(paths: list[str]) -> dict[str, list[str]]:
-    grouped: dict[str, list[str]] = defaultdict(list)
-    for path in paths:
-        name = os.path.basename(path)
-        stem = os.path.splitext(name)[0]
-
-        if "_roi" in stem:
-            animal_key = stem.replace("_roi", "")
-        elif "filtered_skeleton" in stem:
-            animal_key = stem.split("DLC_")[0].rstrip("_")
-        elif "filtered" in stem:
-            animal_key = stem.split("DLC_")[0].rstrip("_")
-        else:
-            animal_key = stem
-
-        grouped[animal_key].append(path)
-
-    return dict(grouped)
+from behavython.shared.input_resolver import group_analysis_files
 
 
 def run_analysis_workflow(request: analysis_request, progress=None, log=None, warning=None) -> dict:
@@ -35,46 +16,81 @@ def run_analysis_workflow(request: analysis_request, progress=None, log=None, wa
     if log:
         log.emit("resume", "Starting analysis workflow...")
 
-    grouped = _group_files_by_animal(request.input_files)
+    groups = group_analysis_files(request.input_files)
 
-    rows: list[dict] = []
-    total = max(len(grouped), 1)
+    if log:
+        log.emit("resume", f"Detected {len(groups)} animal groups")
 
-    for index, (animal, files) in enumerate(grouped.items(), start=1):
-        lower_files = [os.path.basename(f).lower() for f in files]
+    animals = []
+    for index, group in enumerate(groups, start=1):
+        files = group["files"]
 
-        has_image = any(name.endswith((".jpg", ".jpeg", ".png", ".bmp", ".tiff")) for name in lower_files)
-        has_position = any(name.endswith("filtered.csv") and not name.endswith("filtered_skeleton.csv") for name in lower_files)
-        has_skeleton = any(name.endswith("filtered_skeleton.csv") for name in lower_files)
-        has_roi = any(name.endswith("_roi.csv") for name in lower_files)
+        animal = Animal(
+            animal_id=group["animal_id"],
+            position_csv=files["position"][0] if files["position"] else None,
+            skeleton_csv=files["skeleton"][0] if files["skeleton"] else None,
+            roi_csv=files["roi"][0] if files["roi"] else None,
+            image_path=files["image"][0] if files["image"] else None,
+            video_path=files["video"][0] if files["video"] else None,
+        )
+        animals.append(animal)
+        progress.emit(round((index / len(groups)) * 100))
+        if log:
+            log.emit("resume", f"Processed {animal.id}")
 
+    valid_animals = [a for a in animals if a.eligible]
+    invalid_animals = [a for a in animals if not a.eligible]
+    rows = []
+
+    for _, animal in enumerate(animals, start=1):
         rows.append(
             {
-                "animal": animal,
-                "file_count": len(files),
-                "has_image": has_image,
-                "has_position": has_position,
-                "has_skeleton": has_skeleton,
-                "has_roi": has_roi,
-                "ready_for_full_analysis": all([has_image, has_position, has_skeleton, has_roi]),
+                "animal_id": animal.id,
+                "eligible": animal.eligible,
+                "missing_files": ", ".join(animal.missing_files) if not animal.eligible else "",
+                "has_video": animal.video_path is not None,
             }
         )
 
-        if log:
-            log.emit("resume", f"Processed input manifest for {animal}")
-
-        if progress:
-            progress.emit(round((index / total) * 100))
-
-    df = pd.DataFrame(rows)
-    output_path = os.path.join(request.output_folder, "analysis_input_summary.xlsx")
-    df.to_excel(output_path, index=False)
-
     if log:
-        log.emit("resume", f"Analysis summary written to: {output_path}")
+        log.emit("resume", f"Valid animals: {len(valid_animals)} | Invalid animals: {len(invalid_animals)}")
+
+    all_logs = []
+    has_issues = False
+
+    for animal in animals:
+        if animal.logs:
+            has_issues = True
+
+        for entry in animal.logs:
+            all_logs.append(
+                {
+                    "animal_id": animal.id,
+                    "level": entry["level"],
+                    "message": entry["message"],
+                    "context": entry["context"],
+                }
+            )
+
+    log_path = None
+
+    if has_issues:
+        log_path = os.path.join(request.output_folder, "analysis_log.json")
+
+        with open(log_path, "w", encoding="utf-8") as f:
+            json.dump(all_logs, f, indent=2)
+
+        if log:
+            log.emit("resume", f"Log file written to: {log_path}")
+
+        if warning:
+            warning.emit("Warning", f"Analysis completed with issues. Log saved to:\n{log_path}")
 
     return {
         "kind": "analysis",
-        "output_path": output_path,
-        "rows": len(df),
+        "output_path": request.output_folder,
+        "rows": len(animals),
+        "valid_animals": len(valid_animals),
+        "invalid_animals": len(invalid_animals),
+        "log_path": log_path,
     }

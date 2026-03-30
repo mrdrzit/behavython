@@ -103,3 +103,5 @@ src/behavython/test/03_inference_videos/*
 src/behavython/test/04_analysis_inputs/
 src/behavython/test/05_analysis_outputs/
 src/behavython/test/07_video_editing/
+
+*.txt

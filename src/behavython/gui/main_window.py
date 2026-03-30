@@ -116,7 +116,7 @@ class BehavythonMainWindow(QWidget):
 
         if not validate_json_config(path):
             self.logger.info("Invalid configuration file selected: %s", path)
-            
+
             show_warning(self.interface, "Configuration file", "The selected file is not a valid JSON configuration.")
             return
 
@@ -454,7 +454,11 @@ class BehavythonMainWindow(QWidget):
 
         if kind == "analysis":
             self.logger.info("Analysis completed. Output path: %s", result["output_path"])
-            show_info(self.interface, "Analysis completed", f"Analysis summary saved to:\n{result['output_path']}")
+            show_info(
+                self.interface,
+                "Analysis completed",
+                f"Processed {result['rows']} animal(s). Valid: {result['valid_animals']} | Invalid: {result['invalid_animals']}",
+            )
         elif kind == "dlc_analysis":
             extra = ""
             if result.get("config_was_repaired"):

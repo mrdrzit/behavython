@@ -31,19 +31,20 @@ CANONICAL_BODYPARTS = [
     "tail",
 ]
 
-CANONICAL_REQUIRED_BODYPARTS = [
-    "nose",
-    "left_ear",
-    "right_ear",
-    "center",
-]
-
-BODY_PART_MAPPING = {
-    "nose": "focinho",
-    "left_ear": "orelhae",
-    "right_ear": "orelhad",
-    "center": "centro",
+BODYPART_MAPPING = {
+    "focinho": "nose",
+    "orelhae": "left_ear",
+    "orelhad": "right_ear",
+    "centro": "center",
+    "rabo": "tail",
 }
+
+CANONICAL_SKELETON = [
+    ("nose", "center"),
+    ("left_ear", "center"),
+    ("right_ear", "center"),
+    ("center", "tail"),
+]
 
 EXPERIMENT_TYPES = [
     "social_recognition",

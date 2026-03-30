@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import os
-
+import re
+from natsort import os_sorted
+from collections import defaultdict
 from behavython.config.defaults import VALID_VIDEO_EXTENSIONS
 from behavython.shared.models import (
     AnalysisInputSource,
@@ -156,3 +158,77 @@ def resolve_output_folder(source: OutputFolderSource) -> ResolvedOutputFolder:
         path=folder_path,
         warnings=warnings,
     )
+
+
+def group_analysis_files(file_paths: list[str]) -> list[dict]:
+    file_paths = os_sorted(file_paths)
+
+    def classify_file(name_lower: str) -> str:
+        if "dlc" in name_lower and "_filtered" in name_lower:
+            return "skeleton" if "_filtered_skeleton" in name_lower else "position"
+
+        if re.search(r"roi[lr]?\.csv$", name_lower):
+            return "roi"
+
+        if name_lower.endswith((".jpg", ".jpeg", ".png")):
+            return "image"
+
+        if name_lower.endswith(".mp4"):
+            return "video"
+
+        return "unknown"
+
+    def extract_raw_id(name: str, name_lower: str, file_type: str) -> str | None:
+        """
+        Extracts the base ID from the filename while strictly preserving the original casing.
+        """
+        if file_type == "unknown":
+            return None
+
+        if file_type in ("position", "skeleton"):
+            idx = name_lower.find("dlc")
+            if idx != -1:
+                return name[:idx]
+
+        elif file_type == "roi":
+            return re.sub(r"_?roi[lr]?\.csv$", "", name, flags=re.IGNORECASE)
+
+        elif file_type in ("image", "video"):
+            return name.rsplit(".", 1)[0]
+
+        return None
+
+    groups = defaultdict(
+        lambda: {
+            "animal_id": None,
+            "files": {
+                "position": [],
+                "skeleton": [],
+                "roi": [],
+                "image": [],
+                "video": [],
+            },
+        }
+    )
+
+    for path in file_paths:
+        name = os.path.basename(path)
+        name_lower = name.lower()
+
+        file_type = classify_file(name_lower)
+        raw_id = extract_raw_id(name, name_lower, file_type)
+
+        if not raw_id:
+            continue
+
+        display_id = raw_id.rstrip("_")
+
+        group_key = display_id.lower()
+        group = groups[group_key]
+
+        if group["animal_id"] is None:
+            group["animal_id"] = display_id
+
+        group["files"][file_type].append(path)
+
+    return list(groups.values())
