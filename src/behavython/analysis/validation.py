@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-
 from behavython.analysis.models import analysis_request
 
 
