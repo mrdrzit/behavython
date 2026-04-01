@@ -7,7 +7,7 @@ identity:
 
     # Project path (change when moving around)
 project_path: 
-  C:\Users\uzuna\Documents\GITHUB\behavython\src\behavython\test\01_dlc_project\c57_network_2025_minified
+  C:\Users\uzuna\Documents\GITHUB\behavython\test\01_dlc_project\c57_network_2025_minified
 
     # Annotation data set configuration (and individual video cropping parameters)
 video_sets:
@@ -17,6 +17,8 @@ bodyparts:
 - OrelhaD
 - Centro
 - Rabo
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
 
     # Fraction of video to start/stop when extracting frames for labeling/refinement
 

@@ -3,31 +3,31 @@ from __future__ import annotations
 import os
 import logging
 from PySide6.QtWidgets import QWidget
-from behavython.analysis.models import analysis_options, analysis_request
-from behavython.analysis.validation import validate_analysis_request
-from behavython.analysis.workflow import run_analysis_workflow
-from behavython.app.app_context import AppContext
-from behavython.config.ui import DEBUG_STYLE, DEFAULT_STYLE
-from behavython.dlc.models import (
+from behavython.pipeline.models import analysis_options, analysis_request
+from behavython.pipeline.workflow import run_analysis_workflow
+from behavython.services.validation import validate_analysis_request
+from behavython.core.app_context import AppContext
+from behavython.core.defaults import DEBUG_STYLE, DEFAULT_STYLE
+from behavython.pipeline.models import (
     DLCClearUnusedFilesRequest,
     DLCFrameExtractionRequest,
     DLCSkeletonExtractionRequest,
     DLCVideoAnalysisRequest,
 )
-from behavython.dlc.validation import validate_config_path, validate_video_paths
-from behavython.dlc.workflow import (
+from behavython.services.validation import validate_config_path, validate_video_paths
+from behavython.pipeline.plugins.dlc import (
     check_dlc_folder_structure,
     run_clear_unused_files,
     run_dlc_video_analysis,
     run_extract_frames,
     run_extract_skeleton,
 )
-from behavython.services.config_service import load_json_config, validate_json_config
-from behavython.services.dialogs import ask_yes_no, show_info, show_warning, show_worker_error
-from behavython.services.file_dialogs import select_file, select_files, select_folder, select_save_folder
-from behavython.services.logging_service import LoggingService
-from behavython.shared.input_resolver import resolve_analysis_input, resolve_output_folder, resolve_video_input
-from behavython.shared.models import (
+from behavython.services.validation import validate_json_config
+from behavython.gui.dialogs import ask_yes_no, show_info, show_warning, show_worker_error
+from behavython.gui.dialogs import select_file, select_files, select_folder, select_save_folder
+from behavython.services.logging import LoggingService
+from behavython.core.utils import resolve_analysis_input, resolve_output_folder, resolve_video_input
+from behavython.pipeline.models import (
     AnalysisInputSource,
     OutputFolderSource,
     ResolvedAnalysisInput,
@@ -35,7 +35,7 @@ from behavython.shared.models import (
     ResolvedVideoInput,
     VideoInputSource,
 )
-from behavython.workers.task_runner import TaskRunner
+from behavython.tasks.task_runner import TaskRunner
 
 
 class BehavythonMainWindow(QWidget):
@@ -120,7 +120,7 @@ class BehavythonMainWindow(QWidget):
             show_warning(self.interface, "Configuration file", "The selected file is not a valid JSON configuration.")
             return
 
-        data = load_json_config(path)
+        data = validate_json_config(path)
         self.apply_analysis_configuration(data)
         self._set_gui_log_message("resume", "Configuration file loaded successfully!")
         self.logger.info("Configuration file loaded: %s", path)

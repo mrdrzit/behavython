@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 from PySide6 import QtGui, QtUiTools
-
-from behavython.config.paths import ICON_PATH, LOGO_PATH, UI_FILE
-from behavython.config.ui import LOGO_WIDGET_NAME, MAIN_WINDOW_TITLE
-
+from behavython.core.app_context import AppContext
+from behavython.gui.main_window import BehavythonMainWindow
+from behavython.core.paths import ICON_PATH, LOGO_PATH, UI_FILE
+from behavython.core.defaults import MAIN_WINDOW_TITLE, LOGO_WIDGET_NAME
 
 def load_ui(ui_file: Path = UI_FILE):
     """
@@ -42,3 +42,14 @@ def load_main_interface():
     interface = load_ui()
     apply_branding(interface)
     return interface
+
+
+def bootstrap() -> BehavythonMainWindow:
+    """
+    Assemble the application and return the main window wrapper.
+    """
+    context = AppContext()
+    interface = load_main_interface()
+    window = BehavythonMainWindow(interface=interface, context=context)
+    window.show()
+    return window

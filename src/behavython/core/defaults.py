@@ -1,0 +1,86 @@
+APP_NAME = "Behavython"
+MAIN_WINDOW_TITLE = "Behavython"
+LOGO_WIDGET_NAME = "behavython_logo"
+
+DEFAULT_STYLE = """
+QWidget {
+    background-color: #4B4B4B;
+    color: #FFFFFF;
+}
+""".strip()
+
+DEBUG_STYLE = """
+QWidget {
+    background-color: #598d96;
+    color: #FFFFFF;
+}
+""".strip()
+
+DEFAULT_ARENA_WIDTH = 30
+DEFAULT_ARENA_HEIGHT = 30
+DEFAULT_FRAMES_PER_SECOND = 30
+DEFAULT_TASK_DURATION_SECONDS = 300
+DEFAULT_TRIM_AMOUNT_SECONDS = 0
+
+DEFAULT_PLOT_ENABLED = True
+DEFAULT_CROP_VIDEO = False
+
+DEFAULT_EXPERIMENT_TYPE_INDEX = 0
+DEFAULT_ALGO_TYPE_INDEX = 0
+DEFAULT_ANIMAL_INDEX = 0
+DEFAULT_FIG_MAX_SIZE_INDEX = 1
+
+ANALYSIS_REQUIRED_SUFFIXES = {
+    "image": (".jpg", ".jpeg", ".png", ".bmp", ".tiff"),
+    "position": ("filtered.csv",),
+    "skeleton": ("filtered_skeleton.csv",),
+    "roi": ("_roi.csv",),
+}
+
+VALID_VIDEO_EXTENSIONS = (".mp4", ".avi", ".mov")
+
+TOTAL_SESSION_STORAGE_QUOTA = 5
+
+CANONICAL_BODYPARTS = [
+    "nose",
+    "left_ear",
+    "right_ear",
+    "center",
+    "tail",
+]
+
+BODYPART_MAPPING = {
+    "focinho": "nose",
+    "orelhae": "left_ear",
+    "orelhad": "right_ear",
+    "centro": "center",
+    "rabo": "tail",
+}
+
+CANONICAL_SKELETON = [
+    ("nose", "center"),
+    ("left_ear", "center"),
+    ("right_ear", "center"),
+    ("center", "tail"),
+]
+
+EXPERIMENT_TYPES = [
+    "social_recognition",
+    "social_discrimination",
+    "object_discrimination",
+]
+
+ROI_COUNT_BY_EXPERIMENT = {
+    "social_recognition": 1,
+    "social_discrimination": 2,
+    "object_discrimination": 2,
+}
+
+DEFAULT_ANALYSIS_PARAMETERS = {
+    "frames_per_second": 30,
+    "arena_width": 30,
+    "arena_height": 30,
+    "task_duration": 300,
+    "trim_amount": 0,
+    "threshold": 5,
+}
