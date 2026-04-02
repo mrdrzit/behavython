@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 from PySide6 import QtGui, QtUiTools
-from behavython.core.app_context import AppContext
-from behavython.gui.main_window import BehavythonMainWindow
-from behavython.core.paths import ICON_PATH, LOGO_PATH, UI_FILE
-from behavython.core.defaults import MAIN_WINDOW_TITLE, LOGO_WIDGET_NAME
+from src.behavython.core.app_context import AppContext
+from src.behavython.gui.main_window import BehavythonMainWindow
+from src.behavython.core.paths import ICON_PATH, LOGO_PATH, UI_FILE
+from src.behavython.core.defaults import MAIN_WINDOW_TITLE, LOGO_WIDGET_NAME
 
 def load_ui(ui_file: Path = UI_FILE):
     """

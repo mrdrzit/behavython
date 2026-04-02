@@ -3,7 +3,7 @@ from __future__ import annotations
 import traceback
 import logging
 from PySide6.QtCore import QRunnable, Slot
-from behavython.tasks.signals import TaskSignals
+from src.behavython.tasks.signals import TaskSignals
 
 
 class TaskWorker(QRunnable):

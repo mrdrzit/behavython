@@ -2,7 +2,7 @@ from pathlib import Path
 from datetime import datetime
 import tempfile
 import shutil
-from behavython.pipeline.models import RuntimeStorageConfig
+from src.behavython.pipeline.models import RuntimeStorageConfig
 
 class RuntimeStorage:
     def __init__(self, config: RuntimeStorageConfig) -> None:

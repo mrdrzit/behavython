@@ -2,10 +2,18 @@ import os
 import json
 from typing import Callable, Any
 
-from behavython.pipeline.models import Animal
-from behavython.pipeline.metrics import preprocess_animal, compute_roi_interaction
-from behavython.services.validation import validate_analysis_request
-from behavython.core.utils import group_analysis_files
+from src.behavython.pipeline.models import Animal
+from src.behavython.pipeline.metrics import (
+    preprocess_animal,
+    compute_roi_interaction,
+    compute_movement_metrics,
+    compute_spatial_metrics,
+    compute_exploration_metrics,
+)
+from src.behavython.services.validation import validate_analysis_request
+from src.behavython.pipeline.export import export_results_to_parquet, export_summary_metrics
+from src.behavython.core.utils import group_analysis_files
+
 
 def analyze_animal(animal: Animal, request: Any) -> dict:
     """
@@ -26,28 +34,26 @@ def analyze_animal(animal: Animal, request: Any) -> dict:
     data = preprocess_animal(animal, request)
 
     # 2. ROI / interaction
-    interaction_data = compute_roi_interaction(data)  # Passing request if needed by your implementation
+    interaction_data = compute_roi_interaction(data)
 
-    # 3. Movement metrics (core, always present)
-    # movement_metrics = compute_movement_metrics(data, request)
-    movement_metrics = {}
+    # 3. Movement metrics
+    movement_metrics = compute_movement_metrics(data)
 
     # 4. Exploration metrics
-    exploration_metrics = {}
-    if interaction_data is not None:
-        pass
-        # exploration_metrics = compute_exploration_metrics(interaction_data, data, request)
+    # Feed the dataframe and the frame rate to get the timing
+    exploration_metrics = compute_exploration_metrics(interaction_data, data["fps"])
 
     # 5. Spatial metrics
-    spatial_metrics = {}
-    # spatial_metrics = compute_spatial_metrics(data, request)
+    spatial_metrics = compute_spatial_metrics(data, movement_metrics)
 
     # 6. Aggregate results
     results = {
         "animal_id": animal.id,
+        "experiment_type": request.options.experiment_type,
         **movement_metrics,
         **exploration_metrics,
         **spatial_metrics,
+        "collisions_df": interaction_data.get("collisions"),  # Optional: Include the raw df if needed downstream
     }
 
     return results
@@ -120,6 +126,17 @@ def run_analysis_workflow(request: Any, progress: Callable = None, log: Callable
         if progress:
             progress.emit(round((index / len(valid_animals)) * 100))
 
+    if results:
+        if log:
+            log.emit("resume", "Exporting results to Parquet...")
+        try:
+            export_results_to_parquet(results, request.output_folder)
+            export_summary_metrics(results, request.output_folder, log=log)
+        except Exception as e:
+            if warning:
+                warning.emit("Export Error", f"Failed to save Parquet files: {str(e)}")
+            has_issues = True
+
     log_path = None
     if has_issues:
         log_path = os.path.join(request.output_folder, "analysis_log.json")
@@ -138,5 +155,5 @@ def run_analysis_workflow(request: Any, progress: Callable = None, log: Callable
         "valid_animals": len(valid_animals),
         "invalid_animals": len(invalid_animals),
         "log_path": log_path,
-        "results": results,  # Assuming you want to return the actual data
+        "results": results,
     }

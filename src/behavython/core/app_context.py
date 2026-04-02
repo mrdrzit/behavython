@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from PySide6.QtCore import QThreadPool
-from behavython.core.paths import DATA_ROOT, RUNTIME_ROOT
-from behavython.pipeline.models import RuntimeStorageConfig
-from behavython.services.logging import AppLoggingService, register_logging_service
-from behavython.services.storage import RuntimeStorage
+from src.behavython.core.paths import DATA_ROOT, RUNTIME_ROOT
+from src.behavython.pipeline.models import RuntimeStorageConfig
+from src.behavython.services.logging import AppLoggingService, register_logging_service
+from src.behavython.services.storage import RuntimeStorage
 
 @dataclass
 class AppContext:

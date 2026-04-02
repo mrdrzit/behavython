@@ -1,4 +1,6 @@
+import numpy as np
 import math
+
 
 def angle_between_lines(line1, line2, origin):
     """
@@ -136,3 +138,166 @@ def detect_collision(line_segment_start, line_segment_end, circle_center, circle
         else []
     )
     return intersection_points
+
+
+def is_inside_circle(x, y, circle_X, circle_Y, circle_D):
+    """
+    Determines if a given point (x, y) is inside a circle defined by a region of interest (roi_X, roi_Y, roi_D).
+    Args:
+        x (float): The x-coordinate of the point.
+        y (float): The y-coordinate of the point.
+        circle_X (float): The x-coordinate of the circle center.
+        circle_Y (float): The y-coordinate of the circle center.
+        circle_D (float): The diameter of the circle.
+    Returns:
+        bool: True if the point is inside the circle, False otherwise.
+    """
+    # Calculate the radius
+    radius = circle_D / 2.0
+
+    # Calculate the distance between the point and the circle center
+    distance = math.sqrt((x - circle_X) ** 2 + (y - circle_Y) ** 2)
+
+    # Check if the distance is less than or equal to the radius
+    return distance <= radius
+
+
+def calculate_triangle_area(pt1, pt2, pt3):
+    """
+    Calculates the area of a triangle given its three vertices using Heron's formula.
+    Used to calculate the mice's head area.
+
+    Args:
+        pt1 (tuple/list): Coordinates of the first point (e.g., focinho)
+        pt2 (tuple/list): Coordinates of the second point (e.g., orelha_esq)
+        pt3 (tuple/list): Coordinates of the third point (e.g., orelha_dir)
+
+    Returns:
+        float: Area of the triangle.
+    """
+    side1 = math.sqrt(((pt2[0] - pt1[0]) ** 2) + ((pt2[1] - pt1[1]) ** 2))
+    side2 = math.sqrt(((pt3[0] - pt2[0]) ** 2) + ((pt3[1] - pt2[1]) ** 2))
+    side3 = math.sqrt(((pt1[0] - pt3[0]) ** 2) + ((pt1[1] - pt3[1]) ** 2))
+
+    s = (side1 + side2 + side3) / 2
+
+    # max(0, ...) ensures float precision issues don't cause a negative square root
+    area_squared = s * (s - side1) * (s - side2) * (s - side3)
+    return math.sqrt(max(0, area_squared))
+
+
+def calculate_gaze_angle_and_distance(P, Q, A, T):
+    """
+    Calculates the angle between the animal's gaze vector and the target ROI,
+    as well as the Euclidean distance to the target.
+
+    Args:
+        P (tuple/array): Start point of the gaze line
+        Q (tuple/array): End point of the gaze line
+        A (tuple/array): Position of the animal's nose (origin of target vector)
+        T (tuple/array): Position of the ROI center
+
+    Returns:
+        tuple: (angle_in_degrees, distance_to_target)
+    """
+    # Gaze vector (P -> Q)
+    v_gaze = np.array(Q) - np.array(P)
+
+    # Target vector (nose -> ROI)
+    v_target = np.array(T) - np.array(A)
+
+    gaze_norm = np.linalg.norm(v_gaze)
+    target_norm = np.linalg.norm(v_target)
+
+    # Prevent division by zero if vectors are zero-length
+    if gaze_norm == 0 or target_norm == 0:
+        return 0.0, target_norm
+
+    # Normalize
+    v_gaze_n = v_gaze / gaze_norm
+    v_target_n = v_target / target_norm
+
+    # Angle (degrees)
+    cos_theta = np.clip(np.dot(v_gaze_n, v_target_n), -1.0, 1.0)
+    angle_deg = np.degrees(np.arccos(cos_theta))
+
+    # Distance to ROI center
+    distance = target_norm
+
+    return angle_deg, distance
+
+
+def determine_interaction_state(angle_deg, distance, prev_distance):
+    """
+    Determines the interaction state (approaching, retreating, looking, neutral)
+    based on the gaze angle and change in distance.
+
+    Args:
+        angle_deg (float): Angle to the target in degrees.
+        distance (float): Current distance to the target.
+        prev_distance (float | None): Previous frame's distance to the target.
+
+    Returns:
+        str: The state of interaction.
+    """
+    state = "neutral"
+
+    if angle_deg <= 90:
+        if prev_distance is not None and distance < prev_distance:
+            state = "approaching"
+        else:
+            state = "looking"
+    else:
+        if prev_distance is not None and distance > prev_distance:
+            state = "retreating"
+
+    return state
+
+
+def create_frequency_grid(x_values, y_values, bin_size, analysis_range, speed=None, mean_speed=None):
+    """
+    Creates a frequency grid (heatmap) based on the given x and y values.
+    Optimized with NumPy vectorization.
+
+    Args:
+        x_values (np.ndarray): Array of x-coordinate values.
+        y_values (np.ndarray): Array of y-coordinate values.
+        bin_size (float): Size of each bin in the grid.
+        analysis_range (tuple): Range of indices (start, end) to consider for analysis.
+        speed (np.ndarray, optional): Array of speed values corresponding to coordinates.
+        mean_speed (float, optional): Threshold speed to filter the data.
+
+    Returns:
+        np.ndarray: The frequency grid of shape (num_bins_y, num_bins_x).
+    """
+    start, end = analysis_range
+    x = np.asarray(x_values)[start:end]
+    y = np.asarray(y_values)[start:end]
+
+    # Apply speed filter if provided
+    if speed is not None and mean_speed is not None:
+        # Assuming the speed array provided is already sliced, or slice it if it matches the full length
+        if len(speed) == len(x_values):
+            speed = speed[start:end]
+
+        mask = speed > mean_speed
+        x = x[mask]
+        y = y[mask]
+
+    # Handle edge case where no data remains
+    if len(x) == 0 or len(y) == 0:
+        return np.array([[]], dtype=int)
+
+    # Calculate exact bin edges based on the min/max of the data
+    min_x, max_x = np.min(x), np.max(x)
+    min_y, max_y = np.min(y), np.max(y)
+
+    # np.arange goes up to, but doesn't include the stop value, so we add a buffer
+    bins_x = np.arange(min_x, max_x + bin_size, bin_size)
+    bins_y = np.arange(min_y, max_y + bin_size, bin_size)
+
+    # np.histogram2d natively maps coordinates into a 2D frequency grid.
+    # We pass (y, x) to ensure the output matrix shape is (rows=y, cols=x) to match your original logic.
+    grid, _, _ = np.histogram2d(y, x, bins=[bins_y, bins_x])
+
+    return grid.astype(int)

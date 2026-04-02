@@ -3,10 +3,12 @@ from __future__ import annotations
 import io
 import logging
 import warnings
-import sys
+# import sys
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from logging.handlers import RotatingFileHandler
-from behavython.services.storage import RuntimeStorage
+from src.behavython.services.storage import RuntimeStorage
+
+console = logging.getLogger("behavython.console")
 
 
 class LoggingService:
@@ -37,22 +39,14 @@ class _FilteredExternalStream(io.TextIOBase):
         self,
         logger: logging.Logger,
         level: int,
-        passthrough_stream,
-        allow_terminal_progress: bool = True,
     ) -> None:
         super().__init__()
         self.logger = logger
         self.level = level
-        self.passthrough_stream = passthrough_stream
-        self.allow_terminal_progress = allow_terminal_progress
         self._buffer = ""
 
     def _is_tqdm_text(self, text: str) -> bool:
-        tqdm_markers = (
-            "%|",
-            "it/s]",
-            "|█",
-        )
+        tqdm_markers = ("%|", "it/s]", "|█")
         return any(marker in text for marker in tqdm_markers)
 
     def _should_skip_line(self, line: str) -> bool:
@@ -65,14 +59,6 @@ class _FilteredExternalStream(io.TextIOBase):
             "TensorFloat-32 will be used for the matrix multiplication.",
         )
         return any(pattern in line for pattern in noisy_patterns)
-
-    def _handle_text_fragment(self, text: str) -> None:
-        if not text:
-            return
-
-        if self.allow_terminal_progress and self._is_tqdm_text(text):
-            self.passthrough_stream.write(text)
-            self.passthrough_stream.flush()
 
     def _emit_line(self, line: str) -> None:
         stripped_line = line.strip()
@@ -91,7 +77,6 @@ class _FilteredExternalStream(io.TextIOBase):
         if not text:
             return 0
 
-        self._handle_text_fragment(text)
         self._buffer += text
 
         while "\n" in self._buffer:
@@ -104,12 +89,6 @@ class _FilteredExternalStream(io.TextIOBase):
         if self._buffer:
             self._emit_line(self._buffer)
         self._buffer = ""
-
-        try:
-            self.passthrough_stream.flush()
-        except Exception:
-            pass
-
 
 class AppLoggingService:
     def __init__(self, runtime_storage: RuntimeStorage) -> None:
@@ -216,14 +195,14 @@ class AppLoggingService:
         stdout_stream = _FilteredExternalStream(
             logger=logger,
             level=logging.INFO,
-            passthrough_stream=sys.__stdout__,
-            allow_terminal_progress=True,
+            # passthrough_stream=sys.__stdout__,
+            # allow_terminal_progress=True,
         )
         stderr_stream = _FilteredExternalStream(
             logger=logger,
             level=logging.ERROR,
-            passthrough_stream=sys.__stderr__,
-            allow_terminal_progress=True,
+            # passthrough_stream=sys.__stderr__,
+            # allow_terminal_progress=True,
         )
 
         with redirect_stdout(stdout_stream), redirect_stderr(stderr_stream):

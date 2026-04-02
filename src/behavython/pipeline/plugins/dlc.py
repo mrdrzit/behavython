@@ -5,14 +5,15 @@ import sys
 import shutil
 import logging
 import subprocess
+from tqdm import tqdm  
 from pathlib import Path
 from typing import Any
-from behavython.core.defaults import VALID_VIDEO_EXTENSIONS
-from behavython.core.paths import FFMPEG_BIN_DIR
-from behavython.core.utils import load_or_repair_dlc_yaml
-from behavython.services.validation import validate_config_path, validate_video_paths
-from behavython.services.logging import capture_external_output
-from behavython.pipeline.models import (
+from src.behavython.core.defaults import VALID_VIDEO_EXTENSIONS
+from src.behavython.core.paths import FFMPEG_BIN_DIR
+from src.behavython.core.utils import load_or_repair_dlc_yaml
+from src.behavython.services.validation import validate_config_path, validate_video_paths
+from src.behavython.services.logging import capture_external_output
+from src.behavython.pipeline.models import (
     DLCClearUnusedFilesRequest,
     DLCFrameExtractionRequest,
     DLCSkeletonExtractionRequest,
@@ -89,18 +90,24 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
     if progress:
         progress.emit(40)
 
+    # Admitedly, not the best approach to log progress as i'am inserting 
+    # a litte bit of overhead by analyzing videos one by one,
+    # but deeplabcut doesn't provide a way to get progress when analyzing 
+    # multiple videos at once, and this way i can at least log the some
+    # information about which video is being analyzed in the console output.
     console_logger.info("Starting video analysis with DeepLabCut for %d video(s)", len(request.video_paths))
-    with capture_external_output("behavython.external"):
-        deeplabcut.analyze_videos(
-            usable_config_path,
-            request.video_paths,
-            videotype=extension,
-            shuffle=1,
-            trainingsetindex=0,
-            gputouse=0,
-            allow_growth=True,
-            save_as_csv=True,
-        )
+    for video in tqdm(request.video_paths, desc="Analyzing videos", unit="video"):
+        with capture_external_output("behavython.external"):
+            deeplabcut.analyze_videos(
+                usable_config_path,
+                [video],
+                videotype=extension,
+                shuffle=1,
+                trainingsetindex=0,
+                gputouse=0,
+                allow_growth=True,
+                save_as_csv=True,
+            )
 
     if log:
         log.emit("dlc", "Filtering predictions...")

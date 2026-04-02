@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
-from behavython.pipeline.geometry import line_trough_triangle_vertex, detect_collision
+from scipy import stats
+from src.behavython.pipeline.geometry import line_trough_triangle_vertex, detect_collision, create_frequency_grid
 
 
 def compute_roi_interaction(data) -> dict:
@@ -158,7 +159,7 @@ def preprocess_animal(animal, request) -> dict:
     runtime = np.arange(start, end)
     arena_w = request.options.arena_width
     arena_h = request.options.arena_height
-    video_h, video_w = animal.exp_dimensions()
+    video_w, video_h = animal.exp_dimensions()
     scale_x = arena_w / video_w if arena_w and video_w else 1.0
     scale_y = arena_h / video_h if arena_h and video_h else 1.0
 
@@ -176,10 +177,10 @@ def preprocess_animal(animal, request) -> dict:
 
             roi_data.append(
                 {
+                    "name": roi.get("name", "roi"),
                     "x": roi["x"],
                     "y": roi["y"],
                     "r": (roi["width"] + roi["height"]) / 2,
-                    "name": roi.get("file", "roi"),
                 }
             )
 
@@ -194,4 +195,181 @@ def preprocess_animal(animal, request) -> dict:
         "threshold": threshold,
         "roi": roi_data,
         "analysis_range": analysis_range,
+    }
+
+
+def compute_movement_metrics(data: dict) -> dict:
+    """
+    Calculates displacement, velocity, acceleration, and temporal states
+    based on the animal's center coordinates.
+    """
+    coords = data["coords"]
+    fps = data["fps"]
+    threshold = data["threshold"]
+    scale_x = data["scaling"]["x"]
+    scale_y = data["scaling"]["y"]
+    start, end = data["analysis_range"]
+
+    # Safely fetch the center bodypart (fallback to "center" if mapping varies)
+    center_bp = coords.get("centro", coords.get("center"))
+    if center_bp is None:
+        raise ValueError("Missing 'centro' bodypart required for movement metrics.")
+
+    # Apply scaling and slicing
+    centro_x = center_bp["x"][start:end] * scale_x
+    centro_y = center_bp["y"][start:end] * scale_y
+
+    # Calculate step differences
+    d_x = np.append(0, np.diff(centro_x))
+    d_y = np.append(0, np.diff(centro_y))
+
+    # Raw displacement
+    displacement = np.sqrt(np.square(d_x) + np.square(d_y))
+
+    # Apply thresholds (noise filtering and anomaly removal)
+    displacement[displacement < threshold] = 0
+    displacement[displacement > 55] = 0
+
+    # Total distance calculation
+    accumulate_distance = np.cumsum(displacement)
+    total_distance = np.max(accumulate_distance) if len(accumulate_distance) > 0 else 0.0
+
+    # Time vector for derivatives
+    time_vector = np.linspace(0, len(centro_x) / fps, len(centro_x))
+    dt = np.append(0, np.diff(time_vector))
+
+    # Safely calculate velocity and acceleration, ignoring division by zero during resting states
+    with np.errstate(divide="ignore", invalid="ignore"):
+        velocity = np.divide(displacement, dt)
+        velocity[~np.isfinite(velocity)] = 0  # Clean up NaNs or Infs
+        mean_velocity = np.nanmean(velocity) if len(velocity) > 0 else 0.0
+
+        dv = np.append(0, np.diff(velocity))
+        acceleration = np.divide(dv, dt)
+        acceleration[~np.isfinite(acceleration)] = 0
+
+    # Temporal states
+    time_moving = np.sum(displacement > 0) * (1 / fps)
+    time_resting = np.sum(displacement == 0) * (1 / fps)
+    movements_count = np.sum(displacement > 0)
+
+    return {
+        "total_distance_cm": float(total_distance),
+        "mean_velocity_cm_s": float(mean_velocity),
+        "time_moving_s": float(time_moving),
+        "time_resting_s": float(time_resting),
+        "movements_count": int(movements_count),
+        "velocity_array": velocity,
+        "acceleration_array": acceleration,
+        "displacement_array": displacement,
+        "accumulate_distance_array": accumulate_distance,
+    }
+
+
+def compute_spatial_metrics(data: dict, movement_metrics: dict) -> dict:
+    """
+    Calculates all spatial metrics including frequency grids (heatmaps),
+    spatial density (KDE), and path smoothing for downstream visualization.
+    """
+    coords = data["coords"]
+    start, end = data["analysis_range"]
+    analysis_range = data["analysis_range"]
+    bin_size = 10
+
+    center_bp = coords.get("centro", coords.get("center"))
+    if center_bp is not None:
+        position_grid = create_frequency_grid(x_values=center_bp["x"], y_values=center_bp["y"], bin_size=bin_size, analysis_range=analysis_range)
+    else:
+        position_grid = []
+
+    center_bp = coords.get("centro", coords.get("center"))
+
+    if center_bp is None:
+        raise ValueError("Missing 'centro' bodypart required for spatial metrics.")
+
+    # Velocity Grid
+    velocity_grid = create_frequency_grid(
+        x_values=center_bp["x"],
+        y_values=center_bp["y"],
+        bin_size=bin_size,
+        analysis_range=analysis_range,
+        speed=movement_metrics["velocity_array"],
+        mean_speed=movement_metrics["mean_velocity_cm_s"],
+    )
+
+    # Base coordinates for KDE/Smoothing
+    x_axe = center_bp["x"][start:end]
+    y_axe = center_bp["y"][start:end]
+    kde_space_coordinates = np.vstack([x_axe, y_axe])
+
+    # KDE Density Map
+    try:
+        kde_instance = stats.gaussian_kde(kde_space_coordinates)
+        point_density_function = kde_instance.evaluate(kde_space_coordinates)
+
+        min_pdf = np.min(point_density_function)
+        max_pdf = np.max(point_density_function)
+
+        if max_pdf > min_pdf:
+            color_limits = (point_density_function - min_pdf) / (max_pdf - min_pdf)
+        else:
+            color_limits = np.zeros_like(point_density_function)
+
+    except np.linalg.LinAlgError:
+        # Fallback for singular matrix errors
+        point_density_function = np.zeros_like(x_axe)
+        color_limits = np.zeros_like(x_axe)
+
+    # Path Smoothing
+    movement_points = np.column_stack([x_axe, y_axe]).reshape(-1, 1, 2)
+    movement_segments = np.concatenate([movement_points[:-1], movement_points[1:]], axis=1)
+    filter_size = 4
+    moving_average_filter = np.ones((filter_size,)) / filter_size
+    smooth_segs = np.apply_along_axis(lambda m: np.convolve(m, moving_average_filter, mode="same"), axis=0, arr=movement_segments)
+
+    return {
+        "position_grid": position_grid,
+        "velocity_grid": velocity_grid,
+        "kde_density_array": point_density_function,
+        "color_limits_array": color_limits,
+        "smooth_segments_array": smooth_segs,
+        "raw_x_pos_array": x_axe,
+        "raw_y_pos_array": y_axe,
+    }
+
+
+def compute_exploration_metrics(interaction_data: dict, fps: float) -> dict:
+    """
+    Calculates total and ROI-specific exploration times based on collision data.
+    """
+    collisions_df = interaction_data.get("collisions")
+
+    # Handle cases where there are no ROIs or no collision data
+    if collisions_df is None or collisions_df.empty:
+        return {
+            "exploration_time_s": 0.0,
+            "exploration_time_right_s": 0.0,
+            "exploration_time_left_s": 0.0,
+        }
+
+    # Calculate total exploration time
+    exploration_mask = collisions_df["collision_flag"] > 0
+    exploration_time = float(exploration_mask.sum() * (1 / fps))
+
+    # Calculate exploration time for specific ROIs
+    # Note: str.contains is used here to match the original logic.
+    roi_names = collisions_df["roi_name"].fillna("")
+
+    # We combine the exploration mask with the name filter to ensure we only count
+    # frames where a collision ACTUALLY happened with that specific ROI.
+    count_right = (exploration_mask & roi_names.str.contains("roiR")).sum()
+    count_left = (exploration_mask & roi_names.str.contains("roiL")).sum()
+
+    exploration_time_right = float(count_right * (1 / fps))
+    exploration_time_left = float(count_left * (1 / fps))
+
+    return {
+        "exploration_time_s": exploration_time,
+        "exploration_time_right_s": exploration_time_right,
+        "exploration_time_left_s": exploration_time_left,
     }

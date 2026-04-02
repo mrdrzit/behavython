@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from behavython.tasks.task_worker import TaskWorker
+from src.behavython.tasks.task_worker import TaskWorker
 
 
 class TaskRunner:

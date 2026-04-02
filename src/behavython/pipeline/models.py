@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import os
+import re
 import cv2
 import pandas as pd
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-from behavython.core.defaults import BODYPART_MAPPING, CANONICAL_BODYPARTS, TOTAL_SESSION_STORAGE_QUOTA
+from src.behavython.core.defaults import BODYPART_MAPPING, CANONICAL_BODYPARTS, TOTAL_SESSION_STORAGE_QUOTA
 
 
 @dataclass(slots=True)
@@ -29,6 +30,7 @@ class analysis_request:
     input_files: list[str]
     output_folder: str
     options: analysis_options
+    config_path: str | None = None
 
 
 @dataclass(slots=True)
@@ -299,11 +301,17 @@ class Animal:
     def _load_rois(self):
         try:
             df = pd.read_csv(self.roi_csv)
-
-            # Expect columns like: x, y, width, height
             df.columns = [name.lower() for name in df.columns]
+
+            filename = Path(self.roi_csv).stem  # e.g. test_mouse_plain_roiL
+
+            # Extract semantic ROI label: filenames ending in "roi" plus optional side/variant letter (L/R/D/E), case-insensitive.
+            match = re.search(r"(roi[lrde]?)$", filename, re.IGNORECASE)
+            roi_label = match.group(1) if match else "roi"
+
             for _, row in df.iterrows():
                 roi = {
+                    "name": roi_label,
                     "x": float(row["x"]),
                     "y": float(row["y"]),
                     "width": float(row["width"]),
@@ -313,11 +321,7 @@ class Animal:
 
         except Exception as e:
             self.eligible = False
-            self._log(
-                "ERROR",
-                "Failed to load ROI CSV",
-                {"error": str(e)},
-            )
+            self._log("ERROR", "Failed to load ROI CSV", {"error": str(e)})
 
     def _load_image(self):
         try:
