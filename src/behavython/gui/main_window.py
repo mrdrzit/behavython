@@ -3,31 +3,31 @@ from __future__ import annotations
 import os
 import logging
 from PySide6.QtWidgets import QWidget
-from src.behavython.pipeline.models import analysis_options, analysis_request
-from src.behavython.pipeline.workflow import run_analysis_workflow
-from src.behavython.services.validation import validate_analysis_request
-from src.behavython.core.app_context import AppContext
-from src.behavython.core.defaults import DEBUG_STYLE, DEFAULT_STYLE
-from src.behavython.pipeline.models import (
+from behavython.pipeline.models import analysis_options, analysis_request
+from behavython.pipeline.workflow import run_analysis_workflow
+from behavython.services.validation import validate_analysis_request
+from behavython.core.app_context import AppContext
+from behavython.core.defaults import DEBUG_STYLE, DEFAULT_STYLE
+from behavython.pipeline.models import (
     DLCClearUnusedFilesRequest,
     DLCFrameExtractionRequest,
     DLCSkeletonExtractionRequest,
     DLCVideoAnalysisRequest,
 )
-from src.behavython.services.validation import validate_config_path, validate_video_paths
-from src.behavython.pipeline.plugins.dlc import (
+from behavython.services.validation import validate_config_path, validate_video_paths
+from behavython.pipeline.plugins.dlc import (
     check_dlc_folder_structure,
     run_clear_unused_files,
     run_dlc_video_analysis,
     run_extract_frames,
     run_extract_skeleton,
 )
-from src.behavython.services.validation import validate_json_config
-from src.behavython.gui.dialogs import ask_yes_no, show_info, show_warning, show_worker_error
-from src.behavython.gui.dialogs import select_file, select_files, select_folder, select_save_folder
-from src.behavython.services.logging import LoggingService
-from src.behavython.core.utils import resolve_analysis_input, resolve_output_folder, resolve_video_input
-from src.behavython.pipeline.models import (
+from behavython.services.validation import validate_json_config
+from behavython.gui.dialogs import ask_yes_no, show_info, show_warning, show_worker_error
+from behavython.gui.dialogs import select_file, select_files, select_folder, select_save_folder
+from behavython.services.logging import LoggingService
+from behavython.core.utils import resolve_analysis_input, resolve_output_folder, resolve_video_input
+from behavython.pipeline.models import (
     AnalysisInputSource,
     OutputFolderSource,
     ResolvedAnalysisInput,
@@ -35,7 +35,7 @@ from src.behavython.pipeline.models import (
     ResolvedVideoInput,
     VideoInputSource,
 )
-from src.behavython.tasks.task_runner import TaskRunner
+from behavython.tasks.task_runner import TaskRunner
 
 
 class BehavythonMainWindow(QWidget):
@@ -96,7 +96,7 @@ class BehavythonMainWindow(QWidget):
         self.interface.load_configuration_button.clicked.connect(self.on_load_configuration_clicked)
 
     def clear_analysis_tab(self) -> None:
-        self.interface.type_combobox.setCurrentIndex(0)
+        self.interface.type_combobox.setCurrentIndex(1)
         self.interface.algo_type_combobox.setCurrentIndex(0)
         self.interface.arena_width_lineedit.setText("30")
         self.interface.arena_height_lineedit.setText("30")
@@ -104,7 +104,7 @@ class BehavythonMainWindow(QWidget):
         self.interface.animal_combobox.setCurrentIndex(0)
         self.interface.task_duration_lineedit.setText("300")
         self.interface.crop_video_time_lineedit.setText("0")
-        self.interface.fig_max_size.setCurrentIndex(1)
+        self.interface.fig_max_size.setCurrentIndex(2)
         self.interface.crop_video_checkbox.setChecked(False)
         self.interface.plot_data_checkbox.setChecked(True)
         self.logs.clear("resume")

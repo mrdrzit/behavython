@@ -6,7 +6,7 @@ import warnings
 # import sys
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from logging.handlers import RotatingFileHandler
-from src.behavython.services.storage import RuntimeStorage
+from behavython.services.storage import RuntimeStorage
 
 console = logging.getLogger("behavython.console")
 

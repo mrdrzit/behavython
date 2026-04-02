@@ -6,9 +6,9 @@ from typing import Any
 from pathlib import Path
 from natsort import os_sorted
 from collections import defaultdict
-from src.behavython.core.defaults import VALID_VIDEO_EXTENSIONS
-from src.behavython.services.validation import validate_yaml_file, validate_yaml_text
-from src.behavython.pipeline.models import (
+from behavython.core.defaults import VALID_VIDEO_EXTENSIONS
+from behavython.services.validation import validate_yaml_file, validate_yaml_text
+from behavython.pipeline.models import (
     AnalysisInputSource,
     OutputFolderSource,
     ResolvedAnalysisInput,

@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from scipy import stats
-from src.behavython.pipeline.geometry import line_trough_triangle_vertex, detect_collision, create_frequency_grid
+from behavython.pipeline.geometry import line_trough_triangle_vertex, detect_collision, create_frequency_grid
 
 
 def compute_roi_interaction(data) -> dict:

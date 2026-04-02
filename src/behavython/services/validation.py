@@ -3,8 +3,8 @@ import yaml
 from flask import json
 from typing import Any
 from pathlib import Path
-from src.behavython.core.defaults import VALID_VIDEO_EXTENSIONS
-from src.behavython.pipeline.models import analysis_request
+from behavython.core.defaults import VALID_VIDEO_EXTENSIONS
+from behavython.pipeline.models import analysis_request
 
 
 def validate_config_path(path: str) -> list[str]:

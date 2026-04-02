@@ -5,7 +5,7 @@ import sys
 import base64
 import random
 from PySide6 import QtCore, QtWidgets
-from src.behavython.gui.ui_loader import bootstrap
+from behavython.gui.ui_loader import bootstrap
 
 
 def main() -> int:

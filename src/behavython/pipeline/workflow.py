@@ -2,17 +2,17 @@ import os
 import json
 from typing import Callable, Any
 
-from src.behavython.pipeline.models import Animal
-from src.behavython.pipeline.metrics import (
+from behavython.pipeline.models import Animal
+from behavython.pipeline.metrics import (
     preprocess_animal,
     compute_roi_interaction,
     compute_movement_metrics,
     compute_spatial_metrics,
     compute_exploration_metrics,
 )
-from src.behavython.services.validation import validate_analysis_request
-from src.behavython.pipeline.export import export_results_to_parquet, export_summary_metrics
-from src.behavython.core.utils import group_analysis_files
+from behavython.services.validation import validate_analysis_request
+from behavython.pipeline.export import export_results_to_parquet, export_summary_metrics
+from behavython.core.utils import group_analysis_files
 
 
 def analyze_animal(animal: Animal, request: Any) -> dict:

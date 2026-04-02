@@ -1,0 +1,12 @@
+# Include GUI assets
+recursive-include src/behavython/gui/assets *
+
+# Explicitly exclude runtime, dynamic data, and heavy test environments
+prune src/behavython/runtime
+prune src/behavython/data
+prune src/behavython/test
+prune src/behavython/ffmpeg/bin
+
+# If you strictly MUST include the ffmpeg binary against standard practices, 
+# remove the prune line above and uncomment the line below:
+# recursive-include src/behavython/ffmpeg/bin *.exe

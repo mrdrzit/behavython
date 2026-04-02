@@ -7,7 +7,7 @@ import pandas as pd
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-from src.behavython.core.defaults import BODYPART_MAPPING, CANONICAL_BODYPARTS, TOTAL_SESSION_STORAGE_QUOTA
+from behavython.core.defaults import BODYPART_MAPPING, CANONICAL_BODYPARTS, TOTAL_SESSION_STORAGE_QUOTA
 
 
 @dataclass(slots=True)

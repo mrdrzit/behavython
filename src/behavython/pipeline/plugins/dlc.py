@@ -8,12 +8,12 @@ import subprocess
 from tqdm import tqdm  
 from pathlib import Path
 from typing import Any
-from src.behavython.core.defaults import VALID_VIDEO_EXTENSIONS
-from src.behavython.core.paths import FFMPEG_BIN_DIR
-from src.behavython.core.utils import load_or_repair_dlc_yaml
-from src.behavython.services.validation import validate_config_path, validate_video_paths
-from src.behavython.services.logging import capture_external_output
-from src.behavython.pipeline.models import (
+from behavython.core.defaults import VALID_VIDEO_EXTENSIONS
+from behavython.core.paths import FFMPEG_BIN_DIR
+from behavython.core.utils import load_or_repair_dlc_yaml
+from behavython.services.validation import validate_config_path, validate_video_paths
+from behavython.services.logging import capture_external_output
+from behavython.pipeline.models import (
     DLCClearUnusedFilesRequest,
     DLCFrameExtractionRequest,
     DLCSkeletonExtractionRequest,
