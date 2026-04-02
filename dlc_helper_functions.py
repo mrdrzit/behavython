@@ -14,7 +14,6 @@ import threading
 import traceback
 import warnings
 import sys
-import itertools as it
 
 # Data processing and visualization
 import cv2
@@ -28,15 +27,16 @@ import matplotlib.cm as cm
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from scipy import stats
 import matplotlib.lines as mlines
+from scipy import stats
+from pathlib import Path
 from matplotlib import colors as mcolors
 from matplotlib.collections import LineCollection
 
 # GUI and Qt
 import tkinter as tk
 from tkinter import filedialog
-from PySide6.QtCore import QObject, QRunnable, QThread, Signal, Slot
+from PySide6.QtCore import QObject, QRunnable, Signal, Slot
 from PySide6.QtGui import QFontMetrics
 from PySide6.QtWidgets import (QDialog, QFileDialog, QLabel, QMessageBox, QPushButton, QScrollArea, QVBoxLayout, QWidget)
 

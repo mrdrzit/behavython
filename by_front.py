@@ -1,9 +1,8 @@
 import sys
 import os
 from dlc_helper_functions import *
-from PySide6 import QtCore, QtUiTools, QtGui
+from PySide6 import QtCore, QtUiTools, QtGui, QtWidgets
 from PySide6.QtWidgets import QWidget
-from PySide6 import QtWidgets, QtCore, QtUiTools, QtGui
 
 
 class behavython_gui(QWidget):
