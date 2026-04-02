@@ -4,7 +4,7 @@ from flask import json
 from typing import Any
 from pathlib import Path
 from behavython.core.defaults import VALID_VIDEO_EXTENSIONS
-from behavython.pipeline.models import analysis_request
+from behavython.pipeline.models import AnalysisRequest
 
 
 def validate_config_path(path: str) -> list[str]:
@@ -61,7 +61,7 @@ def validate_json_config(path: str) -> bool:
         return None
 
 
-def validate_analysis_request(request: analysis_request) -> list[str]:
+def validate_analysis_request(request: AnalysisRequest) -> list[str]:
     errors: list[str] = []
 
     if not request.input_files:

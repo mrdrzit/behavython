@@ -3,24 +3,24 @@ from __future__ import annotations
 import os
 import logging
 from PySide6.QtWidgets import QWidget
-from behavython.pipeline.models import analysis_options, analysis_request
 from behavython.pipeline.workflow import run_analysis_workflow
 from behavython.services.validation import validate_analysis_request
 from behavython.core.app_context import AppContext
 from behavython.core.defaults import DEBUG_STYLE, DEFAULT_STYLE
 from behavython.pipeline.models import (
+    AnalysisOptions,
+    AnalysisRequest,
+    DLCAnnotatedVideoRequest,
     DLCClearUnusedFilesRequest,
     DLCFrameExtractionRequest,
-    DLCSkeletonExtractionRequest,
     DLCVideoAnalysisRequest,
 )
 from behavython.services.validation import validate_config_path, validate_video_paths
 from behavython.pipeline.plugins.dlc import (
-    check_dlc_folder_structure,
     run_clear_unused_files,
     run_dlc_video_analysis,
     run_extract_frames,
-    run_extract_skeleton,
+    run_create_annotated_video,
 )
 from behavython.services.validation import validate_json_config
 from behavython.gui.dialogs import ask_yes_no, show_info, show_warning, show_worker_error
@@ -138,10 +138,10 @@ class BehavythonMainWindow(QWidget):
             if key in data:
                 widget.setText(str(data[key]))
 
-    def build_analysis_options(self) -> analysis_options:
+    def build_analysis_options(self) -> AnalysisOptions:
         threshold = 0.0267 if self.interface.animal_combobox.currentIndex() == 0 else 0.0667
 
-        return analysis_options(
+        return AnalysisOptions(
             arena_width=int(self.interface.arena_width_lineedit.text()),
             arena_height=int(self.interface.arena_height_lineedit.text()),
             frames_per_second=int(self.interface.frames_per_second_lineedit.text()),
@@ -184,7 +184,7 @@ class BehavythonMainWindow(QWidget):
             show_warning(self.interface, "Analysis output", "\n".join(message_parts))
             return
 
-        request = analysis_request(
+        request = AnalysisRequest(
             input_files=resolved_input.paths,
             output_folder=resolved_output_folder.path,
             options=self.build_analysis_options(),
@@ -213,19 +213,18 @@ class BehavythonMainWindow(QWidget):
         self.interface.get_config_path_button.clicked.connect(self.on_select_dlc_config_clicked)
         self.interface.get_videos_path_button.clicked.connect(self.on_select_video_folder_clicked)
         self.interface.get_file_to_analyze_button.clicked.connect(self.on_select_video_list_clicked)
+        self.interface.folder_to_create_annotated_video_button.clicked.connect(self.on_select_annotated_output_clicked)
 
         self.interface.config_path_lineedit.textChanged.connect(self.enable_analysis)
         self.interface.video_folder_lineedit.textChanged.connect(self.enable_analysis_buttons)
         self.interface.analyze_from_file_lineedit.textChanged.connect(self.toggle_analyze_from_file_button)
 
-        self.interface.folder_structure_check_button.clicked.connect(self.on_check_folder_structure_clicked)
         self.interface.dlc_video_analyze_button.clicked.connect(self.on_run_dlc_analysis_clicked)
         self.interface.analyze_from_file_button.clicked.connect(self.on_run_dlc_analysis_from_file_clicked)
-        self.interface.extract_skeleton_button.clicked.connect(self.on_extract_skeleton_clicked)
         self.interface.clear_unused_files_button.clicked.connect(self.on_clear_unused_files_clicked)
-        self.interface.analyze_from_file_extract_skeleton_button.clicked.connect(self.on_extract_skeleton_from_file_clicked)
         self.interface.get_frames_button.clicked.connect(self.on_get_frames_clicked)
         self.interface.analyze_from_file_get_frames_button.clicked.connect(self.on_get_frames_from_file_clicked)
+        self.interface.create_annotated_video_button.clicked.connect(self.on_create_annotated_video_clicked)
 
     def on_select_dlc_config_clicked(self) -> None:
         path = select_file(self.interface, "Select config.yaml", "YAML files (*.yaml)")
@@ -245,11 +244,11 @@ class BehavythonMainWindow(QWidget):
     def enable_analysis(self) -> None:
         enabled = self.interface.config_path_lineedit.text().lower().endswith(".yaml")
         self.interface.dlc_video_analyze_button.setEnabled(enabled)
-        self.interface.folder_structure_check_button.setEnabled(enabled)
+        self.interface.create_annotated_video_button.setEnabled(enabled)
+        self.interface.folder_to_create_annotated_video_button.setEnabled(enabled)
 
     def enable_analysis_buttons(self) -> None:
         enabled = bool(self.interface.video_folder_lineedit.text().strip())
-        self.interface.extract_skeleton_button.setEnabled(enabled)
         self.interface.get_frames_button.setEnabled(enabled)
         self.interface.clear_unused_files_button.setEnabled(enabled)
 
@@ -258,7 +257,6 @@ class BehavythonMainWindow(QWidget):
         enabled = bool(file_path) and os.path.exists(file_path) and file_path.lower().endswith(".txt")
 
         self.interface.analyze_from_file_button.setEnabled(enabled)
-        self.interface.analyze_from_file_extract_skeleton_button.setEnabled(enabled)
         self.interface.analyze_from_file_get_frames_button.setEnabled(enabled)
 
         if not file_path:
@@ -269,20 +267,6 @@ class BehavythonMainWindow(QWidget):
             self._set_gui_log_message("resume", "The selected file is not a .txt file.")
         else:
             self._set_gui_log_message("resume", "")
-
-    def on_check_folder_structure_clicked(self) -> None:
-        config_path = self.interface.config_path_lineedit.text().strip()
-        ok, messages = check_dlc_folder_structure(config_path)
-
-        self.logs.clear("dlc")
-        for message in messages:
-            self.logs.append("dlc", message)
-
-        if not ok:
-            self.logger.info("DLC folder structure check failed: %s", " | ".join(messages))
-            show_warning(self.interface, "Folder structure", "\n".join(messages))
-        else:
-            self.logger.info("DLC folder structure check passed for config: %s", config_path)
 
     def on_clear_unused_files_clicked(self) -> None:
         resolved_folder = self._build_output_folder(self.interface.video_folder_lineedit.text())
@@ -308,11 +292,45 @@ class BehavythonMainWindow(QWidget):
         self.runner.submit(run_clear_unused_files, request, debug_mode=self.debug_mode)
         self.logger.info("Clear-unused-files submitted for folder: %s", request.folder_path)
 
-    def _build_video_input(self) -> ResolvedVideoInput:
+    def on_select_annotated_output_clicked(self) -> None:
+        path = select_save_folder(self.interface, "Select output folder for annotated videos")
+        if path:
+            self.interface.folder_to_create_annotated_video_lineedit.setText(path)
+
+    def on_create_annotated_video_clicked(self) -> None:
+        annotated_folder_path = self.interface.folder_to_create_annotated_video_lineedit.text().strip()
+        resolved_video_input = self._build_video_input(folder_path=annotated_folder_path)
+        config_path = self.interface.config_path_lineedit.text().strip()
+        input_path = annotated_folder_path
+        output_path = input_path
+
+        errors = validate_config_path(config_path) + validate_video_paths(resolved_video_input.paths)
+        if not input_path:
+            errors.append("Please select an output folder for the annotated video.")
+
+        if errors:
+            show_warning(self.interface, "Annotated Video Validation", "\n".join(errors))
+            return
+
+        request = DLCAnnotatedVideoRequest(config_path=config_path, video_paths=resolved_video_input.paths, output_path=output_path)
+
+        self.logs.clear("dlc")
+        self.progress_bar.setValue(0)
+        self.runner.submit(run_create_annotated_video, request, debug_mode=self.debug_mode)
+
+    def _build_video_input(self, folder_path: str | None = None, txt_path: str | None = None) -> ResolvedVideoInput:
+        """
+        Resolves video inputs from provided paths or falls back to UI line-edits.
+        """
+        # If no path is provided, fall back to the interface values
+        effective_folder = folder_path if folder_path is not None else self.interface.video_folder_lineedit.text()
+        effective_txt = txt_path if txt_path is not None else self.interface.analyze_from_file_lineedit.text()
+
         source = VideoInputSource(
-            folder_path=self.interface.video_folder_lineedit.text(),
-            txt_path=self.interface.analyze_from_file_lineedit.text(),
+            folder_path=effective_folder,
+            txt_path=effective_txt,
         )
+
         return resolve_video_input(source)
 
     def _build_analysis_input(self, selected_files: list[str]) -> ResolvedAnalysisInput:
@@ -366,34 +384,6 @@ class BehavythonMainWindow(QWidget):
         self.runner.submit(run_dlc_video_analysis, request, debug_mode=self.debug_mode)
         self.logger.info(
             "DLC video analysis submitted for %d video(s). Config: %s",
-            len(request.video_paths),
-            request.config_path,
-        )
-
-    def on_extract_skeleton_clicked(self) -> None:
-        self._run_extract_skeleton(self._build_video_input())
-
-    def on_extract_skeleton_from_file_clicked(self) -> None:
-        self._run_extract_skeleton(self._build_video_input())
-
-    def _run_extract_skeleton(self, resolved_video_input: ResolvedVideoInput) -> None:
-        config_path = self.interface.config_path_lineedit.text().strip()
-        errors = validate_config_path(config_path) + validate_video_paths(resolved_video_input.paths)
-
-        if errors:
-            self.logger.info("Skeleton extraction validation failed: %s", "; ".join(errors))
-            show_warning(self.interface, "Skeleton validation", "\n".join(errors))
-            return
-
-        request = DLCSkeletonExtractionRequest(
-            config_path=config_path,
-            video_paths=resolved_video_input.paths,
-        )
-        self.logs.clear("dlc")
-        self.progress_bar.setValue(0)
-        self.runner.submit(run_extract_skeleton, request, debug_mode=self.debug_mode)
-        self.logger.info(
-            "Skeleton extraction submitted for %d video(s). Config: %s",
             len(request.video_paths),
             request.config_path,
         )

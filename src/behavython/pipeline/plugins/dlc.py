@@ -5,7 +5,7 @@ import sys
 import shutil
 import logging
 import subprocess
-from tqdm import tqdm  
+from tqdm import tqdm
 from pathlib import Path
 from typing import Any
 from behavython.core.defaults import VALID_VIDEO_EXTENSIONS
@@ -16,8 +16,8 @@ from behavython.services.logging import capture_external_output
 from behavython.pipeline.models import (
     DLCClearUnusedFilesRequest,
     DLCFrameExtractionRequest,
-    DLCSkeletonExtractionRequest,
     DLCVideoAnalysisRequest,
+    DLCAnnotatedVideoRequest,
 )
 
 app_logger = logging.getLogger("behavython")
@@ -90,9 +90,9 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
     if progress:
         progress.emit(40)
 
-    # Admitedly, not the best approach to log progress as i'am inserting 
-    # a litte bit of overhead by analyzing videos one by one,
-    # but deeplabcut doesn't provide a way to get progress when analyzing 
+    # Admittedly, not the best approach to log progress as I'm inserting
+    # a little bit of overhead by analyzing videos one by one,
+    # but deeplabcut doesn't provide a way to get progress when analyzing
     # multiple videos at once, and this way i can at least log the some
     # information about which video is being analyzed in the console output.
     console_logger.info("Starting video analysis with DeepLabCut for %d video(s)", len(request.video_paths))
@@ -116,7 +116,7 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
     if progress:
         progress.emit(60)
 
-    console_logger.info(f"\nFiltering predictions with DeepLabCut for {len(request.video_paths)} video(s)")
+    console_logger.info(f"Filtering predictions with DeepLabCut for {len(request.video_paths)} video(s)")
     with capture_external_output("behavython.external"):
         deeplabcut.filterpredictions(
             usable_config_path,
@@ -125,6 +125,14 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
             shuffle=1,
             trainingsetindex=0,
             filtertype="median",
+            save_as_csv=True,
+        )
+        deeplabcut.analyzeskeleton(
+            usable_config_path,
+            request.video_paths,
+            shuffle=1,
+            trainingsetindex=0,
+            filtered=True,
             save_as_csv=True,
         )
 
@@ -153,61 +161,6 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
 
     return {
         "kind": "dlc_analysis",
-        "videos": len(request.video_paths),
-        "config_path_used": usable_config_path,
-        "config_was_repaired": was_repaired,
-    }
-
-
-def run_extract_skeleton(request: DLCSkeletonExtractionRequest, progress=None, log=None, warning=None):
-    errors = validate_config_path(request.config_path) + validate_video_paths(request.video_paths)
-    if errors:
-        raise ValueError("\n".join(errors))
-
-    dlc_logger.info(
-        "Skeleton extraction started for %d video(s). config=%s",
-        len(request.video_paths),
-        request.config_path,
-    )
-
-    _, usable_config_path, was_repaired = prepare_dlc_config(request.config_path)
-    _emit_config_repair_logs(request.config_path, usable_config_path, was_repaired, log)
-
-    deeplabcut = load_deeplabcut()
-    extension = os.path.splitext(request.video_paths[0])[1].lower()
-
-    if log:
-        log.emit("dlc", f"Using DeepLabCut version {deeplabcut.__version__}")
-        log.emit("dlc", "Extracting skeleton...")
-
-    for index, video in enumerate(request.video_paths, start=1):
-        console_logger.info("Extracting skeleton for video %d/%d: %s", index, len(request.video_paths), video)
-        with capture_external_output("behavython.external"):
-            deeplabcut.filterpredictions(
-                usable_config_path,
-                video,
-                videotype=extension,
-                shuffle=1,
-                trainingsetindex=0,
-                filtertype="median",
-                save_as_csv=True,
-            )
-            deeplabcut.analyzeskeleton(
-                usable_config_path,
-                video,
-                shuffle=1,
-                trainingsetindex=0,
-                filtered=True,
-                save_as_csv=True,
-            )
-
-        if progress:
-            progress.emit(round((index / len(request.video_paths)) * 100))
-
-    dlc_logger.info("run_extract_skeleton finished successfully")
-
-    return {
-        "kind": "dlc_skeleton",
         "videos": len(request.video_paths),
         "config_path_used": usable_config_path,
         "config_was_repaired": was_repaired,
@@ -280,8 +233,7 @@ def run_extract_frames(request: DLCFrameExtractionRequest, progress=None, log=No
         ]
         subprocess.run(cmd, cwd=FFMPEG_BIN_DIR, capture_output=True, text=True, check=True)
 
-        if log:
-            log.emit("dlc", f"Extracted frame for {os.path.basename(video_path)}")
+        console_logger.info(f"Extracted frame for {os.path.basename(video_path)} at timestamp {timestamp:.2f}s (frame {frame_number})")
 
         if progress:
             progress.emit(round((index / total) * 100))
@@ -447,10 +399,84 @@ def run_clear_unused_files(request: DLCClearUnusedFilesRequest, progress=None, l
         if log:
             log.emit("dlc", "There are missing files in the folder")
 
+    console_logger.info(f"Cleared unused files for DLC folder: {folder_path}")
+    console_logger.info(f"Moved {len(moved_files)} file(s) to {unwanted_folder}")
+    if missing_files:
+        console_logger.warning(f"Missing required files:\n{''.join(missing_files)}")
+
     return {
         "kind": "dlc_clear_unused_files",
         "folderPath": str(folder_path),
         "movedFiles": moved_files,
         "missingFiles": missing_files,
         "allRequiredPresent": len(missing_files) == 0,
+    }
+
+
+def run_create_annotated_video(
+    request: DLCAnnotatedVideoRequest,
+    progress=None,
+    log=None,
+    warning=None,
+) -> dict:
+    """
+    Creates an annotated video using DeepLabCut.
+    Handles uncleaned folders and utilizes automated YAML repair.
+    """
+    log.emit("dlc", "Importing DeepLabCut...")
+    try:
+        import deeplabcut
+    except ImportError:
+        log.emit("dlc", "[ERROR]: DeepLabCut not found in environment.")
+        return {"success": False, "error": "ImportError"}
+
+    log.emit("dlc", "Validating DLC configuration...")
+    try:
+        config_data, config_path_used, was_repaired = load_or_repair_dlc_yaml(request.config_path)
+        if was_repaired:
+            log.emit("dlc", f"Config repaired: {os.path.basename(config_path_used)}")
+    except Exception as e:
+        log.emit("dlc", f"[ERROR]: Could not load config: {str(e)}")
+        return {"success": False, "error": str(e)}
+
+    video_suffixes = {Path(video_path).suffix for video_path in request.video_paths if Path(video_path).suffix}
+    if len(video_suffixes) == 1:
+        videotype = video_suffixes.pop()
+    else:
+        # Fallback to .mp4 to preserve previous behavior when multiple or no suffixes are found
+        videotype = ".mp4"
+        
+    # DLC needs the .h5 and .pickle files in the same directory as the video
+    for video_path in request.video_paths:
+        video_dir = os.path.dirname(video_path)
+        unwanted_dir = os.path.join(video_dir, "unwanted_files")
+        required_suffixes = ("_filtered.h5", "_meta.pickle")
+
+        if os.path.exists(unwanted_dir):
+            files_in_unwanted = [f for f in os.listdir(unwanted_dir) if f.endswith(required_suffixes)]
+            for f in files_in_unwanted:
+                src = os.path.join(unwanted_dir, f)
+                dst = os.path.join(video_dir, f)
+                if not os.path.exists(dst):
+                    shutil.copy(src, dst)
+                    log.emit("dlc", f"Restored from unwanted_files: {f}")
+
+    log.emit("dlc", f"Starting labeled video generation for {len(request.video_paths)} videos...")
+    console_logger.info(f"Creating annotated videos with DeepLabCut for {len(request.video_paths)} video(s)")
+
+    try:
+        deeplabcut.create_labeled_video(
+            str(config_path_used), request.video_paths, videotype=videotype, filtered=True, draw_skeleton=True, destfolder=request.output_path
+        )
+    except Exception as e:
+        dlc_logger.exception("DLC labeled video creation failed")
+        log.emit("dlc", f"[ERROR]: DLC error: {str(e)}")
+        raise e
+
+    return {
+        "kind": "dlc_annotated_video",
+        "videos": len(request.video_paths),
+        "output_path": request.output_path,
+        "config_was_repaired": was_repaired,
+        "config_path_used": str(config_path_used),
     }

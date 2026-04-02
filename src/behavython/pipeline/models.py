@@ -11,7 +11,7 @@ from behavython.core.defaults import BODYPART_MAPPING, CANONICAL_BODYPARTS, TOTA
 
 
 @dataclass(slots=True)
-class analysis_options:
+class AnalysisOptions:
     arena_width: int
     arena_height: int
     frames_per_second: int
@@ -26,10 +26,10 @@ class analysis_options:
 
 
 @dataclass(slots=True)
-class analysis_request:
+class AnalysisRequest:
     input_files: list[str]
     output_folder: str
-    options: analysis_options
+    options: AnalysisOptions
     config_path: str | None = None
 
 
@@ -92,12 +92,6 @@ class DLCVideoAnalysisRequest:
 
 
 @dataclass(slots=True)
-class DLCSkeletonExtractionRequest:
-    config_path: str
-    video_paths: list[str]
-
-
-@dataclass(slots=True)
 class DLCFrameExtractionRequest:
     video_paths: list[str]
     override_frame_number: int | None = None
@@ -107,6 +101,13 @@ class DLCFrameExtractionRequest:
 class DLCClearUnusedFilesRequest:
     folder_path: str
     task_type: str
+
+
+@dataclass(slots=True)
+class DLCAnnotatedVideoRequest:
+    config_path: str
+    video_paths: list[str]
+    output_path: str
 
 
 @dataclass(slots=True)
