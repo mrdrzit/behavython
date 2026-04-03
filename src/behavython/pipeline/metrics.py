@@ -276,30 +276,16 @@ def compute_spatial_metrics(data: dict, movement_metrics: dict) -> dict:
     analysis_range = data["analysis_range"]
     bin_size = 10
 
-    center_bp = coords.get("centro", coords.get("center"))
-    if center_bp is not None:
-        position_grid = create_frequency_grid(x_values=center_bp["x"], y_values=center_bp["y"], bin_size=bin_size, analysis_range=analysis_range)
-    else:
-        position_grid = []
+    nose_bp = coords["nose"] if "nose" in coords else None
 
-    center_bp = coords.get("centro", coords.get("center"))
+    if nose_bp is None:
+        raise ValueError("Missing 'nose' bodypart required for spatial metrics.")
 
-    if center_bp is None:
-        raise ValueError("Missing 'centro' bodypart required for spatial metrics.")
-
-    # Velocity Grid
-    velocity_grid = create_frequency_grid(
-        x_values=center_bp["x"],
-        y_values=center_bp["y"],
-        bin_size=bin_size,
-        analysis_range=analysis_range,
-        speed=movement_metrics["velocity_array"],
-        mean_speed=movement_metrics["mean_velocity_cm_s"],
-    )
+    position_grid = create_frequency_grid(x_values=nose_bp["x"], y_values=nose_bp["y"], bin_size=bin_size, analysis_range=analysis_range)
 
     # Base coordinates for KDE/Smoothing
-    x_axe = center_bp["x"][start:end]
-    y_axe = center_bp["y"][start:end]
+    x_axe = nose_bp["x"][start:end]
+    y_axe = nose_bp["y"][start:end]
     kde_space_coordinates = np.vstack([x_axe, y_axe])
 
     # KDE Density Map
@@ -329,7 +315,6 @@ def compute_spatial_metrics(data: dict, movement_metrics: dict) -> dict:
 
     return {
         "position_grid": position_grid,
-        "velocity_grid": velocity_grid,
         "kde_density_array": point_density_function,
         "color_limits_array": color_limits,
         "smooth_segments_array": smooth_segs,
@@ -372,4 +357,29 @@ def compute_exploration_metrics(interaction_data: dict, fps: float) -> dict:
         "exploration_time_s": exploration_time,
         "exploration_time_right_s": exploration_time_right,
         "exploration_time_left_s": exploration_time_left,
+    }
+
+def extract_collision_coordinates(interaction_data: dict) -> dict:
+    collisions_df = interaction_data["collisions"]
+
+    if collisions_df.empty:
+        return {
+            "x_collision_data": np.array([]),
+            "y_collision_data": np.array([]),
+        }
+
+    valid = collisions_df["collision_flag"] > 0
+    positions = collisions_df.loc[valid, "collision_pos"].dropna()
+
+    if positions.empty:
+        return {
+            "x_collision_data": np.array([]),
+            "y_collision_data": np.array([]),
+        }
+
+    coords = np.vstack(positions.to_numpy())
+
+    return {
+        "x_collision_data": coords[:, 0],
+        "y_collision_data": coords[:, 1],
     }

@@ -1,15 +1,14 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "behavython"
-version = "0.1.0"
+version = "0.7.0"
 description = "Automated behavioral analysis software and pipeline."
 readme = "README.md"
 requires-python = ">=3.10, <3.11"
 
-# The dependencies are mapped exactly from the verified installer script.
 dependencies = [
     # Core Scientific Stack
     "numpy<2.0",
@@ -26,18 +25,18 @@ dependencies = [
     "debugpy",
     "natsort",
     "pyarrow",
-    
+
     # TensorFlow Stack
     "tensorflow<2.11",
     "tensorpack",
     "tf_slim",
-    
-    # PyTorch Stack (Default PyPI fallback; see installation note below)
+
+    # PyTorch Stack
     "torch",
     "torchvision",
     "torchaudio",
-    
-    # DeepLabCut
+
+    # DeepLabCut + GUI
     "deeplabcut==2.3.10",
     "PySide6==6.7.3"
 ]
@@ -45,6 +44,18 @@ dependencies = [
 [project.scripts]
 behavython = "behavython.main:main"
 
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["behavython*"]
+
+[tool.setuptools.package-data]
+# Explicit inclusion of non-Python assets inside the package
+behavython = [
+    "gui/assets/**/*",
+    "ffmpeg/bin/*",
+    "ffmpeg/**/*",
+]

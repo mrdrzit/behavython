@@ -1,9 +1,11 @@
 import os
 import json
-from typing import Callable, Any
-
-from behavython.pipeline.models import Animal
+import logging
+from tqdm import tqdm
+from typing import Callable
+from behavython.pipeline.models import AnalysisRequest, Animal
 from behavython.pipeline.metrics import (
+    extract_collision_coordinates,
     preprocess_animal,
     compute_roi_interaction,
     compute_movement_metrics,
@@ -12,10 +14,12 @@ from behavython.pipeline.metrics import (
 )
 from behavython.services.validation import validate_analysis_request
 from behavython.pipeline.export import export_results_to_parquet, export_summary_metrics
+from behavython.pipeline.plotting import plot_animal_analysis
 from behavython.core.utils import group_analysis_files
 
+console_logger = logging.getLogger("behavython.console")
 
-def analyze_animal(animal: Animal, request: Any) -> dict:
+def analyze_animal(animal: Animal, request: AnalysisRequest) -> dict:
     """
     Main analysis entry point for a single experimental unit.
 
@@ -35,6 +39,7 @@ def analyze_animal(animal: Animal, request: Any) -> dict:
 
     # 2. ROI / interaction
     interaction_data = compute_roi_interaction(data)
+    collision_data = extract_collision_coordinates(interaction_data)
 
     # 3. Movement metrics
     movement_metrics = compute_movement_metrics(data)
@@ -53,13 +58,14 @@ def analyze_animal(animal: Animal, request: Any) -> dict:
         **movement_metrics,
         **exploration_metrics,
         **spatial_metrics,
-        "collisions_df": interaction_data.get("collisions"),  # Optional: Include the raw df if needed downstream
+        **collision_data,
+        "collisions_df": interaction_data["collisions"],
     }
 
     return results
 
 
-def run_analysis_workflow(request: Any, progress: Callable = None, log: Callable = None, warning: Callable = None) -> dict:
+def run_analysis_workflow(request: AnalysisRequest, progress: Callable = None, log: Callable = None, warning: Callable = None) -> dict:
     """
     Orchestrates the batch processing of multiple animals.
     """
@@ -96,7 +102,6 @@ def run_analysis_workflow(request: Any, progress: Callable = None, log: Callable
 
     all_logs = []
     has_issues = False
-
     for animal in animals:
         if animal.logs:
             has_issues = True
@@ -111,13 +116,19 @@ def run_analysis_workflow(request: Any, progress: Callable = None, log: Callable
             )
 
     results = []
-    for index, animal in enumerate(valid_animals, start=1):
+    for index, animal in tqdm(enumerate(valid_animals, start=1), total=len(valid_animals), desc="Analyzing animals", unit="animal"):
         if log:
             log.emit("resume", f"Analyzing {animal.id}")
 
         try:
             result = analyze_animal(animal, request)
             results.append(result)
+
+            if request.options.plot_options == "plotting_enabled":
+                if log:
+                    log.emit("resume", f"Generating plots for {animal.id}...")
+                plot_animal_analysis(animal, result, request)
+
         except Exception as e:
             animal.logs.append({"level": "error", "message": str(e), "context": "analysis"})
             animal.eligible = False
@@ -125,6 +136,7 @@ def run_analysis_workflow(request: Any, progress: Callable = None, log: Callable
 
         if progress:
             progress.emit(round((index / len(valid_animals)) * 100))
+
 
     if results:
         if log:

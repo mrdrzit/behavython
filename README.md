@@ -62,28 +62,47 @@
 
 ### Prerequisites
 
-  - deeplabcut
-  - seaborn
-  - pyside6
-  - openpyxl
-  - scikit-image
-  - pandas
-  - numpy
-  - matplotlib
-  - tk
-  - scipy
+Behavython relies on a scientific Python stack and machine learning frameworks.
+All required dependencies are installed automatically via `pip`, but note the following:
 
-***For a simple way to keep up to date with requirements, reference the requirements.txt file***
-### Installation as a pip package 
-For the installation you need a simple command that you can get by one of two ways: 
+* Python **3.10.x** is required
+* GPU support depends on your local CUDA setup
+* Installation may be heavy due to ML dependencies (TensorFlow, PyTorch, DeepLabCut)
 
- 1. Copying and pasting from here:
-	- "pip install behavython" (without quotation[""] marks)
- 2. Going to the Pypi site and copying from there:
-   	- [PyPi frontpage](https://pypi.org/project/behavython/)
+---
 
-_At the moment, Behavython was mainly tested on Windows_
-<br/>
+### Installation (pip)
+
+Due to PyTorch CUDA wheels, you **must include the PyTorch index** during installation:
+
+```bash
+pip install behavython --extra-index-url https://download.pytorch.org/whl/cu118
+```
+
+If this flag is omitted, PyTorch may install incorrectly (e.g., CPU-only or incompatible builds).
+
+---
+
+### Alternative: Windows automated setup
+
+You can also use the provided installer:
+
+```bash
+run_behavython.bat
+```
+
+This script sets up the environment and installs all dependencies automatically.
+
+---
+
+### Notes
+
+* Behavython has been primarily tested on **Windows**
+* Installation time may be significant depending on your system
+* For reproducibility, dependency versions are strictly pinned in the package
+
+---
+
 <!-- USAGE EXAMPLES -->
 ## Usage
                                 
