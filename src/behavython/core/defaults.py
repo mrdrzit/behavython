@@ -19,6 +19,20 @@ QWidget {
 }
 """.strip()
 
+# Validation checkbox states
+VALIDATION_CHECKBOX_ACTIVE = """
+QCheckBox { color: #FFFFFF; }
+QCheckBox::indicator { width:15px; height:15px; background-color:#606060; border-radius:4px; }
+QCheckBox::indicator:checked { background-color:#A21F27; }
+"""
+
+# Faded state
+VALIDATION_CHECKBOX_FADED = """
+QCheckBox { color: #808080; }
+QCheckBox::indicator { width:15px; height:15px; background-color:#404040; border-radius:4px; }
+QCheckBox::indicator:checked { background-color:#5a1116; }
+"""
+
 # ==========================================
 # DEFAULT GUI STATES
 # ==========================================

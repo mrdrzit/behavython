@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QWidget
 from behavython.pipeline.workflow import run_analysis_workflow
 from behavython.services.validation import validate_analysis_request
 from behavython.core.app_context import AppContext
-from behavython.core.defaults import DEBUG_STYLE, DEFAULT_STYLE
+from behavython.core.defaults import DEBUG_STYLE, DEFAULT_STYLE, VALIDATION_CHECKBOX_ACTIVE, VALIDATION_CHECKBOX_FADED
 from behavython.pipeline.models import (
     AnalysisOptions,
     AnalysisRequest,
@@ -232,36 +232,19 @@ class BehavythonMainWindow(QWidget):
         is_maze = normalized_text in ["open_field", "elevated_plus_maze", "plus_maze"]
         is_plotting = self.interface.plot_data_checkbox.isChecked()
 
-        should_be_visible = is_maze and is_plotting
+        should_be_active = is_maze and is_plotting
 
         if hasattr(self.interface, "generate_validation_video_checkbox"):
             checkbox = self.interface.generate_validation_video_checkbox
-
-            if checkbox.isVisible() != should_be_visible:
-                checkbox.setVisible(should_be_visible)
-
-                shift_amount = 26 if should_be_visible else -26
-
-                widgets_to_move = [
-                    self.interface.label_13,
-                    self.interface.analysis_button,
-                    self.interface.clear_button,
-                    self.interface.resume_lineedit,
-                    self.interface.load_configuration_button,
-                ]
-
-                for widget in widgets_to_move:
-                    rect = widget.geometry()
-                    widget.setGeometry(rect.x(), rect.y() + shift_amount, rect.width(), rect.height())
+            checkbox.setEnabled(should_be_active)
+            
+            if should_be_active:
+                checkbox.setStyleSheet(VALIDATION_CHECKBOX_ACTIVE)
+            else:
+                checkbox.setStyleSheet(VALIDATION_CHECKBOX_FADED)
+                checkbox.setChecked(False) # Force uncheck if invalid context
 
     def on_plot_enabled_changed(self, *args) -> None:
-        is_plotting_enabled = self.interface.plot_data_checkbox.isChecked()
-
-        if hasattr(self.interface, "generate_validation_video_checkbox"):
-            checkbox = self.interface.generate_validation_video_checkbox
-            checkbox.setEnabled(is_plotting_enabled)
-            if not is_plotting_enabled:
-                checkbox.setChecked(False)
         self.on_experiment_type_changed()
 
     # ------------------------------------------------------------------
