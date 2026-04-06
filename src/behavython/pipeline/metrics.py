@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from shapely.geometry import Point
 from scipy import stats
 from behavython.pipeline.geometry import line_trough_triangle_vertex, detect_collision, create_frequency_grid
 
@@ -198,44 +199,34 @@ def preprocess_animal(animal, request) -> dict:
     }
 
 
-def compute_movement_metrics(data: dict) -> dict:
+def compute_movement_metrics(
+    centro_x: np.ndarray, centro_y: np.ndarray, fps: float, scale_x: float, scale_y: float, threshold: float = 0.0667
+) -> dict:
     """
-    Calculates displacement, velocity, acceleration, and temporal states
-    based on the animal's center coordinates.
+    Calculates displacement, velocity, acceleration, and temporal states.
+    Expects arrays that have already been sliced to the analysis range and filtered.
     """
-    coords = data["coords"]
-    fps = data["fps"]
-    threshold = data["threshold"]
-    scale_x = data["scaling"]["x"]
-    scale_y = data["scaling"]["y"]
-    start, end = data["analysis_range"]
-
-    # Safely fetch the center bodypart (fallback to "center" if mapping varies)
-    center_bp = coords.get("centro", coords.get("center"))
-    if center_bp is None:
-        raise ValueError("Missing 'centro' bodypart required for movement metrics.")
-
-    # Apply scaling and slicing
-    centro_x = center_bp["x"][start:end] * scale_x
-    centro_y = center_bp["y"][start:end] * scale_y
+    # Apply scaling to the already filtered/sliced coordinates
+    scaled_x = centro_x * scale_x
+    scaled_y = centro_y * scale_y
 
     # Calculate step differences
-    d_x = np.append(0, np.diff(centro_x))
-    d_y = np.append(0, np.diff(centro_y))
+    d_x = np.append(0, np.diff(scaled_x))
+    d_y = np.append(0, np.diff(scaled_y))
 
     # Raw displacement
     displacement = np.sqrt(np.square(d_x) + np.square(d_y))
 
     # Apply thresholds (noise filtering and anomaly removal)
     displacement[displacement < threshold] = 0
-    displacement[displacement > 55] = 0
+    displacement[displacement > 55] = 0  # Max physical displacement boundary
 
     # Total distance calculation
     accumulate_distance = np.cumsum(displacement)
     total_distance = np.max(accumulate_distance) if len(accumulate_distance) > 0 else 0.0
 
     # Time vector for derivatives
-    time_vector = np.linspace(0, len(centro_x) / fps, len(centro_x))
+    time_vector = np.linspace(0, len(scaled_x) / fps, len(scaled_x))
     dt = np.append(0, np.diff(time_vector))
 
     # Safely calculate velocity and acceleration, ignoring division by zero during resting states
@@ -359,6 +350,7 @@ def compute_exploration_metrics(interaction_data: dict, fps: float) -> dict:
         "exploration_time_left_s": exploration_time_left,
     }
 
+
 def extract_collision_coordinates(interaction_data: dict) -> dict:
     collisions_df = interaction_data["collisions"]
 
@@ -383,3 +375,135 @@ def extract_collision_coordinates(interaction_data: dict) -> dict:
         "x_collision_data": coords[:, 0],
         "y_collision_data": coords[:, 1],
     }
+
+
+def compute_zone_metrics(filtered_x: np.ndarray, filtered_y: np.ndarray, geometry_dict: dict, fps: float) -> dict:
+    """
+    Evaluates coordinates against maze geometries to tag spatial states (zones)
+    and calculates the total time spent in each zone.
+
+    This fully replaces the legacy `analyze_entries` and `analyze_time_in_each_sector`.
+    """
+    states = []
+
+    # Tag each frame with a zone
+    for x, y in zip(filtered_x, filtered_y):
+        if pd.isna(x) or pd.isna(y):
+            states.append("missing")
+            continue
+
+        point = Point(x, y)
+        current_zone = "none"  # Default fallback matching the legacy outlier/outside tag
+
+        # We iterate through the flat geometry dictionary provided by geometry.py
+        for zone_name, polygon in geometry_dict.items():
+            if polygon.contains(point):
+                current_zone = zone_name
+                break
+
+        states.append(current_zone)
+
+    states_series = pd.Series(states, name="spatial_state")
+
+    # Calculate time in zones using highly optimized Pandas value_counts
+    time_per_frame = 1.0 / fps
+    frame_counts = states_series.value_counts()
+
+    time_in_zones = {}
+    for zone, count in frame_counts.items():
+        time_in_zones[zone] = float(count * time_per_frame)
+
+    return {"spatial_state_array": states_series, "time_in_zones_s": time_in_zones}
+
+def compute_crossings(state_array: pd.Series, experiment_type: str) -> dict:
+    """
+    Calculates zone transitions and maps them to the legacy dictionary keys.
+    Replaces the frame-by-frame loop with vectorized array shifts.
+    """
+    previous_states = state_array.shift(1)
+
+    # Keep only rows where the state actually changed
+    transitions = pd.DataFrame({
+        "from_zone": previous_states,
+        "to_zone": state_array
+    }).dropna()
+    transitions = transitions[transitions["from_zone"] != transitions["to_zone"]]
+
+    counts = {}
+
+    if experiment_type == "plus_maze":
+        counts = {
+            "to_center_from_top_open": 0, "to_center_from_right_closed": 0,
+            "to_center_from_bottom_open": 0, "to_center_from_left_closed": 0,
+            "to_top_open_from_center": 0, "to_right_closed_from_center": 0,
+            "to_bottom_open_from_center": 0, "to_left_closed_from_center": 0,
+            "crossings_from_outside_to_maze": 0, "crossings_from_maze_to_outside": 0,
+            "crossing_from_none": 0, "unrecognized_crossings": 0
+        }
+
+        for _, row in transitions.iterrows():
+            f_z, t_z = row["from_zone"], row["to_zone"]
+
+            if f_z == "none" or f_z == "missing":
+                if t_z in ["none", "missing"]:
+                    continue
+                counts["crossing_from_none"] += 1
+                counts["crossings_from_outside_to_maze"] += 1
+            elif f_z == "top_open" and t_z == "center":
+                counts["to_center_from_top_open"] += 1
+            elif f_z == "center" and t_z == "top_open":
+                counts["to_top_open_from_center"] += 1
+            elif f_z == "right_closed" and t_z == "center":
+                counts["to_center_from_right_closed"] += 1
+            elif f_z == "center" and t_z == "right_closed":
+                counts["to_right_closed_from_center"] += 1
+            elif f_z == "bottom_open" and t_z == "center":
+                counts["to_center_from_bottom_open"] += 1
+            elif f_z == "center" and t_z == "bottom_open":
+                counts["to_bottom_open_from_center"] += 1
+            elif f_z == "left_closed" and t_z == "center":
+                counts["to_center_from_left_closed"] += 1
+            elif f_z == "center" and t_z == "left_closed":
+                counts["to_left_closed_from_center"] += 1
+            elif t_z == "none" or t_z == "missing":
+                counts["crossings_from_maze_to_outside"] += 1
+            else:
+                counts["unrecognized_crossings"] += 1
+
+    elif experiment_type == "open_field":
+        counts = {
+            "to_center": 0, "to_border": 0, "from_or_to_outside": 0,
+            "no_crossing": 0, "crossing_from_none": 0
+        }
+
+        # Helper to categorize the 3x3 grid into 'center' and 'border'
+        def get_of_category(z):
+            if z in ["none", "missing"]:
+                return "none"
+            if z == "zone_r1_c1":
+                return "center"  # Exact center of the 3x3 grid
+            if z.startswith("zone_"):
+                return "border"
+            return "unknown"
+
+        for _, row in transitions.iterrows():
+            f_cat = get_of_category(row["from_zone"])
+            t_cat = get_of_category(row["to_zone"])
+
+            if f_cat == "none" and t_cat == "none":
+                continue
+            elif f_cat == "none":
+                counts["crossing_from_none"] += 1
+                counts["from_or_to_outside"] += 1
+            elif t_cat == "none":
+                counts["from_or_to_outside"] += 1
+            elif f_cat == "center" and t_cat == "border":
+                counts["to_border"] += 1
+            elif f_cat == "border" and t_cat == "center":
+                counts["to_center"] += 1
+            elif f_cat == t_cat:
+                counts["no_crossing"] += 1
+            else:
+                counts["from_or_to_outside"] += 1
+
+    return counts

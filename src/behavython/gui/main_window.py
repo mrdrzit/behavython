@@ -184,10 +184,27 @@ class BehavythonMainWindow(QWidget):
             show_warning(self.interface, "Analysis output", "\n".join(message_parts))
             return
 
+        # Build options early to evaluate the experiment type
+        options = self.build_analysis_options()
+        
+        # Prompt for batch configuration if the experiment requires geometry
+        config_path = None
+        if options.experiment_type in ["open_field", "plus_maze"]:
+            # Ensure select_file is imported from your dialogs module
+            config_path = select_file(
+                self.interface, 
+                "Select Arena Batch Configuration", 
+                "JSON Files (*.json)"
+            )
+            if not config_path:
+                show_warning(self.interface, "Missing Configuration", "You must select an arena configuration JSON to run a maze analysis.")
+                return
+
         request = AnalysisRequest(
             input_files=resolved_input.paths,
             output_folder=resolved_output_folder.path,
-            options=self.build_analysis_options(),
+            options=options,
+            config_path=config_path, # Injects the selected path into the request payload
         )
 
         errors = validate_analysis_request(request)

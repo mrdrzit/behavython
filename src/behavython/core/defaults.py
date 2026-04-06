@@ -84,3 +84,5 @@ DEFAULT_ANALYSIS_PARAMETERS = {
     "trim_amount": 0,
     "threshold": 5,
 }
+
+MIN_EVENT_FRAMES = 3

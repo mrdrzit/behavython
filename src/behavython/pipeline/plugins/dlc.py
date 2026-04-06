@@ -95,8 +95,13 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
     # but deeplabcut doesn't provide a way to get progress when analyzing
     # multiple videos at once, and this way i can at least log the some
     # information about which video is being analyzed in the console output.
-    console_logger.info("Starting video analysis with DeepLabCut for %d video(s)", len(request.video_paths))
+    console_logger.info(
+        f"Starting video analysis with DeepLabCut for {len(request.video_paths)} video(s). Note that the progress bar will probably loook stuck in the\n \
+          first video. Please be patient.\n\
+          Wait at least the duration of the first video before assuming it's stuck. Thanks you! :)",
+    )
     for video in tqdm(request.video_paths, desc="Analyzing videos", unit="video"):
+        
         with capture_external_output("behavython.external"):
             deeplabcut.analyze_videos(
                 usable_config_path,
@@ -445,7 +450,7 @@ def run_create_annotated_video(
     else:
         # Fallback to .mp4 to preserve previous behavior when multiple or no suffixes are found
         videotype = ".mp4"
-        
+
     # DLC needs the .h5 and .pickle files in the same directory as the video
     for video_path in request.video_paths:
         video_dir = os.path.dirname(video_path)

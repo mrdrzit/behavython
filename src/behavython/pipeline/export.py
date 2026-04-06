@@ -15,32 +15,53 @@ def export_results_to_parquet(results: list[dict], output_folder: str) -> None:
 
     for res in results:
         animal_id = res["animal_id"]
+        
+        # 1. Extract Base Summary Metrics (Scalars)
+        summary_dict = {
+            "animal_id": animal_id,
+            "experiment_type": res.get("experiment_type"),
+            "total_distance_cm": res.get("total_distance_cm"),
+            "mean_velocity_cm_s": res.get("mean_velocity_cm_s"),
+            "time_moving_s": res.get("time_moving_s"),
+            "time_resting_s": res.get("time_resting_s"),
+            "movements_count": res.get("movements_count")
+        }
 
-        # 1. Extract Summary Metrics (Scalars)
-        # These are used for statistical aggregation and Excel reports
-        summary_rows.append(
-            {
-                "animal_id": animal_id,
-                "experiment_type": res.get("experiment_type"),
-                "total_distance_cm": res.get("total_distance_cm"),
-                "mean_velocity_cm_s": res.get("mean_velocity_cm_s"),
-                "time_moving_s": res.get("time_moving_s"),
-                "time_resting_s": res.get("time_resting_s"),
+        # Inject Object Recognition specific metrics if they exist
+        if "exploration_time_s" in res:
+            summary_dict.update({
                 "exploration_time_s": res.get("exploration_time_s"),
                 "exploration_time_right_s": res.get("exploration_time_right_s"),
                 "exploration_time_left_s": res.get("exploration_time_left_s"),
-            }
-        )
+            })
+
+        # Inject Maze specific metrics dynamically (flattens the dictionary)
+        if "time_in_zones_s" in res:
+            for zone, time_s in res["time_in_zones_s"].items():
+                summary_dict[f"time_in_{zone}_s"] = time_s
+                
+        if "crossings" in res:
+            for cross_type, count in res["crossings"].items():
+                summary_dict[f"crossings_{cross_type}"] = count
+
+        summary_rows.append(summary_dict)
 
         # 2. Extract Time-Series Data (Arrays)
-        # These are used for downstream plotting and visualization
         if "velocity_array" in res:
+            # Safely grab the correct X/Y arrays depending on the pipeline used
+            x_arr = res.get("filtered_x", res.get("raw_x_pos_array", []))
+            y_arr = res.get("filtered_y", res.get("raw_y_pos_array", []))
+            
+            # Grab spatial states if it's a maze, otherwise fill with None
+            state_arr = res.get("spatial_state_array", [None] * len(x_arr))
+
             ts_df = pd.DataFrame(
                 {
                     "animal_id": animal_id,
                     "frame": range(len(res["velocity_array"])),
-                    "raw_x": res.get("raw_x_pos_array", []),
-                    "raw_y": res.get("raw_y_pos_array", []),
+                    "x_pos": x_arr,
+                    "y_pos": y_arr,
+                    "spatial_state": state_arr,
                     "velocity": res.get("velocity_array", []),
                     "acceleration": res.get("acceleration_array", []),
                     "displacement": res.get("displacement_array", []),
@@ -93,6 +114,25 @@ def export_summary_metrics(results: list[dict], output_folder: str, log: Callabl
                 "total distance (cm)": res.get("total_distance_cm", 0),
                 "mean velocity (cm/s)": res.get("mean_velocity_cm_s", 0),
             }
+        elif exp_type in ["open_field", "plus_maze"]:
+            # Base maze metrics
+            metrics = {
+                "time moving (s)": res.get("time_moving_s", 0),
+                "time resting (s)": res.get("time_resting_s", 0),
+                "total distance (cm)": res.get("total_distance_cm", 0),
+                "mean velocity (cm/s)": res.get("mean_velocity_cm_s", 0),
+                "movements count": res.get("movements_count", 0),
+            }
+            
+            # Dynamically unpack zone times
+            for zone, time_s in res.get("time_in_zones_s", {}).items():
+                clean_name = zone.replace("_", " ").capitalize()
+                metrics[f"time in {clean_name} (s)"] = time_s
+                
+            # Dynamically unpack crossing counts
+            for cross_type, count in res.get("crossings", {}).items():
+                clean_name = cross_type.replace("_", " ").capitalize()
+                metrics[f"{clean_name} count"] = count
         else:
             # Safe fallback for any unspecified experiment types
             metrics = {
@@ -103,7 +143,6 @@ def export_summary_metrics(results: list[dict], output_folder: str, log: Callabl
             }
 
         # 2. Create the DataFrame and Transpose it (.T)
-        # This makes the index the metric names, and the column name the animal_id
         df = pd.DataFrame(metrics, index=[animal_id]).T
         animal_frames.append(df)
 
@@ -111,7 +150,6 @@ def export_summary_metrics(results: list[dict], output_folder: str, log: Callabl
         return
 
     # 3. Join all individual animal DataFrames side-by-side
-    # pd.concat with axis=1 aligns the rows (metrics) automatically
     final_df = pd.concat(animal_frames, axis=1)
 
     # Name the index column for cleaner output

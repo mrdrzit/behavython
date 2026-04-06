@@ -128,8 +128,9 @@ class YamlRepairResult:
 
 
 class Animal:
-    def __init__(self, animal_id, position_csv, skeleton_csv, roi_csv, image_path, video_path=None):
+    def __init__(self, animal_id, position_csv, image_path, skeleton_csv=None, roi_csv=None, video_path=None, experiment_type="object_recognition"):
         self.id = animal_id
+        self.experiment_type = experiment_type
 
         # File references
         self.position_csv = position_csv
@@ -165,12 +166,16 @@ class Animal:
         self.logs.append(entry)
 
     def _validate(self):
+        # Base requirements for EVERY analysis
         required = {
             "position_csv": self.position_csv,
-            "skeleton_csv": self.skeleton_csv,
-            "roi_csv": self.roi_csv,
             "image_path": self.image_path,
         }
+
+        # Task-specific requirements
+        if self.experiment_type not in ["open_field", "plus_maze"]:
+            required["skeleton_csv"] = self.skeleton_csv
+            required["roi_csv"] = self.roi_csv
 
         for key, path in required.items():
             if path is None or not os.path.exists(path):
@@ -185,11 +190,7 @@ class Animal:
         # Video is optional
         if isinstance(self.video_path, list):
             if len(self.video_path) > 1:
-                self._log(
-                    "WARNING",
-                    "Multiple video files detected. Using first.",
-                    {"files": self.video_path},
-                )
+                self._log("WARNING", "Multiple video files detected. Using first.", {"files": self.video_path})
                 self.video_path = self.video_path[0]
             elif len(self.video_path) == 1:
                 self.video_path = self.video_path[0]
@@ -202,7 +203,6 @@ class Animal:
                 "Animal marked as NOT ELIGIBLE for analysis due to missing required files",
                 {"missing": self.missing_files},
             )
-            self.eligible = False
 
     def _load_all(self):
         self._load_position()
@@ -259,9 +259,11 @@ class Animal:
             self.eligible = False
 
     def _load_skeleton(self):
+        if not self.skeleton_csv:
+            return
+
         try:
             self.skeleton = {}
-
             df = pd.read_csv(self.skeleton_csv, header=[0, 1])
 
             for bone, coord in df.columns:
@@ -273,40 +275,31 @@ class Animal:
 
                 try:
                     bone_df = df[bone]
-
                     self.skeleton[bone] = {
                         "length": bone_df["length"],
                         "orientation": bone_df["orientation"],
                         "likelihood": bone_df["likelihood"] if "likelihood" in bone_df else None,
                     }
-
                 except KeyError:
                     self.logs.append({"level": "error", "message": f"Incomplete skeleton data: {bone}", "context": "skeleton_loading"})
 
-            # Optional: enforce minimum structure
             if not self.skeleton:
                 self.logs.append({"level": "error", "message": "No valid skeleton data found", "context": "skeleton_loading"})
                 self.eligible = False
 
         except Exception as e:
-            self.logs.append(
-                {
-                    "level": "error",
-                    "message": "Failed to load skeleton CSV",
-                    "context": "skeleton_loading",
-                    "error": str(e),
-                }
-            )
+            self.logs.append({"level": "error", "message": "Failed to load skeleton CSV", "context": "skeleton_loading", "error": str(e)})
             self.eligible = False
 
     def _load_rois(self):
+        if not self.roi_csv:
+            return
+
         try:
             df = pd.read_csv(self.roi_csv)
             df.columns = [name.lower() for name in df.columns]
 
-            filename = Path(self.roi_csv).stem  # e.g. test_mouse_plain_roiL
-
-            # Extract semantic ROI label: filenames ending in "roi" plus optional side/variant letter (L/R/D/E), case-insensitive.
+            filename = Path(self.roi_csv).stem
             match = re.search(r"(roi[lrde]?)$", filename, re.IGNORECASE)
             roi_label = match.group(1) if match else "roi"
 
@@ -349,3 +342,43 @@ class Animal:
         if self.image is None:
             return (0, 0)
         return self.image.shape[1], self.image.shape[0]
+
+
+@dataclass
+class MazeAnimal:
+    """
+    A strict geometric validator that wraps the base Animal class.
+    Ensures that an animal has the required coordinates and tracking data
+    specifically for Open Field or Plus Maze experiments.
+    """
+
+    animal: Animal
+    experiment_type: str
+    arena_corners: list[tuple[float, float]] = field(default_factory=list)
+    maze_points: list[tuple[float, float]] = field(default_factory=list)
+
+    def __post_init__(self):
+        self._validate_maze_requirements()
+
+    def _validate_maze_requirements(self):
+        if not self.animal.eligible:
+            raise ValueError(f"[{self.animal.id}] Base animal data is ineligible for analysis.")
+
+        if self.experiment_type == "open_field" and len(self.arena_corners) != 4:
+            raise ValueError(f"[{self.animal.id}] Open Field requires exactly 4 arena corners.")
+
+        if self.experiment_type == "plus_maze" and len(self.maze_points) != 12:
+            raise ValueError(f"[{self.animal.id}] Plus Maze requires exactly 12 maze points.")
+
+    def get_primary_tracking_data(self, preferred_bodypart: str = "center") -> tuple[pd.Series, pd.Series]:
+        """
+        Retrieves the X and Y series. Falls back to the first available bodypart
+        if the preferred one is missing, preventing hardcoded 'focinho' dependencies.
+        """
+        if preferred_bodypart in self.animal.bodyparts:
+            bp_data = self.animal.bodyparts[preferred_bodypart]
+        else:
+            first_available = next(iter(self.animal.bodyparts))
+            bp_data = self.animal.bodyparts[first_available]
+
+        return bp_data["x"], bp_data["y"]

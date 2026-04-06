@@ -1,10 +1,14 @@
 import os
+import math
 import json
 import logging
 from tqdm import tqdm
 from typing import Callable
-from behavython.pipeline.models import AnalysisRequest, Animal
+from behavython.pipeline import filters, geometry  # noqa: F401
+from behavython.pipeline.models import AnalysisRequest, Animal, MazeAnimal
 from behavython.pipeline.metrics import (
+    compute_crossings,
+    compute_zone_metrics,
     extract_collision_coordinates,
     preprocess_animal,
     compute_roi_interaction,
@@ -18,6 +22,7 @@ from behavython.pipeline.plotting import plot_animal_analysis
 from behavython.core.utils import group_analysis_files
 
 console_logger = logging.getLogger("behavython.console")
+
 
 def analyze_animal(animal: Animal, request: AnalysisRequest) -> dict:
     """
@@ -34,25 +39,24 @@ def analyze_animal(animal: Animal, request: AnalysisRequest) -> dict:
         dict: flat dictionary with all computed metrics
     """
 
-    # 1. Preprocessing
     data = preprocess_animal(animal, request)
-
-    # 2. ROI / interaction
     interaction_data = compute_roi_interaction(data)
     collision_data = extract_collision_coordinates(interaction_data)
 
-    # 3. Movement metrics
-    movement_metrics = compute_movement_metrics(data)
+    start, end = data["analysis_range"]
+    movement_metrics = compute_movement_metrics(
+        centro_x=data["coords"]["center"]["x"][start:end],
+        centro_y=data["coords"]["center"]["y"][start:end],
+        fps=data["fps"],
+        scale_x=data["scaling"]["x"],
+        scale_y=data["scaling"]["y"],
+        threshold=data["threshold"],
+    )
 
-    # 4. Exploration metrics
-    # Feed the dataframe and the frame rate to get the timing
     exploration_metrics = compute_exploration_metrics(interaction_data, data["fps"])
-
-    # 5. Spatial metrics
     spatial_metrics = compute_spatial_metrics(data, movement_metrics)
 
-    # 6. Aggregate results
-    results = {
+    return {
         "animal_id": animal.id,
         "experiment_type": request.options.experiment_type,
         **movement_metrics,
@@ -62,7 +66,73 @@ def analyze_animal(animal: Animal, request: AnalysisRequest) -> dict:
         "collisions_df": interaction_data["collisions"],
     }
 
-    return results
+
+def analyze_maze_animal(maze_animal: MazeAnimal, request: AnalysisRequest) -> dict:
+    """
+    The new pipeline specifically for Open Field and Plus Maze.
+    Strings together pure extraction, filtering, geometry, and spatial events.
+    """
+
+    # 1. Calculate Pixel-to-CM Scaling Factors
+    if maze_animal.experiment_type == "open_field":
+        tl, tr, _, bl = maze_animal.arena_corners
+        # Euclidean distance between top-left and top-right
+        pixel_width = math.dist(tl, tr) 
+        # Euclidean distance between top-left and bottom-left
+        pixel_height = math.dist(tl, bl)
+        
+    elif maze_animal.experiment_type == "plus_maze":
+        pts = maze_animal.maze_points
+        # Mapping the furthest arm extremities
+        pixel_width = math.dist(pts[11], pts[4])  # Closed arms distance
+        pixel_height = math.dist(pts[2], pts[7])  # Open arms distance
+
+    # Scale = Physical Size (cm) / Pixel Size (px)
+    scale_x = request.options.arena_width / pixel_width if pixel_width > 0 else 1.0
+    scale_y = request.options.arena_height / pixel_height if pixel_height > 0 else 1.0
+
+    # 2. Data extraction
+    raw_x, raw_y = maze_animal.get_primary_tracking_data(preferred_bodypart="center")
+    fps = request.options.frames_per_second
+    max_time = request.options.task_duration
+    trim_frames = int(request.options.trim_amount * fps)
+    total_frames = int(max_time * fps)
+    start = trim_frames
+    end = min(trim_frames + total_frames, len(raw_x))
+
+    sliced_x = raw_x.iloc[start:end].reset_index(drop=True)
+    sliced_y = raw_y.iloc[start:end].reset_index(drop=True)
+
+    # 3. Filtering (disabled for now)
+    # filtered_x, filtered_y = filters.apply_rolling_window_filter(sliced_x, sliced_y, window_size=5, jump_threshold=150)
+    filtered_x, filtered_y = sliced_x, sliced_y
+
+    # 4. Kinematics (reusing your existing compute_movement_metrics)
+    # We pass scale_x/y as 1.0 here if pixel-to-cm conversion is handled in preprocessing
+    kinematics = compute_movement_metrics(
+        centro_x=filtered_x.values, centro_y=filtered_y.values, fps=fps, scale_x=scale_x, scale_y=scale_y, threshold=request.options.threshold
+    )
+
+    # 5. Geometry & Spatial Events
+    if maze_animal.experiment_type == "open_field":
+        arena_polygons = geometry.build_grid_open_field_geometry(maze_animal.arena_corners)
+    else:
+        arena_polygons = geometry.build_plus_maze_geometry(maze_animal.maze_points)
+
+    # Pure extraction and legacy translation
+    zone_metrics = compute_zone_metrics(filtered_x, filtered_y, arena_polygons, fps)
+    crossings = compute_crossings(zone_metrics["spatial_state_array"], maze_animal.experiment_type)
+
+    return {
+        "animal_id": maze_animal.animal.id,
+        "experiment_type": maze_animal.experiment_type,
+        "filtered_x": filtered_x,
+        "filtered_y": filtered_y,
+        "spatial_state_array": zone_metrics["spatial_state_array"],
+        "time_in_zones_s": zone_metrics["time_in_zones_s"],
+        "crossings": crossings,
+        **kinematics,
+    }
 
 
 def run_analysis_workflow(request: AnalysisRequest, progress: Callable = None, log: Callable = None, warning: Callable = None) -> dict:
@@ -87,10 +157,11 @@ def run_analysis_workflow(request: AnalysisRequest, progress: Callable = None, l
         animal = Animal(
             animal_id=group["animal_id"],
             position_csv=files["position"][0] if files["position"] else None,
+            image_path=files["image"][0] if files["image"] else None,
             skeleton_csv=files["skeleton"][0] if files["skeleton"] else None,
             roi_csv=files["roi"][0] if files["roi"] else None,
-            image_path=files["image"][0] if files["image"] else None,
             video_path=files["video"][0] if files["video"] else None,
+            experiment_type=request.options.experiment_type
         )
         animals.append(animal)
 
@@ -116,17 +187,32 @@ def run_analysis_workflow(request: AnalysisRequest, progress: Callable = None, l
             )
 
     results = []
-    for index, animal in tqdm(enumerate(valid_animals, start=1), total=len(valid_animals), desc="Analyzing animals", unit="animal"):
-        if log:
-            log.emit("resume", f"Analyzing {animal.id}")
-
+    for index, animal in tqdm(enumerate(valid_animals, start=1), total=len(valid_animals)):
         try:
-            result = analyze_animal(animal, request)
+            if request.options.experiment_type in ["open_field", "plus_maze"]:
+                arena_corners = []
+                maze_points = []
+
+                if request.config_path and os.path.exists(request.config_path):
+                    with open(request.config_path, "r", encoding="utf-8") as f:
+                        config_data = json.load(f)
+                        if request.options.experiment_type == "open_field":
+                            arena_corners = config_data.get("arena_corners", [])
+                        elif request.options.experiment_type == "plus_maze":
+                            maze_points = config_data.get("maze_points", [])
+                else:
+                    raise FileNotFoundError("Arena configuration file is missing or invalid.")
+
+                maze_dto = MazeAnimal(
+                    animal=animal, experiment_type=request.options.experiment_type, arena_corners=arena_corners, maze_points=maze_points
+                )
+                result = analyze_maze_animal(maze_dto, request)
+            else:
+                result = analyze_animal(animal, request)
+
             results.append(result)
 
             if request.options.plot_options == "plotting_enabled":
-                if log:
-                    log.emit("resume", f"Generating plots for {animal.id}...")
                 plot_animal_analysis(animal, result, request)
 
         except Exception as e:
@@ -136,7 +222,6 @@ def run_analysis_workflow(request: AnalysisRequest, progress: Callable = None, l
 
         if progress:
             progress.emit(round((index / len(valid_animals)) * 100))
-
 
     if results:
         if log:

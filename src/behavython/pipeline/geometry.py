@@ -1,5 +1,6 @@
-import numpy as np
+from shapely.geometry import Polygon
 import math
+import numpy as np
 
 
 def angle_between_lines(line1, line2, origin):
@@ -301,3 +302,58 @@ def create_frequency_grid(x_values, y_values, bin_size, analysis_range, speed=No
     grid, _, _ = np.histogram2d(y, x, bins=[bins_y, bins_x])
 
     return grid.astype(int)
+
+def build_plus_maze_geometry(points: list[tuple[float, float]]) -> dict[str, Polygon]:
+    """
+    Builds the 5 standard polygons for the elevated plus maze.
+    Expects exactly 12 points outlining the maze structure in a continuous loop.
+    
+    Mapping based on standard reference points:
+    points[0:4]   -> Top Open Arm (Top-Left, Top-Right, Center-Top-Right, Center-Top-Left)
+    points[3:7]   -> Right Closed Arm (Center-Top-Right, Top-Right, Bottom-Right, Center-Bottom-Right)
+    points[6:10]  -> Bottom Open Arm (Center-Bottom-Right, Bottom-Right, Bottom-Left, Center-Bottom-Left)
+    points[9:12] + points[0] -> Left Closed Arm
+    """
+    if len(points) != 12:
+        raise ValueError(f"Elevated Plus Maze requires exactly 12 points, got {len(points)}")
+
+    return {
+        "top_open": Polygon(points[0:4]),
+        "right_closed": Polygon(points[3:7]),
+        "bottom_open": Polygon(points[6:10]),
+        "left_closed": Polygon(points[9:12] + [points[0]]),
+        "center": Polygon([points[3], points[6], points[9], points[0]])
+    }
+
+def build_grid_open_field_geometry(
+    corners: list[tuple[float, float]], 
+    grid_size: tuple[int, int] = (3, 3)
+) -> dict[str, Polygon]:
+    """
+    Mathematically interpolates an NxM grid from 4 outer corners.
+    Expected corners clicking order: [Top-Left, Top-Right, Bottom-Right, Bottom-Left]
+    """
+    if len(corners) != 4:
+        raise ValueError(f"Open Field grid requires exactly 4 corners, got {len(corners)}")
+
+    rows, cols = grid_size
+    tl, tr, br, bl = [np.array(pt) for pt in corners]
+    
+    grid_polygons = {}
+    
+    for row in range(rows):
+        for col in range(cols):
+            y_frac_top = row / rows
+            y_frac_bottom = (row + 1) / rows
+            x_frac_left = col / cols
+            x_frac_right = (col + 1) / cols
+            
+            cell_tl = tl + (tr - tl) * x_frac_left + (bl - tl) * y_frac_top
+            cell_tr = tl + (tr - tl) * x_frac_right + (bl - tl) * y_frac_top
+            cell_br = tl + (tr - tl) * x_frac_right + (bl - tl) * y_frac_bottom
+            cell_bl = tl + (tr - tl) * x_frac_left + (bl - tl) * y_frac_bottom
+            
+            zone_name = f"zone_r{row}_c{col}"
+            grid_polygons[zone_name] = Polygon([cell_tl, cell_tr, cell_br, cell_bl])
+            
+    return grid_polygons
