@@ -4,10 +4,12 @@ import json
 import logging
 from tqdm import tqdm
 from typing import Callable
+from behavython.core.defaults import MIN_EVENT_FRAMES, LINK_WINDOW
 from behavython.pipeline import filters, geometry  # noqa: F401
 from behavython.pipeline.models import AnalysisRequest, Animal, MazeAnimal
 from behavython.pipeline.metrics import (
     compute_crossings,
+    compute_social_behavior_metrics,
     compute_zone_metrics,
     extract_collision_coordinates,
     preprocess_animal,
@@ -56,6 +58,13 @@ def analyze_animal(animal: Animal, request: AnalysisRequest) -> dict:
     exploration_metrics = compute_exploration_metrics(interaction_data, data["fps"])
     spatial_metrics = compute_spatial_metrics(data, movement_metrics)
 
+    latent_social_behavior_metrics = compute_social_behavior_metrics(
+        collisions_df=interaction_data["collisions"],
+        fps=data["fps"],
+        min_frames=MIN_EVENT_FRAMES,
+        link_window=LINK_WINDOW 
+    )
+
     return {
         "animal_id": animal.id,
         "experiment_type": request.options.experiment_type,
@@ -63,6 +72,7 @@ def analyze_animal(animal: Animal, request: AnalysisRequest) -> dict:
         **exploration_metrics,
         **spatial_metrics,
         **collision_data,
+        **latent_social_behavior_metrics,
         "collisions_df": interaction_data["collisions"],
     }
 
@@ -77,10 +87,10 @@ def analyze_maze_animal(maze_animal: MazeAnimal, request: AnalysisRequest) -> di
     if maze_animal.experiment_type == "open_field":
         tl, tr, _, bl = maze_animal.arena_corners
         # Euclidean distance between top-left and top-right
-        pixel_width = math.dist(tl, tr) 
+        pixel_width = math.dist(tl, tr)
         # Euclidean distance between top-left and bottom-left
         pixel_height = math.dist(tl, bl)
-        
+
     elif maze_animal.experiment_type == "plus_maze":
         pts = maze_animal.maze_points
         # Mapping the furthest arm extremities
@@ -161,7 +171,7 @@ def run_analysis_workflow(request: AnalysisRequest, progress: Callable = None, l
             skeleton_csv=files["skeleton"][0] if files["skeleton"] else None,
             roi_csv=files["roi"][0] if files["roi"] else None,
             video_path=files["video"][0] if files["video"] else None,
-            experiment_type=request.options.experiment_type
+            experiment_type=request.options.experiment_type,
         )
         animals.append(animal)
 

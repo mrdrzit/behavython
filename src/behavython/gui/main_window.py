@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import os
+import time
 import logging
 from PySide6.QtWidgets import QWidget
+from PySide6.QtCore import QEvent, Qt
 from behavython.pipeline.workflow import run_analysis_workflow
 from behavython.services.validation import validate_analysis_request
 from behavython.core.app_context import AppContext
@@ -58,8 +60,11 @@ class BehavythonMainWindow(QWidget):
             on_finished=self.on_worker_finished,
         )
 
-        if hasattr(self.interface, "enable_debugging_mode_checkbox"):
-            self.interface.enable_debugging_mode_checkbox.stateChanged.connect(self.toggle_debug_mode)
+        self._debug_click_count = 0
+        self._last_debug_click_time = 0.0
+
+        if hasattr(self.interface, "behavython_logo"):
+            self.interface.behavython_logo.installEventFilter(self)
 
         self._connect_analysis_tab()
         self._connect_dlc_tab()
@@ -86,6 +91,38 @@ class BehavythonMainWindow(QWidget):
         self.logs.clear(target)
         if message:
             self.logs.append(target, message)
+
+    def eventFilter(self, obj, event):
+        if hasattr(self.interface, "behavython_logo") and obj == self.interface.behavython_logo:
+            # Catch BOTH standard clicks and double-clicks to prevent the "Double-Click Trap"
+            if event.type() in (QEvent.Type.MouseButtonPress, QEvent.Type.MouseButtonDblClick):
+                
+                # Method 1: Instant Modifier Click (Ctrl + Shift + Click)
+                modifiers = event.modifiers()
+                if (modifiers & Qt.KeyboardModifier.ControlModifier) and \
+                   (modifiers & Qt.KeyboardModifier.ShiftModifier):
+                    self._debug_click_count = 0  # Reset the counter cleanly
+                    self.toggle_debug_mode()
+                    return True
+                
+                # Method 2: Rapid 3-Click 
+                current_time = time.time()
+                
+                # Reset counter if more than 1 second passes between clicks
+                if current_time - self._last_debug_click_time > 1.0:
+                    self._debug_click_count = 0
+                
+                self._debug_click_count += 1
+                self._last_debug_click_time = current_time
+
+                # Trigger on 3 fast clicks
+                if self._debug_click_count >= 3:
+                    self._debug_click_count = 0
+                    self.toggle_debug_mode()
+                    
+                return True # Event handled, prevent default
+                
+        return super().eventFilter(obj, event)
 
     # ------------------------------------------------------------------
     # Analysis tab
@@ -450,23 +487,21 @@ class BehavythonMainWindow(QWidget):
         self.logger.info("Frame extraction submitted for %d video(s).", len(request.video_paths))
 
     def toggle_debug_mode(self) -> None:
-        if not hasattr(self.interface, "enable_debugging_mode_checkbox"):
-            return
-
-        enabled = self.interface.enable_debugging_mode_checkbox.isChecked()
-        self.debug_mode = enabled
+        self.debug_mode = not self.debug_mode
+        enabled = self.debug_mode
+        
         self.logger.info("Debug mode toggled: %s", enabled)
 
         if enabled:
             self.interface.setStyleSheet(DEBUG_STYLE)
             self.logs.clear_all()
-            self.logs.append("resume", "🐞 Debug mode active")
-            self.logs.append("dlc", "🐞 Debug mode active")
+            self.logs.append("resume", "🛠️ Debug mode active")
+            self.logs.append("dlc", "🛠️ Debug mode active")
         else:
             self.interface.setStyleSheet(DEFAULT_STYLE)
             self.logs.clear_all()
-            self.logs.append("resume", "🔧 Debug mode deactivated")
-            self.logs.append("dlc", "🔧 Debug mode deactivated")
+            self.logs.append("resume", "🛡️ Debug mode deactivated")
+            self.logs.append("dlc", "🛡️ Debug mode deactivated")
 
     # ------------------------------------------------------------------
     # Worker callbacks

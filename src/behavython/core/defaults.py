@@ -13,9 +13,94 @@ QWidget {
 """.strip()
 
 DEBUG_STYLE = """
+/* 1. Global Background and Text */
 QWidget {
-    background-color: #598d96;
+    background-color: #1E1E1E;
+    color: #CCCCCC;
+}
+
+/* 2. Text Areas and Logs (Make it look like a console) */
+QTextEdit, QPlainTextEdit, QLineEdit {
+    background-color: #121212;
+    color: #CE9178; /* VS Code String Orange */
+    border: 1px solid #d97706; /* Amber warning border */
+    border-radius: 4px;
+    font-family: "Consolas", monospace;
+    padding: 4px;
+}
+
+/* 3. Buttons: Warning Amber outine, fills on hover */
+QPushButton {
+    background-color: #2D2D2D;
+    color: #d97706;
+    border: 1px solid #d97706;
+    border-radius: 6px;
+    font-weight: bold;
+    padding: 6px;
+}
+
+QPushButton:hover {
+    background-color: #d97706;
+    color: #1E1E1E;
+}
+
+QPushButton:pressed {
+    background-color: #b45309;
+    border: 1px solid #b45309;
     color: #FFFFFF;
+}
+
+/* 4. Progress Bar: Shift from blue to amber */
+QProgressBar {
+    border: 1px solid #3C3C3C;
+    border-radius: 4px;
+    background-color: #252526;
+    text-align: center;
+    color: #FFFFFF;
+    font-weight: bold;
+}
+
+QProgressBar::chunk {
+    background-color: #d97706;
+    border-radius: 2px;
+}
+
+/* 5. ComboBoxes (Dropdowns) */
+QComboBox {
+    background-color: #252526;
+    border: 1px solid #3C3C3C;
+    border-radius: 4px;
+    padding-left: 8px;
+    color: #D4D4D4;
+}
+
+QComboBox::drop-down {
+    border: none;
+}
+
+QComboBox QAbstractItemView {
+    background-color: #1E1E1E;
+    color: #CE9178;
+    selection-background-color: #d97706;
+    selection-color: #1E1E1E;
+}
+
+/* 6. Checkboxes */
+QCheckBox {
+    color: #D4D4D4;
+}
+
+QCheckBox::indicator {
+    width: 15px;
+    height: 15px;
+    background-color: #252526;
+    border: 1px solid #555555;
+    border-radius: 4px;
+}
+
+QCheckBox::indicator:checked {
+    background-color: #d97706;
+    border: 1px solid #d97706;
 }
 """.strip()
 
@@ -52,8 +137,8 @@ DEFAULT_ARENA_HEIGHT = 30
 DEFAULT_FRAMES_PER_SECOND = 30
 DEFAULT_TASK_DURATION_SECONDS = 300
 DEFAULT_TRIM_AMOUNT_SECONDS = 0
-
 MIN_EVENT_FRAMES = 3
+LINK_WINDOW = 30
 
 DEFAULT_ANALYSIS_PARAMETERS = {
     "frames_per_second": 30,

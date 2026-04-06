@@ -57,22 +57,23 @@ def compute_roi_interaction(data) -> dict:
 
             distance = norm_target
 
-            # --- state
+            # --- calculate delta distance & state ---
             prev_distance = prev_distances.get(idx)
+            delta_distance = distance - prev_distance if prev_distance is not None else 0.0
             prev_distances[idx] = distance
 
             if angle_deg <= 90:
-                if prev_distance is not None and distance < prev_distance:
+                if delta_distance < 0:
                     state = "approaching"
                 else:
                     state = "looking"
             else:
-                if prev_distance is not None and distance > prev_distance:
+                if delta_distance > 0:
                     state = "retreating"
                 else:
                     state = "neutral"
 
-            # --- collision
+            # --- collision ---
             collision = detect_collision(
                 [Q[0], Q[1]],
                 [P[0], P[1]],
@@ -80,32 +81,20 @@ def compute_roi_interaction(data) -> dict:
                 roi["r"] / 2,
             )
 
-            if collision:
-                collision_rows.append(
-                    {
-                        "collision_flag": 1,
-                        "collision_pos": collision,
-                        "head_area": head_area,
-                        "roi_name": roi["name"],
-                        "interaction_state": state,
-                        "angle_to_roi": angle_deg,
-                        "distance_to_roi": distance,
-                        "frame": i,
-                    }
-                )
-            else:
-                collision_rows.append(
-                    {
-                        "collision_flag": 0,
-                        "collision_pos": None,
-                        "head_area": head_area,
-                        "roi_name": None,
-                        "interaction_state": "no interaction",
-                        "angle_to_roi": angle_deg,
-                        "distance_to_roi": distance,
-                        "frame": i,
-                    }
-                )
+            # We ALWAYS append the calculated state and ROI name, regardless of collision
+            collision_rows.append(
+                {
+                    "frame": i,
+                    "roi_name": roi["name"],
+                    "interaction_state": state,
+                    "collision_flag": 1 if collision else 0,
+                    "collision_pos": collision if collision else None,
+                    "head_area": head_area,
+                    "angle_to_roi": angle_deg,
+                    "distance_to_roi": distance,
+                    "delta distance": delta_distance,  # Required by your extract_approach.py
+                }
+            )
 
     collisions_df = pd.DataFrame(collision_rows)
 
@@ -415,6 +404,7 @@ def compute_zone_metrics(filtered_x: np.ndarray, filtered_y: np.ndarray, geometr
 
     return {"spatial_state_array": states_series, "time_in_zones_s": time_in_zones}
 
+
 def compute_crossings(state_array: pd.Series, experiment_type: str) -> dict:
     """
     Calculates zone transitions and maps them to the legacy dictionary keys.
@@ -423,22 +413,25 @@ def compute_crossings(state_array: pd.Series, experiment_type: str) -> dict:
     previous_states = state_array.shift(1)
 
     # Keep only rows where the state actually changed
-    transitions = pd.DataFrame({
-        "from_zone": previous_states,
-        "to_zone": state_array
-    }).dropna()
+    transitions = pd.DataFrame({"from_zone": previous_states, "to_zone": state_array}).dropna()
     transitions = transitions[transitions["from_zone"] != transitions["to_zone"]]
 
     counts = {}
 
     if experiment_type == "plus_maze":
         counts = {
-            "to_center_from_top_open": 0, "to_center_from_right_closed": 0,
-            "to_center_from_bottom_open": 0, "to_center_from_left_closed": 0,
-            "to_top_open_from_center": 0, "to_right_closed_from_center": 0,
-            "to_bottom_open_from_center": 0, "to_left_closed_from_center": 0,
-            "crossings_from_outside_to_maze": 0, "crossings_from_maze_to_outside": 0,
-            "crossing_from_none": 0, "unrecognized_crossings": 0
+            "to_center_from_top_open": 0,
+            "to_center_from_right_closed": 0,
+            "to_center_from_bottom_open": 0,
+            "to_center_from_left_closed": 0,
+            "to_top_open_from_center": 0,
+            "to_right_closed_from_center": 0,
+            "to_bottom_open_from_center": 0,
+            "to_left_closed_from_center": 0,
+            "crossings_from_outside_to_maze": 0,
+            "crossings_from_maze_to_outside": 0,
+            "crossing_from_none": 0,
+            "unrecognized_crossings": 0,
         }
 
         for _, row in transitions.iterrows():
@@ -471,10 +464,7 @@ def compute_crossings(state_array: pd.Series, experiment_type: str) -> dict:
                 counts["unrecognized_crossings"] += 1
 
     elif experiment_type == "open_field":
-        counts = {
-            "to_center": 0, "to_border": 0, "from_or_to_outside": 0,
-            "no_crossing": 0, "crossing_from_none": 0
-        }
+        counts = {"to_center": 0, "to_border": 0, "from_or_to_outside": 0, "no_crossing": 0, "crossing_from_none": 0}
 
         # Helper to categorize the 3x3 grid into 'center' and 'border'
         def get_of_category(z):
@@ -507,3 +497,141 @@ def compute_crossings(state_array: pd.Series, experiment_type: str) -> dict:
                 counts["from_or_to_outside"] += 1
 
     return counts
+
+
+def compute_social_behavior_metrics(collisions_df: pd.DataFrame, fps: float, min_frames: int = 3, link_window: int = 30) -> dict:
+    """
+    Extracts bout counts, mean inter-bout intervals, and outcome proportions
+    (investigation, approach, abortive) based on the social behavior dissertation logic.
+    """
+    if collisions_df.empty:
+        return {
+            "total_bouts": 0,
+            "mean_inter_bout_interval_s": 0.0,
+            "investigation_proportion": 0.0,
+            "approach_proportion": 0.0,
+            "abortive_retreat_proportion": 0.0,
+        }
+
+    sequences = []
+
+    # 1. Group by ROI to prevent .shift() from mixing interleaved ROI rows
+    for roi_name, roi_df in collisions_df.groupby("roi_name"):
+        # Skip the 'None' fallback if the animal is interacting with nothing
+        if pd.isna(roi_name):
+            continue
+
+        # Ensure correct temporal ordering for this specific ROI
+        roi_df = roi_df.sort_values("frame").reset_index(drop=True)
+
+        # Helper to extract valid contiguous blocks
+        def get_blocks(condition):
+            blocks = condition.ne(condition.shift()).cumsum()
+            valid_blocks = []
+            for _, block in roi_df[condition].groupby(blocks):
+                if len(block) >= min_frames:
+                    valid_blocks.append({"start_frame": block["frame"].iloc[0], "end_frame": block["frame"].iloc[-1]})
+            return valid_blocks
+
+        # 2. Extract Events
+        approaches = get_blocks(roi_df["interaction_state"] == "approaching")
+        collisions = get_blocks(roi_df["collision_flag"] == 1)
+        retreats = get_blocks(roi_df["interaction_state"] == "retreating")
+
+        used_collisions = set()
+        used_retreats = set()
+
+        # 3. Build Sequences
+        for a in approaches:
+            a_start, a_end = a["start_frame"], a["end_frame"]
+
+            # ---- Find Collision ----
+            linked_col = next(
+                (
+                    c
+                    for i, c in enumerate(collisions)
+                    if i not in used_collisions and c["start_frame"] > a_start and c["start_frame"] <= a_end + link_window
+                ),
+                None,
+            )
+            if linked_col:
+                used_collisions.add(collisions.index(linked_col))
+
+            ref_end = linked_col["end_frame"] if linked_col else a_end
+
+            # ---- Find Retreat ----
+            linked_ret = next(
+                (
+                    r
+                    for i, r in enumerate(retreats)
+                    if i not in used_retreats and r["start_frame"] > ref_end and r["start_frame"] <= ref_end + link_window
+                ),
+                None,
+            )
+            if linked_ret:
+                used_retreats.add(retreats.index(linked_ret))
+
+            # ---- Determine Outcome ----
+            if linked_col:
+                outcome = "collision"
+            elif linked_ret:
+                outcome = "abortive_retreat"
+            else:
+                outcome = "approach_only"
+
+            seq_end = linked_ret["end_frame"] if linked_ret else (linked_col["end_frame"] if linked_col else a_end)
+
+            sequences.append({"start_frame": a_start, "end_frame": seq_end, "outcome": outcome})
+
+    # 4. Global Aggregation (Combine sequences from all ROIs)
+    total_bouts = len(sequences)
+    if total_bouts == 0:
+        return {
+            "total_bouts": 0, "mean_inter_bout_interval_s": 0.0,
+            "investigation_proportion": 0.0, "approach_proportion": 0.0, "abortive_retreat_proportion": 0.0,
+            "collision_bouts": 0, "approach_only_bouts": 0, "abortive_retreat_bouts": 0,
+            "mean_interval_collision_s": 0.0, "mean_interval_approach_only_s": 0.0, "mean_interval_abortive_retreat_s": 0.0
+        }
+
+    outcomes = [s["outcome"] for s in sequences]
+    n_col = outcomes.count("collision")
+    n_app = outcomes.count("approach_only")
+    n_abt = outcomes.count("abortive_retreat")
+
+    def get_mean_interval(seq_list):
+        """Helper to calculate the mean gap in seconds for a given list of sequences."""
+        intervals_s = []
+        for i in range(len(seq_list) - 1):
+            gap_frames = seq_list[i+1]["start_frame"] - seq_list[i]["end_frame"]
+            if gap_frames > 0:
+                intervals_s.append(gap_frames / fps)
+        return float(np.mean(intervals_s)) if intervals_s else 0.0
+
+    # Overall interval
+    overall_mean_interval = get_mean_interval(sequences)
+
+    # State-specific intervals
+    col_seqs = [s for s in sequences if s["outcome"] == "collision"]
+    app_seqs = [s for s in sequences if s["outcome"] == "approach_only"]
+    abt_seqs = [s for s in sequences if s["outcome"] == "abortive_retreat"]
+
+    return {
+        # Overall
+        "total_bouts": total_bouts,
+        "mean_inter_bout_interval_s": overall_mean_interval,
+        
+        # Proportions
+        "investigation_proportion": float(n_col / total_bouts),
+        "approach_proportion": float(n_app / total_bouts),
+        "abortive_retreat_proportion": float(n_abt / total_bouts),
+        
+        # Specific Counts
+        "collision_bouts": n_col,
+        "approach_only_bouts": n_app,
+        "abortive_retreat_bouts": n_abt,
+        
+        # Specific Intervals
+        "mean_interval_collision_s": get_mean_interval(col_seqs),
+        "mean_interval_approach_only_s": get_mean_interval(app_seqs),
+        "mean_interval_abortive_retreat_s": get_mean_interval(abt_seqs)
+    }
