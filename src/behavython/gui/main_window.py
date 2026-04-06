@@ -80,6 +80,7 @@ class BehavythonMainWindow(QWidget):
         self.enable_analysis_buttons()
         self.enable_analysis()
         self.toggle_analyze_from_file_button()
+        self.on_experiment_type_changed(self.interface.type_combobox.currentText())
 
     def _set_gui_log_message(self, target: str, message: str) -> None:
         self.logs.clear(target)
@@ -94,6 +95,8 @@ class BehavythonMainWindow(QWidget):
         self.interface.analysis_button.clicked.connect(self.on_run_analysis_clicked)
         self.interface.clear_button.clicked.connect(self.clear_analysis_tab)
         self.interface.load_configuration_button.clicked.connect(self.on_load_configuration_clicked)
+        self.interface.type_combobox.currentTextChanged.connect(self.on_experiment_type_changed)
+        self.interface.plot_data_checkbox.toggled.connect(self.on_plot_enabled_changed)
 
     def clear_analysis_tab(self) -> None:
         self.interface.type_combobox.setCurrentIndex(1)
@@ -107,6 +110,7 @@ class BehavythonMainWindow(QWidget):
         self.interface.fig_max_size.setCurrentIndex(2)
         self.interface.crop_video_checkbox.setChecked(False)
         self.interface.plot_data_checkbox.setChecked(True)
+        self.interface.generate_validation_video_checkbox.setChecked(False)
         self.logs.clear("resume")
 
     def on_load_configuration_clicked(self) -> None:
@@ -153,6 +157,7 @@ class BehavythonMainWindow(QWidget):
             trim_amount=int(self.interface.crop_video_time_lineedit.text()),
             crop_video=self.interface.crop_video_checkbox.isChecked(),
             plot_options="plotting_enabled" if self.interface.plot_data_checkbox.isChecked() else "plotting_disabled",
+            generate_video=self.interface.generate_validation_video_checkbox.isChecked(),
         )
 
     def on_run_analysis_clicked(self) -> None:
@@ -186,16 +191,12 @@ class BehavythonMainWindow(QWidget):
 
         # Build options early to evaluate the experiment type
         options = self.build_analysis_options()
-        
+
         # Prompt for batch configuration if the experiment requires geometry
         config_path = None
-        if options.experiment_type in ["open_field", "plus_maze"]:
+        if options.experiment_type in ["open_field", "elevated_plus_maze"]:
             # Ensure select_file is imported from your dialogs module
-            config_path = select_file(
-                self.interface, 
-                "Select Arena Batch Configuration", 
-                "JSON Files (*.json)"
-            )
+            config_path = select_file(self.interface, "Select Arena Batch Configuration", "JSON Files (*.json)")
             if not config_path:
                 show_warning(self.interface, "Missing Configuration", "You must select an arena configuration JSON to run a maze analysis.")
                 return
@@ -204,7 +205,7 @@ class BehavythonMainWindow(QWidget):
             input_files=resolved_input.paths,
             output_folder=resolved_output_folder.path,
             options=options,
-            config_path=config_path, # Injects the selected path into the request payload
+            config_path=config_path,
         )
 
         errors = validate_analysis_request(request)
@@ -221,6 +222,47 @@ class BehavythonMainWindow(QWidget):
             len(request.input_files),
             request.output_folder,
         )
+
+    def on_experiment_type_changed(self, text: str = None) -> None:
+        if text is None:
+            text = self.interface.type_combobox.currentText()
+
+        normalized_text = text.lower().strip().replace(" ", "_")
+
+        is_maze = normalized_text in ["open_field", "elevated_plus_maze", "plus_maze"]
+        is_plotting = self.interface.plot_data_checkbox.isChecked()
+
+        should_be_visible = is_maze and is_plotting
+
+        if hasattr(self.interface, "generate_validation_video_checkbox"):
+            checkbox = self.interface.generate_validation_video_checkbox
+
+            if checkbox.isVisible() != should_be_visible:
+                checkbox.setVisible(should_be_visible)
+
+                shift_amount = 26 if should_be_visible else -26
+
+                widgets_to_move = [
+                    self.interface.label_13,
+                    self.interface.analysis_button,
+                    self.interface.clear_button,
+                    self.interface.resume_lineedit,
+                    self.interface.load_configuration_button,
+                ]
+
+                for widget in widgets_to_move:
+                    rect = widget.geometry()
+                    widget.setGeometry(rect.x(), rect.y() + shift_amount, rect.width(), rect.height())
+
+    def on_plot_enabled_changed(self, *args) -> None:
+        is_plotting_enabled = self.interface.plot_data_checkbox.isChecked()
+
+        if hasattr(self.interface, "generate_validation_video_checkbox"):
+            checkbox = self.interface.generate_validation_video_checkbox
+            checkbox.setEnabled(is_plotting_enabled)
+            if not is_plotting_enabled:
+                checkbox.setChecked(False)
+        self.on_experiment_type_changed()
 
     # ------------------------------------------------------------------
     # DeepLabCut tab

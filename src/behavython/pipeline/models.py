@@ -23,6 +23,7 @@ class AnalysisOptions:
     trim_amount: int
     crop_video: bool
     plot_options: str
+    generate_video: bool = False
 
 
 @dataclass(slots=True)

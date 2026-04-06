@@ -1,3 +1,6 @@
+# ==========================================
+# APPLICATION & GUI SETTINGS
+# ==========================================
 APP_NAME = "Behavython"
 MAIN_WINDOW_TITLE = "Behavython"
 LOGO_WIDGET_NAME = "behavython_logo"
@@ -16,31 +19,55 @@ QWidget {
 }
 """.strip()
 
+# ==========================================
+# DEFAULT GUI STATES
+# ==========================================
+DEFAULT_EXPERIMENT_TYPE_INDEX = 0
+DEFAULT_ALGO_TYPE_INDEX = 0
+DEFAULT_ANIMAL_INDEX = 0
+DEFAULT_FIG_MAX_SIZE_INDEX = 1
+
+DEFAULT_PLOT_ENABLED = True
+DEFAULT_CROP_VIDEO = False
+
+# ==========================================
+# DEFAULT ANALYSIS PARAMETERS
+# ==========================================
 DEFAULT_ARENA_WIDTH = 30
 DEFAULT_ARENA_HEIGHT = 30
 DEFAULT_FRAMES_PER_SECOND = 30
 DEFAULT_TASK_DURATION_SECONDS = 300
 DEFAULT_TRIM_AMOUNT_SECONDS = 0
 
-DEFAULT_PLOT_ENABLED = True
-DEFAULT_CROP_VIDEO = False
+MIN_EVENT_FRAMES = 3
 
-DEFAULT_EXPERIMENT_TYPE_INDEX = 0
-DEFAULT_ALGO_TYPE_INDEX = 0
-DEFAULT_ANIMAL_INDEX = 0
-DEFAULT_FIG_MAX_SIZE_INDEX = 1
-
-ANALYSIS_REQUIRED_SUFFIXES = {
-    "image": (".jpg", ".jpeg", ".png", ".bmp", ".tiff"),
-    "position": ("filtered.csv",),
-    "skeleton": ("filtered_skeleton.csv",),
-    "roi": ("_roi.csv",),
+DEFAULT_ANALYSIS_PARAMETERS = {
+    "frames_per_second": 30,
+    "arena_width": 30,
+    "arena_height": 30,
+    "task_duration": 300,
+    "trim_amount": 0,
+    "threshold": 5,
 }
 
-VALID_VIDEO_EXTENSIONS = (".mp4", ".avi", ".mov")
+# ==========================================
+# EXPERIMENT DEFINITIONS
+# ==========================================
+EXPERIMENT_TYPES = [
+    "social_recognition",
+    "social_discrimination",
+    "object_discrimination",
+]
 
-TOTAL_SESSION_STORAGE_QUOTA = 5
+ROI_COUNT_BY_EXPERIMENT = {
+    "social_recognition": 1,
+    "social_discrimination": 2,
+    "object_discrimination": 2,
+}
 
+# ==========================================
+# BIOLOGICAL & TRACKING MODELS
+# ==========================================
 CANONICAL_BODYPARTS = [
     "nose",
     "left_ear",
@@ -64,25 +91,108 @@ CANONICAL_SKELETON = [
     ("center", "tail"),
 ]
 
-EXPERIMENT_TYPES = [
-    "social_recognition",
-    "social_discrimination",
-    "object_discrimination",
+# ==========================================
+# FILE & SYSTEM CONFIGURATION
+# ==========================================
+TOTAL_SESSION_STORAGE_QUOTA = 5
+
+ANALYSIS_REQUIRED_SUFFIXES = {
+    "image": (".jpg", ".jpeg", ".png", ".bmp", ".tiff"),
+    "position": ("filtered.csv",),
+    "skeleton": ("filtered_skeleton.csv",),
+    "roi": ("_roi.csv",),
+}
+
+VALID_VIDEO_EXTENSIONS = (".mp4", ".avi", ".mov")
+
+# ==========================================
+# PLOTTING & VISUALIZATION STYLES
+# ==========================================
+PLOT_COLORMAP = "inferno"
+PLOT_TRAJECTORY_COLOR = "orangered"
+PLOT_TRAJECTORY_LINEWIDTH = 1.5
+PLOT_SCATTER_SIZE = 6
+
+ZONE_COLOR_MAP = {
+    "top_open": "red",
+    "right_closed": "blue",
+    "bottom_open": "green",
+    "left_closed": "yellow",
+    "center": "purple",
+    "none": "magenta",
+    "missing": "magenta",
+    "outlier": "magenta",
+}
+
+ZONE_FALLBACK_COLORS = [
+    "cyan", "lime", "orange", "pink", "teal", 
+    "coral", "gold", "white", "brown"
 ]
 
-ROI_COUNT_BY_EXPERIMENT = {
-    "social_recognition": 1,
-    "social_discrimination": 2,
-    "object_discrimination": 2,
+PLOT_GEOMETRY_COLORS = [
+    "red", "blue", "green", "yellow", "purple", 
+    "cyan", "magenta", "orange", "lime"
+]
+
+ANIMATION_POLY_COLORS = [
+    "lightblue", "lightgreen", "lightcoral", 
+    "moccasin", "lightgrey", "pink"
+]
+
+# ==========================================
+# OPENCV VIDEO ANIMATION STYLES (BGR Format)
+# ==========================================
+CV2_TRAJECTORY_COLOR = (255, 0, 0)
+CV2_CROSSING_COLOR = (0, 0, 255)
+CV2_TEXT_COLOR = (0, 0, 0)
+CV2_TEXT_BG_COLOR = (255, 255, 255)
+CV2_GEOMETRY_OUTLINE = (100, 100, 100)
+
+CV2_POLY_COLORS = [
+    (230, 216, 173),
+    (144, 238, 144),
+    (128, 128, 240),
+    (181, 228, 255),
+    (211, 211, 211),
+    (203, 192, 255),
+]
+
+# ------------------------------------------------------------------
+# CORE COLOR PALETTE 
+# ------------------------------------------------------------------
+# We use HEX for Matplotlib and BGR Tuples for OpenCV
+HEX_ORANGERED = "#FF4500"
+BGR_ORANGERED = (0, 69, 255)  # Matches Orangered
+
+HEX_CYAN = "#00FFFF"
+BGR_CYAN = (255, 255, 0)
+
+HEX_MAGENTA = "#FF00FF"
+BGR_MAGENTA = (255, 0, 255)
+
+# ------------------------------------------------------------------
+# UNIFIED ZONE & ROI STYLES
+# ------------------------------------------------------------------
+# Maps zone names to their visual representation in both Plotting and Video
+ZONE_STYLES = {
+    "top_open":     {"mpl": "#FF0000", "cv2": (0, 0, 255)},     # Red
+    "right_closed": {"mpl": "#0000FF", "cv2": (255, 0, 0)},     # Blue
+    "bottom_open":  {"mpl": "#008000", "cv2": (0, 128, 0)},     # Green
+    "left_closed":  {"mpl": "#FFFF00", "cv2": (0, 255, 255)},   # Yellow
+    "center":       {"mpl": "#800080", "cv2": (128, 0, 128)},   # Purple
+    "none":         {"mpl": HEX_MAGENTA, "cv2": BGR_MAGENTA},
+    "missing":      {"mpl": HEX_MAGENTA, "cv2": BGR_MAGENTA},
+    "outlier":      {"mpl": HEX_MAGENTA, "cv2": BGR_MAGENTA},
+    # Open Field Grid Defaults
+    "zone_r1_c1":   {"mpl": "#800080", "cv2": (128, 0, 128)},   # Center (Purple)
 }
 
-DEFAULT_ANALYSIS_PARAMETERS = {
-    "frames_per_second": 30,
-    "arena_width": 30,
-    "arena_height": 30,
-    "task_duration": 300,
-    "trim_amount": 0,
-    "threshold": 5,
-}
+# Fallback for dynamic/unknown zones
+FALLBACK_ZONE_STYLE = {"mpl": "#00FFFF", "cv2": (255, 255, 0)} # Cyan
 
-MIN_EVENT_FRAMES = 3
+# ------------------------------------------------------------------
+# REFINED PLOTTING CONSTANTS
+# ------------------------------------------------------------------
+PLOT_TRAJECTORY_COLOR = HEX_ORANGERED
+CV2_TRAJECTORY_COLOR = BGR_ORANGERED
+CV2_CROSSING_COLOR = (255, 255, 255) # White for high contrast on events

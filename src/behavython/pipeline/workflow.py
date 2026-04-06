@@ -187,7 +187,7 @@ def run_analysis_workflow(request: AnalysisRequest, progress: Callable = None, l
             )
 
     results = []
-    for index, animal in tqdm(enumerate(valid_animals, start=1), total=len(valid_animals)):
+    for index, animal in tqdm(enumerate(valid_animals, start=1), total=len(valid_animals), position=0):
         try:
             if request.options.experiment_type in ["open_field", "plus_maze"]:
                 arena_corners = []
