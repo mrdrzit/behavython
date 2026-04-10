@@ -9,9 +9,6 @@ recursive-include src/behavython *
 # Include GUI assets explicitly
 recursive-include src/behavython/gui/assets *
 
-# Include the additional scripts folder with installation and default dicts for analysis
-recursive-include additional_info *
-
 # Remove runtime/session data
 prune src/behavython/runtime
 prune src/behavython/data
@@ -30,3 +27,10 @@ prune .vscode
 
 # Remove egg-info if present
 prune *.egg-info
+
+# Recursive exclude legacy files
+recursive-exclude src/behavython/_legacy *
+
+
+# Include config assets
+recursive-include src/behavython/assets *
