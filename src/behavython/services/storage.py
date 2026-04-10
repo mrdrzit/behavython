@@ -4,6 +4,7 @@ import tempfile
 import shutil
 from behavython.pipeline.models import RuntimeStorageConfig
 
+
 class RuntimeStorage:
     def __init__(self, config: RuntimeStorageConfig) -> None:
         self.config = config
@@ -54,11 +55,7 @@ class RuntimeStorage:
         if not self.runtime_root.exists():
             return []
 
-        session_dirs = [
-            path
-            for path in self.runtime_root.iterdir()
-            if path.is_dir() and path.name.startswith("session_")
-        ]
+        session_dirs = [path for path in self.runtime_root.iterdir() if path.is_dir() and path.name.startswith("session_")]
 
         return sorted(session_dirs, key=lambda path: path.stat().st_mtime, reverse=True)
 

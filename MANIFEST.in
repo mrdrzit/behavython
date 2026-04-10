@@ -9,9 +9,6 @@ recursive-include src/behavython *
 # Include GUI assets explicitly
 recursive-include src/behavython/gui/assets *
 
-# Include ffmpeg binary (explicitly, since you're keeping it)
-recursive-include src/behavython/ffmpeg *
-
 # Include the additional scripts folder with installation and default dicts for analysis
 recursive-include additional_info *
 

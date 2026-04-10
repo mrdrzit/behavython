@@ -4,6 +4,7 @@ from flask import json
 from typing import Any
 from pathlib import Path
 from behavython.core.defaults import VALID_VIDEO_EXTENSIONS
+from behavython.core.paths import USER_BIN_ROOT, USER_MODELS_ROOT
 from behavython.pipeline.models import AnalysisRequest
 
 
@@ -75,3 +76,14 @@ def validate_analysis_request(request: AnalysisRequest) -> list[str]:
             errors.append(f"Missing file: {path}")
 
     return errors
+
+
+def is_ffmpeg_installed() -> bool:
+    ffmpeg_exe = USER_BIN_ROOT / "ffmpeg.exe"
+    ffprobe_exe = USER_BIN_ROOT / "ffprobe.exe"
+    return ffmpeg_exe.exists() and ffprobe_exe.exists()
+
+
+def is_model_installed(model_name: str) -> bool:
+    model_dir = USER_MODELS_ROOT / model_name
+    return model_dir.exists() and any(model_dir.iterdir())

@@ -106,3 +106,6 @@ src/behavython/test/07_video_editing/
 
 test/
 *.txt
+
+# Legacy files (to be removed)
+src/behavython/_legacy/

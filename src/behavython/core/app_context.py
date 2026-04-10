@@ -3,9 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from PySide6.QtCore import QThreadPool
 from behavython.core.paths import DATA_ROOT, RUNTIME_ROOT
+from behavython.core.utils import migrate_legacy_data
 from behavython.pipeline.models import RuntimeStorageConfig
 from behavython.services.logging import AppLoggingService, register_logging_service
 from behavython.services.storage import RuntimeStorage
+
 
 @dataclass
 class AppContext:
@@ -15,6 +17,7 @@ class AppContext:
     app_logging: AppLoggingService = field(init=False)
 
     def __post_init__(self) -> None:
+        migrate_legacy_data()
         self.runtime_storage = RuntimeStorage(
             config=RuntimeStorageConfig(
                 runtime_root=RUNTIME_ROOT,

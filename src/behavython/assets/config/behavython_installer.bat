@@ -148,7 +148,8 @@ call "%CONDA_CMD%" run -n %ENV_NAME% python -m pip install ^
     opencv-python ^
     PyYAML ^
     tqdm ^
-    debugpy
+    debugpy ^
+	flask
 
 if errorlevel 1 (
     echo [ERROR] Core pip package installation failed.

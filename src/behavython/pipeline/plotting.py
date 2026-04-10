@@ -11,7 +11,7 @@ import seaborn as sns
 import numpy as np
 from tqdm import tqdm
 
-from behavython.core.paths import FFMPEG_BIN_PATH
+from behavython.core.paths import USER_BIN_ROOT
 from matplotlib.animation import FuncAnimation
 from behavython.pipeline.models import Animal, AnalysisRequest
 from behavython.pipeline import geometry
@@ -33,22 +33,6 @@ from behavython.core.defaults import (
 )
 
 console_logger = logging.getLogger("behavython.console")
-
-
-def _configure_bundled_ffmpeg():
-    """
-    Locates the bundled ffmpeg binary using the centralized paths configuration
-    and explicitly sets it for Matplotlib and the runtime environment.
-    """
-    ffmpeg_name = "ffmpeg.exe" if os.name == "nt" else "ffmpeg"
-    ffmpeg_exe = FFMPEG_BIN_PATH / ffmpeg_name
-
-    if ffmpeg_exe.exists():
-        matplotlib.rcParams["animation.ffmpeg_path"] = str(ffmpeg_exe)
-        os.environ["PATH"] = str(FFMPEG_BIN_PATH) + os.pathsep + os.environ.get("PATH", "")
-
-
-_configure_bundled_ffmpeg()
 
 
 def plot_animal_analysis(animal: Animal, result: dict, request: AnalysisRequest) -> None:
@@ -452,7 +436,7 @@ def _matplotlib_animate_maze_crossings(animal: Animal, result: dict, request: An
                 pbar.update(1)
 
             try:
-                ani.save(save_path, writer="ffmpeg", fps=fps, progress_callback=progress_callback)
+                ani.save(save_path, writer=USER_BIN_ROOT / "ffmpeg", fps=fps, progress_callback=progress_callback)
             except Exception as e:
                 console_logger.error(f"Failed to save animation for {animal_name}. Error: {e}")
 

@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import os
 import re
+import shutil
+import tempfile
 from typing import Any
 from pathlib import Path
 from natsort import os_sorted
 from collections import defaultdict
 from behavython.core.defaults import VALID_VIDEO_EXTENSIONS
+from behavython.core.paths import DATA_ROOT, PACKAGE_ROOT, RUNTIME_ROOT, USER_BIN_ROOT
 from behavython.services.validation import validate_yaml_file, validate_yaml_text
 from behavython.pipeline.models import (
     AnalysisInputSource,
@@ -312,7 +315,7 @@ def _repair_multiline_video_keys(raw_text: str) -> tuple[str, bool]:
 def repair_dlc_config_yaml(
     source_path: str | Path,
     destination_path: str | Path | None = None,
-    overwrite: bool = False,
+    overwrite: bool = True,
 ) -> YamlRepairResult:
     source = Path(source_path)
 
@@ -346,16 +349,40 @@ def repair_dlc_config_yaml(
     elif destination_path is not None:
         out_path = Path(destination_path)
     else:
-        out_path = source.with_name(f"{source.stem}_repaired{source.suffix}")
+        stem = source.stem
+        if not stem.endswith("_repaired"):
+            stem = f"{stem}_repaired"
+        out_path = source.with_name(f"{stem}{source.suffix}")
 
-    out_path.write_text(repaired_text, encoding="utf-8")
+    if not changed and out_path == source:
+        return YamlRepairResult(
+            success=True,
+            original_path=source,
+            repaired_path=source,
+            changed=False,
+            message="YAML validated successfully (no changes needed).",
+            config=parsed,
+        )
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        encoding="utf-8",
+        dir=out_path.parent,
+        delete=False,
+    ) as tmp_file:
+        tmp_file.write(repaired_text)
+        tmp_path = Path(tmp_file.name)
+
+    os.replace(tmp_path, out_path)
 
     return YamlRepairResult(
         success=True,
         original_path=source,
         repaired_path=out_path,
         changed=changed,
-        message="YAML repaired and validated successfully." if changed else "YAML validated successfully.",
+        message=("YAML repaired and validated successfully." if changed else "YAML validated successfully."),
         config=parsed,
     )
 
@@ -371,3 +398,38 @@ def load_or_repair_dlc_yaml(path: str | Path) -> tuple[dict[str, Any], Path, boo
         if not result.success or result.config is None or result.repaired_path is None:
             raise
         return result.config, result.repaired_path, result.changed
+
+
+def migrate_legacy_data():
+    legacy_data = PACKAGE_ROOT / "data"
+    legacy_runtime = PACKAGE_ROOT / "runtime"
+
+    if legacy_data.exists() and not DATA_ROOT.exists():
+        shutil.move(str(legacy_data), str(DATA_ROOT))
+
+    if legacy_runtime.exists() and not RUNTIME_ROOT.exists():
+        shutil.move(str(legacy_runtime), str(RUNTIME_ROOT))
+
+
+def resolve_binary(name: str) -> str:
+    binary = f"{name}.exe" if os.name == "nt" else name
+
+    # 1. local (downloaded into ~/.behavython/bin)
+    local = USER_BIN_ROOT / binary
+    if local.exists():
+        return str(local)
+
+    # 2. system PATH
+    system = shutil.which(name)
+    if system:
+        return system
+
+    raise RuntimeError(f"{name} not found. Install FFmpeg or use the built-in downloader.")
+
+
+def get_ffmpeg_path() -> str:
+    return resolve_binary("ffmpeg")
+
+
+def get_ffprobe_path() -> str:
+    return resolve_binary("ffprobe")

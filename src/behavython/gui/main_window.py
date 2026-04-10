@@ -3,12 +3,13 @@ from __future__ import annotations
 import os
 import time
 import logging
-from PySide6.QtWidgets import QWidget
-from PySide6.QtCore import QEvent, Qt
+from PySide6.QtWidgets import QWidget, QMessageBox
+from PySide6.QtCore import QEvent, Qt, QTimer
 from behavython.pipeline.workflow import run_analysis_workflow
-from behavython.services.validation import validate_analysis_request
+from behavython.services.validation import is_model_installed, validate_analysis_request
 from behavython.core.app_context import AppContext
 from behavython.core.defaults import DEBUG_STYLE, DEFAULT_STYLE, VALIDATION_CHECKBOX_ACTIVE, VALIDATION_CHECKBOX_FADED
+from behavython.core.paths import FFMPEG_URL, MODELS_URLS
 from behavython.pipeline.models import (
     AnalysisOptions,
     AnalysisRequest,
@@ -28,7 +29,7 @@ from behavython.services.validation import validate_json_config
 from behavython.gui.dialogs import ask_yes_no, show_info, show_warning, show_worker_error
 from behavython.gui.dialogs import select_file, select_files, select_folder, select_save_folder
 from behavython.services.logging import LoggingService
-from behavython.core.utils import resolve_analysis_input, resolve_output_folder, resolve_video_input
+from behavython.core.utils import get_ffmpeg_path, resolve_analysis_input, resolve_output_folder, resolve_video_input
 from behavython.pipeline.models import (
     AnalysisInputSource,
     OutputFolderSource,
@@ -38,6 +39,7 @@ from behavython.pipeline.models import (
     VideoInputSource,
 )
 from behavython.tasks.task_runner import TaskRunner
+from behavython.gui.dependencies import get_model_path, is_ffmpeg_installed, get_os_name, get_unix_install_instructions, dependencyDownloadDialog
 
 
 class BehavythonMainWindow(QWidget):
@@ -70,6 +72,8 @@ class BehavythonMainWindow(QWidget):
         self._connect_dlc_tab()
         self._initialize_ui_state()
 
+        QTimer.singleShot(200, self._check_startup_dependencies)
+
     @property
     def debug_mode(self) -> bool:
         return self.context.debug_mode
@@ -92,26 +96,94 @@ class BehavythonMainWindow(QWidget):
         if message:
             self.logs.append(target, message)
 
+    def _check_startup_dependencies(self) -> None:
+        if not is_ffmpeg_installed():
+            current_os = get_os_name()
+
+            if current_os == "Windows":
+                reply = QMessageBox.question(
+                    self.interface,
+                    "Missing Dependency",
+                    "FFmpeg is required for video extraction and processing but was not found.\n\nWould you like to download it now? (~100MB)",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                )
+
+                if reply == QMessageBox.StandardButton.Yes:
+                    dialog = dependencyDownloadDialog(target="ffmpeg", url=FFMPEG_URL, parent=self.interface)
+                    dialog.start_download()
+
+                    if not is_ffmpeg_installed():
+                        show_warning(self.interface, "Warning", "FFmpeg installation incomplete. Video processing will fail.")
+                    else:
+                        self._set_gui_log_message("dlc", "FFmpeg installed successfully!")
+                else:
+                    show_warning(self.interface, "Warning", "FFmpeg is required. Video extraction and cropping will fail.")
+
+            else:
+                # macOS / Linux explicit instructions
+                instructions = get_unix_install_instructions()
+                QMessageBox.warning(
+                    self.interface,
+                    "Missing Dependency: FFmpeg",
+                    f"FFmpeg is required for video processing but was not found on your system.\n\n{instructions}",
+                )
+        else:
+            # FFmpeg is already installed, just print the path once at startup!
+            ffmpeg_path = get_ffmpeg_path()
+            self.logger.info(f"Startup check passed. Using FFmpeg at: {ffmpeg_path}")
+            self.console_logger.info(f"Using FFmpeg at: {ffmpeg_path}")
+
+    def _ensure_model_installed(self, model_name: str) -> bool:
+        """
+        Checks if a model is installed. If not, prompts the user to download it.
+        Returns True if the model is ready to use, False if cancelled or failed.
+        """
+        if is_model_installed(model_name):
+            return True
+
+        reply = QMessageBox.question(
+            self.interface,
+            "Missing Neural Network",
+            f"The pre-trained network '{model_name}' is required for this action but was not found.\n\nWould you like to download it now?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            url = MODELS_URLS.get(model_name)
+            if not url:
+                show_warning(self.interface, "Download Error", f"No download URL configured for {model_name}.")
+                return False
+
+            dialog = dependencyDownloadDialog(target=model_name, url=url, parent=self.interface)
+            dialog.start_download()
+
+            if is_model_installed(model_name):
+                self._set_gui_log_message("dlc", f"Model '{model_name}' installed successfully!")
+                return True
+            else:
+                show_warning(self.interface, "Warning", f"Installation of '{model_name}' failed or was cancelled.")
+                return False
+
+        return False
+
     def eventFilter(self, obj, event):
         if hasattr(self.interface, "behavython_logo") and obj == self.interface.behavython_logo:
             # Catch BOTH standard clicks and double-clicks to prevent the "Double-Click Trap"
             if event.type() in (QEvent.Type.MouseButtonPress, QEvent.Type.MouseButtonDblClick):
-                
                 # Method 1: Instant Modifier Click (Ctrl + Shift + Click)
                 modifiers = event.modifiers()
-                if (modifiers & Qt.KeyboardModifier.ControlModifier) and \
-                   (modifiers & Qt.KeyboardModifier.ShiftModifier):
+                if (modifiers & Qt.KeyboardModifier.ControlModifier) and (modifiers & Qt.KeyboardModifier.ShiftModifier):
                     self._debug_click_count = 0  # Reset the counter cleanly
                     self.toggle_debug_mode()
                     return True
-                
-                # Method 2: Rapid 3-Click 
+
+                # Method 2: Rapid 3-Click
                 current_time = time.time()
-                
+
                 # Reset counter if more than 1 second passes between clicks
                 if current_time - self._last_debug_click_time > 1.0:
                     self._debug_click_count = 0
-                
+
                 self._debug_click_count += 1
                 self._last_debug_click_time = current_time
 
@@ -119,9 +191,9 @@ class BehavythonMainWindow(QWidget):
                 if self._debug_click_count >= 3:
                     self._debug_click_count = 0
                     self.toggle_debug_mode()
-                    
-                return True # Event handled, prevent default
-                
+
+                return True  # Event handled, prevent default
+
         return super().eventFilter(obj, event)
 
     # ------------------------------------------------------------------
@@ -148,6 +220,9 @@ class BehavythonMainWindow(QWidget):
         self.interface.crop_video_checkbox.setChecked(False)
         self.interface.plot_data_checkbox.setChecked(True)
         self.interface.generate_validation_video_checkbox.setChecked(False)
+        self.interface.use_default_network_button.setChecked(False)
+        self.interface.config_path_lineedit.clear()
+        self.interface.get_config_path_button.setEnabled(True)
         self.logs.clear("resume")
 
     def on_load_configuration_clicked(self) -> None:
@@ -274,12 +349,12 @@ class BehavythonMainWindow(QWidget):
         if hasattr(self.interface, "generate_validation_video_checkbox"):
             checkbox = self.interface.generate_validation_video_checkbox
             checkbox.setEnabled(should_be_active)
-            
+
             if should_be_active:
                 checkbox.setStyleSheet(VALIDATION_CHECKBOX_ACTIVE)
             else:
                 checkbox.setStyleSheet(VALIDATION_CHECKBOX_FADED)
-                checkbox.setChecked(False) # Force uncheck if invalid context
+                checkbox.setChecked(False)  # Force uncheck if invalid context
 
     def on_plot_enabled_changed(self, *args) -> None:
         self.on_experiment_type_changed()
@@ -304,6 +379,7 @@ class BehavythonMainWindow(QWidget):
         self.interface.get_frames_button.clicked.connect(self.on_get_frames_clicked)
         self.interface.analyze_from_file_get_frames_button.clicked.connect(self.on_get_frames_from_file_clicked)
         self.interface.create_annotated_video_button.clicked.connect(self.on_create_annotated_video_clicked)
+        self.interface.use_default_network_button.toggled.connect(self.on_use_default_network_toggled)
 
     def on_select_dlc_config_clicked(self) -> None:
         path = select_file(self.interface, "Select config.yaml", "YAML files (*.yaml)")
@@ -489,7 +565,7 @@ class BehavythonMainWindow(QWidget):
     def toggle_debug_mode(self) -> None:
         self.debug_mode = not self.debug_mode
         enabled = self.debug_mode
-        
+
         self.logger.info("Debug mode toggled: %s", enabled)
 
         if enabled:
@@ -502,6 +578,30 @@ class BehavythonMainWindow(QWidget):
             self.logs.clear_all()
             self.logs.append("resume", "🛡️ Debug mode deactivated")
             self.logs.append("dlc", "🛡️ Debug mode deactivated")
+
+    def on_use_default_network_toggled(self, checked: bool) -> None:
+        if checked:
+            if not self._ensure_model_installed("c57_network_2025_minified"):
+                self.interface.use_default_network_button.blockSignals(True)
+                self.interface.use_default_network_button.setChecked(False)
+                self.interface.use_default_network_button.blockSignals(False)
+                return
+
+            model_path = get_model_path("c57_network_2025_minified")
+            config_yaml_path = model_path / "config.yaml"
+
+            self.interface.config_path_lineedit.setText(str(config_yaml_path))
+            self.interface.get_config_path_button.setEnabled(False)
+
+            self._set_gui_log_message("dlc", "Default C57 network loaded and ready.")
+            self.logger.info("User selected default network: %s", config_yaml_path)
+
+        else:
+            # User unchecked the box. Revert to manual mode.
+            self.interface.config_path_lineedit.clear()
+            self.interface.get_config_path_button.setEnabled(True)
+            self._set_gui_log_message("dlc", "")
+            self.logger.info("User deselected default network.")
 
     # ------------------------------------------------------------------
     # Worker callbacks

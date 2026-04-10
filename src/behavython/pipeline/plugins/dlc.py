@@ -9,8 +9,7 @@ from tqdm import tqdm
 from pathlib import Path
 from typing import Any
 from behavython.core.defaults import VALID_VIDEO_EXTENSIONS
-from behavython.core.paths import FFMPEG_BIN_DIR
-from behavython.core.utils import load_or_repair_dlc_yaml
+from behavython.core.utils import load_or_repair_dlc_yaml, get_ffmpeg_path, get_ffprobe_path
 from behavython.services.validation import validate_config_path, validate_video_paths
 from behavython.services.logging import capture_external_output
 from behavython.pipeline.models import (
@@ -96,12 +95,14 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
     # multiple videos at once, and this way i can at least log the some
     # information about which video is being analyzed in the console output.
     console_logger.info(
-        f"Starting video analysis with DeepLabCut for {len(request.video_paths)} video(s). Note that the progress bar will probably loook stuck in the\n \
-          first video. Please be patient.\n\
-          Wait at least the duration of the first video before assuming it's stuck. Thanks you! :)",
+        f"Starting DeepLabCut analysis for {len(request.video_paths)} video(s).\nThe progress bar may appear stuck during the first video.\nDeepLabCut often processes near real-time, so wait roughly one video-length before assuming a stall.\nThanks you! :)",
     )
     for video in tqdm(request.video_paths, desc="Analyzing videos", unit="video"):
-        
+        # repair config for each video in case DLC moves or creates files during analysis that break the config.yaml
+        # this is a bit of a band-aid for DLC's tendency to break the config.yaml, but it should help make the process more robust overall
+        # Need to look into why DLC corrupts the config.yaml every time it analyzes a video
+        # Also done below
+        _, usable_config_path, was_repaired = prepare_dlc_config(request.config_path)
         with capture_external_output("behavython.external"):
             deeplabcut.analyze_videos(
                 usable_config_path,
@@ -123,6 +124,7 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
 
     console_logger.info(f"Filtering predictions with DeepLabCut for {len(request.video_paths)} video(s)")
     with capture_external_output("behavython.external"):
+        _, usable_config_path, was_repaired = prepare_dlc_config(request.config_path)
         deeplabcut.filterpredictions(
             usable_config_path,
             request.video_paths,
@@ -173,8 +175,9 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
 
 
 def _get_video_fps(video_path: str) -> float:
+    ffprobe = get_ffprobe_path()
     cmd = [
-        "ffprobe",
+        ffprobe,
         "-v",
         "error",
         "-select_streams",
@@ -185,14 +188,15 @@ def _get_video_fps(video_path: str) -> float:
         "default=noprint_wrappers=1:nokey=1",
         video_path,
     ]
-    result = subprocess.run(cmd, cwd=FFMPEG_BIN_DIR, capture_output=True, text=True, check=True)
+    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
     numerator, denominator = map(float, result.stdout.strip().split("/"))
     return numerator / denominator
 
 
 def _get_video_duration(video_path: str) -> float:
+    ffprobe = get_ffprobe_path()
     cmd = [
-        "ffprobe",
+        ffprobe,
         "-v",
         "error",
         "-show_entries",
@@ -201,7 +205,7 @@ def _get_video_duration(video_path: str) -> float:
         "default=noprint_wrappers=1:nokey=1",
         video_path,
     ]
-    result = subprocess.run(cmd, cwd=FFMPEG_BIN_DIR, capture_output=True, text=True, check=True)
+    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
     return float(result.stdout.strip())
 
 
@@ -222,9 +226,10 @@ def run_extract_frames(request: DLCFrameExtractionRequest, progress=None, log=No
 
         timestamp = frame_number / fps
         output_path = os.path.splitext(video_path)[0] + ".jpg"
+        ffmpeg = get_ffmpeg_path()
 
         cmd = [
-            "ffmpeg",
+            ffmpeg,
             "-ss",
             str(timestamp),
             "-i",
@@ -236,7 +241,7 @@ def run_extract_frames(request: DLCFrameExtractionRequest, progress=None, log=No
             "-y",
             output_path,
         ]
-        subprocess.run(cmd, cwd=FFMPEG_BIN_DIR, capture_output=True, text=True, check=True)
+        subprocess.run(cmd, capture_output=True, text=True, check=True)
 
         console_logger.info(f"Extracted frame for {os.path.basename(video_path)} at timestamp {timestamp:.2f}s (frame {frame_number})")
 
