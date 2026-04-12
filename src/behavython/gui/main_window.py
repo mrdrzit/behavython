@@ -230,14 +230,14 @@ class BehavythonMainWindow(QWidget):
         if not path:
             return
 
-        if not validate_json_config(path):
-            self.logger.info("Invalid configuration file selected: %s", path)
+        config_data = validate_json_config(path)
 
+        if not config_data:
+            self.logger.info("Invalid configuration file selected: %s", path)
             show_warning(self.interface, "Configuration file", "The selected file is not a valid JSON configuration.")
             return
 
-        data = validate_json_config(path)
-        self.apply_analysis_configuration(data)
+        self.apply_analysis_configuration(config_data)
         self._set_gui_log_message("resume", "Configuration file loaded successfully!")
         self.logger.info("Configuration file loaded: %s", path)
 

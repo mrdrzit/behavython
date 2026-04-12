@@ -1,7 +1,7 @@
 import os
 import yaml
 from flask import json
-from typing import Any
+from typing import Any, Optional
 from pathlib import Path
 from behavython.core.defaults import VALID_VIDEO_EXTENSIONS
 from behavython.core.paths import USER_BIN_ROOT, USER_MODELS_ROOT
@@ -53,11 +53,13 @@ def validate_yaml_file(path: str | Path) -> dict[str, Any]:
         return validate_yaml_text(handle.read())
 
 
-def validate_json_config(path: str) -> bool:
+def validate_json_config(path: str) -> Optional[dict[str, Any]]:
     try:
         with open(path, "r", encoding="utf-8") as handle:
             data = json.load(handle)
-        return data is not None and isinstance(data, dict)
+        if data is not None and isinstance(data, dict):
+            return data
+        return None
     except Exception:
         return None
 
