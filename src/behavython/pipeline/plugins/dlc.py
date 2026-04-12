@@ -293,33 +293,38 @@ def check_dlc_folder_structure(config_path: str) -> tuple[bool, list[str]]:
 def _get_required_files_status(folder_path: Path, task_type: str) -> tuple[dict[str, bool], list[str]]:
     file_names = [path.name for path in folder_path.iterdir() if path.is_file()]
     lower_names = [name.lower() for name in file_names]
-
-    status = {
-        "hasFilteredCsv": any(name.endswith("filtered.csv") and not name.endswith("filtered_skeleton.csv") for name in lower_names),
-        "hasSkeletonFilteredCsv": any(name.endswith("filtered_skeleton.csv") for name in lower_names),
-        "hasImageFile": any(name.endswith((".png", ".jpg", ".jpeg", ".tiff", ".bmp")) for name in lower_names),
-        "hasRoiFile": any(name.endswith("roi.csv") for name in lower_names),
-        "hasLeftRoiFile": any(name.endswith("roil.csv") for name in lower_names),
-        "hasRightRoiFile": any(name.endswith("roir.csv") for name in lower_names),
-    }
-
+    normalized_task = task_type.lower().replace(" ", "_")
     missing_files: list[str] = []
 
-    if not status["hasFilteredCsv"]:
+    # Enforcing snake_case for variables/keys
+    status = {
+        "has_filtered_csv": any(name.endswith("filtered.csv") and not name.endswith("filtered_skeleton.csv") for name in lower_names),
+        "has_skeleton_filtered_csv": any(name.endswith("filtered_skeleton.csv") for name in lower_names),
+        "has_image_file": any(name.endswith((".png", ".jpg", ".jpeg", ".tiff", ".bmp")) for name in lower_names),
+        "has_roi_file": any(name.endswith("roi.csv") for name in lower_names),
+        "has_left_roi_file": any(name.endswith("roil.csv") for name in lower_names),
+        "has_right_roi_file": any(name.endswith("roir.csv") for name in lower_names),
+        "has_geometry_json": any(name.endswith(".json") for name in lower_names),
+    }
+
+    if not status["has_filtered_csv"]:
         missing_files.append(" - filtered.csv")
-    if not status["hasSkeletonFilteredCsv"]:
+    if not status["has_skeleton_filtered_csv"]:
         missing_files.append(" - filtered_skeleton.csv")
-    if not status["hasImageFile"]:
+    if not status["has_image_file"]:
         missing_files.append(" - screenshot of the video")
 
-    if task_type == "njr":
-        if not status["hasLeftRoiFile"]:
+    if normalized_task == "njr":
+        if not status["has_left_roi_file"]:
             missing_files.append(" - roiL.csv")
-        if not status["hasRightRoiFile"]:
+        if not status["has_right_roi_file"]:
             missing_files.append(" - roiR.csv")
-    elif task_type == "social_recognition":
-        if not status["hasRoiFile"]:
+    elif normalized_task == "social_recognition":
+        if not status["has_roi_file"]:
             missing_files.append(" - roi.csv")
+    elif normalized_task in ["open_field", "plus_maze", "epm"]:
+        if not status["has_geometry_json"]:
+            missing_files.append(" - arena geometry (.json)")
 
     return status, missing_files
 
@@ -346,7 +351,7 @@ def run_clear_unused_files(request: DLCClearUnusedFilesRequest, progress=None, l
     if not folder_path.exists() or not folder_path.is_dir():
         raise ValueError(f"Invalid folder: {folder_path}")
 
-    task_type = request.task_type.strip().lower()
+    task_type = request.task_type.strip().lower().replace(" ", "_")
 
     unwanted_folder = folder_path / "unwanted_files"
     unwanted_folder.mkdir(exist_ok=True)
@@ -383,6 +388,8 @@ def run_clear_unused_files(request: DLCClearUnusedFilesRequest, progress=None, l
                 keep_entry = True
             elif suffix in image_suffixes:
                 keep_entry = True
+            elif suffix == ".json":
+                keep_entry = True
             elif "roi" in lower_name and suffix == ".csv":
                 keep_entry = True
             elif lower_name.endswith("filtered.csv"):
@@ -409,17 +416,19 @@ def run_clear_unused_files(request: DLCClearUnusedFilesRequest, progress=None, l
         if log:
             log.emit("dlc", "There are missing files in the folder")
 
-    console_logger.info(f"Cleared unused files for DLC folder: {folder_path}")
-    console_logger.info(f"Moved {len(moved_files)} file(s) to {unwanted_folder}")
-    if missing_files:
-        console_logger.warning(f"Missing required files:\n{''.join(missing_files)}")
+    if console_logger:
+        console_logger.info(f"Cleared unused files for DLC folder: {folder_path}")
+        console_logger.info(f"Moved {len(moved_files)} file(s) to {unwanted_folder}")
+        if missing_files:
+            formatted_missing = "\n".join(missing_files)  # Fixed join string format
+            console_logger.warning(f"Missing required files:\n{formatted_missing}")
 
     return {
         "kind": "dlc_clear_unused_files",
-        "folderPath": str(folder_path),
-        "movedFiles": moved_files,
-        "missingFiles": missing_files,
-        "allRequiredPresent": len(missing_files) == 0,
+        "folder_path": str(folder_path),
+        "moved_files": moved_files,
+        "missing_files": missing_files,
+        "all_required_present": len(missing_files) == 0,
     }
 
 

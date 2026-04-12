@@ -650,21 +650,21 @@ class BehavythonMainWindow(QWidget):
             self.logger.info("Frame extraction completed for %d video(s).", result["videos"])
             show_info(self.interface, "Frame extraction completed", f"Processed {result['videos']} video(s).")
         elif kind == "dlc_clear_unused_files":
-            moved_count = len(result["movedFiles"])
+            moved_count = len(result["moved_files"])
             self.logger.info(
                 "Cleanup completed. moved_files=%d all_required_present=%s",
                 moved_count,
-                result["allRequiredPresent"],
+                result["all_required_present"],
             )
 
-            if result["allRequiredPresent"]:
+            if result["all_required_present"]:
                 show_info(
                     self.interface,
                     "Cleanup completed",
                     f"Moved {moved_count} file(s) to unwanted_files.\nAll required files are present.",
                 )
             else:
-                missing_text = "\n".join(result["missingFiles"])
+                missing_text = "\n".join(result["missing_files"])
                 show_warning(
                     self.interface,
                     "Missing files",
