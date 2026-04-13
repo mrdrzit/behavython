@@ -5,7 +5,7 @@
 <br/>
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/mrdrzit/Behavython/main/logo/logo.png" width="300" alt="Behavython logo"/>
+  <img src="https://raw.githubusercontent.com/mrdrzit/behavython/refs/heads/main/src/behavython/gui/assets/images/logo.png" width="300" alt="Behavython logo"/>
 
   <p>
     <strong>Automated Behavioral Analysis Interface</strong><br/>
@@ -51,16 +51,19 @@ The software enforces strict scientific reproducibility through automated enviro
 
 ## Getting Started
 
+Here is a more professional and user-friendly way to word that section, focusing on clarity and ease of use:
+
 ### Automated Installation (Windows)
 
-For Windows users, we provide a batch script that automates the creation of the Conda environment, installs the correct pip dependencies, and handles the CUDA setup. 
+For a streamlined setup, we provide a batch script that automates the entire process: creating the Conda environment, installing the required `pip` dependencies, and configuring the CUDA environment.
 
-Download and run the installer from the repository:
-- Open the link and save the page (right-click → Save As) as a `.bat` file, that is, `behavython_installer.bat`: <br>
-[Download the file from here](https://github.com/mrdrzit/behavython/raw/main/installation_script/behavython_installer.bat)
+**How to use the installer:**
 
-- Learn how to use the installer from here:<br>
-[Installation Guide](https://github.com/mrdrzit/behavython/tree/main/installation_script)
+1.  **Download the script:** [**Download behavython_installer.bat**](https://github.com/mrdrzit/behavython/raw/main/installation_script/behavython_installer.bat)<br>
+    *_Right-click the link and select **"Save Link As..."** to download it as a `.bat` file_*<br>
+    *_In the windows explorer dowload prompt make sure to select "Save as type: All Files" and not "Text Documents" to avoid saving it as a `.txt` file_*
+2.  **Run the Installer:** Double-click the downloaded file and follow the on-screen instructions.
+3.  **Detailed Instructions:** For a full walkthrough of the automated process, refer to our [**Installation Guide**](https://github.com/mrdrzit/behavython/tree/main/installation_script).
 
 ### Step-by-Step Installation (Manual)
 
@@ -103,7 +106,7 @@ Failure to configure the GPU dependencies correctly will result in severe proces
 
 ## Pretrained Models
 
-Behavython comes with a pretrained model for roi and mouse tracking (c57 black on white arena top view) These can be downloaded from the [GitHub Releases page](https://www.google.com/search?q=https://github.com/mrdrzit/Behavython/releases).
+Behavython comes with a pretrained model for roi and mouse tracking (c57 black on white arena top view) These can be downloaded from the [GitHub Releases page](https://github.com/mrdrzit/behavython/releases/tag/models-v1.0).
 
 The latest release (`models-v1.0`) includes:
 
