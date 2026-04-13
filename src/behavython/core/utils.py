@@ -433,3 +433,13 @@ def get_ffmpeg_path() -> str:
 
 def get_ffprobe_path() -> str:
     return resolve_binary("ffprobe")
+
+
+def detect_gpu():
+    try:
+        import tensorflow as tf
+
+        gpus = tf.config.list_physical_devices("GPU")
+        return len(gpus) > 0, gpus
+    except Exception:
+        return False, []

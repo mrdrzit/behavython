@@ -90,6 +90,7 @@ class BehavythonMainWindow(QWidget):
         self.enable_analysis()
         self.toggle_analyze_from_file_button()
         self.on_experiment_type_changed(self.interface.type_combobox.currentText())
+        self.set_advanced_tabs_visible(False)
 
     def _set_gui_log_message(self, target: str, message: str) -> None:
         self.logs.clear(target)
@@ -195,6 +196,13 @@ class BehavythonMainWindow(QWidget):
                 return True  # Event handled, prevent default
 
         return super().eventFilter(obj, event)
+
+    def set_advanced_tabs_visible(self, visible: bool):
+        self.tab_widget = self.interface.tabWidget
+        data_tab_index = self.tab_widget.indexOf(self.interface.data_process_tab)
+
+        if data_tab_index != -1:
+            self.tab_widget.setTabVisible(data_tab_index, visible)
 
     # ------------------------------------------------------------------
     # Analysis tab
@@ -564,6 +572,7 @@ class BehavythonMainWindow(QWidget):
 
     def toggle_debug_mode(self) -> None:
         self.debug_mode = not self.debug_mode
+        self.set_advanced_tabs_visible(self.debug_mode)
         enabled = self.debug_mode
 
         self.logger.info("Debug mode toggled: %s", enabled)

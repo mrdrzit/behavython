@@ -9,7 +9,7 @@ from tqdm import tqdm
 from pathlib import Path
 from typing import Any
 from behavython.core.defaults import VALID_VIDEO_EXTENSIONS
-from behavython.core.utils import load_or_repair_dlc_yaml, get_ffmpeg_path, get_ffprobe_path
+from behavython.core.utils import load_or_repair_dlc_yaml, get_ffmpeg_path, get_ffprobe_path, detect_gpu
 from behavython.services.validation import validate_config_path, validate_video_paths
 from behavython.services.logging import capture_external_output
 from behavython.pipeline.models import (
@@ -60,6 +60,24 @@ def _emit_config_repair_logs(original_path: str, usable_path: str, was_repaired:
 
 def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=None, warning=None):
     errors = validate_config_path(request.config_path) + validate_video_paths(request.video_paths)
+
+    # Check if the user has a gpu available for DLC to use, and if not, warn them that the analysis may be very slow
+    try:
+        has_gpu, gpus = detect_gpu()
+
+        if has_gpu:
+            dlc_logger.info("GPU detected and will be used by DeepLabCut.")
+            gpu_to_use = 0
+        else:
+            if warning:
+                warning.emit("No GPU detected. DeepLabCut will run on CPU (this can be very slow).")
+            dlc_logger.warning("No GPU detected. Falling back to CPU.")
+            gpu_to_use = None
+
+    except Exception as e:
+        dlc_logger.warning(f"GPU detection failed: {e}")
+        gpu_to_use = None
+
     if errors:
         raise ValueError("\n".join(errors))
 
@@ -110,7 +128,7 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
                 videotype=extension,
                 shuffle=1,
                 trainingsetindex=0,
-                gputouse=0,
+                gputouse=gpu_to_use,
                 allow_growth=True,
                 save_as_csv=True,
             )
