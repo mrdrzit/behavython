@@ -67,19 +67,19 @@ For a streamlined setup, we provide a batch script that automates the entire pro
 
 ### Step-by-Step Installation (Manual)
 
-We strongly recommend using Conda (or Miniconda/Mamba) to manage your isolated Python environment to prevent dependency conflicts.
+We strongly recommend using mamba (or Miniconda/Mamba) to manage your isolated Python environment to prevent dependency conflicts.
 
 **1. Create the environment:**
 Create a clean environment explicitly using Python 3.10.
 ```bash
-conda create -n behavython python=3.10
+mamba create -n behavython python=3.10
 ````
 
 **2. Activate the environment:**
 You must be inside the environment for the next steps.
 
 ```bash
-conda activate behavython
+mamba activate behavython
 ```
 
 **3. Install Behavython:**
@@ -97,7 +97,7 @@ Behavython relies heavily on GPU-accelerated frameworks. You must install the NV
 
 ```bash
 # Ensure you are still inside the 'behavython' environment
-conda install -c conda-forge cudatoolkit=11.2 cudnn=8.1.0
+mamba install -c conda-forge cudatoolkit=11.2 cudnn=8.1.0
 ```
 
 Failure to configure the GPU dependencies correctly will result in severe processing slowdowns and potential runtime memory errors during DeepLabCut operations.
