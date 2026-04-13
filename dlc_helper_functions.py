@@ -14,7 +14,6 @@ import threading
 import traceback
 import warnings
 import sys
-import itertools as it
 
 # Data processing and visualization
 import cv2
@@ -28,15 +27,16 @@ import matplotlib.cm as cm
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from scipy import stats
 import matplotlib.lines as mlines
+from scipy import stats
+from pathlib import Path
 from matplotlib import colors as mcolors
 from matplotlib.collections import LineCollection
 
 # GUI and Qt
 import tkinter as tk
 from tkinter import filedialog
-from PySide6.QtCore import QObject, QRunnable, QThread, Signal, Slot
+from PySide6.QtCore import QObject, QRunnable, Signal, Slot
 from PySide6.QtGui import QFontMetrics
 from PySide6.QtWidgets import (QDialog, QFileDialog, QLabel, QMessageBox, QPushButton, QScrollArea, QVBoxLayout, QWidget)
 
@@ -2821,53 +2821,133 @@ def crop_videos(worker, self, text_signal=None, progress=None, warning_message=N
             text_signal.emit(("log_video_editing_lineedit", f"[WARNING]: No crop coordinates found for video {video_name}."))
             # self.interface.log_video_editing_lineedit.append(f"[WARNING]: No crop coordinates found for video {video_name}.")
 
-def copy_folder_robocopy(worker, self, text_signal=None, progress=None, warning_message=None, resume_message=None, request_files=None, analysis_failed=None):
-    if self.debug_mode:
-        debugpy.debug_this_thread()
-        breakpoint()
+
+
+def copy_folder_robocopy(
+    worker,
+    self,
+    text_signal=None,
+    progress=None,
+    warning_message=None,
+    resume_message=None,
+    request_files=None,
+    analysis_failed=None
+):
+    import subprocess
+
+    def _parse_extensions(input_text: str) -> list[str]:
+        if not input_text.strip():
+            raise ValueError("No extensions provided.")
+
+        raw_items = input_text.split(",")
+        parsed = []
+
+        for item in raw_items:
+            ext = item.strip().lower()
+
+            if not ext:
+                continue
+
+            if ext.startswith("*"):
+                ext = ext[1:]
+
+            if not ext.startswith("."):
+                ext = f".{ext}"
+
+            if any(char in ext for char in r'\/:*?"<>|'):
+                raise ValueError(f"Invalid characters in extension: '{item}'")
+
+            parsed.append(f"*{ext}")
+
+        if not parsed:
+            raise ValueError("No valid extensions found.")
+
+        return parsed
+
     source = self.interface.source_folder_path_video_editing_lineedit.text()
     destination = self.interface.destination_folder_path_video_editing_lineedit.text()
-    # If the destination path contains spaces, change the directory name to use underscores
+
     if " " in destination:
-        warning_message.emit(("Destination folder", "The destination folder path contains spaces. Please remove the spaces and try again."))
+        warning_message.emit(("Destination folder", "Remove spaces from destination path."))
+        return
+
+    if not source:
+        text_signal.emit(("log_video_editing_lineedit", "[ERROR]: No source folder."))
+        return
+
+    if not destination:
+        text_signal.emit(("log_video_editing_lineedit", "[ERROR]: No destination folder."))
         return
 
     exclude_files = self.interface.exclude_files_checkbox.isChecked()
     include_files = self.interface.include_files_checkbox.isChecked()
 
     if include_files and exclude_files:
-        text_signal.emit(("log_video_editing_lineedit", "[ERROR]: You cannot select both include and exclude files."))
+        text_signal.emit(("log_video_editing_lineedit", "[ERROR]: Cannot use include + exclude together."))
         return
 
-    if source == "":
-        text_signal.emit(("log_video_editing_lineedit", "[ERROR]: Please select a source folder."))
-        return
-    elif destination == "":
-        text_signal.emit(("log_video_editing_lineedit", "[ERROR]: Please select a destination folder."))
-        return
-
-    if exclude_files:
-        extensions_to_exclude = self.interface.file_exclusion_video_editing_lineedit.text().lower().strip().split(",")
-        extensions_str = " ".join([f'"*{ext.strip()}"' for ext in extensions_to_exclude])
-        robocopy_command = f'robocopy "{source}" "{destination}" /e /zb /copyall /xf {extensions_str}'
-    elif include_files:
-        extensions_to_include = self.interface.file_inclusion_video_editing_lineedit.text().lower().strip().split(",")
-        extensions_str = " ".join([f'"*{ext.strip()}"' for ext in extensions_to_include])
-        robocopy_command = f'robocopy "{source}" "{destination}" /e /zb /copyall /if {extensions_str}'
-    else:
-        robocopy_command = f'robocopy "{source}" "{destination}" /e /zb /copyall'
-
-    # Escape the command properly for PowerShell
-    ps_command = f'''
-    $command = '{robocopy_command}'
-    Start-Process cmd -ArgumentList '/c', $command -Verb RunAs -Wait
-    '''
+    cmd = [
+        "robocopy",
+        source,
+        destination,
+        "/E",
+        "/MT:32",
+        "/R:1",
+        "/W:1",
+        "/COPY:DAT",
+        "/DCOPY:DAT",
+        "/NJH",
+        "/NJS",
+        "/NDL"
+    ]
 
     try:
-        subprocess.run(["powershell", "-Command", ps_command], check=True)
-    except subprocess.CalledProcessError as e:
+        if exclude_files:
+            extensions = _parse_extensions(
+                self.interface.file_exclusion_video_editing_lineedit.text()
+            )
+            for ext in extensions:
+                cmd.extend(["/XF", ext])
+
+            text_signal.emit(("log_video_editing_lineedit", f"[INFO]: Excluding: {', '.join(extensions)}"))
+
+        elif include_files:
+            extensions = _parse_extensions(
+                self.interface.file_inclusion_video_editing_lineedit.text()
+            )
+            cmd.extend(extensions)
+
+            text_signal.emit(("log_video_editing_lineedit", f"[INFO]: Including: {', '.join(extensions)}"))
+
+    except ValueError as e:
         text_signal.emit(("log_video_editing_lineedit", f"[ERROR]: {str(e)}"))
-        self.interface.log_video_editing_lineedit.append(f"[ERROR]: {str(e)}")
+        return
+
+    try:
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1
+        )
+
+        # Stream output directly (no parsing, clean mirror)
+        for line in process.stdout:
+            if not line:
+                continue
+            print(line, end="")  # preserve original robocopy formatting
+
+        process.wait()
+
+        # Robocopy return codes: 0–7 = success
+        if process.returncode <= 7:
+            text_signal.emit(("log_video_editing_lineedit", "[INFO]: Copy completed successfully."))
+        else:
+            text_signal.emit(("log_video_editing_lineedit", f"[ERROR]: Robocopy failed (code {process.returncode})"))
+
+    except Exception as e:
+        text_signal.emit(("log_video_editing_lineedit", f"[ERROR]: {str(e)}"))
 
 def save_crop_coordinates(self):
     """

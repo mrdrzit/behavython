@@ -1,0 +1,36 @@
+# Include core metadata
+include README.md
+include LICENSE
+include CITATION.cff
+
+# Include all package source
+recursive-include src/behavython *
+
+# Include GUI assets explicitly
+recursive-include src/behavython/gui/assets *
+
+# Remove runtime/session data
+prune src/behavython/runtime
+prune src/behavython/data
+
+# Remove tests entirely
+prune src/behavython/test
+
+# Remove caches and compiled files everywhere
+global-exclude __pycache__ *.py[cod] *.pyo
+
+# Remove logs
+global-exclude *.log
+
+# Remove VSCode and dev files
+prune .vscode
+
+# Remove egg-info if present
+prune *.egg-info
+
+# Recursive exclude legacy files
+recursive-exclude src/behavython/_legacy *
+
+
+# Include config assets
+recursive-include src/behavython/assets *
