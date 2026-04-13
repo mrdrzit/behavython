@@ -53,6 +53,7 @@ def _plot_object_recognition(animal: Animal, result: dict, request: AnalysisRequ
     save_folder = request.output_folder
     animal_name = animal.id
     animal_image = animal.image
+    dpi = 100
 
     x_pos = result["raw_x_pos_array"]
     y_pos = result["raw_y_pos_array"]
@@ -67,8 +68,12 @@ def _plot_object_recognition(animal: Animal, result: dict, request: AnalysisRequ
     max_w, max_h = map(int, request.options.max_fig_res)
     img_w, img_h = animal.exp_dimensions()
 
-    ratio = min(max_w / img_w, max_h / img_h) if img_w > 0 and img_h > 0 else 1
-    new_size = (int(img_w * ratio / 100), int(img_h * ratio / 100))
+    ratio = min(max_w / img_w, max_h / img_h) if img_w > 0 and img_h > 0 else 1.0
+
+    target_w_px = img_w * ratio
+    target_h_px = img_h * ratio
+
+    new_size = (target_w_px / dpi, target_h_px / dpi)
 
     plt.ioff()
     try:
@@ -77,7 +82,7 @@ def _plot_object_recognition(animal: Animal, result: dict, request: AnalysisRequ
         ax1.set_title(f"Center Position Heatmap: {animal_name}")
         ax1.imshow(position_grid, cmap=PLOT_COLORMAP, interpolation="bessel")
         ax1.axis("off")
-        fig1.savefig(os.path.join(save_folder, f"{animal_name} - Overall heatmap of the mice's position (nose).png"), bbox_inches="tight")
+        fig1.savefig(os.path.join(save_folder, f"{animal_name} - Overall heatmap of the mice's position (nose).png"), bbox_inches="tight", dpi=dpi)
 
         # 2. Exploration Map
         fig2, ax2 = plt.subplots(figsize=new_size)
@@ -87,7 +92,7 @@ def _plot_object_recognition(animal: Animal, result: dict, request: AnalysisRequ
         if animal_image is not None:
             ax2.imshow(animal_image, interpolation="bessel")
         ax2.axis("off")
-        fig2.savefig(os.path.join(save_folder, f"{animal_name} - Overall exploration by ROI.png"), bbox_inches="tight")
+        fig2.savefig(os.path.join(save_folder, f"{animal_name} - Overall exploration by ROI.png"), bbox_inches="tight", dpi=dpi)
 
         # 3. Accumulated Distance
         fig3, ax3 = plt.subplots(figsize=new_size)
@@ -96,7 +101,7 @@ def _plot_object_recognition(animal: Animal, result: dict, request: AnalysisRequ
         ax3.set_xlabel("Time (s)")
         ax3.set_ylabel("Distance (cm)")
         ax3.grid(True)
-        fig3.savefig(os.path.join(save_folder, f"{animal_name} - Distance accumulated over time.png"), bbox_inches="tight")
+        fig3.savefig(os.path.join(save_folder, f"{animal_name} - Distance accumulated over time.png"), bbox_inches="tight", dpi=dpi)
 
         # 4. Trajectory
         fig4, ax4 = plt.subplots(figsize=new_size)
@@ -105,7 +110,7 @@ def _plot_object_recognition(animal: Animal, result: dict, request: AnalysisRequ
         if animal_image is not None:
             ax4.imshow(animal_image, interpolation="bessel", alpha=0.8)
         ax4.axis("off")
-        fig4.savefig(os.path.join(save_folder, f"{animal_name} - Animal movement in the arena (nose).png"), bbox_inches="tight")
+        fig4.savefig(os.path.join(save_folder, f"{animal_name} - Animal movement in the arena (nose).png"), bbox_inches="tight", dpi=dpi)
 
     finally:
         plt.close("all")
@@ -119,6 +124,7 @@ def _plot_maze_analysis(animal: Animal, result: dict, request: AnalysisRequest) 
     save_folder = request.output_folder
     animal_name = animal.id
     animal_image = animal.image
+    dpi = 100
 
     x_pos = result.get("filtered_x", [])
     y_pos = result.get("filtered_y", [])
@@ -130,31 +136,35 @@ def _plot_maze_analysis(animal: Animal, result: dict, request: AnalysisRequest) 
     max_w, max_h = map(int, request.options.max_fig_res)
     img_w, img_h = animal.exp_dimensions()
 
-    ratio = min(max_w / img_w, max_h / img_h) if img_w > 0 and img_h > 0 else 1
-    new_size = (int(img_w * ratio / 100), int(img_h * ratio / 100))
+    ratio = min(max_w / img_w, max_h / img_h) if img_w > 0 and img_h > 0 else 1.0
+
+    target_w_px = img_w * ratio
+    target_h_px = img_h * ratio
+
+    new_size = (target_w_px / dpi, target_h_px / dpi)
 
     plt.ioff()
     try:
         # 1. Trajectory Plot
-        fig1, ax1 = plt.subplots(figsize=new_size, dpi=150)
+        fig1, ax1 = plt.subplots(figsize=new_size, dpi=dpi)
         fig1.subplots_adjust(left=0.08, right=0.95, bottom=0.08, top=0.95, hspace=0, wspace=0)
         ax1.set_title(f"Movement Trajectory: {animal_name}")
         ax1.plot(x_pos, y_pos, color=PLOT_TRAJECTORY_COLOR, linewidth=PLOT_TRAJECTORY_LINEWIDTH)
         if animal_image is not None:
             ax1.imshow(animal_image, interpolation="bessel", alpha=0.8)
         ax1.axis("off")
-        fig1.savefig(os.path.join(save_folder, f"{animal_name} - Movement in the arena.png"), bbox_inches="tight")
+        fig1.savefig(os.path.join(save_folder, f"{animal_name} - Movement in the arena.png"), bbox_inches="tight", dpi=dpi)
 
         # 2. Accumulated Distance Plot
         if len(accumulate_distance) > 0:
-            fig2, ax2 = plt.subplots(figsize=new_size, dpi=150)
+            fig2, ax2 = plt.subplots(figsize=new_size, dpi=dpi)
             fig2.subplots_adjust(left=0.08, right=0.95, bottom=0.08, top=0.95, hspace=0, wspace=0)
             ax2.set_title(f"Accumulated Distance: {animal_name}")
             ax2.plot(time_vector, accumulate_distance)
             ax2.set_xlabel("Time (s)")
             ax2.set_ylabel("Distance (cm)")
             ax2.grid(True)
-            fig2.savefig(os.path.join(save_folder, f"{animal_name} - Distance accumulated over time.png"), bbox_inches="tight")
+            fig2.savefig(os.path.join(save_folder, f"{animal_name} - Distance accumulated over time.png"), bbox_inches="tight", dpi=dpi)
 
         # 3. Geometry Overlay
         if request.config_path and os.path.exists(request.config_path):
@@ -169,7 +179,7 @@ def _plot_maze_analysis(animal: Animal, result: dict, request: AnalysisRequest) 
                 polygons = {}
 
             if polygons:
-                fig3, ax3 = plt.subplots(figsize=new_size, dpi=150)
+                fig3, ax3 = plt.subplots(figsize=new_size, dpi=dpi)
                 fig3.subplots_adjust(left=0.08, right=0.95, bottom=0.08, top=0.95, hspace=0, wspace=0)
                 ax3.set_title(f"Maze Geometry Overlay: {animal_name}")
                 if animal_image is not None:
@@ -184,7 +194,7 @@ def _plot_maze_analysis(animal: Animal, result: dict, request: AnalysisRequest) 
                     ax3.plot(x, y, color=style["mpl"], linewidth=2, label=zone_name, zorder=z)
 
                 ax3.axis("off")
-                fig3.savefig(os.path.join(save_folder, f"{animal_name} - Maze Geometry.png"), bbox_inches="tight", dpi=150)
+                fig3.savefig(os.path.join(save_folder, f"{animal_name} - Maze Geometry.png"), bbox_inches="tight", dpi=dpi)
 
                 if getattr(request.options, "generate_video", False):
                     _opencv_animate_maze_crossings(animal, result, request, polygons)
@@ -202,6 +212,7 @@ def _plot_entries(animal: Animal, result: dict, request: AnalysisRequest) -> Non
     save_folder = request.output_folder
     animal_name = animal.id
     animal_image = animal.image
+    dpi = 100
 
     x_pos = result.get("filtered_x")
     y_pos = result.get("filtered_y")
@@ -212,9 +223,10 @@ def _plot_entries(animal: Animal, result: dict, request: AnalysisRequest) -> Non
 
     max_w, max_h = map(int, request.options.max_fig_res)
     img_w, img_h = animal.exp_dimensions()
-    ratio = min(max_w / img_w, max_h / img_h) if img_w > 0 and img_h > 0 else 1
-    new_size = (int(img_w * ratio / 100), int(img_h * ratio / 100))
-    dpi = 150
+    ratio = min(max_w / img_w, max_h / img_h) if img_w > 0 and img_h > 0 else 1.0
+    target_w_px = img_w * ratio
+    target_h_px = img_h * ratio
+    new_size = (target_w_px / dpi, target_h_px / dpi)
 
     plt.ioff()
     fig, ax = plt.subplots(figsize=new_size, dpi=dpi)
@@ -354,6 +366,7 @@ def _matplotlib_animate_maze_crossings(animal: Animal, result: dict, request: An
     console_logger.info(f"Starting animation generation for {animal.id}... This may take a moment.")
     save_folder = request.output_folder
     animal_name = animal.id
+    dpi = 100
 
     x_pos = result.get("filtered_x").values
     y_pos = result.get("filtered_y").values
@@ -373,10 +386,12 @@ def _matplotlib_animate_maze_crossings(animal: Animal, result: dict, request: An
 
     max_w, max_h = map(int, request.options.max_fig_res)
     img_w, img_h = animal.exp_dimensions()
-    ratio = min(max_w / img_w, max_h / img_h) if img_w > 0 and img_h > 0 else 1
-    new_size = (int(img_w * ratio / 100), int(img_h * ratio / 100))
+    ratio = min(max_w / img_w, max_h / img_h) if img_w > 0 and img_h > 0 else 1.0
+    target_w_px = img_w * ratio
+    target_h_px = img_h * ratio
+    new_size = (target_w_px / dpi, target_h_px / dpi)
 
-    fig, ax = plt.subplots(figsize=new_size, dpi=100)
+    fig, ax = plt.subplots(figsize=new_size, dpi=dpi)
     ax.set_aspect("equal")
     ax.set_title(f"Body Part Crossing Animation: {animal_name}")
 
