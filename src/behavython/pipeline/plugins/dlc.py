@@ -95,7 +95,7 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
     # multiple videos at once, and this way i can at least log the some
     # information about which video is being analyzed in the console output.
     console_logger.info(
-        f"Starting DeepLabCut analysis for {len(request.video_paths)} video(s).\nThe progress bar may appear stuck during the first video.\nDeepLabCut often processes near real-time, so wait roughly one video-length before assuming a stall.\nThanks you! :)",
+        f"Starting DeepLabCut analysis for {len(request.video_paths)} video(s).\nThe progress bar may appear stuck during the first video.\nDeepLabCut often processes near real-time, so wait roughly one video-length before assuming a stall.\nThank you! :)",
     )
     for video in tqdm(request.video_paths, desc="Analyzing videos", unit="video"):
         # repair config for each video in case DLC moves or creates files during analysis that break the config.yaml
