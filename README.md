@@ -8,8 +8,8 @@
   <img src="https://raw.githubusercontent.com/mrdrzit/Behavython/main/logo/logo.png" width="300" alt="Behavython logo"/>
 
   <p>
-    <strong>Behavioral Analysis Interface</strong><br/>
-    Currently built to integrate with <a href="https://deeplabcut.github.io/DeepLabCut/README.html">DeepLabCut</a><br/>
+    <strong>Automated Behavioral Analysis Interface</strong><br/>
+    Currently built to integrate seamlessly with <a href="https://deeplabcut.github.io/DeepLabCut/README.html">DeepLabCut</a><br/>
     Other tools coming soon!
   </p>
 
@@ -25,11 +25,12 @@
 ## Table of Contents
 - [About](#about)
 - [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
+  - [Automated Installation (Windows)](#automated-installation-windows)
+  - [Step-by-Step Installation (Manual)](#step-by-step-installation-manual)
   - [GPU Setup (Critical)](#gpu-setup-critical)
-- [Workflow](#workflow)
-- [Outputs](#outputs)
+- [Pretrained Models](#pretrained-models)
+- [Workflow & Configuration](#workflow--configuration)
+- [Outputs & Metrics](#outputs--metrics)
 - [Contributing](#contributing)
 - [License](#license)
 - [Contact](#contact)
@@ -38,247 +39,168 @@
 
 ## About
 
-Behavython is an automated behavioral analysis interface designed to work alongside DeepLabCut (DLC). It converts raw tracking data (CSV/H5) into structured behavioral metrics.
+Behavython is an automated, high-throughput behavioral analysis interface. It features a modular architecture that converts raw tracking data (CSV/H5) into structured, biologically relevant behavioral metrics.
 
-It supports:
-- Geometry-based paradigms (Open Field, Elevated Plus Maze)
-- Interaction-based paradigms (Social/Object recognition)
+It natively supports:
+- **Geometry-based paradigms:** Open Field, Elevated Plus Maze (EPM)
+- **Interaction-based paradigms:** Social Recognition, Social Discrimination, Object Discrimination
 
-The goal is reproducible, high-throughput behavioral quantification.
+The software enforces strict scientific reproducibility through automated environment management, robust data validation, and granular metric exports.
 
 ---
 
 ## Getting Started
 
-### Prerequisites
+### Automated Installation (Windows)
 
-- Python **3.10.x**
-- NVIDIA GPU (**strongly recommended**)
+For Windows users, we provide a batch script that automates the creation of the Conda environment, installs the correct pip dependencies, and handles the CUDA setup. 
 
----
+Download and run the installer from the repository:
+- Open the link and save the page (right-click → Save As) as a `.bat` file, that is, `behavython_installer.bat`: <br>
+[Download the file from here](https://github.com/mrdrzit/behavython/raw/main/installation_script/behavython_installer.bat)
 
-### Installation
+- Learn how to use the installer from here:<br>
+[Installation Guide](https://github.com/mrdrzit/behavython/tree/main/installation_script)
 
-#### Pip
+### Step-by-Step Installation (Manual)
 
+We strongly recommend using Conda (or Miniconda/Mamba) to manage your isolated Python environment to prevent dependency conflicts.
+
+**1. Create the environment:**
+Create a clean environment explicitly using Python 3.10.
 ```bash
-pip install behavython --extra-index-url https://download.pytorch.org/whl/cu118
+conda create -n behavython python=3.10
 ````
 
-If you omit the PyTorch index, you may install an incompatible CPU-only build.
+**2. Activate the environment:**
+You must be inside the environment for the next steps.
 
----
-
-#### Windows (Automated)
-
-Use the provided:
-
-```bat
-run_behavython.bat
+```bash
+conda activate behavython
 ```
 
----
+**3. Install Behavython:**
+Use `pip` inside the activated environment. **Crucial:** You must include the extra index URL to fetch the correct GPU-compiled PyTorch wheels. Omitting this may result in an incompatible CPU-only installation.
+
+```bash
+pip install behavython --extra-index-url [https://download.pytorch.org/whl/cu118](https://download.pytorch.org/whl/cu118)
+```
 
 ### GPU Setup (Critical)
 
-> ⚠️ Required for correct execution
+> ⚠️ **Required for correct execution**
 
-Behavython depends on GPU-accelerated frameworks. You must install CUDA + cuDNN after setting up your Python environment:
+Behavython relies heavily on GPU-accelerated frameworks. You must install the NVIDIA CUDA toolkit and cuDNN **AFTER** you have completed the pip installation above, and it must be done **INSIDE** the active `behavython` environment.
 
 ```bash
-conda (or mamba) install -c conda-forge cudatoolkit=11.2 cudnn=8.1.0
+# Ensure you are still inside the 'behavython' environment
+conda install -c conda-forge cudatoolkit=11.2 cudnn=8.1.0
 ```
 
-Failure here leads to:
+Failure to configure the GPU dependencies correctly will result in severe processing slowdowns and potential runtime memory errors during DeepLabCut operations.
 
-* Extremely slow processing
-* Potential runtime errors
+-----
 
-> ⚠️ This must be done **after** creating your Python environment, not globally. That is, inside of your `behavython` environment.
+## Pretrained Models
 
----
+Behavython comes with a pretrained model for roi and mouse tracking (c57 black on white arena top view) These can be downloaded from the [GitHub Releases page](https://www.google.com/search?q=https://github.com/mrdrzit/Behavython/releases).
 
-## Workflow
+The latest release (`models-v1.0`) includes:
 
-Pipeline:
+  * `c57_network_2025_minified.zip` - Optimized for C57 rodent tracking.
+  * `roi_network.zip` - Dedicated network for Region of Interest detection in social recognition experiments.
+
+Extract these ZIP archives into .behavython/models/ folder in your home directory located in: <br>
+- **Windows:** `C:\Users\<YourUsername>\.behavython\models\`
+- **Linux/Mac:** `~/.behavython/models/`
+- **Note:** Ensure the extracted model files are directly within the `models` folder, not nested inside additional subdirectories.
+
+-----
+
+## Workflow & Configuration
+
+### The Pipeline
 
 ```
-Video → DeepLabCut → CSV → Behavython → Metrics
+Video → DeepLabCut → Filtered CSV → Behavython Core Pipeline → Metrics & Parquet
 ```
 
----
+### Arena Configuration (Geometry Tasks)
 
-### Experiment Types
+For Open Field and Elevated Plus Maze (EPM) experiments, Behavython requires a `.json` configuration file defining the spatial geometry. You can extract these coordinates using the ImageJ Point Tool.
 
-**ROI-Based**
+  * **Open Field:** Requires exactly 4 ordered corners (Top-Left, Top-Right, Bottom-Right, Bottom-Left).
+  * **Elevated Plus Maze:** Requires exactly 12 ordered points defining the outer boundaries, arms, and center zone.
 
-* `social_recognition`
-* `social_discrimination`
-* `object_discrimination`
+*Note: Incorrect coordinate ordering will corrupt spatial occupancy metrics.*
 
-**Geometry-Based**
+### ROI Configuration (Interaction Tasks)
 
-* `open_field`
-* `elevated_plus_maze`
+For interaction paradigms, utilize the ImageJ Oval Tool to define your regions of interest.
 
----
+  * Analyze → Set Measurements: Ensure **Centroid** and **Bounding Rectangle** are checked.
+  * Name the exported CSV files logically (e.g., `video_roiL.csv` and `video_roiR.csv` for two-choice tasks, or `video_roi.csv` for single-object).
 
-### Arena Configuration (Geometry)
+-----
 
-Requires `.json` with coordinates extracted from ImageJ.
+## Outputs & Metrics
 
-#### Open Field
+The pipeline outputs data in multiple formats for both statistical aggregation and granular programmatic review.
 
-4 points (ordered):
+### General Storage
 
-1. Top Left
-2. Top Right
-3. Bottom Right
-4. Bottom Left
+  * **`analysis_summary.xlsx` / `.csv`**: Scalar metrics aggregated per animal.
+  * **`analysis_timeseries.parquet`**: Highly compressed, frame-by-frame data utilizing Apache Arrow for efficient downstream data science workflows.
+  * **`analysis_log.json`**: Comprehensive error and warning logs per session.
 
-#### Elevated Plus Maze
+### Task-Specific Metrics
 
-12 ordered points:
+**Geometry Experiments (Open Field, EPM):**
 
-* Outer: TL, TR, BL, BR
-* Arms: LT, LB, RT, RB
-* Center: CTL, CTR, CBL, CBR
+  * Zone occupancy times and percentages.
+  * Transition counts between zones.
+  * Discrete `spatial_state` arrays per frame.
 
-> ⚠️ Incorrect ordering corrupts all spatial metrics
+**Interaction Experiments (Social/Object):**
 
----
+  * Investigation and approach proportions.
+  * Mean inter-bout intervals (seconds).
+  * Discrete bout analysis (Collision bouts, approach-only bouts, abortive retreats).
+  * `analysis_collisions.parquet`: Granular export containing distance to objects, interaction angles, and frame-by-frame flags.
 
-### ROI Experiments
-
-Use ImageJ:
-
-1. Oval Tool (hold Shift)
-2. Analyze → Set Measurements:
-
-   * Centroid
-   * Bounding Rectangle
-3. Press `Ctrl + M`
-4. Save CSV
-
-Naming:
-
-* Single: `video_roi.csv`
-* Dual: `video_roiL.csv`, `video_roiR.csv`
-
----
-
-### DeepLabCut Processing
-
-Use the **DEEPLABCUT** tab:
-
-* Select `config.yaml`
-* Select videos
-* Click ANALYZE
-
-> Without GPU: expect severe slowdown
-
----
-
-### Running Analysis
-
-In **ANALYSIS** tab:
-
-* Set arena size (cm)
-* Set FPS
-
-Options:
-
-* **Trim**: skips initial seconds
-* **Crop**: limits total duration
-
-Steps:
-
-1. Select input files (CSV, ROI, videos)
-2. Select output folder
-3. (If needed) select `.json`
-
----
-
-## Outputs
-
-### General
-
-* `analysis_summary.xlsx / .csv`
-  Scalar metrics per animal
-
-* `analysis_timeseries.parquet`
-  Frame-by-frame data
-
----
-
-### Geometry Experiments
-
-Adds:
-
-* Zone occupancy
-* Transition counts
-* `spatial_state` per frame
-
----
-
-### ROI Experiments
-
-Adds:
-
-* Investigation ratio
-* Approach rate
-* Retreat rate
-
-File:
-
-* `analysis_collisions.parquet`
-
-  * Distance to object
-  * Angles
-  * Interaction flags
-
----
+-----
 
 ## Contributing
 
-Contributions are welcome.
+Contributions to the codebase and scientific pipelines are welcome.
 
-* Open an issue
-* Submit a pull request
-* Suggest improvements
+  * Open an issue to report bugs or suggest features.
+  * Submit a pull request for code changes. Ensure modifications align with the project's modular architecture and strict type-hinting standards.
 
----
+-----
 
 ## License
 
-GNU GPL v3.0
-See `LICENSE` file.
+This project is distributed under the GNU GPL v3.0 License. See the `LICENSE` file for more information.
 
----
+-----
 
 ## Contact
 
-* Matheus Costa — [matheuscosta3004@gmail.com](mailto:matheuscosta3004@gmail.com)
-* João Pedro Carvalho Moreira — [mcjpedro@gmail.com](mailto:mcjpedro@gmail.com)
+  * **Matheus Costa** — [matheuscosta3004@gmail.com](mailto:matheuscosta3004@gmail.com)
+  * **João Pedro** — [mcjpedro@gmail.com](mailto:mcjpedro@gmail.com)
 
----
+-----
 
 ## Acknowledgments
 
-* Flávio Mourão — [https://github.com/fgmourao](https://github.com/fgmourao)
-* Núcleo de Neurociências (NNC) — [http://www.nnc.ufmg.br](http://www.nnc.ufmg.br)
+  * Flávio Mourão — [https://github.com/fgmourao](https://github.com/fgmourao)
+  * Núcleo de Neurociências (NNC) — [http://www.nnc.ufmg.br](http://www.nnc.ufmg.br)
 
----
-
-## Developed at
-
-Núcleo de Neurociências (NNC)
-Universidade Federal de Minas Gerais (UFMG)
-Brazil
-
-[issues-shield]: https://img.shields.io/github/issues/mrdrzit/Behavython 
-[issues-url]: https://github.com/mrdrzit/Behavython/issues 
-[closed-issues-shield]: https://img.shields.io/github/issues-closed/mrdrzit/Behavython?color=%2321e00b 
-[closed-issues-url]: https://github.com/mrdrzit/Behavython/issues?q=is%3Aissue+is%3Aclosed 
-[license-shield]: https://img.shields.io/github/license/mrdrzit/Behavython 
-[license-url]: https://github.com/mrdrzit/Behavython/blob/main/LICENSE
+<br>
+<p align="left">
+  <strong>Developed at</strong><br>
+  Núcleo de Neurociências (NNC)<br>
+  Universidade Federal de Minas Gerais (UFMG)<br>
+  Brazil
+</p>

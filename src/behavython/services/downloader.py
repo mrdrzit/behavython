@@ -62,20 +62,33 @@ class downloadWorker(QThread):
         self.status.emit("Extracting FFmpeg...")
         self.progress.emit(0)
 
+        extract_dir = USER_BIN_ROOT / "ffmpeg_extracted"
+        extract_dir_resolved = extract_dir.resolve()
+
         with zipfile.ZipFile(zip_path, "r") as zip_ref:
-            extract_dir = USER_BIN_ROOT / "ffmpeg_extracted"
-            zip_ref.extractall(extract_dir)
+            for member in zip_ref.infolist():
+                target_path = (extract_dir / member.filename).resolve()
 
-            bin_dir = next(extract_dir.rglob("bin"))
+                if not target_path.is_relative_to(extract_dir_resolved):
+                    raise RuntimeError(f"Security hazard: Zip Slip attempt detected in file {member.filename}")
 
-            for exe in ["ffmpeg.exe", "ffprobe.exe"]:
-                src_exe = bin_dir / exe
-                if src_exe.exists():
-                    shutil.move(str(src_exe), str(USER_BIN_ROOT / exe))
+                zip_ref.extract(member, extract_dir)
+
+        bin_dir = next(extract_dir.rglob("bin"), None)
+
+        if bin_dir is None:
+            shutil.rmtree(extract_dir, ignore_errors=True)
+            zip_path.unlink(missing_ok=True)
+            raise FileNotFoundError("Could not locate the 'bin' directory within the extracted FFmpeg archive.")
+
+        for exe in ["ffmpeg.exe", "ffprobe.exe"]:
+            src_exe = bin_dir / exe
+            if src_exe.exists():
+                shutil.move(str(src_exe), str(USER_BIN_ROOT / exe))
 
         self.status.emit("Cleaning up...")
-        zip_path.unlink()
-        shutil.rmtree(extract_dir)
+        zip_path.unlink(missing_ok=True)
+        shutil.rmtree(extract_dir, ignore_errors=True)
 
     def _download_and_extract_model(self):
         USER_MODELS_ROOT.mkdir(parents=True, exist_ok=True)
@@ -88,10 +101,18 @@ class downloadWorker(QThread):
         self.status.emit(f"Extracting {self.target}...")
         self.progress.emit(0)
 
+        model_dir = USER_MODELS_ROOT / self.target
+        model_dir.mkdir(exist_ok=True)
+        model_dir_resolved = model_dir.resolve()
+
         with zipfile.ZipFile(zip_path, "r") as zip_ref:
-            model_dir = USER_MODELS_ROOT / self.target
-            model_dir.mkdir(exist_ok=True)
-            zip_ref.extractall(model_dir)
+            for member in zip_ref.infolist():
+                target_path = (model_dir / member.filename).resolve()
+
+                if not target_path.is_relative_to(model_dir_resolved):
+                    raise RuntimeError(f"Security hazard: Zip Slip attempt detected in file {member.filename}")
+
+                zip_ref.extract(member, model_dir)
 
         self.status.emit("Cleaning up...")
-        zip_path.unlink()
+        zip_path.unlink(missing_ok=True)

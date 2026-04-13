@@ -442,7 +442,8 @@ def run_create_annotated_video(
     Creates an annotated video using DeepLabCut.
     Handles uncleaned folders and utilizes automated YAML repair.
     """
-    log.emit("dlc", "Importing DeepLabCut...")
+    if log:
+        log.emit("dlc", "Importing DeepLabCut...")
     try:
         import deeplabcut
     except ImportError:

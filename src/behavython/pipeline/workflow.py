@@ -4,7 +4,7 @@ import json
 import logging
 from tqdm import tqdm
 from typing import Callable
-from behavython.core.defaults import MIN_EVENT_FRAMES, LINK_WINDOW
+from behavython.core.defaults import MAZE_EXPERIMENT_TYPES, MIN_EVENT_FRAMES, LINK_WINDOW
 from behavython.pipeline import filters, geometry  # noqa: F401
 from behavython.pipeline.models import AnalysisRequest, Animal, MazeAnimal
 from behavython.pipeline.metrics import (
@@ -59,10 +59,7 @@ def analyze_animal(animal: Animal, request: AnalysisRequest) -> dict:
     spatial_metrics = compute_spatial_metrics(data, movement_metrics)
 
     latent_social_behavior_metrics = compute_social_behavior_metrics(
-        collisions_df=interaction_data["collisions"],
-        fps=data["fps"],
-        min_frames=MIN_EVENT_FRAMES,
-        link_window=LINK_WINDOW 
+        collisions_df=interaction_data["collisions"], fps=data["fps"], min_frames=MIN_EVENT_FRAMES, link_window=LINK_WINDOW
     )
 
     return {
@@ -175,31 +172,18 @@ def run_analysis_workflow(request: AnalysisRequest, progress: Callable = None, l
         )
         animals.append(animal)
 
-    valid_animals = [a for a in animals if a.eligible]
-    invalid_animals = [a for a in animals if not a.eligible]
+    valid_animals_for_processing = [a for a in animals if a.eligible]
+    initial_invalid_count = len(animals) - len(valid_animals_for_processing)
 
     if log:
-        log.emit("resume", f"Valid animals: {len(valid_animals)} | Invalid animals: {len(invalid_animals)}")
-
-    all_logs = []
-    has_issues = False
-    for animal in animals:
-        if animal.logs:
-            has_issues = True
-        for entry in animal.logs:
-            all_logs.append(
-                {
-                    "animal_id": animal.id,
-                    "level": entry["level"],
-                    "message": entry["message"],
-                    "context": entry["context"],
-                }
-            )
+        log.emit("resume", f"Valid animals for processing: {len(valid_animals_for_processing)} | Initial invalid: {initial_invalid_count}")
 
     results = []
-    for index, animal in tqdm(enumerate(valid_animals, start=1), total=len(valid_animals), position=0):
+    has_issues = False
+
+    for index, animal in tqdm(enumerate(valid_animals_for_processing, start=1), total=len(valid_animals_for_processing), position=0):
         try:
-            if request.options.experiment_type in ["open_field", "plus_maze"]:
+            if request.options.experiment_type in MAZE_EXPERIMENT_TYPES:
                 arena_corners = []
                 maze_points = []
 
@@ -231,7 +215,7 @@ def run_analysis_workflow(request: AnalysisRequest, progress: Callable = None, l
             has_issues = True
 
         if progress:
-            progress.emit(round((index / len(valid_animals)) * 100))
+            progress.emit(round((index / len(valid_animals_for_processing)) * 100))
 
     if results:
         if log:
@@ -244,8 +228,22 @@ def run_analysis_workflow(request: AnalysisRequest, progress: Callable = None, l
                 warning.emit("Export Error", f"Failed to save Parquet files: {str(e)}")
             has_issues = True
 
+    all_logs = []
+    for animal in animals:
+        if animal.logs:
+            has_issues = True
+            for entry in animal.logs:
+                all_logs.append(
+                    {
+                        "animal_id": animal.id,
+                        "level": entry["level"],
+                        "message": entry["message"],
+                        "context": entry["context"],
+                    }
+                )
+
     log_path = None
-    if has_issues:
+    if has_issues and all_logs:
         log_path = os.path.join(request.output_folder, "analysis_log.json")
         with open(log_path, "w", encoding="utf-8") as f:
             json.dump(all_logs, f, indent=2)
@@ -255,12 +253,15 @@ def run_analysis_workflow(request: AnalysisRequest, progress: Callable = None, l
         if warning:
             warning.emit("Warning", f"Analysis completed with issues. Log saved to:\n{log_path}")
 
+    final_valid_count = sum(1 for a in animals if a.eligible)
+    final_invalid_count = sum(1 for a in animals if not a.eligible)
+
     return {
         "kind": "analysis",
         "output_path": request.output_folder,
         "rows": len(animals),
-        "valid_animals": len(valid_animals),
-        "invalid_animals": len(invalid_animals),
+        "valid_animals": final_valid_count,
+        "invalid_animals": final_invalid_count,
         "log_path": log_path,
         "results": results,
     }

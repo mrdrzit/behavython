@@ -7,7 +7,7 @@ import pandas as pd
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-from behavython.core.defaults import BODYPART_MAPPING, CANONICAL_BODYPARTS, TOTAL_SESSION_STORAGE_QUOTA
+from behavython.core.defaults import BODYPART_MAPPING, CANONICAL_BODYPARTS, MAZE_EXPERIMENT_TYPES, TOTAL_SESSION_STORAGE_QUOTA
 
 
 @dataclass(slots=True)
@@ -174,7 +174,7 @@ class Animal:
         }
 
         # Task-specific requirements
-        if self.experiment_type not in ["open_field", "plus_maze"]:
+        if self.experiment_type not in MAZE_EXPERIMENT_TYPES:
             required["skeleton_csv"] = self.skeleton_csv
             required["roi_csv"] = self.roi_csv
 

@@ -1,7 +1,7 @@
+import shutil
+import secrets
 from pathlib import Path
 from datetime import datetime
-import tempfile
-import shutil
 from behavython.pipeline.models import RuntimeStorageConfig
 
 
@@ -38,9 +38,8 @@ class RuntimeStorage:
 
     def _create_session_root(self) -> Path:
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        unique_suffix = next(tempfile._get_candidate_names())
+        unique_suffix = secrets.token_hex(4)
         session_name = f"session_{timestamp}_{unique_suffix}"
-
         session_root = self.runtime_root / session_name
         session_root.mkdir(parents=True, exist_ok=False)
         return session_root

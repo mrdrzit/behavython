@@ -164,6 +164,16 @@ ROI_COUNT_BY_EXPERIMENT = {
     "object_discrimination": 2,
 }
 
+MAZE_EXPERIMENT_TYPES = {
+    "open_field",
+    "elevated_plus_maze",
+}
+
+SOCIAL_EXPERIMENT_TYPES = {
+    "social_recognition",
+    "social_discrimination",
+}
+
 # ==========================================
 # BIOLOGICAL & TRACKING MODELS
 # ==========================================
@@ -205,10 +215,22 @@ ANALYSIS_REQUIRED_SUFFIXES = {
 VALID_VIDEO_EXTENSIONS = (".mp4", ".avi", ".mov")
 
 # ==========================================
-# PLOTTING & VISUALIZATION STYLES
+# CORE COLOR PALETTE
+# ==========================================
+HEX_ORANGERED = "#FF4500"
+BGR_ORANGERED = (0, 69, 255)
+
+HEX_CYAN = "#00FFFF"
+BGR_CYAN = (255, 255, 0)
+
+HEX_MAGENTA = "#FF00FF"
+BGR_MAGENTA = (255, 0, 255)
+
+# ==========================================
+# PLOTTING & VISUALIZATION STYLES (MATPLOTLIB)
 # ==========================================
 PLOT_COLORMAP = "inferno"
-PLOT_TRAJECTORY_COLOR = "orangered"
+PLOT_TRAJECTORY_COLOR = HEX_ORANGERED
 PLOT_TRAJECTORY_LINEWIDTH = 1.5
 PLOT_SCATTER_SIZE = 6
 
@@ -223,26 +245,15 @@ ZONE_COLOR_MAP = {
     "outlier": "magenta",
 }
 
-ZONE_FALLBACK_COLORS = [
-    "cyan", "lime", "orange", "pink", "teal", 
-    "coral", "gold", "white", "brown"
-]
-
-PLOT_GEOMETRY_COLORS = [
-    "red", "blue", "green", "yellow", "purple", 
-    "cyan", "magenta", "orange", "lime"
-]
-
-ANIMATION_POLY_COLORS = [
-    "lightblue", "lightgreen", "lightcoral", 
-    "moccasin", "lightgrey", "pink"
-]
+ZONE_FALLBACK_COLORS = ["cyan", "lime", "orange", "pink", "teal", "coral", "gold", "white", "brown"]
+PLOT_GEOMETRY_COLORS = ["red", "blue", "green", "yellow", "purple", "cyan", "magenta", "orange", "lime"]
+ANIMATION_POLY_COLORS = ["lightblue", "lightgreen", "lightcoral", "moccasin", "lightgrey", "pink"]
 
 # ==========================================
 # OPENCV VIDEO ANIMATION STYLES (BGR Format)
 # ==========================================
-CV2_TRAJECTORY_COLOR = (255, 0, 0)
-CV2_CROSSING_COLOR = (0, 0, 255)
+CV2_TRAJECTORY_COLOR = BGR_ORANGERED
+CV2_CROSSING_COLOR = (255, 255, 255)
 CV2_TEXT_COLOR = (0, 0, 0)
 CV2_TEXT_BG_COLOR = (255, 255, 255)
 CV2_GEOMETRY_OUTLINE = (100, 100, 100)
@@ -256,42 +267,20 @@ CV2_POLY_COLORS = [
     (203, 192, 255),
 ]
 
-# ------------------------------------------------------------------
-# CORE COLOR PALETTE 
-# ------------------------------------------------------------------
-# We use HEX for Matplotlib and BGR Tuples for OpenCV
-HEX_ORANGERED = "#FF4500"
-BGR_ORANGERED = (0, 69, 255)  # Matches Orangered
-
-HEX_CYAN = "#00FFFF"
-BGR_CYAN = (255, 255, 0)
-
-HEX_MAGENTA = "#FF00FF"
-BGR_MAGENTA = (255, 0, 255)
-
-# ------------------------------------------------------------------
+# ==========================================
 # UNIFIED ZONE & ROI STYLES
-# ------------------------------------------------------------------
-# Maps zone names to their visual representation in both Plotting and Video
+# ==========================================
 ZONE_STYLES = {
-    "top_open":     {"mpl": "#FF0000", "cv2": (0, 0, 255)},     # Red
-    "right_closed": {"mpl": "#0000FF", "cv2": (255, 0, 0)},     # Blue
-    "bottom_open":  {"mpl": "#008000", "cv2": (0, 128, 0)},     # Green
-    "left_closed":  {"mpl": "#FFFF00", "cv2": (0, 255, 255)},   # Yellow
-    "center":       {"mpl": "#800080", "cv2": (128, 0, 128)},   # Purple
-    "none":         {"mpl": HEX_MAGENTA, "cv2": BGR_MAGENTA},
-    "missing":      {"mpl": HEX_MAGENTA, "cv2": BGR_MAGENTA},
-    "outlier":      {"mpl": HEX_MAGENTA, "cv2": BGR_MAGENTA},
-    # Open Field Grid Defaults
-    "zone_r1_c1":   {"mpl": "#800080", "cv2": (128, 0, 128)},   # Center (Purple)
+    "top_open": {"mpl": "#FF0000", "cv2": (0, 0, 255)},
+    "right_closed": {"mpl": "#0000FF", "cv2": (255, 0, 0)},
+    "bottom_open": {"mpl": "#008000", "cv2": (0, 128, 0)},
+    "left_closed": {"mpl": "#FFFF00", "cv2": (0, 255, 255)},
+    "center": {"mpl": "#800080", "cv2": (128, 0, 128)},
+    "none": {"mpl": HEX_MAGENTA, "cv2": BGR_MAGENTA},
+    "missing": {"mpl": HEX_MAGENTA, "cv2": BGR_MAGENTA},
+    "outlier": {"mpl": HEX_MAGENTA, "cv2": BGR_MAGENTA},
+    "zone_r1_c1": {"mpl": "#800080", "cv2": (128, 0, 128)},
 }
 
 # Fallback for dynamic/unknown zones
-FALLBACK_ZONE_STYLE = {"mpl": "#00FFFF", "cv2": (255, 255, 0)} # Cyan
-
-# ------------------------------------------------------------------
-# REFINED PLOTTING CONSTANTS
-# ------------------------------------------------------------------
-PLOT_TRAJECTORY_COLOR = HEX_ORANGERED
-CV2_TRAJECTORY_COLOR = BGR_ORANGERED
-CV2_CROSSING_COLOR = (255, 255, 255) # White for high contrast on events
+FALLBACK_ZONE_STYLE = {"mpl": "#00FFFF", "cv2": (255, 255, 0)}

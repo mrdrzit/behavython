@@ -19,6 +19,7 @@ from behavython.pipeline import geometry
 # Import our new style variables
 from behavython.core.defaults import (
     FALLBACK_ZONE_STYLE,
+    MAZE_EXPERIMENT_TYPES,
     PLOT_COLORMAP,
     PLOT_TRAJECTORY_COLOR,
     PLOT_TRAJECTORY_LINEWIDTH,
@@ -40,7 +41,7 @@ def plot_animal_analysis(animal: Animal, result: dict, request: AnalysisRequest)
     Main plotting router. Directs the result dictionary to the correct
     visualization generator based on the experiment type.
     """
-    if request.options.experiment_type in ["open_field", "plus_maze"]:
+    if request.options.experiment_type in MAZE_EXPERIMENT_TYPES:
         _plot_maze_analysis(animal, result, request)
     else:
         _plot_object_recognition(animal, result, request)

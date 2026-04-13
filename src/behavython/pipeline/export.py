@@ -1,8 +1,11 @@
 import os
+import logging
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 from typing import Callable
+
+console_logging = logging.getLogger("behavython.console")
 
 
 def export_results_to_parquet(results: list[dict], output_folder: str) -> None:
@@ -140,15 +143,12 @@ def export_summary_metrics(results: list[dict], output_folder: str, log: Callabl
                     {
                         "total bouts": res.get("total_bouts", 0),
                         "mean inter-bout interval (s)": res.get("mean_inter_bout_interval_s", 0),
-                        
                         "investigation proportion": res.get("investigation_proportion", 0.0),
                         "approach proportion": res.get("approach_proportion", 0.0),
                         "abortive retreat proportion": res.get("abortive_retreat_proportion", 0.0),
-                        
                         "collision bouts": res.get("collision_bouts", 0),
                         "approach only bouts": res.get("approach_only_bouts", 0),
                         "abortive retreat bouts": res.get("abortive_retreat_bouts", 0),
-                        
                         "mean interval between collisions (s)": res.get("mean_interval_collision_s", 0.0),
                         "mean interval between approaches (s)": res.get("mean_interval_approach_only_s", 0.0),
                         "mean interval between abortive retreats (s)": res.get("mean_interval_abortive_retreat_s", 0.0),
@@ -207,3 +207,5 @@ def export_summary_metrics(results: list[dict], output_folder: str, log: Callabl
     except ModuleNotFoundError:
         if log:
             log.emit("warning", "Excel export failed: 'openpyxl' not found")
+        elif console_logging:
+            console_logging.warning("Excel export failed: 'openpyxl' not found")
