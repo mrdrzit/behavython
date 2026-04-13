@@ -107,5 +107,7 @@ src/behavython/test/07_video_editing/
 test/
 *.txt
 
-# Legacy files (to be removed)
-src/behavython/_legacy/
+# 1. Ignore everything inside the legacy folder
+src/behavython/_legacy/*
+!src/behavython/_legacy/scripts/
+!src/behavython/_legacy/assets/

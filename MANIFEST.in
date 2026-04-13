@@ -34,3 +34,6 @@ recursive-exclude src/behavython/_legacy *
 
 # Include config assets
 recursive-include src/behavython/assets *
+
+# Include scripts
+recursive-include installation_scripts *

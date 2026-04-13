@@ -1,6 +1,6 @@
 import sys
 import os
-from dlc_helper_functions import *
+from behavython._legacy.scripts.dlc_helper_functions import *
 from PySide6 import QtCore, QtUiTools, QtGui, QtWidgets
 from PySide6.QtWidgets import QWidget
 
@@ -58,9 +58,15 @@ class behavython_gui(QWidget):
         # Data process tab
         self.interface.get_config_path_data_process_button.clicked.connect(lambda: get_folder_path_function(self, "config_path_data_process"))
         self.interface.get_frames_path_data_process_button.clicked.connect(lambda: get_folder_path_function(self, "videos_path_data_process"))
-        self.interface.generated_frames_source_button.clicked.connect(lambda: get_folder_path_function(self, "generated_frames_source_data_process_lineedit"))
-        self.interface.generated_frames_destination_button.clicked.connect(lambda: get_folder_path_function(self, "generated_frames_destination_data_process_lineedit"))
-        self.interface.generated_frames_network_destination_button.clicked.connect(lambda: get_folder_path_function(self, "generated_frames_network_destination_data_process_lineedit"))
+        self.interface.generated_frames_source_button.clicked.connect(
+            lambda: get_folder_path_function(self, "generated_frames_source_data_process_lineedit")
+        )
+        self.interface.generated_frames_destination_button.clicked.connect(
+            lambda: get_folder_path_function(self, "generated_frames_destination_data_process_lineedit")
+        )
+        self.interface.generated_frames_network_destination_button.clicked.connect(
+            lambda: get_folder_path_function(self, "generated_frames_network_destination_data_process_lineedit")
+        )
         self.interface.generated_frames_merge_button.clicked.connect(lambda: merge_generated_frames(self))
         self.interface.get_source_folder_path_button_video_editing_button.clicked.connect(lambda: get_folder_path_function(self, "source_folder"))
         self.interface.convert_csv_to_h5_data_process_button.clicked.connect(lambda: self.run_worker(convert_csv_to_h5, self))
@@ -72,7 +78,9 @@ class behavython_gui(QWidget):
         self.interface.get_bout_analysis_folder_button.clicked.connect(lambda: get_folder_path_function(self, "get_bout_analysis_folder"))
 
         # Video editing tab
-        self.interface.get_destination_folder_path_button_video_editing_button.clicked.connect(lambda: get_folder_path_function(self, "destination_folder"))
+        self.interface.get_destination_folder_path_button_video_editing_button.clicked.connect(
+            lambda: get_folder_path_function(self, "destination_folder")
+        )
         self.interface.get_videos_path_video_editing_button.clicked.connect(lambda: get_folder_path_function(self, "crop_path_video_editing"))
         self.interface.get_video_coordinates_video_editing_button.clicked.connect(lambda: self.run_worker(get_crop_coordinates, self))
         self.interface.save_cropped_dimensions_video_editing_button.clicked.connect(lambda: save_crop_coordinates(self))
@@ -122,16 +130,16 @@ class behavython_gui(QWidget):
         worker.signals.finished.connect(lambda: on_worker_finished(self))
         worker.signals.data_ready.connect(on_data_ready)
         self.threadpool.start(worker)
-    
+
     def get_files(self, worker, file_type):
         if file_type == "dlc_files":
             worker.stored_data = []
-            files, _= QFileDialog.getOpenFileNames(self, "Select the analysis files", "", "DLC files (*.csv *.jpg)")
+            files, _ = QFileDialog.getOpenFileNames(self, "Select the analysis files", "", "DLC files (*.csv *.jpg)")
             worker.stored_data.append(files)
             worker.signals.data_ready.emit()
         elif file_type == "dlc_config":
             worker.stored_data = []
-            files, _= QFileDialog.getOpenFileNames(self, "Select the config file", "", "DLC files (*.yaml)")
+            files, _ = QFileDialog.getOpenFileNames(self, "Select the config file", "", "DLC files (*.yaml)")
             worker.stored_data.append(files)
             worker.signals.data_ready.emit()
         elif file_type == "save_folder":
@@ -149,13 +157,13 @@ class behavython_gui(QWidget):
             print("Bad file request. Please check the file_type argument.")
             worker.signals.data_ready.emit()
             return
-    
+
     def update_progress_bar(self, progress):
         self.progress_bar.setValue(progress)
 
     def update_lineedit(self, values):
         """Handle multiple line edits with clear/append functionality
-        
+
         Args:
             values (tuple): Can be either:
                 - ("clear_all_lineedits") to clear all line edits
@@ -165,33 +173,33 @@ class behavython_gui(QWidget):
         if not values:
             print("No values provided to update_lineedit.")
             return
-        
+
         if len(values) != 2:
             print("Exactly two values required for update_lineedit.")
             return
-            
+
         first, second = values
-        
+
         lineedit_map = {
             "resume_lineedit": self.interface.resume_lineedit,
             "clear_unused_files_lineedit": self.interface.clear_unused_files_lineedit,
             "log_video_editing_lineedit": self.interface.log_video_editing_lineedit,
             "log_data_process_lineedit": self.interface.log_data_process_lineedit,
         }
-        
+
         # Handle clear all case
         if first == "clear_all_lineedits":
             for lineedit in lineedit_map.values():
                 if lineedit is not None:
                     lineedit.clear()
             return
-        
+
         # Get the lineedit
         lineedit = lineedit_map.get(first)
         if lineedit is None:
             print(f"Lineedit '{first}' not found.")
             return
-        
+
         # Handle clear or append
         if second == "clear_lineedit":
             lineedit.clear()
@@ -202,12 +210,12 @@ class behavython_gui(QWidget):
         elements_to_toggle = [
             self.interface.folder_to_create_annotated_video_button,
             self.interface.folder_to_create_annotated_video_lineedit,
-            self.interface.create_annotated_video_button
+            self.interface.create_annotated_video_button,
         ]
 
         for element in elements_to_toggle:
             element.setEnabled(True if self.interface.config_path_lineedit.text().endswith(".yaml") else False)
-        
+
     def enable_bout_analysis(self):
         analysis_check_box_is_enabled = self.interface.enable_bout_analysis_checkbox.isChecked()
         self.interface.log_data_process_lineedit.clear()
@@ -215,11 +223,13 @@ class behavython_gui(QWidget):
         elements_to_toggle = [
             self.interface.get_bout_analysis_folder_button,
             self.interface.run_bout_analysis_button,
-            self.interface.path_to_bout_analysis_folder_lineedit
+            self.interface.path_to_bout_analysis_folder_lineedit,
         ]
 
         for element in elements_to_toggle:
-            element.setEnabled(True if analysis_check_box_is_enabled and self.interface.config_path_data_process_lineedit.text().endswith(".yaml") else False)
+            element.setEnabled(
+                True if analysis_check_box_is_enabled and self.interface.config_path_data_process_lineedit.text().endswith(".yaml") else False
+            )
 
         if analysis_check_box_is_enabled:
             if not self.interface.config_path_data_process_lineedit.text().endswith(".yaml"):
@@ -237,10 +247,7 @@ class behavython_gui(QWidget):
             element.setEnabled(True if not self.interface.video_folder_lineedit.text() == "." else False)
 
     def enable_analysis(self):
-        elements_to_toggle = [
-            self.interface.dlc_video_analyze_button,
-            self.interface.folder_structure_check_button
-        ]
+        elements_to_toggle = [self.interface.dlc_video_analyze_button, self.interface.folder_structure_check_button]
 
         for element in elements_to_toggle:
             element.setEnabled(True if self.interface.config_path_lineedit.text().endswith(".yaml") else False)
@@ -261,7 +268,7 @@ class behavython_gui(QWidget):
             configuration = json.load(open(config_path))
             load_configuration_file(self, configuration)
             self.interface.resume_lineedit.setText("Configuration file loaded successfully!")
-    
+
     def toggle_analyze_from_file_button(self):
         if self.interface.analyze_from_file_lineedit.text() == "":
             self.interface.resume_lineedit.clear()
@@ -306,15 +313,15 @@ class behavython_gui(QWidget):
         options["plot_options"] = "plotting_enabled" if self.interface.plot_data_checkbox.isChecked() else "plotting_disabled"
 
         return options
-    
+
     def toggle_debug_mode(self):
         """Toggle debug mode and visual indicators"""
         debug_mode = self.interface.enable_debugging_mode_checkbox.isChecked()
-        
+
         # Change window color based on debug state
         if debug_mode:
             self.debug_mode = True
-            
+
             # Apply orange background
             self.interface.setStyleSheet("""
                 QWidget {
@@ -322,7 +329,7 @@ class behavython_gui(QWidget):
                     color: #FFFFFF;
                 }
             """)
-            
+
             self.update_lineedit(("clear_all_lineedits", ""))
             self.update_lineedit(("resume_lineedit", "🐞 Debug mode active"))
             self.update_lineedit(("clear_unused_files_lineedit", "🐞 Debug mode active"))
@@ -347,13 +354,14 @@ class behavython_gui(QWidget):
         lineedits_to_check = [
             self.interface.config_path_lineedit,
             self.interface.config_path_data_process_lineedit,
-            self.interface.folder_to_get_create_roi_lineedit
+            self.interface.folder_to_get_create_roi_lineedit,
         ]
 
         if any(lineedit.text() != "" for lineedit in lineedits_to_check):
             self.deeplabcut_is_enabled = True
         else:
             self.deeplabcut_is_enabled = False
+
 
 def main():
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts)
@@ -363,6 +371,7 @@ def main():
     startup = get_message()
     os.system(f"echo {startup}")
     app.exec()  # Start the application
+
 
 if __name__ == "__main__":
     show = main()
