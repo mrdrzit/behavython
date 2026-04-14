@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import re
 import cv2
@@ -126,6 +127,20 @@ class YamlRepairResult:
     changed: bool
     message: str
     config: dict[str, Any] | None = None
+
+
+class MappedFormatter(logging.Formatter):
+    def __init__(self, *args, name_map: dict[str, str], **kwargs):
+        super().__init__(*args, **kwargs)
+        self.name_map = name_map
+
+    def format(self, record):
+        original_name = record.name
+        record.name = self.name_map.get(record.name, record.name)
+        try:
+            return super().format(record)
+        finally:
+            record.name = original_name
 
 
 class Animal:

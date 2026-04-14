@@ -214,6 +214,13 @@ ANALYSIS_REQUIRED_SUFFIXES = {
 
 VALID_VIDEO_EXTENSIONS = (".mp4", ".avi", ".mov")
 
+LOGGING_NAME_MAP = {
+    "behavython": "CORE",
+    "behavython.dlc": "DLC",
+    "behavython.console": "SYSTEM",
+    "behavython.external": "EXTERNAL",
+}
+
 # ==========================================
 # CORE COLOR PALETTE
 # ==========================================

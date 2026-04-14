@@ -29,7 +29,8 @@ def load_deeplabcut():
     os.environ.setdefault("MPLBACKEND", "Agg")
 
     if "deeplabcut" not in sys.modules:
-        import deeplabcut  # type: ignore
+        with capture_external_output("behavython.external"):
+            import deeplabcut  # type: ignore
     else:
         deeplabcut = sys.modules["deeplabcut"]
     return deeplabcut
@@ -63,14 +64,14 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
 
     # Check if the user has a gpu available for DLC to use, and if not, warn them that the analysis may be very slow
     try:
-        has_gpu, gpus = detect_gpu()
+        has_gpu, _ = detect_gpu()
 
         if has_gpu:
             dlc_logger.info("GPU detected and will be used by DeepLabCut.")
             gpu_to_use = 0
         else:
             if warning:
-                warning.emit("No GPU detected. DeepLabCut will run on CPU (this can be very slow).")
+                warning.emit("Warning", "No GPU detected. DeepLabCut will run on CPU (this can be very slow).")
             dlc_logger.warning("No GPU detected. Falling back to CPU.")
             gpu_to_use = None
 
@@ -112,9 +113,10 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
     # but deeplabcut doesn't provide a way to get progress when analyzing
     # multiple videos at once, and this way i can at least log the some
     # information about which video is being analyzed in the console output.
-    console_logger.info(
-        f"Starting DeepLabCut analysis for {len(request.video_paths)} video(s).\nThe progress bar may appear stuck during the first video.\nDeepLabCut often processes near real-time, so wait roughly one video-length before assuming a stall.\nThank you! :)",
-    )
+    console_logger.info(f"DLC analysis start | videos={len(request.video_paths)}")
+    console_logger.info("DLC note | Progress bar may appear stuck during first video")
+    console_logger.info("DLC note | Processing is approximately real-time for GPUs like the RTX 3060")
+    console_logger.info("DLC note | It may be fast for newer GPUs and slower for older GPUs or CPU-only")
     for video in tqdm(request.video_paths, desc="Analyzing videos", unit="video"):
         # repair config for each video in case DLC moves or creates files during analysis that break the config.yaml
         # this is a bit of a band-aid for DLC's tendency to break the config.yaml, but it should help make the process more robust overall

@@ -24,7 +24,8 @@ class TaskWorker(QRunnable):
                 try:
                     import debugpy
 
-                    debugpy.debug_this_thread()
+                    if debugpy.is_client_connected():
+                        debugpy.debug_this_thread()
                 except Exception:
                     self.logger.exception("Failed to attach debugpy to worker thread.")
 

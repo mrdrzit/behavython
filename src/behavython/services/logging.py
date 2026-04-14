@@ -3,12 +3,15 @@ from __future__ import annotations
 import io
 import logging
 import warnings
-# import sys
+import os
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from logging.handlers import RotatingFileHandler
+from behavython.core.defaults import LOGGING_NAME_MAP
+from behavython.pipeline.models import MappedFormatter
 from behavython.services.storage import RuntimeStorage
 
 console = logging.getLogger("behavython.console")
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 
 class LoggingService:
@@ -57,6 +60,19 @@ class _FilteredExternalStream(io.TextIOBase):
             "Modify $PATH to customize ptxas location.",
             "This message will be only logged once.",
             "TensorFloat-32 will be used for the matrix multiplication.",
+            "Could not load dynamic library",
+            "Cannot dlopen some GPU libraries",
+            "Skipping registering GPU devices",
+            "cudart64_",
+            "cublas64_",
+            "cudnn64_",
+            "cufft64_",
+            "curand64_",
+            "cusolver64_",
+            "cusparse64_",
+            "MLIR V1 optimization pass is not enabled",
+            "This TensorFlow binary is optimized with oneAPI",
+            "light mode",
         )
         return any(pattern in line for pattern in noisy_patterns)
 
@@ -90,6 +106,7 @@ class _FilteredExternalStream(io.TextIOBase):
             self._emit_line(self._buffer)
         self._buffer = ""
 
+
 class AppLoggingService:
     def __init__(self, runtime_storage: RuntimeStorage) -> None:
         self.runtime_storage = runtime_storage
@@ -113,9 +130,10 @@ class AppLoggingService:
         self._clear_handlers(self.dlc_logger)
         self._clear_handlers(self.external_logger)
 
-        formatter = logging.Formatter(
-            fmt="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+        formatter = MappedFormatter(
+            fmt="%(asctime)s | %(levelname)-7s | %(name)-4s | %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
+            name_map=LOGGING_NAME_MAP,
         )
 
         persistent_log_path = self.runtime_storage.logs_root / "app.log"
@@ -162,7 +180,7 @@ class AppLoggingService:
 
         console_only_handler = logging.StreamHandler()
         console_only_handler.setLevel(logging.INFO)
-        console_only_handler.setFormatter(logging.Formatter("%(message)s"))
+        console_only_handler.setFormatter(formatter)
 
         self.console_logger.addHandler(console_only_handler)
 
