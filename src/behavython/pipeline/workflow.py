@@ -89,7 +89,7 @@ def analyze_maze_animal(maze_animal: MazeAnimal, request: AnalysisRequest) -> di
         # Euclidean distance between top-left and bottom-left
         pixel_height = math.dist(tl, bl)
 
-    elif maze_animal.experiment_type == "plus_maze":
+    elif maze_animal.experiment_type == "elevated_plus_maze":
         pts = maze_animal.maze_points
         # Mapping the furthest arm extremities
         pixel_width = math.dist(pts[11], pts[4])  # Closed arms distance
@@ -225,7 +225,7 @@ def run_analysis_workflow(request: AnalysisRequest, progress: Callable = None, l
                         config_data = json.load(f)
                         if request.options.experiment_type == "open_field":
                             arena_corners = config_data.get("arena_corners", [])
-                        elif request.options.experiment_type == "plus_maze":
+                        elif request.options.experiment_type == "elevated_plus_maze":
                             maze_points = config_data.get("maze_points", [])
                 else:
                     raise AnalysisError("Arena configuration file is missing or invalid.")

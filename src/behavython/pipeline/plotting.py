@@ -179,7 +179,7 @@ def _plot_maze_analysis(animal: Animal, result: dict, request: AnalysisRequest) 
 
             if request.options.experiment_type == "open_field":
                 polygons = geometry.build_grid_open_field_geometry(config_data.get("arena_corners", []))
-            elif request.options.experiment_type == "plus_maze":
+            elif request.options.experiment_type == "elevated_plus_maze":
                 polygons = geometry.build_plus_maze_geometry(config_data.get("maze_points", []))
             else:
                 polygons = {}
@@ -540,7 +540,9 @@ def _opencv_animate_roi_interactions(animal: Animal, result: dict, request: Anal
             video_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
             video_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         else:
-            animal.logs.append({"level": "warning", "message": "Video could not be opened. Rendering animation on static background.", "context": "plotting"})
+            animal.logs.append(
+                {"level": "warning", "message": "Video could not be opened. Rendering animation on static background.", "context": "plotting"}
+            )
     else:
         animal.logs.append({"level": "warning", "message": "No video provided. Rendering animation on static background.", "context": "plotting"})
 

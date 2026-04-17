@@ -503,7 +503,7 @@ def compute_crossings(state_array: pd.Series, experiment_type: str) -> dict:
 
     counts = {}
 
-    if experiment_type == "plus_maze":
+    if experiment_type == "elevated_plus_maze":
         counts = {
             "to_center_from_top_open": 0,
             "to_center_from_right_closed": 0,

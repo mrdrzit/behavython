@@ -134,35 +134,59 @@ For Open Field and Elevated Plus Maze (EPM) experiments, Behavython requires a `
   * **Elevated Plus Maze:** Requires exactly 12 ordered points defining the outer boundaries, arms, and center zone.
 
 **Example: Open Field (`arena.json`)**
-```jsonc
+Use the image as reference to order the points correctly.
+Here, you can copy this example and save as a .json file to use 
+In order, the points should be created in imageJ in this sequence:
+  * top-left (1)
+  * top-right (2)
+  * bottom-right (3)
+  * bottom-left (4)
+
+```json
 {
   "experiment_type": "open_field",
   "arena_corners": [
-    [126.0, 72.0],  // top left
-    [637.0, 74.0],  // top right
-    [633.0, 581.0], // bottom right
-    [128.0, 581.0]  // bottom left
+    [126.0, 72.0],
+    [637.0, 74.0],
+    [633.0, 581.0],
+    [128.0, 581.0]
   ]
 }
 ```
 
 **Example: Elevated Plus Maze (`arena.json`)**
-```jsonc
+As with the open field, use the image as reference to order the points correctly.
+Here, you can copy this example and save as a .json file to use 
+In order, the points should be created in imageJ in this sequence:
+  * Center Top Left (1)
+  * Top Left (2)
+  * Top Right (3)
+  * Center Top Right (4)
+  * Right Top (5)
+  * Right Bottom (6)
+  * Center Bottom Right (7)
+  * Bottom Right (8)
+  * Bottom Left (9)
+  * Center Bottom Left (10)
+  * Left Bottom (11)
+  * Left Top (12)
+
+```json
 {
   "experiment_type": "elevated_plus_maze",
   "maze_points": [
-    [128, 336],  // left arm upper edge outer-left
-    [384, 336],  // left arm upper edge at center shaft
-    [384, 32],   // top shaft left corner
-    [514, 32],   // top shaft right corner
-    [514, 336],  // right arm upper edge at center shaft
-    [900, 336],  // right arm upper edge outer-right
-    [900, 446],  // right arm lower edge outer-right
-    [514, 446],  // right arm lower edge at center shaft
-    [514, 1042], // bottom arm right edge outer-right
-    [384, 1042], // bottom arm right edge at center shaft
-    [384, 446],  // bottom shaft right corner
-    [128, 446]   // bottom arm left edge outer-left
+    [128, 336],
+    [384, 336],
+    [384, 32],
+    [514, 32],
+    [514, 336],
+    [900, 336],
+    [900, 446],
+    [514, 446],
+    [514, 1042],
+    [384, 1042],
+    [384, 446], 
+    [128, 446]
   ]
 }
 ```
