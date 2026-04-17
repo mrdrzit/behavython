@@ -347,12 +347,7 @@ class BehavythonMainWindow(QWidget):
         if text is None:
             text = self.interface.type_combobox.currentText()
 
-        normalized_text = text.lower().strip().replace(" ", "_")
-
-        is_maze = normalized_text in ["open_field", "elevated_plus_maze", "plus_maze", "social_recognition"]
-        is_plotting = self.interface.plot_data_checkbox.isChecked()
-
-        should_be_active = is_maze and is_plotting
+        should_be_active = self.interface.plot_data_checkbox.isChecked()
 
         if hasattr(self.interface, "generate_validation_video_checkbox"):
             checkbox = self.interface.generate_validation_video_checkbox
