@@ -1,10 +1,10 @@
 # Behavython — Installation and Execution Guide
 
-## 3. Running the Installer (Windows CMD)
-
 > **Important:** There are two supported installation methods:
-> - Installer (`.bat`) → requires using this `run_behavython.bat`
-> - `pip install` → use `behavython` command directly
+> - Installer (`.bat`) → requires using `run_behavython.bat` to launch.
+> - `pip install` → use the `behavython` CLI command directly.
+
+---
 
 ## 1. Prerequisites
 
@@ -12,20 +12,14 @@ Ensure the following components are installed and properly configured before pro
 
 * **Conda Distribution**
   One of the following must be installed and available in your system:
-
   * Miniforge3
   * Mambaforge
   * Miniconda3
-    Expected installation path:
-
-  ```
-  %USERPROFILE%\miniforge3 (or equivalent)
-  ```
+  
+  *Expected installation path:* `%USERPROFILE%\miniforge3` (or equivalent)
 
 * **Git**
-  Git must be installed and accessible via the system `PATH`.
-  Verify with:
-
+  Git must be installed and accessible via the system `PATH`. Verify with:
   ```cmd
   git --version
   ```
@@ -36,53 +30,23 @@ Ensure the following components are installed and properly configured before pro
 
 The installation script provisions a fully configured scientific environment:
 
-* **Environment Setup**
-
-  * Creates a Conda environment named `behavython`
-  * Uses Python **3.10.18**
-
-* **GPU / ML Stack**
-
-  * CUDA Toolkit **11.2**
-  * cuDNN **8.1.0**
-  * PyTorch build compatible with CUDA **11.8**
-  * TensorFlow-compatible stack
-
-* **Behavioral Analysis**
-
-  * Installs **DeepLabCut 2.3.10** (with GUI support)
-
-* **Project Setup**
-
-  * Clones or updates the repository:
-
-    ```
-    https://github.com/mrdrzit/behavython.git
-    ```
-  * Target directory:
-
-    ```
-    %USERPROFILE%\Documents\behavython
-    ```
+* **Environment Setup:** Creates a Conda environment named `behavython` with Python 3.10.18.
+* **GPU / ML Stack:** Installs CUDA Toolkit 11.2, cuDNN 8.1.0, and a PyTorch build compatible with CUDA 11.8.
+* **Behavioral Analysis:** Installs DeepLabCut 2.3.10 (with GUI support).
+* **Project Setup:** Clones or updates the repository to `%USERPROFILE%\Documents\behavython`.
 
 ---
 
-Follow these steps exactly if a double click on the `.bat` file does not work:
+## 3. Running the Installer (Windows CMD)
 
-1. Open Command Prompt:
+Follow these steps exactly to run the installer script:
 
-   ```
-   Win + R → cmd → Enter
-   ```
-
-2. Navigate to the installer location from the terminal:
-
+1. Open Command Prompt (`Win + R` → `cmd` → `Enter`).
+2. Navigate to the installer location (assuming it is in Downloads):
    ```cmd
    cd %USERPROFILE%\Downloads
    ```
-
-3. Execute the installer from the terminal typing the name of the `.bat` file while in the correct directory:
-
+3. Execute the installer by typing the name of the `.bat` file:
    ```cmd
    behavython_installer.bat
    ```
@@ -101,56 +65,30 @@ Follow these steps exactly if a double click on the `.bat` file does not work:
      Setup complete
      ```
 
----
-
-Here is a revised **Section 4 (Launching Behavython)** with your requirement integrated clearly and unambiguously, plus a small structural improvement to distinguish install methods.
-
----
-
 ## 4. Launching Behavython
 
 ### A. If Installed via Installer (`.bat`)
 
-The installer sets up a controlled environment and a dedicated launcher script.
-You **must use the provided launcher** to ensure the correct environment and dependencies are used.
+The installer sets up a controlled environment and a dedicated launcher script. You **must use the provided launcher** to ensure the correct environment and dependencies are used.
 
 1. Navigate to the launcher directory:
-
-```cmd
-cd /d "%USERPROFILE%\Documents\behavython\src"
-```
-
+   ```cmd
+   cd /d "%USERPROFILE%\Documents\behavython\src"
+   ```
 2. Run the launcher:
+   ```cmd
+   run_behavython.bat
+   ```
 
-```cmd
-run_behavython.bat
-```
-
-This script will:
-
-* Automatically detect your Conda/Mamba installation
-* Validate the `behavython` environment
-* Launch the application using the correct Python environment
-* Fallback to system Python if needed (with warnings)
-
-> Direct execution via `python` or `conda run` is not recommended in this installation mode, as it may bypass environment checks and lead to runtime errors.
-
----
+*Note: This script will automatically detect your Conda/Mamba installation, validate the `behavython` environment, and launch the application using the correct Python environment. Direct execution via `python` or `conda run` is not recommended in this installation mode, as it may bypass environment checks.*
 
 ### B. If Installed via `pip`
 
-If Behavython was installed using:
+If Behavython was installed using `pip install behavython`, you can launch it directly from any terminal, provided that you have activated the conda environment and installed the dependencies correctly as follows:
 
 ```cmd
-pip install behavython
-```
-
-You can launch it directly from any terminal:
-
-```cmd
+mamba activate behavython
 behavython
 ```
 
-This uses the CLI entry point defined in the package and does **not** require navigating to any directory.
-
----
+This uses the CLI entry point defined in the package and does **not** require navigating to any specific directory.

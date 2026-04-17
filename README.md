@@ -51,8 +51,6 @@ The software enforces strict scientific reproducibility through automated enviro
 
 ## Getting Started
 
-Here is a more professional and user-friendly way to word that section, focusing on clarity and ease of use:
-
 ### Automated Installation (Windows)
 
 For a streamlined setup, we provide a batch script that automates the entire process: creating the Conda environment, installing the required `pip` dependencies, and configuring the CUDA environment.
@@ -86,7 +84,7 @@ mamba activate behavython
 Use `pip` inside the activated environment. **Crucial:** You must include the extra index URL to fetch the correct GPU-compiled PyTorch wheels. Omitting this may result in an incompatible CPU-only installation.
 
 ```bash
-pip install behavython --extra-index-url [https://download.pytorch.org/whl/cu118](https://download.pytorch.org/whl/cu118)
+pip install behavython --extra-index-url https://download.pytorch.org/whl/cu118
 ```
 
 ### GPU Setup (Critical)
@@ -135,14 +133,65 @@ For Open Field and Elevated Plus Maze (EPM) experiments, Behavython requires a `
   * **Open Field:** Requires exactly 4 ordered corners (Top-Left, Top-Right, Bottom-Right, Bottom-Left).
   * **Elevated Plus Maze:** Requires exactly 12 ordered points defining the outer boundaries, arms, and center zone.
 
+**Example: Open Field (`arena.json`)**
+```jsonc
+{
+  "experiment_type": "open_field",
+  "arena_corners": [
+    [126.0, 72.0],  // top left
+    [637.0, 74.0],  // top right
+    [633.0, 581.0], // bottom right
+    [128.0, 581.0]  // bottom left
+  ]
+}
+```
+
+**Example: Elevated Plus Maze (`arena.json`)**
+```json
+{
+  "experiment_type": "elevated_plus_maze",
+  "maze_points": [
+    [128, 336],  // left arm upper edge outer-left
+    [384, 336],  // left arm upper edge at center shaft
+    [384, 32],   // top shaft left corner
+    [514, 32],   // top shaft right corner
+    [514, 336],  // right arm upper edge at center shaft
+    [900, 336],  // right arm upper edge outer-right
+    [900, 446],  // right arm lower edge outer-right
+    [514, 446],  // right arm lower edge at center shaft
+    [514, 1042], // bottom arm right edge outer-right
+    [384, 1042], // bottom arm right edge at center shaft
+    [384, 446],  // bottom shaft right corner
+    [128, 446]   // bottom arm left edge outer-left
+  ]
+}
+```
+
 *Note: Incorrect coordinate ordering will corrupt spatial occupancy metrics.*
+
+<div align="center">
+  <img src="https://raw.githubusercontent.com/mrdrzit/behavython/refs/heads/main/src/behavython/gui/assets/images/geometry_reference.png" width="400" alt="Geometry Point Ordering Reference"/>
+  <br>
+  <em>Coordinate ordering reference for Open Field and Elevated Plus Maze.</em>
+</div>
 
 ### ROI Configuration (Interaction Tasks)
 
-For interaction paradigms, utilize the ImageJ Oval Tool to define your regions of interest.
+For interaction paradigms (like Social Recognition or Object Discrimination), Behavython requires Region of Interest (ROI) definitions exported as CSV files. You can generate these using the ImageJ Oval Tool.
 
-  * Analyze → Set Measurements: Ensure **Centroid** and **Bounding Rectangle** are checked.
-  * Name the exported CSV files logically (e.g., `video_roiL.csv` and `video_roiR.csv` for two-choice tasks, or `video_roi.csv` for single-object).
+**ROI Requirements:**
+
+  * **ImageJ Measurements:** Go to *Analyze → Set Measurements*. You **must** ensure both **Centroid** and **Bounding Rectangle** are checked. The resulting CSV needs the bounding box (BX, BY, Width, Height) and centroid (X, Y) coordinates.
+  * **File Naming Convention:** The exported CSV must contain the original video name, followed by an ROI identifier:
+    * *Single-Object/Target:* `video_name_roi.csv`
+    * *Two-Choice Tasks:* `video_name_roiL.csv` and `video_name_roiR.csv` (Left and Right).
+  * **File Format:** The file must be a standard `.csv` (Comma Separated Values) file.
+
+**Example: Social Recognition/Discrimination (`video_name_roi.csv`)**
+```csv
+ ,Area,X,Y,BX,BY,Width,Height
+1,24065,376.500,387.500,289,300,175,175
+```
 
 -----
 
