@@ -4,7 +4,7 @@ from shapely.geometry import Point
 from scipy import stats
 from collections import deque
 from behavython.pipeline.geometry import line_trough_triangle_vertex, detect_collision, create_frequency_grid
-from behavython.core.defaults import ANGLE_CONE_ENTER, ANGLE_CONE_EXIT, ROI_DELTA_LOOKBACK_FRAMES
+from behavython.core.defaults import ANGLE_CONE_ENTER, ANGLE_CONE_EXIT, ROI_DELTA_LOOKBACK_FRAMES, APPROACH_THRESHOLD_BL, LOCOMOTION_THRESHOLD_BL
 
 
 def compute_roi_interaction(data) -> dict:
@@ -22,11 +22,46 @@ def compute_roi_interaction(data) -> dict:
     collision_rows = []
     distance_windows = {}
     in_cone = {}
+    center_window = deque(maxlen=ROI_DELTA_LOOKBACK_FRAMES)
+
+    # --- calculate body length for normalized thresholds ---
+    # 1. Try Full Body (Nose to Tail)
+    if "tail" in coords.keys():
+        dist = np.sqrt((nose_x[runtime] - coords["tail"]["x"][runtime]) ** 2 + (nose_y[runtime] - coords["tail"]["y"][runtime]) ** 2)
+        median_body_length = np.nanmedian(dist)
+    # 2. Try Half Body (Nose to Center)
+    elif "center" in coords.keys():
+        dist = np.sqrt((nose_x[runtime] - coords["center"]["x"][runtime]) ** 2 + (nose_y[runtime] - coords["center"]["y"][runtime]) ** 2)
+        median_body_length = np.nanmedian(dist) * 2.0
+    # 3. Guaranteed Fallback: Head Length (Nose to Ears)
+    else:
+        ear_mid_x = (left_x[runtime] + right_x[runtime]) / 2.0
+        ear_mid_y = (left_y[runtime] + right_y[runtime]) / 2.0
+        head_dist = np.sqrt((nose_x[runtime] - ear_mid_x) ** 2 + (nose_y[runtime] - ear_mid_y) ** 2)
+        median_body_length = np.nanmedian(head_dist) * 4.0
+
+    # Ultimate safety fallback in case all coordinates were NaNs
+    if np.isnan(median_body_length) or median_body_length == 0:
+        median_body_length = 100.0
 
     for i in runtime:
         A = np.array([nose_x[i], nose_y[i]])
         B = np.array([left_x[i], left_y[i]])
         C = np.array([right_x[i], right_y[i]])
+
+        # --- center locomotion speed ---
+        if "center" in coords.keys():
+            c_pt = np.array([coords["center"]["x"][i], coords["center"]["y"][i]])
+        else:
+            c_pt = A  # fallback to nose
+
+        center_window.append(c_pt)
+        if len(center_window) >= 2:
+            oldest_c = center_window[0]
+            center_displacement = np.linalg.norm(c_pt - oldest_c)
+            center_speed_bl = (center_displacement / (len(center_window) - 1)) / median_body_length
+        else:
+            center_speed_bl = 0.0
 
         # --- head triangle area (Heron)
         s1 = np.linalg.norm(B - A)
@@ -85,10 +120,15 @@ def compute_roi_interaction(data) -> dict:
             in_cone[idx] = currently_in_cone
 
             # --- classify directional state using hysteresis cone gate ---
-            if currently_in_cone:
-                state = "approaching" if delta_distance < 10 else "looking"
+            normalized_delta = delta_distance / median_body_length
+
+            if center_speed_bl >= LOCOMOTION_THRESHOLD_BL:
+                if currently_in_cone:
+                    state = "approaching" if normalized_delta < APPROACH_THRESHOLD_BL else "looking"
+                else:
+                    state = "retreating" if normalized_delta > APPROACH_THRESHOLD_BL else "neutral"
             else:
-                state = "retreating" if delta_distance > 10 else "neutral"
+                state = "looking" if currently_in_cone else "neutral"
 
             # --- collision ---
             collision = detect_collision(

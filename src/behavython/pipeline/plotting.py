@@ -31,9 +31,379 @@ from behavython.core.defaults import (
     CV2_TEXT_BG_COLOR,
     CV2_GEOMETRY_OUTLINE,
     ZONE_STYLES,
+    ANGLE_CONE_ENTER,
+    ANGLE_CONE_EXIT,
 )
 
 console_logger = logging.getLogger("behavython.console")
+
+
+def _rotate_vec_2d(v: np.ndarray, theta_rad: float) -> np.ndarray:
+    c = float(np.cos(theta_rad))
+    s = float(np.sin(theta_rad))
+    return np.array([c * v[0] - s * v[1], s * v[0] + c * v[1]], dtype=float)
+
+
+def _put_hud_lines(img: np.ndarray, lines: list[str], origin_xy: tuple[int, int] = (10, 10)) -> None:
+    x0, y0 = origin_xy
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale = 0.45
+    thickness = 1
+    line_h = 18
+
+    if not lines:
+        return
+
+    sizes = [cv2.getTextSize(t, font, font_scale, thickness)[0] for t in lines]
+    box_w = max(w for (w, _) in sizes) + 10
+    box_h = len(lines) * line_h + 8
+
+    x1, y1 = x0 + box_w, y0 + box_h
+    cv2.rectangle(img, (x0, y0), (x1, y1), CV2_TEXT_BG_COLOR, -1)
+    cv2.rectangle(img, (x0, y0), (x1, y1), CV2_TEXT_COLOR, 1)
+
+    y = y0 + 18
+    for t in lines:
+        cv2.putText(img, t, (x0 + 5, y), font, font_scale, CV2_TEXT_COLOR, thickness, cv2.LINE_AA)
+        y += line_h
+
+
+def _opencv_animate_roi_interactions(animal: Animal, result: dict, request: AnalysisRequest) -> None:
+    """
+    Optimized ROI debug renderer.
+
+    Preserves visual output while reducing runtime by:
+    - sequential video decoding (no per-frame seek)
+    - NumPy bodypart access instead of pandas iloc
+    - O(1) ROI lookup map
+    - lighter row iteration
+    - reduced temporary allocations
+    """
+    collisions_df = result.get("collisions_df")
+    if collisions_df is None or getattr(collisions_df, "empty", True):
+        return
+
+    required = ("nose", "left_ear", "right_ear")
+    if any(bp not in animal.bodyparts for bp in required):
+        return
+
+    fps = request.options.frames_per_second
+    save_path = os.path.join(request.output_folder, f"{animal.id} - ROI Interaction Debug.mp4")
+
+    # ------------------------------------------------------------------
+    # Frames to render
+    # ------------------------------------------------------------------
+    frame_indices = collisions_df["frame"].dropna().astype(np.int32).unique()
+
+    if len(frame_indices) == 0:
+        return
+
+    frame_indices.sort()
+
+    # ------------------------------------------------------------------
+    # Video source / dimensions
+    # ------------------------------------------------------------------
+    cap = None
+    has_video = False
+    video_w = 0
+    video_h = 0
+
+    if getattr(animal, "video_path", None):
+        cap = cv2.VideoCapture(animal.video_path)
+        if cap is not None and cap.isOpened():
+            has_video = True
+            video_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            video_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    if (video_w <= 0 or video_h <= 0) and animal.image is not None:
+        video_h, video_w = animal.image.shape[:2]
+
+    if video_w <= 0 or video_h <= 0:
+        video_w, video_h = 1280, 720
+
+    max_w, max_h = map(int, request.options.max_fig_res)
+    ratio = min(max_w / video_w, max_h / video_h)
+
+    new_w = int(video_w * ratio)
+    new_h = int(video_h * ratio)
+
+    writer = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (new_w, new_h))
+
+    # ------------------------------------------------------------------
+    # Precompute frame groups
+    # ------------------------------------------------------------------
+    by_frame = {int(frame): grp for frame, grp in collisions_df.groupby("frame", sort=False)}
+
+    # ------------------------------------------------------------------
+    # Fast bodypart access
+    # ------------------------------------------------------------------
+    nose_x = animal.bodyparts["nose"]["x"].to_numpy()
+    nose_y = animal.bodyparts["nose"]["y"].to_numpy()
+    le_x = animal.bodyparts["left_ear"]["x"].to_numpy()
+    le_y = animal.bodyparts["left_ear"]["y"].to_numpy()
+    re_x = animal.bodyparts["right_ear"]["x"].to_numpy()
+    re_y = animal.bodyparts["right_ear"]["y"].to_numpy()
+
+    # ------------------------------------------------------------------
+    # ROI lookup map
+    # ------------------------------------------------------------------
+    roi_map = {str(r.get("name", "")): r for r in getattr(animal, "rois", [])}
+
+    # ------------------------------------------------------------------
+    # Constants
+    # ------------------------------------------------------------------
+    cone_len = int(180 * ratio)
+
+    enter_theta = np.deg2rad(float(ANGLE_CONE_ENTER))
+    exit_theta = np.deg2rad(float(ANGLE_CONE_EXIT))
+
+    state_color = {
+        "approaching": (0, 255, 255),
+        "looking": (0, 220, 0),
+        "retreating": (0, 0, 255),
+        "neutral": (220, 220, 220),
+    }
+
+    white_bg = np.full((video_h, video_w, 3), 255, dtype=np.uint8)
+
+    def _endpt(origin_xy, vec_xy, length):
+        return int(origin_xy[0] + vec_xy[0] * length), int(origin_xy[1] + vec_xy[1] * length)
+
+    # ------------------------------------------------------------------
+    # Sequential decoder state
+    # ------------------------------------------------------------------
+    current_frame = 0
+
+    try:
+        for f in tqdm(frame_indices, desc=f"Rendering {animal.id}", unit="frame", leave=False):
+            f = int(f)
+            frame_img = None
+
+            # ----------------------------------------------------------
+            # Sequential video reading (major speedup)
+            # ----------------------------------------------------------
+            if has_video and cap is not None:
+                while current_frame < f:
+                    ok_skip, _ = cap.read()
+                    current_frame += 1
+                    if not ok_skip:
+                        break
+
+                if current_frame == f:
+                    ok, fr = cap.read()
+                    current_frame += 1
+                    if ok and fr is not None:
+                        frame_img = fr
+
+            # ----------------------------------------------------------
+            # Fallback sources
+            # ----------------------------------------------------------
+            if frame_img is None:
+                if animal.image is not None:
+                    frame_img = animal.image.copy()
+                else:
+                    frame_img = white_bg.copy()
+
+            # ----------------------------------------------------------
+            # Resize once
+            # ----------------------------------------------------------
+            if frame_img.shape[1] != new_w or frame_img.shape[0] != new_h:
+                frame_img = cv2.resize(frame_img, (new_w, new_h))
+
+            # ----------------------------------------------------------
+            # Landmark extraction
+            # ----------------------------------------------------------
+            try:
+                A = np.array((nose_x[f], nose_y[f]), dtype=float)
+                B = np.array((le_x[f], le_y[f]), dtype=float)
+                C = np.array((re_x[f], re_y[f]), dtype=float)
+            except Exception:
+                writer.write(frame_img)
+                continue
+
+            # ----------------------------------------------------------
+            # Gaze geometry
+            # ----------------------------------------------------------
+            P, Q = geometry.line_trough_triangle_vertex(A, B, C)
+
+            P = np.asarray(P, dtype=float)
+            Q = np.asarray(Q, dtype=float)
+
+            v = Q - P
+            n = np.linalg.norm(v)
+
+            if n <= 1e-9:
+                g = np.array((1.0, 0.0), dtype=float)
+            else:
+                g = v / n
+
+            A_px = (int(A[0] * ratio), int(A[1] * ratio))
+            B_px = (int(B[0] * ratio), int(B[1] * ratio))
+            C_px = (int(C[0] * ratio), int(C[1] * ratio))
+            P_px = (int(P[0] * ratio), int(P[1] * ratio))
+            Q_px = (int(Q[0] * ratio), int(Q[1] * ratio))
+
+            # ----------------------------------------------------------
+            # Head triangle
+            # ----------------------------------------------------------
+            tri = np.array((A_px, B_px, C_px), dtype=np.int32).reshape((-1, 1, 2))
+
+            cv2.polylines(frame_img, [tri], True, (255, 0, 255), 2)
+            cv2.circle(frame_img, A_px, 4, (255, 0, 255), -1)
+
+            # Exact P->Q segment
+            cv2.line(frame_img, P_px, Q_px, (255, 255, 0), 2)
+            cv2.circle(frame_img, P_px, 3, (255, 255, 0), -1)
+            cv2.circle(frame_img, Q_px, 3, (255, 255, 0), -1)
+
+            # ----------------------------------------------------------
+            # Cones
+            # ----------------------------------------------------------
+            gl_enter = _rotate_vec_2d(g, +enter_theta)
+            gr_enter = _rotate_vec_2d(g, -enter_theta)
+            gl_exit = _rotate_vec_2d(g, +exit_theta)
+            gr_exit = _rotate_vec_2d(g, -exit_theta)
+
+            overlay = frame_img.copy()
+
+            poly = np.array((A_px, _endpt(A_px, gl_enter, cone_len), _endpt(A_px, gr_enter, cone_len)), dtype=np.int32).reshape((-1, 1, 2))
+
+            cv2.fillPoly(overlay, [poly], (200, 200, 0))
+            cv2.addWeighted(overlay, 0.18, frame_img, 0.82, 0, frame_img)
+
+            cv2.line(frame_img, A_px, _endpt(A_px, gl_enter, cone_len), (0, 200, 200), 1)
+            cv2.line(frame_img, A_px, _endpt(A_px, gr_enter, cone_len), (0, 200, 200), 1)
+            cv2.line(frame_img, A_px, _endpt(A_px, gl_exit, cone_len), (0, 140, 255), 1)
+            cv2.line(frame_img, A_px, _endpt(A_px, gr_exit, cone_len), (0, 140, 255), 1)
+
+            # ----------------------------------------------------------
+            # Dynamic ROI overlay + HUD
+            # ----------------------------------------------------------
+            rows = by_frame.get(f)
+
+            frame_collision_count = 0
+            if rows is not None:
+                try:
+                    frame_collision_count = int((rows["collision_flag"] == 1).sum())
+                except Exception:
+                    pass
+
+            hud_lines = [f"f={f} rois={0 if rows is None else len(rows)} col={frame_collision_count}"]
+
+            if rows is not None:
+                rows_sorted = rows.sort_values("roi_name", kind="stable")
+
+                max_hud_rows = 2
+                hud_added = 0
+
+                # column arrays once (faster than to_dict(records))
+                roi_name_col = rows_sorted["roi_name"].to_numpy()
+                state_col = rows_sorted["interaction_state"].to_numpy()
+
+                in_cone_col = rows_sorted["in_cone"].to_numpy() if "in_cone" in rows_sorted.columns else np.zeros(len(rows_sorted), dtype=bool)
+
+                angle_col = (
+                    rows_sorted["angle_to_roi"].to_numpy() if "angle_to_roi" in rows_sorted.columns else np.full(len(rows_sorted), None, dtype=object)
+                )
+
+                dist_col = (
+                    rows_sorted["distance_to_roi"].to_numpy()
+                    if "distance_to_roi" in rows_sorted.columns
+                    else np.full(len(rows_sorted), None, dtype=object)
+                )
+
+                delta_col = (
+                    rows_sorted["delta distance"].to_numpy()
+                    if "delta distance" in rows_sorted.columns
+                    else np.full(len(rows_sorted), None, dtype=object)
+                )
+
+                coll_flag_col = (
+                    rows_sorted["collision_flag"].to_numpy() if "collision_flag" in rows_sorted.columns else np.zeros(len(rows_sorted), dtype=np.int32)
+                )
+
+                coll_pos_col = (
+                    rows_sorted["collision_pos"].to_numpy()
+                    if "collision_pos" in rows_sorted.columns
+                    else np.full(len(rows_sorted), None, dtype=object)
+                )
+
+                n_rows = len(rows_sorted)
+
+                for i in range(n_rows):
+                    roi_name = str(roi_name_col[i])
+                    state = str(state_col[i])
+                    in_cone = bool(in_cone_col[i])
+
+                    angle = angle_col[i]
+                    dist = dist_col[i]
+                    delta_d = delta_col[i]
+
+                    coll_flag = int(coll_flag_col[i])
+                    coll_pos = coll_pos_col[i]
+
+                    color = state_color.get(state, (220, 220, 220))
+                    roi_obj = roi_map.get(roi_name)
+
+                    if roi_obj is not None:
+                        cx = int(float(roi_obj["x"]) * ratio)
+                        cy = int(float(roi_obj["y"]) * ratio)
+
+                        rr = int((float(roi_obj["width"]) + float(roi_obj["height"])) / 4 * ratio)
+                        rr = max(rr, 1)
+
+                        cv2.circle(frame_img, (cx, cy), rr, color, 1)
+
+                        if in_cone or coll_flag == 1:
+                            cv2.line(frame_img, A_px, (cx, cy), color, 1)
+
+                        label = f"{roi_name}:{state[:3]}"
+                        cv2.putText(frame_img, label, (cx + 5, cy - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1, cv2.LINE_AA)
+
+                    # collision points
+                    if coll_flag == 1 and coll_pos is not None:
+                        if (
+                            isinstance(coll_pos, (list, tuple, np.ndarray))
+                            and len(coll_pos) > 0
+                            and isinstance(coll_pos[0], (list, tuple, np.ndarray))
+                        ):
+                            pts = coll_pos
+                        else:
+                            pts = (coll_pos,)
+
+                        for pt in pts:
+                            try:
+                                x = int(float(pt[0]) * ratio)
+                                y = int(float(pt[1]) * ratio)
+
+                                cv2.circle(frame_img, (x, y), 4, (255, 255, 255), -1)
+                                cv2.circle(frame_img, (x, y), 5, (0, 0, 0), 1)
+                            except Exception:
+                                pass
+
+                    if hud_added < max_hud_rows:
+                        if angle is not None and dist is not None and delta_d is not None:
+                            hud_lines.append(
+                                f"{roi_name} {state} "
+                                f"cone={int(in_cone)} "
+                                f"collision={coll_flag} "
+                                f"angle={float(angle):.0f} "
+                                f"distance={float(dist):.0f} "
+                                f"distance_d={float(delta_d):+.2f}"
+                            )
+                        else:
+                            hud_lines.append(f"{roi_name} {state[:3]} c={int(in_cone)} col={coll_flag}")
+
+                        hud_added += 1
+
+            _put_hud_lines(frame_img, hud_lines, origin_xy=(10, 10))
+            writer.write(frame_img)
+
+    finally:
+        writer.release()
+
+        if cap is not None:
+            cap.release()
 
 
 def plot_animal_analysis(animal: Animal, result: dict, request: AnalysisRequest) -> None:
@@ -112,6 +482,9 @@ def _plot_object_recognition(animal: Animal, result: dict, request: AnalysisRequ
             ax4.imshow(animal_image, interpolation="bessel", alpha=0.8)
         ax4.axis("off")
         fig4.savefig(os.path.join(save_folder, f"{animal_name} - Animal movement in the arena (nose).png"), bbox_inches="tight", dpi=dpi)
+
+        if getattr(request.options, "generate_video", False):
+            _opencv_animate_roi_interactions(animal, result, request)
 
     finally:
         plt.close("all")
