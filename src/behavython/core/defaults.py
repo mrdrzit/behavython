@@ -211,13 +211,14 @@ CANONICAL_SKELETON = [
 TOTAL_SESSION_STORAGE_QUOTA = 5
 
 ANALYSIS_REQUIRED_SUFFIXES = {
-    "image": (".jpg", ".jpeg", ".png", ".bmp", ".tiff"),
+    "image": (".png", ".jpg", ".jpeg", ".tiff"),
+    "video": (".mp4", ".avi", ".mov"),
     "position": ("filtered.csv",),
     "skeleton": ("filtered_skeleton.csv",),
-    "roi": ("_roi.csv",),
+    "social_recognition_rois": ("_roi.csv",),
+    "social_discrimination_rois": ("roil.csv", "roir.csv"),
+    "maze_rois": (".json",),
 }
-
-VALID_VIDEO_EXTENSIONS = (".mp4", ".avi", ".mov")
 
 LOGGING_NAME_MAP = {
     "behavython": "CORE",

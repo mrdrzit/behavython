@@ -3,7 +3,7 @@ import yaml
 from flask import json
 from typing import Any, Optional
 from pathlib import Path
-from behavython.core.defaults import VALID_VIDEO_EXTENSIONS
+from behavython.core.defaults import ANALYSIS_REQUIRED_SUFFIXES
 from behavython.core.paths import USER_BIN_ROOT, USER_MODELS_ROOT
 from behavython.pipeline.models import AnalysisRequest
 
@@ -30,7 +30,7 @@ def validate_video_paths(video_paths: list[str]) -> list[str]:
     for path in video_paths:
         if not os.path.exists(path):
             errors.append(f"Missing video: {path}")
-        elif not path.lower().endswith(VALID_VIDEO_EXTENSIONS):
+        elif not path.lower().endswith(ANALYSIS_REQUIRED_SUFFIXES["video"]):
             errors.append(f"Invalid video extension: {path}")
 
     extensions = {os.path.splitext(path)[1].lower() for path in video_paths}

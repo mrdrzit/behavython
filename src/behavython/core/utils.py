@@ -8,7 +8,7 @@ from typing import Any
 from pathlib import Path
 from natsort import os_sorted
 from collections import defaultdict
-from behavython.core.defaults import VALID_VIDEO_EXTENSIONS
+from behavython.core.defaults import ANALYSIS_REQUIRED_SUFFIXES
 from behavython.core.paths import DATA_ROOT, PACKAGE_ROOT, RUNTIME_ROOT, USER_BIN_ROOT
 from behavython.services.validation import validate_yaml_file, validate_yaml_text
 from behavython.pipeline.models import (
@@ -57,7 +57,7 @@ def _collect_videos_from_folder(folder_path: str) -> list[str]:
     for entry_name in os.listdir(folder_path):
         entry_path = os.path.join(folder_path, entry_name)
 
-        if os.path.isfile(entry_path) and entry_name.lower().endswith(VALID_VIDEO_EXTENSIONS):
+        if os.path.isfile(entry_path) and entry_name.lower().endswith(ANALYSIS_REQUIRED_SUFFIXES["video"]):
             video_paths.append(entry_path)
 
     return sorted(video_paths)

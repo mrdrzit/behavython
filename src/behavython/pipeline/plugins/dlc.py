@@ -8,7 +8,7 @@ import subprocess
 from tqdm import tqdm
 from pathlib import Path
 from typing import Any
-from behavython.core.defaults import VALID_VIDEO_EXTENSIONS
+from behavython.core.defaults import ANALYSIS_REQUIRED_SUFFIXES, MAZE_EXPERIMENT_TYPES
 from behavython.core.utils import load_or_repair_dlc_yaml, get_ffmpeg_path, get_ffprobe_path, detect_gpu
 from behavython.services.validation import validate_config_path, validate_video_paths
 from behavython.services.logging import capture_external_output
@@ -310,21 +310,50 @@ def check_dlc_folder_structure(config_path: str) -> tuple[bool, list[str]]:
     return True, messages
 
 
+def _is_file_needed_for_task(file_path: Path, task_type: str) -> bool:
+    lower_name = file_path.name.lower()
+    suffix = file_path.suffix.lower()
+    normalized_task = task_type.strip().lower().replace(" ", "_")
+
+    if suffix in ANALYSIS_REQUIRED_SUFFIXES["video"]:
+        return True
+    if suffix in ANALYSIS_REQUIRED_SUFFIXES["image"]:
+        return True
+    if lower_name.endswith(ANALYSIS_REQUIRED_SUFFIXES["position"]) and not lower_name.endswith(ANALYSIS_REQUIRED_SUFFIXES["skeleton"]):
+        return True
+    if lower_name.endswith(ANALYSIS_REQUIRED_SUFFIXES["skeleton"]):
+        return True
+    if normalized_task in {"social_discrimination", "njr"}:
+        if any(lower_name.endswith(ending) for ending in ANALYSIS_REQUIRED_SUFFIXES["social_discrimination_rois"]):
+            return True
+    elif normalized_task == "social_recognition":
+        if any(lower_name.endswith(ending) for ending in ANALYSIS_REQUIRED_SUFFIXES["social_recognition_rois"]):
+            return True
+    elif normalized_task in MAZE_EXPERIMENT_TYPES:
+        if suffix in ANALYSIS_REQUIRED_SUFFIXES["maze_rois"]:
+            return True
+
+    return False
+
+
 def _get_required_files_status(folder_path: Path, task_type: str) -> tuple[dict[str, bool], list[str]]:
     file_names = [path.name for path in folder_path.iterdir() if path.is_file()]
     lower_names = [name.lower() for name in file_names]
-    normalized_task = task_type.lower().replace(" ", "_")
+
+    normalized_task = task_type.strip().lower().replace(" ", "_")
     missing_files: list[str] = []
 
-    # Enforcing snake_case for variables/keys
     status = {
-        "has_filtered_csv": any(name.endswith("filtered.csv") and not name.endswith("filtered_skeleton.csv") for name in lower_names),
-        "has_skeleton_filtered_csv": any(name.endswith("filtered_skeleton.csv") for name in lower_names),
-        "has_image_file": any(name.endswith((".png", ".jpg", ".jpeg", ".tiff", ".bmp")) for name in lower_names),
-        "has_roi_file": any(name.endswith("roi.csv") for name in lower_names),
+        "has_video": any(name.endswith(ANALYSIS_REQUIRED_SUFFIXES["video"]) for name in lower_names),
+        "has_filtered_csv": any(
+            name.endswith(ANALYSIS_REQUIRED_SUFFIXES["position"]) and not name.endswith(ANALYSIS_REQUIRED_SUFFIXES["skeleton"]) for name in lower_names
+        ),
+        "has_skeleton_filtered_csv": any(name.endswith(ANALYSIS_REQUIRED_SUFFIXES["skeleton"]) for name in lower_names),
+        "has_image_file": any(name.endswith(ANALYSIS_REQUIRED_SUFFIXES["image"]) for name in lower_names),
+        "has_roi_file": any(name.endswith(ending) for name in lower_names for ending in ANALYSIS_REQUIRED_SUFFIXES["social_recognition_rois"]),
         "has_left_roi_file": any(name.endswith("roil.csv") for name in lower_names),
         "has_right_roi_file": any(name.endswith("roir.csv") for name in lower_names),
-        "has_geometry_json": any(name.endswith(".json") for name in lower_names),
+        "has_geometry_json": any(name.endswith(ANALYSIS_REQUIRED_SUFFIXES["maze_rois"]) for name in lower_names),
     }
 
     if not status["has_filtered_csv"]:
@@ -333,8 +362,7 @@ def _get_required_files_status(folder_path: Path, task_type: str) -> tuple[dict[
         missing_files.append(" - filtered_skeleton.csv")
     if not status["has_image_file"]:
         missing_files.append(" - screenshot of the video")
-
-    if normalized_task == "njr":
+    if normalized_task in {"social_discrimination", "njr"}:
         if not status["has_left_roi_file"]:
             missing_files.append(" - roiL.csv")
         if not status["has_right_roi_file"]:
@@ -342,7 +370,7 @@ def _get_required_files_status(folder_path: Path, task_type: str) -> tuple[dict[
     elif normalized_task == "social_recognition":
         if not status["has_roi_file"]:
             missing_files.append(" - roi.csv")
-    elif normalized_task in ["open_field", "plus_maze", "epm"]:
+    elif normalized_task in MAZE_EXPERIMENT_TYPES:
         if not status["has_geometry_json"]:
             missing_files.append(" - arena geometry (.json)")
 
@@ -376,9 +404,6 @@ def run_clear_unused_files(request: DLCClearUnusedFilesRequest, progress=None, l
     unwanted_folder = folder_path / "unwanted_files"
     unwanted_folder.mkdir(exist_ok=True)
 
-    video_suffixes = VALID_VIDEO_EXTENSIONS
-    image_suffixes = {".png", ".jpg", ".jpeg", ".tiff", ".bmp"}
-
     entry_list = [path for path in folder_path.iterdir()]
     moved_files: list[str] = []
 
@@ -402,20 +427,7 @@ def run_clear_unused_files(request: DLCClearUnusedFilesRequest, progress=None, l
                     log.emit("dlc", f"Moved folder {entry_path.name} to unwanted_files")
 
         else:
-            suffix = entry_path.suffix.lower()
-
-            if suffix in video_suffixes:
-                keep_entry = True
-            elif suffix in image_suffixes:
-                keep_entry = True
-            elif suffix == ".json":
-                keep_entry = True
-            elif "roi" in lower_name and suffix == ".csv":
-                keep_entry = True
-            elif lower_name.endswith("filtered.csv"):
-                keep_entry = True
-            elif lower_name.endswith("filtered_skeleton.csv"):
-                keep_entry = True
+            keep_entry = _is_file_needed_for_task(entry_path, task_type)
 
             if not keep_entry:
                 destination = _build_safe_destination(unwanted_folder, entry_path)
