@@ -147,7 +147,7 @@ For Open Field and Elevated Plus Maze (EPM) experiments, Behavython requires a `
 ```
 
 **Example: Elevated Plus Maze (`arena.json`)**
-```json
+```jsonc
 {
   "experiment_type": "elevated_plus_maze",
   "maze_points": [
