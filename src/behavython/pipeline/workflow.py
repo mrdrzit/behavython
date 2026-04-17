@@ -22,6 +22,7 @@ from behavython.services.validation import validate_analysis_request
 from behavython.pipeline.export import export_results_to_parquet, export_summary_metrics
 from behavython.pipeline.plotting import plot_animal_analysis
 from behavython.core.utils import group_analysis_files
+from behavython.core.exceptions import AnalysisError, CriticalSystemError
 
 console_logger = logging.getLogger("behavython.console")
 
@@ -148,7 +149,7 @@ def run_analysis_workflow(request: AnalysisRequest, progress: Callable = None, l
     """
     errors = validate_analysis_request(request)
     if errors:
-        raise ValueError("\n".join(errors))
+        raise AnalysisError("\n".join(errors))
 
     if log:
         log.emit("resume", "Starting analysis workflow...")
@@ -195,7 +196,7 @@ def run_analysis_workflow(request: AnalysisRequest, progress: Callable = None, l
                         elif request.options.experiment_type == "plus_maze":
                             maze_points = config_data.get("maze_points", [])
                 else:
-                    raise FileNotFoundError("Arena configuration file is missing or invalid.")
+                    raise AnalysisError("Arena configuration file is missing or invalid.")
 
                 maze_dto = MazeAnimal(
                     animal=animal, experiment_type=request.options.experiment_type, arena_corners=arena_corners, maze_points=maze_points
@@ -209,8 +210,19 @@ def run_analysis_workflow(request: AnalysisRequest, progress: Callable = None, l
             if request.options.plot_options == "plotting_enabled":
                 plot_animal_analysis(animal, result, request)
 
-        except Exception as e:
+        except AnalysisError as e:
             animal.logs.append({"level": "error", "message": str(e), "context": "analysis"})
+            animal.eligible = False
+            has_issues = True
+
+        except CriticalSystemError as e:
+            if warning:
+                warning.emit("Critical System Error", f"Execution halted: {str(e)}")
+            raise e
+
+        except Exception as e:
+            console_logger.exception(f"Unexpected bug during analysis of {animal.id}")
+            animal.logs.append({"level": "error", "message": f"Unexpected bug: {str(e)}", "context": "analysis"})
             animal.eligible = False
             has_issues = True
 

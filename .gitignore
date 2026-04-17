@@ -111,3 +111,6 @@ test/
 src/behavython/_legacy/*
 !src/behavython/_legacy/scripts/
 !src/behavython/_legacy/assets/
+
+# Publish script
+publish.bat

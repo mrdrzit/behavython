@@ -1,6 +1,7 @@
 from shapely.geometry import Polygon
 import math
 import numpy as np
+from behavython.core.exceptions import AnalysisError
 
 
 def angle_between_lines(line1, line2, origin):
@@ -320,7 +321,7 @@ def build_plus_maze_geometry(points: list[tuple[float, float]]) -> dict[str, Pol
     points[9:12] + points[0] -> Left Closed Arm
     """
     if len(points) != 12:
-        raise ValueError(f"Elevated Plus Maze requires exactly 12 points, got {len(points)}")
+        raise AnalysisError(f"Elevated Plus Maze requires exactly 12 points, got {len(points)}")
 
     return {
         "top_open": Polygon(points[0:4]),
@@ -339,7 +340,7 @@ def build_grid_open_field_geometry(
     Expected corners clicking order: [Top-Left, Top-Right, Bottom-Right, Bottom-Left]
     """
     if len(corners) != 4:
-        raise ValueError(f"Open Field grid requires exactly 4 corners, got {len(corners)}")
+        raise AnalysisError(f"Open Field grid requires exactly 4 corners, got {len(corners)}")
 
     rows, cols = grid_size
     tl, tr, br, bl = [np.array(pt) for pt in corners]

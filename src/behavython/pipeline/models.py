@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 from behavython.core.defaults import BODYPART_MAPPING, CANONICAL_BODYPARTS, MAZE_EXPERIMENT_TYPES, TOTAL_SESSION_STORAGE_QUOTA
+from behavython.core.exceptions import AnalysisError
 
 
 @dataclass(slots=True)
@@ -338,7 +339,7 @@ class Animal:
             self.image = cv2.imread(self.image_path)
 
             if self.image is None:
-                raise ValueError("cv2.imread returned None")
+                raise AnalysisError("cv2.imread returned None")
 
         except Exception as e:
             self.eligible = False
@@ -378,13 +379,13 @@ class MazeAnimal:
 
     def _validate_maze_requirements(self):
         if not self.animal.eligible:
-            raise ValueError(f"[{self.animal.id}] Base animal data is ineligible for analysis.")
+            raise AnalysisError(f"[{self.animal.id}] Base animal data is ineligible for analysis.")
 
         if self.experiment_type == "open_field" and len(self.arena_corners) != 4:
-            raise ValueError(f"[{self.animal.id}] Open Field requires exactly 4 arena corners.")
+            raise AnalysisError(f"[{self.animal.id}] Open Field requires exactly 4 arena corners.")
 
         if self.experiment_type == "plus_maze" and len(self.maze_points) != 12:
-            raise ValueError(f"[{self.animal.id}] Plus Maze requires exactly 12 maze points.")
+            raise AnalysisError(f"[{self.animal.id}] Plus Maze requires exactly 12 maze points.")
 
     def get_primary_tracking_data(self, preferred_bodypart: str = "center") -> tuple[pd.Series, pd.Series]:
         """

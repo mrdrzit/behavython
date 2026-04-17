@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 from behavython.core.defaults import ANALYSIS_REQUIRED_SUFFIXES, MAZE_EXPERIMENT_TYPES
 from behavython.core.utils import load_or_repair_dlc_yaml, get_ffmpeg_path, get_ffprobe_path, detect_gpu
+from behavython.core.exceptions import AnalysisError
 from behavython.services.validation import validate_config_path, validate_video_paths
 from behavython.services.logging import capture_external_output
 from behavython.pipeline.models import (
@@ -80,7 +81,7 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
         gpu_to_use = None
 
     if errors:
-        raise ValueError("\n".join(errors))
+        raise AnalysisError("\n".join(errors))
 
     dlc_logger.info(
         "Deeplabcut video analysis started for %d video(s). config=%s",
@@ -232,7 +233,7 @@ def _get_video_duration(video_path: str) -> float:
 def run_extract_frames(request: DLCFrameExtractionRequest, progress=None, log=None, warning=None):
     errors = validate_video_paths(request.video_paths)
     if errors:
-        raise ValueError("\n".join(errors))
+        raise AnalysisError("\n".join(errors))
 
     total = len(request.video_paths)
 
@@ -397,7 +398,7 @@ def run_clear_unused_files(request: DLCClearUnusedFilesRequest, progress=None, l
     folder_path = Path(request.folder_path)
 
     if not folder_path.exists() or not folder_path.is_dir():
-        raise ValueError(f"Invalid folder: {folder_path}")
+        raise AnalysisError(f"Invalid folder: {folder_path}")
 
     task_type = request.task_type.strip().lower().replace(" ", "_")
 
@@ -520,10 +521,10 @@ def run_create_annotated_video(
         deeplabcut.create_labeled_video(
             str(config_path_used), request.video_paths, videotype=videotype, filtered=True, draw_skeleton=True, destfolder=request.output_path
         )
-    except Exception as e:
+    except AnalysisError as e:
         dlc_logger.exception("DLC labeled video creation failed")
         log.emit("dlc", f"[ERROR]: DLC error: {str(e)}")
-        raise e
+        raise AnalysisError(f"[ERROR]: DLC error: {str(e)}")
 
     return {
         "kind": "dlc_annotated_video",

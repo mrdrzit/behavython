@@ -6,6 +6,7 @@ from pathlib import Path
 from behavython.core.defaults import ANALYSIS_REQUIRED_SUFFIXES
 from behavython.core.paths import USER_BIN_ROOT, USER_MODELS_ROOT
 from behavython.pipeline.models import AnalysisRequest
+from behavython.core.exceptions import AnalysisError
 
 
 def validate_config_path(path: str) -> list[str]:
@@ -43,7 +44,7 @@ def validate_video_paths(video_paths: list[str]) -> list[str]:
 def validate_yaml_text(yaml_text: str) -> dict[str, Any]:
     data = yaml.safe_load(yaml_text)
     if not isinstance(data, dict):
-        raise ValueError("YAML root is not a dictionary.")
+        raise AnalysisError("YAML root is not a dictionary.")
     return data
 
 

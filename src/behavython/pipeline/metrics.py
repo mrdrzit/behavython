@@ -5,6 +5,7 @@ from scipy import stats
 from collections import deque
 from behavython.pipeline.geometry import line_trough_triangle_vertex, detect_collision, create_frequency_grid
 from behavython.core.defaults import ANGLE_CONE_ENTER, ANGLE_CONE_EXIT, ROI_DELTA_LOOKBACK_FRAMES, APPROACH_THRESHOLD_BL, LOCOMOTION_THRESHOLD_BL
+from behavython.core.exceptions import AnalysisError
 
 
 def compute_roi_interaction(data) -> dict:
@@ -184,10 +185,10 @@ def preprocess_animal(animal, request) -> dict:
     lengths = [len(v["x"]) for v in coords.values()]
 
     if not lengths:
-        raise ValueError("No bodyparts available")
+        raise AnalysisError("No bodyparts available")
 
     if len(set(lengths)) != 1:
-        raise ValueError("Mismatched frame lengths across bodyparts")
+        raise AnalysisError("Mismatched frame lengths across bodyparts")
 
     n_frames = lengths[0]
     fps = request.options.frames_per_second
@@ -206,7 +207,7 @@ def preprocess_animal(animal, request) -> dict:
         end = min(total_frames, n_frames)
 
     if start >= end:
-        raise ValueError("Invalid runtime range (trim too large)")
+        raise AnalysisError("Invalid runtime range (trim too large)")
 
     runtime = np.arange(start, end)
     arena_w = request.options.arena_width
@@ -321,7 +322,7 @@ def compute_spatial_metrics(data: dict, movement_metrics: dict) -> dict:
     nose_bp = coords["nose"] if "nose" in coords else None
 
     if nose_bp is None:
-        raise ValueError("Missing 'nose' bodypart required for spatial metrics.")
+        raise AnalysisError("Missing 'nose' bodypart required for spatial metrics.")
 
     position_grid = create_frequency_grid(x_values=nose_bp["x"], y_values=nose_bp["y"], bin_size=bin_size, analysis_range=analysis_range)
 
