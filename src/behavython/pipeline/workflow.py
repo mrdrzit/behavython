@@ -103,10 +103,42 @@ def analyze_maze_animal(maze_animal: MazeAnimal, request: AnalysisRequest) -> di
     raw_x, raw_y = maze_animal.get_primary_tracking_data(preferred_bodypart="center")
     fps = request.options.frames_per_second
     max_time = request.options.task_duration
-    trim_frames = int(request.options.trim_amount * fps)
+    trim_seconds = request.options.trim_amount
+    trim_frames = int(trim_seconds * fps)
     total_frames = int(max_time * fps)
-    start = trim_frames
-    end = min(trim_frames + total_frames, len(raw_x))
+    crop_video = request.options.crop_video
+    n_frames = len(raw_x)
+
+    if crop_video:
+        start = trim_frames
+        end = trim_frames + total_frames
+
+        if start >= n_frames:
+            raise AnalysisError(f"[{maze_animal.animal.id}] Trim amount ({trim_seconds}s) exceeds the video length ({n_frames / fps:.1f}s).")
+
+        if end > n_frames:
+            maze_animal.animal.logs.append(
+                {
+                    "level": "warning",
+                    "message": f"Requested {max_time}s after {trim_seconds}s trim, but video is only {n_frames / fps:.1f}s. Analyzing remaining {(n_frames - start) / fps:.1f}s.",
+                    "context": "analysis_range",
+                }
+            )
+            end = n_frames
+    else:
+        start = 0
+        if total_frames > n_frames:
+            maze_animal.animal.logs.append(
+                {
+                    "level": "warning",
+                    "message": f"Requested {max_time}s analysis, but video is only {n_frames / fps:.1f}s. Analyzing entire video.",
+                    "context": "analysis_range",
+                }
+            )
+        end = min(total_frames, n_frames)
+
+    if start >= end:
+        raise AnalysisError(f"[{maze_animal.animal.id}] Invalid runtime range (start >= end).")
 
     sliced_x = raw_x.iloc[start:end].reset_index(drop=True)
     sliced_y = raw_y.iloc[start:end].reset_index(drop=True)

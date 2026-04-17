@@ -112,5 +112,10 @@ src/behavython/_legacy/*
 !src/behavython/_legacy/scripts/
 !src/behavython/_legacy/assets/
 
-# Publish script
+# Publish and diff patch scripts
 publish.bat
+create_diff_patch.bat
+
+# Diff patches
+*.diff
+*.patch

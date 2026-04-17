@@ -539,6 +539,10 @@ def _opencv_animate_roi_interactions(animal: Animal, result: dict, request: Anal
             has_video = True
             video_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
             video_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        else:
+            animal.logs.append({"level": "warning", "message": "Video could not be opened. Rendering animation on static background.", "context": "plotting"})
+    else:
+        animal.logs.append({"level": "warning", "message": "No video provided. Rendering animation on static background.", "context": "plotting"})
 
     if (video_w <= 0 or video_h <= 0) and animal.image is not None:
         video_h, video_w = animal.image.shape[:2]

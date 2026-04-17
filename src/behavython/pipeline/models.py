@@ -314,7 +314,14 @@ class Animal:
 
         try:
             df = pd.read_csv(self.roi_csv)
-            df.columns = [name.lower() for name in df.columns]
+            df.columns = [name.lower().strip() for name in df.columns]
+
+            required_cols = {"x", "y", "bx", "by", "width", "height"}
+            missing_cols = required_cols - set(df.columns)
+            if missing_cols:
+                raise AnalysisError(
+                    f"ROI CSV is missing required columns: {', '.join(missing_cols)}. Please check 'Bounding rectangle' and 'Centroid' in ImageJ set measurements when creating the ROIs"
+                )
 
             filename = Path(self.roi_csv).stem
             match = re.search(r"(roi[lrde]?)$", filename, re.IGNORECASE)
@@ -325,11 +332,16 @@ class Animal:
                     "name": roi_label,
                     "x": float(row["x"]),
                     "y": float(row["y"]),
+                    "bx": float(row["bx"]),
+                    "by": float(row["by"]),
                     "width": float(row["width"]),
                     "height": float(row["height"]),
                 }
                 self.rois.append(roi)
 
+        except AnalysisError as e:
+            self.eligible = False
+            self._log("ERROR", str(e), {"context": "roi_loading"})
         except Exception as e:
             self.eligible = False
             self._log("ERROR", "Failed to load ROI CSV", {"error": str(e)})
@@ -384,8 +396,8 @@ class MazeAnimal:
         if self.experiment_type == "open_field" and len(self.arena_corners) != 4:
             raise AnalysisError(f"[{self.animal.id}] Open Field requires exactly 4 arena corners.")
 
-        if self.experiment_type == "plus_maze" and len(self.maze_points) != 12:
-            raise AnalysisError(f"[{self.animal.id}] Plus Maze requires exactly 12 maze points.")
+        if self.experiment_type == "elevated_plus_maze" and len(self.maze_points) != 12:
+            raise AnalysisError(f"[{self.animal.id}] Elevated Plus Maze requires exactly 12 maze points. Please verify the JSON configuration.")
 
     def get_primary_tracking_data(self, preferred_bodypart: str = "center") -> tuple[pd.Series, pd.Series]:
         """

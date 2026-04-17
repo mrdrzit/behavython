@@ -201,13 +201,34 @@ def preprocess_animal(animal, request) -> dict:
 
     if crop_video:
         start = trim_frames
-        end = min(trim_frames + total_frames, n_frames)
+        end = trim_frames + total_frames
+
+        if start >= n_frames:
+            raise AnalysisError(f"Trim amount ({trim_seconds}s) exceeds the entire video length ({n_frames / fps:.1f}s).")
+
+        if end > n_frames:
+            animal.logs.append(
+                {
+                    "level": "warning",
+                    "message": f"Requested {max_time}s after {trim_seconds}s trim, but video is only {n_frames / fps:.1f}s. Analyzing remaining {(n_frames - start) / fps:.1f}s.",
+                    "context": "analysis_range",
+                }
+            )
+            end = n_frames
     else:
         start = 0
+        if total_frames > n_frames:
+            animal.logs.append(
+                {
+                    "level": "warning",
+                    "message": f"Requested {max_time}s analysis, but video is only {n_frames / fps:.1f}s. Analyzing entire video.",
+                    "context": "analysis_range",
+                }
+            )
         end = min(total_frames, n_frames)
 
     if start >= end:
-        raise AnalysisError("Invalid runtime range (trim too large)")
+        raise AnalysisError("Invalid runtime range (start >= end).")
 
     runtime = np.arange(start, end)
     arena_w = request.options.arena_width
