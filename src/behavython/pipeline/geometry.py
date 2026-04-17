@@ -56,11 +56,16 @@ def line_trough_triangle_vertex(A, B, C):
 
     # Compute the midpoint of the side opposite vertex A
     M = (B + C) / 2
-    # Compute the vector from vertex A to the midpoint
+    # Compute the vector from vertex A (nose) to the midpoint between ears.
+    # This points "backward" relative to gaze, so we invert it for a forward heading.
     AM = M - A
-    # Define the endpoints of the line passing through the center of vertex A
-    P = A - 0.5 * AM
-    Q = A + 0.1 * AM
+    forward = -AM
+
+    # Define the endpoints of the gaze line through A in the forward direction.
+    # We extend slightly farther behind the nose to tolerate small tracking jitter
+    # where the nose can momentarily appear "inside" the ROI boundary.
+    P = A - 0.2 * forward
+    Q = A + 0.5 * forward
 
     return P, Q
 

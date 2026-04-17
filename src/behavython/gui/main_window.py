@@ -284,7 +284,7 @@ class BehavythonMainWindow(QWidget):
         selected_files = select_files(
             self.interface,
             "Select analysis files",
-            "DLC files (*.csv *.jpg *.jpeg *.png)",
+            "DLC files (*.csv *.jpg *.jpeg *.png *.mp4)",
         )
         resolved_input = self._build_analysis_input(selected_files)
 
@@ -349,7 +349,7 @@ class BehavythonMainWindow(QWidget):
 
         normalized_text = text.lower().strip().replace(" ", "_")
 
-        is_maze = normalized_text in ["open_field", "elevated_plus_maze", "plus_maze"]
+        is_maze = normalized_text in ["open_field", "elevated_plus_maze", "plus_maze", "social_recognition"]
         is_plotting = self.interface.plot_data_checkbox.isChecked()
 
         should_be_active = is_maze and is_plotting

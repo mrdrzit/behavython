@@ -2,7 +2,9 @@ import numpy as np
 import pandas as pd
 from shapely.geometry import Point
 from scipy import stats
+from collections import deque
 from behavython.pipeline.geometry import line_trough_triangle_vertex, detect_collision, create_frequency_grid
+from behavython.core.defaults import ANGLE_CONE_ENTER, ANGLE_CONE_EXIT, ROI_DELTA_LOOKBACK_FRAMES
 
 
 def compute_roi_interaction(data) -> dict:
@@ -18,7 +20,8 @@ def compute_roi_interaction(data) -> dict:
     right_y = coords["right_ear"]["y"]
 
     collision_rows = []
-    prev_distances = {}
+    distance_windows = {}
+    in_cone = {}
 
     for i in runtime:
         A = np.array([nose_x[i], nose_y[i]])
@@ -58,20 +61,34 @@ def compute_roi_interaction(data) -> dict:
             distance = norm_target
 
             # --- calculate delta distance & state ---
-            prev_distance = prev_distances.get(idx)
-            delta_distance = distance - prev_distance if prev_distance is not None else 0.0
-            prev_distances[idx] = distance
+            distance_window = distance_windows.setdefault(idx, deque(maxlen=ROI_DELTA_LOOKBACK_FRAMES))
+            distance_window.append(distance)
 
-            if angle_deg <= 90:
-                if delta_distance < 0:
-                    state = "approaching"
-                else:
-                    state = "looking"
+            if len(distance_window) >= 2:
+                oldest_distance = distance_window[0]
+                frame_span = len(distance_window) - 1
+                # Keep delta in a per-frame scale while using a short temporal buffer.
+                delta_distance = (distance - oldest_distance) / frame_span
             else:
-                if delta_distance > 0:
-                    state = "retreating"
-                else:
-                    state = "neutral"
+                delta_distance = 0.0
+
+            # --- per-ROI cone hysteresis ---
+            currently_in_cone = in_cone.get(idx, False)
+            if currently_in_cone:
+                # Once in cone, only leave after crossing EXIT threshold
+                if angle_deg > ANGLE_CONE_EXIT:
+                    currently_in_cone = False
+            else:
+                # Once out of cone, only enter after crossing ENTER threshold
+                if angle_deg < ANGLE_CONE_ENTER:
+                    currently_in_cone = True
+            in_cone[idx] = currently_in_cone
+
+            # --- classify directional state using hysteresis cone gate ---
+            if currently_in_cone:
+                state = "approaching" if delta_distance < 10 else "looking"
+            else:
+                state = "retreating" if delta_distance > 10 else "neutral"
 
             # --- collision ---
             collision = detect_collision(
@@ -81,18 +98,23 @@ def compute_roi_interaction(data) -> dict:
                 roi["r"] / 2,
             )
 
-            # We ALWAYS append the calculated state and ROI name, regardless of collision
+            # Collision is mutually exclusive with directional interaction states.
+            # If a collision is present, force state to "collision" so downstream
+            # counts do not classify the same frame as approaching/retreating/looking.
+            final_state = "collision" if collision else state
+
             collision_rows.append(
                 {
                     "frame": i,
                     "roi_name": roi["name"],
-                    "interaction_state": state,
+                    "interaction_state": final_state,
                     "collision_flag": 1 if collision else 0,
                     "collision_pos": collision if collision else None,
                     "head_area": head_area,
                     "angle_to_roi": angle_deg,
                     "distance_to_roi": distance,
                     "delta distance": delta_distance,  # Required by your extract_approach.py
+                    "in_cone": currently_in_cone,
                 }
             )
 
@@ -319,7 +341,8 @@ def compute_exploration_metrics(interaction_data: dict, fps: float) -> dict:
 
     # Calculate total exploration time
     exploration_mask = collisions_df["collision_flag"] > 0
-    exploration_time = float(exploration_mask.sum() * (1 / fps))
+    exploration_mask = exploration_mask.astype(int)
+    exploration_time = np.sum(exploration_mask) * (1 / fps)
 
     # Calculate exploration time for specific ROIs
     # Note: str.contains is used here to match the original logic.
@@ -587,10 +610,17 @@ def compute_social_behavior_metrics(collisions_df: pd.DataFrame, fps: float, min
     total_bouts = len(sequences)
     if total_bouts == 0:
         return {
-            "total_bouts": 0, "mean_inter_bout_interval_s": 0.0,
-            "investigation_proportion": 0.0, "approach_proportion": 0.0, "abortive_retreat_proportion": 0.0,
-            "collision_bouts": 0, "approach_only_bouts": 0, "abortive_retreat_bouts": 0,
-            "mean_interval_collision_s": 0.0, "mean_interval_approach_only_s": 0.0, "mean_interval_abortive_retreat_s": 0.0
+            "total_bouts": 0,
+            "mean_inter_bout_interval_s": 0.0,
+            "investigation_proportion": 0.0,
+            "approach_proportion": 0.0,
+            "abortive_retreat_proportion": 0.0,
+            "collision_bouts": 0,
+            "approach_only_bouts": 0,
+            "abortive_retreat_bouts": 0,
+            "mean_interval_collision_s": 0.0,
+            "mean_interval_approach_only_s": 0.0,
+            "mean_interval_abortive_retreat_s": 0.0,
         }
 
     outcomes = [s["outcome"] for s in sequences]
@@ -602,7 +632,7 @@ def compute_social_behavior_metrics(collisions_df: pd.DataFrame, fps: float, min
         """Helper to calculate the mean gap in seconds for a given list of sequences."""
         intervals_s = []
         for i in range(len(seq_list) - 1):
-            gap_frames = seq_list[i+1]["start_frame"] - seq_list[i]["end_frame"]
+            gap_frames = seq_list[i + 1]["start_frame"] - seq_list[i]["end_frame"]
             if gap_frames > 0:
                 intervals_s.append(gap_frames / fps)
         return float(np.mean(intervals_s)) if intervals_s else 0.0
@@ -619,19 +649,16 @@ def compute_social_behavior_metrics(collisions_df: pd.DataFrame, fps: float, min
         # Overall
         "total_bouts": total_bouts,
         "mean_inter_bout_interval_s": overall_mean_interval,
-        
         # Proportions
         "investigation_proportion": float(n_col / total_bouts),
         "approach_proportion": float(n_app / total_bouts),
         "abortive_retreat_proportion": float(n_abt / total_bouts),
-        
         # Specific Counts
         "collision_bouts": n_col,
         "approach_only_bouts": n_app,
         "abortive_retreat_bouts": n_abt,
-        
         # Specific Intervals
         "mean_interval_collision_s": get_mean_interval(col_seqs),
         "mean_interval_approach_only_s": get_mean_interval(app_seqs),
-        "mean_interval_abortive_retreat_s": get_mean_interval(abt_seqs)
+        "mean_interval_abortive_retreat_s": get_mean_interval(abt_seqs),
     }
