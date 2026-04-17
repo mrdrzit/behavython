@@ -137,10 +137,10 @@ For Open Field and Elevated Plus Maze (EPM) experiments, Behavython requires a `
 Use the image as reference to order the points correctly.
 Here, you can copy this example and save as a .json file to use 
 In order, the points should be created in imageJ in this sequence:
-  * top-left (1)
-  * top-right (2)
-  * bottom-right (3)
-  * bottom-left (4)
+1. top-left 
+2. top-right
+3. bottom-right
+4. bottom-left
 
 ```json
 {
@@ -158,18 +158,18 @@ In order, the points should be created in imageJ in this sequence:
 As with the open field, use the image as reference to order the points correctly.
 Here, you can copy this example and save as a .json file to use 
 In order, the points should be created in imageJ in this sequence:
-  * Center Top Left (1)
-  * Top Left (2)
-  * Top Right (3)
-  * Center Top Right (4)
-  * Right Top (5)
-  * Right Bottom (6)
-  * Center Bottom Right (7)
-  * Bottom Right (8)
-  * Bottom Left (9)
-  * Center Bottom Left (10)
-  * Left Bottom (11)
-  * Left Top (12)
+1. Center Top Left 
+2. Top Left
+3. Top Right
+4. Center Top Right
+5. Right Top
+6. Right Bottom
+7. Center Bottom Right
+8. Bottom Right
+9. Bottom Left
+10. Center Bottom Left
+11. Left Bottom
+12. Left Top
 
 ```json
 {
