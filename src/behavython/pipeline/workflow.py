@@ -199,7 +199,7 @@ def run_analysis_workflow(request: AnalysisRequest, progress: Callable = None, l
             position_csv=files["position"][0] if files["position"] else None,
             image_path=files["image"][0] if files["image"] else None,
             skeleton_csv=files["skeleton"][0] if files["skeleton"] else None,
-            roi_csv=files["roi"][0] if files["roi"] else None,
+            roi_paths=files["roi"] if files["roi"] else None,
             video_path=files["video"][0] if files["video"] else None,
             experiment_type=request.options.experiment_type,
         )

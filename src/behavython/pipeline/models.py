@@ -8,7 +8,7 @@ import pandas as pd
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-from behavython.core.defaults import BODYPART_MAPPING, CANONICAL_BODYPARTS, MAZE_EXPERIMENT_TYPES, TOTAL_SESSION_STORAGE_QUOTA
+from behavython.core.defaults import BODYPART_MAPPING, CANONICAL_BODYPARTS, MAZE_EXPERIMENT_TYPES, TOTAL_SESSION_STORAGE_QUOTA, ROI_COUNT_BY_EXPERIMENT
 from behavython.core.exceptions import AnalysisError
 
 
@@ -145,14 +145,16 @@ class MappedFormatter(logging.Formatter):
 
 
 class Animal:
-    def __init__(self, animal_id, position_csv, image_path, skeleton_csv=None, roi_csv=None, video_path=None, experiment_type="object_recognition"):
+    def __init__(self, animal_id, position_csv, image_path, skeleton_csv=None, roi_paths=None, video_path=None, experiment_type="object_recognition"):
         self.id = animal_id
         self.experiment_type = experiment_type
 
         # File references
         self.position_csv = position_csv
         self.skeleton_csv = skeleton_csv
-        self.roi_csv = roi_csv
+
+        # Because list("file.csv") becomes: ['f', 'i', 'l', 'e', '.', 'c', 's', 'v']. Normal
+        self.roi_paths = [] if roi_paths is None else [roi_paths] if isinstance(roi_paths, str) else list(roi_paths)
         self.image_path = image_path
         self.video_path = video_path
 
@@ -192,7 +194,6 @@ class Animal:
         # Task-specific requirements
         if self.experiment_type not in MAZE_EXPERIMENT_TYPES:
             required["skeleton_csv"] = self.skeleton_csv
-            required["roi_csv"] = self.roi_csv
 
         for key, path in required.items():
             if path is None or not os.path.exists(path):
@@ -203,6 +204,24 @@ class Animal:
                     f"Missing required file: {key}",
                     {"path": path},
                 )
+
+        if self.experiment_type not in MAZE_EXPERIMENT_TYPES:
+            if not self.roi_paths:
+                self.eligible = False
+                self.missing_files.append("roi_paths")
+                self._log("ERROR", "Missing required file: roi_paths", {"path": None})
+            else:
+                expected_rois = ROI_COUNT_BY_EXPERIMENT.get(self.experiment_type)
+                if expected_rois is not None and len(self.roi_paths) != expected_rois:
+                    self.eligible = False
+                    self.missing_files.append("roi_paths")
+                    self._log("ERROR", f"Experiment '{self.experiment_type}' requires exactly {expected_rois} ROI files, found {len(self.roi_paths)}", {"paths": self.roi_paths})
+
+                for path in self.roi_paths:
+                    if path is None or not os.path.exists(path):
+                        self.eligible = False
+                        self.missing_files.append("roi_paths")
+                        self._log("ERROR", "Missing required ROI file", {"path": path})
 
         # Video is optional
         if isinstance(self.video_path, list):
@@ -309,42 +328,43 @@ class Animal:
             self.eligible = False
 
     def _load_rois(self):
-        if not self.roi_csv:
+        if not self.roi_paths:
             return
 
-        try:
-            df = pd.read_csv(self.roi_csv)
-            df.columns = [name.lower().strip() for name in df.columns]
+        for path in self.roi_paths:
+            try:
+                df = pd.read_csv(path)
+                df.columns = [name.lower().strip() for name in df.columns]
 
-            required_cols = {"x", "y", "bx", "by", "width", "height"}
-            missing_cols = required_cols - set(df.columns)
-            if missing_cols:
-                raise AnalysisError(
-                    f"ROI CSV is missing required columns: {', '.join(missing_cols)}. Please check 'Bounding rectangle' and 'Centroid' in ImageJ set measurements when creating the ROIs"
-                )
+                required_cols = {"x", "y", "bx", "by", "width", "height"}
+                missing_cols = required_cols - set(df.columns)
+                if missing_cols:
+                    raise AnalysisError(
+                        f"ROI CSV is missing required columns: {', '.join(missing_cols)}. Please check 'Bounding rectangle' and 'Centroid' in ImageJ set measurements when creating the ROIs"
+                    )
 
-            filename = Path(self.roi_csv).stem
-            match = re.search(r"(roi[lrde]?)$", filename, re.IGNORECASE)
-            roi_label = match.group(1) if match else "roi"
+                filename = Path(path).stem
+                match = re.search(r"(roi[lrde]?)$", filename, re.IGNORECASE)
+                roi_label = match.group(1) if match else "roi"
 
-            for _, row in df.iterrows():
-                roi = {
-                    "name": roi_label,
-                    "x": float(row["x"]),
-                    "y": float(row["y"]),
-                    "bx": float(row["bx"]),
-                    "by": float(row["by"]),
-                    "width": float(row["width"]),
-                    "height": float(row["height"]),
-                }
-                self.rois.append(roi)
+                for _, row in df.iterrows():
+                    roi = {
+                        "name": roi_label,
+                        "x": float(row["x"]),
+                        "y": float(row["y"]),
+                        "bx": float(row["bx"]),
+                        "by": float(row["by"]),
+                        "width": float(row["width"]),
+                        "height": float(row["height"]),
+                    }
+                    self.rois.append(roi)
 
-        except AnalysisError as e:
-            self.eligible = False
-            self._log("ERROR", str(e), {"context": "roi_loading"})
-        except Exception as e:
-            self.eligible = False
-            self._log("ERROR", "Failed to load ROI CSV", {"error": str(e)})
+            except AnalysisError as e:
+                self.eligible = False
+                self._log("ERROR", str(e), {"context": "roi_loading", "path": path})
+            except Exception as e:
+                self.eligible = False
+                self._log("ERROR", "Failed to load ROI CSV", {"error": str(e), "path": path})
 
     def _load_image(self):
         try:
