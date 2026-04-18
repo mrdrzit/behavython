@@ -91,6 +91,7 @@ class BehavythonMainWindow(QWidget):
         self.toggle_analyze_from_file_button()
         self.on_experiment_type_changed(self.interface.type_combobox.currentText())
         self.set_advanced_tabs_visible(False)
+        self.on_crop_video_toggled()
 
     def _set_gui_log_message(self, target: str, message: str) -> None:
         self.logs.clear(target)
@@ -214,16 +215,17 @@ class BehavythonMainWindow(QWidget):
         self.interface.load_configuration_button.clicked.connect(self.on_load_configuration_clicked)
         self.interface.type_combobox.currentTextChanged.connect(self.on_experiment_type_changed)
         self.interface.plot_data_checkbox.toggled.connect(self.on_plot_enabled_changed)
+        self.interface.crop_video_checkbox.toggled.connect(self.on_crop_video_toggled)
 
     def clear_analysis_tab(self) -> None:
         self.interface.type_combobox.setCurrentIndex(1)
         self.interface.algo_type_combobox.setCurrentIndex(0)
-        self.interface.arena_width_lineedit.setText("30")
-        self.interface.arena_height_lineedit.setText("30")
-        self.interface.frames_per_second_lineedit.setText("30")
         self.interface.animal_combobox.setCurrentIndex(0)
-        self.interface.task_duration_lineedit.setText("300")
-        self.interface.crop_video_time_lineedit.setText("0")
+        self.interface.arena_width_spinbox.setValue(30)
+        self.interface.arena_height_spinbox.setValue(30)
+        self.interface.frames_per_second_spinbox.setValue(30)
+        self.interface.task_duration_spinbox.setValue(300)
+        self.interface.crop_video_time_spinbox.setValue(0)
         self.interface.fig_max_size.setCurrentIndex(2)
         self.interface.crop_video_checkbox.setChecked(False)
         self.interface.plot_data_checkbox.setChecked(True)
@@ -251,30 +253,35 @@ class BehavythonMainWindow(QWidget):
 
     def apply_analysis_configuration(self, data: dict) -> None:
         mapping = {
-            "Arena width": self.interface.arena_width_lineedit,
-            "Arena height": self.interface.arena_height_lineedit,
-            "Video framerate": self.interface.frames_per_second_lineedit,
-            "Task Duration": self.interface.task_duration_lineedit,
-            "Amount to trim": self.interface.crop_video_time_lineedit,
+            "Arena width": self.interface.arena_width_spinbox,
+            "Arena height": self.interface.arena_height_spinbox,
+            "Video framerate": self.interface.frames_per_second_spinbox,
+            "Task Duration": self.interface.task_duration_spinbox,
+            "Amount to trim": self.interface.crop_video_time_spinbox,
         }
 
         for key, widget in mapping.items():
             if key in data:
-                widget.setText(str(data[key]))
+                try:
+                    val = data[key]
+                    if val is not None and str(val).strip() != "":
+                        widget.setValue(int(float(val)))
+                except (ValueError, TypeError):
+                    self.logger.warning("Could not parse config value '%s' for %s", data[key], key)
 
     def build_analysis_options(self) -> AnalysisOptions:
         threshold = 0.0267 if self.interface.animal_combobox.currentIndex() == 0 else 0.0667
 
         return AnalysisOptions(
-            arena_width=int(self.interface.arena_width_lineedit.text()),
-            arena_height=int(self.interface.arena_height_lineedit.text()),
-            frames_per_second=int(self.interface.frames_per_second_lineedit.text()),
+            arena_width=self.interface.arena_width_spinbox.value(),
+            arena_height=self.interface.arena_height_spinbox.value(),
+            frames_per_second=self.interface.frames_per_second_spinbox.value(),
             experiment_type=self.interface.type_combobox.currentText().lower().strip().replace(" ", "_"),
             max_fig_res=str(self.interface.fig_max_size.currentText()).replace(" ", "").replace("x", ",").split(","),
             algo_type=self.interface.algo_type_combobox.currentText().lower().strip(),
             threshold=threshold,
-            task_duration=int(self.interface.task_duration_lineedit.text()),
-            trim_amount=int(self.interface.crop_video_time_lineedit.text()),
+            task_duration=self.interface.task_duration_spinbox.value(),
+            trim_amount=self.interface.crop_video_time_spinbox.value(),
             crop_video=self.interface.crop_video_checkbox.isChecked(),
             plot_options="plotting_enabled" if self.interface.plot_data_checkbox.isChecked() else "plotting_disabled",
             generate_video=self.interface.generate_validation_video_checkbox.isChecked(),
@@ -361,6 +368,14 @@ class BehavythonMainWindow(QWidget):
 
     def on_plot_enabled_changed(self, *args) -> None:
         self.on_experiment_type_changed()
+
+    def on_crop_video_toggled(self, *args) -> None:
+        if self.interface.crop_video_checkbox.isChecked():
+            self.interface.crop_video_time_spinbox.setEnabled(True)
+            self.interface.crop_video_time_label.setEnabled(True)
+        else:
+            self.interface.crop_video_time_spinbox.setEnabled(False)
+            self.interface.crop_video_time_label.setEnabled(False)
 
     # ------------------------------------------------------------------
     # DeepLabCut tab
