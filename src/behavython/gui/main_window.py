@@ -3,12 +3,13 @@ from __future__ import annotations
 import os
 import time
 import logging
+from pathlib import Path
 from PySide6.QtWidgets import QWidget, QMessageBox
 from PySide6.QtCore import QEvent, Qt, QTimer
 from behavython.pipeline.workflow import run_analysis_workflow
 from behavython.services.validation import is_model_installed, validate_analysis_request
 from behavython.core.app_context import AppContext
-from behavython.core.defaults import DEBUG_STYLE, DEFAULT_STYLE, VALIDATION_CHECKBOX_ACTIVE, VALIDATION_CHECKBOX_FADED
+from behavython.core.defaults import DEBUG_STYLE, DEFAULT_STYLE, VALIDATION_CHECKBOX_ACTIVE, VALIDATION_CHECKBOX_FADED, ANALYSIS_REQUIRED_SUFFIXES
 from behavython.core.paths import FFMPEG_URL, MODELS_URLS
 from behavython.pipeline.models import (
     AnalysisOptions,
@@ -94,6 +95,7 @@ class BehavythonMainWindow(QWidget):
         self.on_experiment_type_changed(self.interface.type_combobox.currentText())
         self.set_advanced_tabs_visible(False)
         self.on_crop_video_toggled()
+        self.toggle_assisted_analysis_ready()
 
     def _set_gui_log_message(self, target: str, message: str) -> None:
         self.logs.clear(target)
@@ -404,7 +406,10 @@ class BehavythonMainWindow(QWidget):
         # Assisted Labeling (Data Process)
         self.interface.get_config_path_data_process.clicked.connect(self.on_select_refining_dlc_config_clicked)
         self.interface.get_frames_path_data_process.clicked.connect(self.on_select_refining_video_folder_clicked)
-        self.interface.analyze_frames_data_process.clicked.connect(self.on_run_analyze_frames_clicked)
+        self.interface.start_assisted_labeling_data_process.clicked.connect(self.on_run_analyze_frames_clicked)
+        self.interface.config_path_data_process_path.textChanged.connect(self.toggle_assisted_analysis_ready)
+        self.interface.video_folder_data_process.textChanged.connect(self.toggle_assisted_analysis_ready)
+        self.interface.extract_frames_data_process_spinbox.valueChanged.connect(self.toggle_assisted_analysis_ready)
 
     def on_select_dlc_config_clicked(self) -> None:
         path = select_file(self.interface, "Select config.yaml", "YAML files (*.yaml)")
@@ -597,19 +602,48 @@ class BehavythonMainWindow(QWidget):
         self.runner.submit(run_extract_frames, request, debug_mode=self.debug_mode)
         self.logger.info("Frame extraction submitted for %d video(s).", len(request.video_paths))
 
+    def toggle_assisted_analysis_ready(self) -> None:
+        analysis_button = self.interface.start_assisted_labeling_data_process
+        config_path = self.interface.config_path_data_process_path.text().strip()
+        frames_folder = self.interface.video_folder_data_process.text().strip()
+        num_frames = self.interface.extract_frames_data_process_spinbox.value()
+
+        is_ready = bool(config_path) and os.path.exists(config_path) and bool(frames_folder) and os.path.exists(frames_folder) and num_frames > 0
+        analysis_button.setEnabled(is_ready)
+
     def on_run_analyze_frames_clicked(self) -> None:
         config_path = self.interface.config_path_data_process_path.text().strip()
         frames_folder = self.interface.video_folder_data_process.text().strip()
+        num_frames = int(self.interface.extract_frames_data_process_spinbox.value() or 0)
 
         if not config_path or not frames_folder:
-            show_warning(self.interface, "Missing Information", "Please select both a config.yaml and a frames/video folder.")
+            show_warning(self.interface, "Missing Information", "Please select both a config.yaml and a video folder.")
+            return
+
+        folder_path = Path(frames_folder)
+        if not folder_path.exists():
+            show_warning(self.interface, "Invalid Folder", "The selected folder does not exist.")
+            return
+
+        video_extensions = ANALYSIS_REQUIRED_SUFFIXES["video"]
+        invalid_items = [item.name for item in folder_path.iterdir() if item.is_dir() or item.suffix.lower() not in video_extensions]
+
+        if invalid_items:
+            show_warning(
+                self.interface,
+                "Invalid Folder Content",
+                f"The folder contains non-video items: "
+                f"{', '.join(invalid_items[:5])}"
+                f"{'...' if len(invalid_items) > 5 else ''}\n\n"
+                "Please select a folder containing ONLY video files.",
+            )
             return
 
         request = DLCAnalyzeFramesRequest(
             config_path=config_path,
             frames_folder=frames_folder,
             frame_extension=self.interface.file_extension_confirmation_combobox_data_process.currentText().strip().lower(),
-            number_of_frames=int(self.interface.extract_frames_field.text() or 1),
+            number_of_frames=num_frames,
         )
 
         self.logs.clear("dlc")

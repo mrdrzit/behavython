@@ -97,7 +97,7 @@ QTabBar::tab:selected {
     <enum>QTabWidget::TabShape::Rounded</enum>
    </property>
    <property name="currentIndex">
-    <number>2</number>
+    <number>0</number>
    </property>
    <property name="iconSize">
     <size>
@@ -3103,8 +3103,8 @@ QCheckBox{font:7pt&quot;Arial&quot;;font-weight:bold}</string>
      </property>
      <property name="geometry">
       <rect>
-       <x>24</x>
-       <y>217</y>
+       <x>26</x>
+       <y>219</y>
        <width>221</width>
        <height>20</height>
       </rect>
@@ -3139,17 +3139,20 @@ QCheckBox{font:7pt&quot;Arial&quot;;font-weight:bold}</string>
       <string notr="true">QLabel{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;}</string>
      </property>
      <property name="text">
-      <string notr="true">Type how many frames you want to extract</string>
+      <string notr="true">How many frames do you want to extract?</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
      </property>
     </widget>
-    <widget class="QPushButton" name="analyze_frames_data_process">
+    <widget class="QPushButton" name="start_assisted_labeling_data_process">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
      <property name="geometry">
       <rect>
        <x>81</x>
-       <y>242</y>
+       <y>250</y>
        <width>171</width>
        <height>41</height>
       </rect>
@@ -3158,7 +3161,12 @@ QCheckBox{font:7pt&quot;Arial&quot;;font-weight:bold}</string>
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
      <property name="styleSheet">
-      <string notr="true">QPushButton{font:14pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+      <string notr="true">QPushButton{font:14pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}
+QPushButton:disabled {
+    background-color: gray;
+    color: white;
+    border: 2px solid darkgray; 
+}</string>
      </property>
      <property name="text">
       <string notr="true">START ASSISTED LABELING</string>
@@ -3532,67 +3540,6 @@ QCheckBox{font:7pt&quot;Arial&quot;;font-weight:bold}</string>
       <string>path\to\final\destination</string>
      </property>
     </widget>
-    <widget class="QLineEdit" name="extract_frames_field">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="geometry">
-      <rect>
-       <x>249</x>
-       <y>218</y>
-       <width>61</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>0</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>300</width>
-       <height>20</height>
-      </size>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QLineEdit{
-    border:#969696;
-    background-color:#606060; 
-    border-bottom-left-radius:6px;
-    border-top-left-radius:6px;
-    color:#FFFFFF;
-    font:7pt&quot;Arial&quot;;
-    font-weight:bold;
-    border-bottom-right-radius:6px;
-    border-top-right-radius:6px
-}
-
-QLineEdit:disabled {
-    background-color: #4A4A4F;
-    color: #9A9A9A;
-}</string>
-     </property>
-     <property name="text">
-      <string notr="true"/>
-     </property>
-     <property name="frame">
-      <bool>false</bool>
-     </property>
-     <property name="cursorPosition">
-      <number>0</number>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignmentFlag::AlignCenter</set>
-     </property>
-     <property name="readOnly">
-      <bool>false</bool>
-     </property>
-     <property name="placeholderText">
-      <string>Type Here</string>
-     </property>
-    </widget>
     <widget class="QLabel" name="analyze_frames_data_process_section_label">
      <property name="geometry">
       <rect>
@@ -3649,6 +3596,74 @@ QLineEdit:disabled {
       <bool>true</bool>
      </property>
     </widget>
+    <widget class="QSpinBox" name="extract_frames_data_process_spinbox">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>259</x>
+       <y>220</y>
+       <width>52</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>52</width>
+       <height>20</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QSpinBox {
+    background-color: #606060;
+    color: white;
+    border: 1px solid #969696;
+    border-radius: 6px;
+    padding-right: 18px;
+    font-family: Arial;
+    font-size: 8pt;
+    font-weight: bold;
+}
+
+QSpinBox {
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+
+QSpinBox:disabled {
+    background-color: #4A4A4A;
+    color: #9A9A9A;
+}
+
+QSpinBox {
+    padding-left:8px;
+}
+
+QSpinBox::up-button,
+QSpinBox::down-button {
+    width: 0px;
+    height: 0px;
+    border: none;
+    background: transparent;
+}
+
+QSpinBox {
+    padding-right: 0px;
+}</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+     </property>
+     <property name="suffix">
+      <string/>
+     </property>
+     <property name="maximum">
+      <number>999</number>
+     </property>
+    </widget>
    </widget>
   </widget>
   <widget class="QLabel" name="behavython_logo">
@@ -3676,6 +3691,8 @@ QLineEdit:disabled {
     <bool>true</bool>
    </property>
   </widget>
+  <zorder>behavython_logo</zorder>
+  <zorder>tabWidget</zorder>
  </widget>
  <tabstops>
   <tabstop>tabWidget</tabstop>
@@ -3718,8 +3735,7 @@ QLineEdit:disabled {
   <tabstop>file_extension_confirmation_combobox_data_process</tabstop>
   <tabstop>get_frames_path_data_process</tabstop>
   <tabstop>video_folder_data_process</tabstop>
-  <tabstop>extract_frames_field</tabstop>
-  <tabstop>analyze_frames_data_process</tabstop>
+  <tabstop>start_assisted_labeling_data_process</tabstop>
  </tabstops>
  <resources/>
  <connections/>
