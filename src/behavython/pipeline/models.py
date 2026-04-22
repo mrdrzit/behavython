@@ -114,6 +114,14 @@ class DLCAnnotatedVideoRequest:
 
 
 @dataclass(slots=True)
+class DLCAnalyzeFramesRequest:
+    config_path: str
+    frames_folder: str
+    frame_extension: str = ".jpg"
+    number_of_frames: int | None = None
+
+
+@dataclass(slots=True)
 class RuntimeStorageConfig:
     runtime_root: Path
     data_root: Path

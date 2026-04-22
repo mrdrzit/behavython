@@ -17,6 +17,7 @@ from behavython.pipeline.models import (
     DLCClearUnusedFilesRequest,
     DLCFrameExtractionRequest,
     DLCVideoAnalysisRequest,
+    DLCAnalyzeFramesRequest,
 )
 from behavython.services.validation import validate_config_path, validate_video_paths
 from behavython.pipeline.plugins.dlc import (
@@ -24,6 +25,7 @@ from behavython.pipeline.plugins.dlc import (
     run_dlc_video_analysis,
     run_extract_frames,
     run_create_annotated_video,
+    run_analyze_frames,
 )
 from behavython.services.validation import validate_json_config
 from behavython.gui.dialogs import ask_yes_no, show_info, show_warning, show_worker_error
@@ -399,10 +401,25 @@ class BehavythonMainWindow(QWidget):
         self.interface.create_annotated_video_button.clicked.connect(self.on_create_annotated_video_clicked)
         self.interface.use_default_network_button.toggled.connect(self.on_use_default_network_toggled)
 
+        # Assisted Labeling (Data Process)
+        self.interface.get_config_path_data_process.clicked.connect(self.on_select_refining_dlc_config_clicked)
+        self.interface.get_frames_path_data_process.clicked.connect(self.on_select_refining_video_folder_clicked)
+        self.interface.analyze_frames_data_process.clicked.connect(self.on_run_analyze_frames_clicked)
+
     def on_select_dlc_config_clicked(self) -> None:
         path = select_file(self.interface, "Select config.yaml", "YAML files (*.yaml)")
         if path:
             self.interface.config_path_lineedit.setText(path)
+
+    def on_select_refining_dlc_config_clicked(self) -> None:
+        path = select_file(self.interface, "Select config.yaml", "YAML files (*.yaml)")
+        if path:
+            self.interface.config_path_data_process_path.setText(path)
+
+    def on_select_refining_video_folder_clicked(self) -> None:
+        path = select_folder(self.interface, "Select video folder")
+        if path:
+            self.interface.video_folder_data_process.setText(path)
 
     def on_select_video_folder_clicked(self) -> None:
         path = select_folder(self.interface, "Select video folder")
@@ -579,6 +596,26 @@ class BehavythonMainWindow(QWidget):
         self.progress_bar.setValue(0)
         self.runner.submit(run_extract_frames, request, debug_mode=self.debug_mode)
         self.logger.info("Frame extraction submitted for %d video(s).", len(request.video_paths))
+
+    def on_run_analyze_frames_clicked(self) -> None:
+        config_path = self.interface.config_path_data_process_path.text().strip()
+        frames_folder = self.interface.video_folder_data_process.text().strip()
+
+        if not config_path or not frames_folder:
+            show_warning(self.interface, "Missing Information", "Please select both a config.yaml and a frames/video folder.")
+            return
+
+        request = DLCAnalyzeFramesRequest(
+            config_path=config_path,
+            frames_folder=frames_folder,
+            frame_extension=self.interface.file_extension_confirmation_combobox_data_process.currentText().strip().lower(),
+            number_of_frames=int(self.interface.extract_frames_field.text() or 1),
+        )
+
+        self.logs.clear("dlc")
+        self.progress_bar.setValue(0)
+        self.runner.submit(run_analyze_frames, request, debug_mode=self.debug_mode)
+        self.logger.info("Assisted Labeling (analyze frames) submitted. Config: %s, Folder: %s", config_path, frames_folder)
 
     def toggle_debug_mode(self) -> None:
         self.debug_mode = not self.debug_mode

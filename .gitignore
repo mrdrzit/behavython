@@ -119,3 +119,6 @@ create_diff_patch.bat
 # Diff patches
 *.diff
 *.patch
+
+# Github config files
+.github

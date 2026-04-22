@@ -5,6 +5,7 @@ import sys
 import shutil
 import logging
 import subprocess
+import pandas as pd
 from tqdm import tqdm
 from pathlib import Path
 from typing import Any
@@ -18,6 +19,7 @@ from behavython.pipeline.models import (
     DLCFrameExtractionRequest,
     DLCVideoAnalysisRequest,
     DLCAnnotatedVideoRequest,
+    DLCAnalyzeFramesRequest,
 )
 
 app_logger = logging.getLogger("behavython")
@@ -527,4 +529,104 @@ def run_create_annotated_video(request: DLCAnnotatedVideoRequest, progress=None,
         "output_path": request.output_path,
         "config_was_repaired": was_repaired,
         "config_path_used": str(config_path_used),
+    }
+
+
+def run_analyze_frames(request: DLCAnalyzeFramesRequest, progress=None, log=None, warning=None) -> dict:
+    """
+    Orchestrates the Model-Assisted Label Transfer workflow.
+    Scans the DLC project, resolves frame assets, and runs DLC inference.
+    The session handles backups and rollback automatically.
+    """
+    from behavython.services.dlc_assisted_label_session import DLCAssistedLabelSession
+
+    if log:
+        console_logger.info("Starting Assisted Label session...")
+
+    if progress:
+        progress.emit(5)
+
+    try:
+        with DLCAssistedLabelSession(request) as session:
+            if log:
+                log.emit(
+                    "dlc",
+                    f"Model: {session.model_metadata.get('network_name', 'unknown')} | Scorer: {session.model_metadata.get('scorer', 'unknown')}",
+                )
+                console_logger.info(
+                    f"Model: {session.model_metadata.get('network_name', 'unknown')} | Scorer: {session.model_metadata.get('scorer', 'unknown')}"
+                )
+
+            if progress:
+                progress.emit(15)
+
+            if log:
+                log.emit("dlc", "Resolving frame assets...")
+                console_logger.info("Resolving frame assets...")
+            assets = session.resolve_frame_assets()
+
+            for warn_msg in assets.warnings:
+                dlc_logger.warning(warn_msg)
+                if warning:
+                    warning.emit("Warning", warn_msg)
+                console_logger.warning(warn_msg)
+
+            if not assets.is_ready:
+                raise AnalysisError(f"No frames found in: {request.frames_folder}\nAdd frames or enable frame extraction in the request.")
+
+            # Calculate total frames for logging
+            total_frames = sum(len(list(f.glob("*"))) for f in assets.video_folders)
+
+            if log:
+                log.emit("dlc", f"{len(assets.video_folders)} folder(s) ({total_frames} frames) ready for inference")
+                if assets.newly_extracted:
+                    log.emit("dlc", f"{len(assets.newly_extracted)} frame(s) extracted from video(s)")
+
+            if progress:
+                progress.emit(35)
+
+            if log:
+                log.emit("dlc", "Running DLC inference (this may take a while)...")
+                console_logger.info("Running DLC inference (this may take a while)...")
+            generated_files = session.run_inference(assets)
+
+            if log:
+                log.emit("dlc", f"Inference complete | {len(generated_files)} video folder(s) processed")
+                console_logger.info(f"Inference complete | {len(generated_files)} video folder(s) processed")
+
+            # 4. Verification Plots
+            if generated_files:
+                # Merge all standardized H5s for a unified verification report
+                all_dfs = [pd.read_hdf(f) for f in generated_files]
+                if all_dfs:
+                    merged_df = pd.concat(all_dfs)
+                    merged_path = session.session_temp / "merged_labels_for_verification.h5"
+                    merged_df.to_hdf(merged_path, key="df_with_missing", mode="w")
+                    session.generate_verification_plots(merged_path)
+
+            if progress:
+                progress.emit(90)
+
+            session.commit()
+            console_logger.info("Assisted labeling session committed successfully")
+
+    except AnalysisError:
+        raise
+    except Exception as e:
+        dlc_logger.exception("Assisted Label session failed unexpectedly")
+        raise AnalysisError(f"Assisted labeling failed: {e}") from e
+
+    if progress:
+        progress.emit(100)
+
+    if log:
+        log.emit("dlc", "Assisted Label session completed successfully.")
+
+    return {
+        "kind": "dlc_analyze_frames",
+        "folders_processed": len(assets.video_folders),
+        "frames_extracted": len(assets.newly_extracted),
+        "standardized_labels_created": len(generated_files),
+        "scorer": session.model_metadata.get("scorer", ""),
+        "target_folder": str(session.target_folder),
     }
