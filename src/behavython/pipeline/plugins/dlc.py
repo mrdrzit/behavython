@@ -465,12 +465,7 @@ def run_clear_unused_files(request: DLCClearUnusedFilesRequest, progress=None, l
     }
 
 
-def run_create_annotated_video(
-    request: DLCAnnotatedVideoRequest,
-    progress=None,
-    log=None,
-    warning=None,
-) -> dict:
+def run_create_annotated_video(request: DLCAnnotatedVideoRequest, progress=None, log=None, warning=None) -> dict:
     """
     Creates an annotated video using DeepLabCut.
     Handles uncleaned folders and utilizes automated YAML repair.

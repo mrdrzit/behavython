@@ -312,11 +312,7 @@ def _repair_multiline_video_keys(raw_text: str) -> tuple[str, bool]:
     return repaired_text, changed
 
 
-def repair_dlc_config_yaml(
-    source_path: str | Path,
-    destination_path: str | Path | None = None,
-    overwrite: bool = True,
-) -> YamlRepairResult:
+def repair_dlc_config_yaml(source_path: str | Path, destination_path: str | Path | None = None, overwrite: bool = True) -> YamlRepairResult:
     source = Path(source_path)
 
     if not source.exists():
