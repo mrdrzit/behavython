@@ -5,7 +5,10 @@ import uuid
 import shutil
 import logging
 import subprocess
+import glob
+import numpy as np
 import pandas as pd
+import matplotlib.font_manager as fm
 from typing import Any, List
 from natsort import os_sorted
 from pathlib import Path
@@ -13,8 +16,6 @@ from dataclasses import dataclass, field
 from behavython.pipeline.plugins.dlc import load_deeplabcut
 from behavython.pipeline.models import DLCAnalyzeFramesRequest
 from behavython.core.defaults import ANALYSIS_REQUIRED_SUFFIXES
-import matplotlib.font_manager as fm
-import glob
 from behavython.services.logging import capture_external_output
 from behavython.core.utils import load_or_repair_dlc_yaml, get_ffmpeg_path, get_ffprobe_path, detect_gpu
 from behavython.core.exceptions import AnalysisError, BackupError, BodypartMismatchError, ProjectIntegrityError, ScorerMismatchError
@@ -262,8 +263,8 @@ class DLCAssistedLabelSession:
                         shutil.copy2(frame, temp_folder)
                     video_folders.append(temp_folder)
 
-        # 2. Extract new frames from videos (automatic if videos exist)
-        if video_files:
+        # 2. Extract new frames from videos (only if in video mode)
+        if self.request.mode == "video" and video_files:
             for video in video_files:
                 try:
                     # _extract_frames_from_video now creates its own subfolder
@@ -275,8 +276,25 @@ class DLCAssistedLabelSession:
                     warnings.append(f"Could not extract frames from {video.name}: {e}")
                     logger.warning(f"Frame extraction failed for {video.name}: {e}")
 
+        # 3. Handle images directly in the root folder (only if in image mode)
+        if self.request.mode == "image":
+            root_images = [item for item in self.target_folder.iterdir() if item.is_file() and item.suffix.lower() == frame_ext]
+
+            if root_images:
+                # We treat the root folder itself as a single "video" folder
+                # to keep the DLC structure consistent (labeled-data/folder_name/frames)
+                root_subfolder = self.session_temp / self.target_folder.name
+                root_subfolder.mkdir(exist_ok=True)
+                for img in root_images:
+                    dest = root_subfolder / img.name
+                    shutil.copy2(img, dest)
+                    newly_extracted.append(dest)
+
+                if root_subfolder not in video_folders:
+                    video_folders.append(root_subfolder)
+
         if not video_folders:
-            warnings.append(f"No valid frame folders or videos resolved in {self.target_folder}.")
+            warnings.append(f"No valid frame folders, videos, or image assets resolved in {self.target_folder}.")
 
         console_logger.info(f"Asset resolution | folders_to_analyze={len(video_folders)} | newly_extracted={len(newly_extracted)}")
 
@@ -398,29 +416,63 @@ class DLCAssistedLabelSession:
         """
         try:
             scorer = self.model_metadata.get("scorer", "unknown")
+            bodyparts = self.model_metadata.get("bodyparts", [])
             df = pd.read_hdf(h5_path)
 
             # 1. Drop likelihood level
             if "likelihood" in df.columns.get_level_values("coords"):
                 df = df.drop("likelihood", level="coords", axis=1)
 
-            # 2. Rename Scorer (top level)
-            current_scorer = df.columns.get_level_values(0)[0]
-            if current_scorer != scorer:
-                # We need to rebuild the columns index
-                new_cols = pd.MultiIndex.from_tuples([(scorer, bp, c) for (_, bp, c) in df.columns.to_flat_index()], names=df.columns.names)
-                df.columns = new_cols
+            # 2. Header Construction (Matching DLC create_df_from_prediction logic)
+            # We rebuild the columns using from_product to ensure a clean MultiIndex
+            # with correct names and levels, sorted as per config bodyparts.
+            coords = ["x", "y"]
+            cols = [[scorer], bodyparts, coords]
+            cols_names = ["scorer", "bodyparts", "coords"]
+
+            # Note: We assume the inference output has all bodyparts defined in config.
+            # If not, this from_product approach will fail to align correctly unless
+            # we re-index the dataframe.
+            new_columns = pd.MultiIndex.from_product(cols, names=cols_names)
+
+            # Align existing data to the new column structure
+            # (This handles cases where the model might have different bodypart order)
+            df.columns = df.columns.remove_unused_levels()
+
+            # Rebuild a temporary MultiIndex from tuples to ensure we can map values correctly
+            # if the scorer name was different in the raw inference file.
+            flat_data = []
+            for bp in bodyparts:
+                for c in coords:
+                    try:
+                        # Try to find data for this bp/coord regardless of old scorer name
+                        val = df.xs((bp, c), level=("bodyparts", "coords"), axis=1)
+                        flat_data.append(val.iloc[:, 0])
+                    except (KeyError, IndexError):
+                        # Fill with NaN if bodypart is missing from inference
+                        flat_data.append(pd.Series(np.nan, index=df.index))
+
+            df = pd.concat(flat_data, axis=1)
+            df.columns = new_columns
 
             # 3. Fix Index [dataset, experiment, image]
             # Legacy expected: ['labeled-data', folder_name, image_name]
-            image_names = [Path(idx).name for idx in df.index]
-            new_index = pd.MultiIndex.from_arrays([["labeled-data"] * len(df), [folder_name] * len(df), image_names], names=df.columns.names)
+            if isinstance(df.index, pd.MultiIndex):
+                image_names = [Path(str(idx[-1])).name for idx in df.index]
+            else:
+                image_names = [Path(str(idx)).name for idx in df.index]
+
+            new_index = pd.MultiIndex.from_arrays(
+                [["labeled-data"] * len(df), [folder_name] * len(df), image_names],
+                names=None,  # DLC indices typically don't name the levels here
+            )
             df.index = new_index
 
             # 4. Save standardized files
             dest_h5 = h5_path.parent / f"CollectedData_{scorer}.h5"
             dest_csv = h5_path.parent / f"CollectedData_{scorer}.csv"
 
+            # Use Fixed format for CollectedData (standard for manual labels)
             df.to_hdf(dest_h5, key="df_with_missing", mode="w")
             df.to_csv(dest_csv)
 
@@ -644,6 +696,75 @@ class DLCAssistedLabelSession:
 
         self.is_committed = True
         console_logger.info(f"Commit successful | {moved_count} video subfolder(s) transferred to {self.target_folder.name}")
+
+        # 3. Final Synchronization: Run localized convertcsv2h5 on the destination
+        # This ensures the H5 files have the perfect structure expected by DLC GUI.
+        scorer = self.model_metadata.get("scorer", "unknown")
+        for src_folder in subfolders:
+            dst_folder = self.target_folder / src_folder.name
+            csv_file = dst_folder / f"CollectedData_{scorer}.csv"
+            if csv_file.exists():
+                try:
+                    self._synchronize_csv_to_h5(csv_file, scorer)
+                except Exception as e:
+                    logger.warning(f"Failed to synchronize {csv_file.name}: {e}")
+
+    def _guarantee_multiindex_rows(self, df: pd.DataFrame):
+        """Standard DLC logic to ensure index is a platform-agnostic MultiIndex."""
+        if not isinstance(df.index, pd.MultiIndex):
+            path = df.index[0]
+            try:
+                sep = "/" if "/" in path else "\\"
+                splits = tuple(df.index.str.split(sep))
+                df.index = pd.MultiIndex.from_tuples(splits)
+            except (TypeError, AttributeError):
+                pass
+
+        try:
+            df.index = df.index.set_levels(df.index.levels[1].astype(str), level=1)
+        except (AttributeError, IndexError):
+            pass
+
+    def _synchronize_csv_to_h5(self, csv_path: Path, scorer: str):
+        """Localized version of deeplabcut.convertcsv2h5 that works on any folder."""
+        from itertools import islice
+
+        # Determine header depth without loading the whole file
+        with open(csv_path) as datafile:
+            head = list(islice(datafile, 0, 5))
+
+        if not head:
+            return
+
+        if len(head) > 1 and "individuals" in head[1]:
+            header = list(range(4))
+        else:
+            header = list(range(3))
+
+        if head[-1].split(",")[0] == "labeled-data":
+            index_col = [0, 1, 2]
+        else:
+            index_col = 0
+
+        # Read CSV with exact DLC parameters
+        data = pd.read_csv(csv_path, index_col=index_col, header=header)
+
+        # Ensure correct scorer level
+        try:
+            # First try using level name
+            data.columns = data.columns.set_levels([scorer], level="scorer")
+        except (KeyError, ValueError):
+            # Fallback to level index 0
+            data.columns = data.columns.set_levels([scorer], level=0)
+
+        # Apply platform-agnostic index formatting
+        self._guarantee_multiindex_rows(data)
+
+        # Save to H5 and back to CSV to ensure consistency
+        h5_path = str(csv_path).replace(".csv", ".h5")
+        data.to_hdf(h5_path, key="df_with_missing", mode="w")
+        data.to_csv(csv_path)
+        logger.info(f"Synchronized {csv_path.name} to {Path(h5_path).name}")
 
     def rollback(self):
         """Restores all backed-up files and deletes temporary creations."""

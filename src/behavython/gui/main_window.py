@@ -95,6 +95,8 @@ class BehavythonMainWindow(QWidget):
         self.on_experiment_type_changed(self.interface.type_combobox.currentText())
         self.set_advanced_tabs_visible(False)
         self.on_crop_video_toggled()
+        if hasattr(self.interface, "extract_frames_data_process_spinbox"):
+            self.interface.extract_frames_data_process_spinbox.setValue(20)
         self.toggle_assisted_analysis_ready()
 
     def _set_gui_log_message(self, target: str, message: str) -> None:
@@ -606,9 +608,8 @@ class BehavythonMainWindow(QWidget):
         analysis_button = self.interface.start_assisted_labeling_data_process
         config_path = self.interface.config_path_data_process_path.text().strip()
         frames_folder = self.interface.video_folder_data_process.text().strip()
-        num_frames = self.interface.extract_frames_data_process_spinbox.value()
 
-        is_ready = bool(config_path) and os.path.exists(config_path) and bool(frames_folder) and os.path.exists(frames_folder) and num_frames > 0
+        is_ready = bool(config_path) and os.path.exists(config_path) and bool(frames_folder) and os.path.exists(frames_folder)
         analysis_button.setEnabled(is_ready)
 
     def on_run_analyze_frames_clicked(self) -> None:
@@ -626,24 +627,44 @@ class BehavythonMainWindow(QWidget):
             return
 
         video_extensions = ANALYSIS_REQUIRED_SUFFIXES["video"]
-        invalid_items = [item.name for item in folder_path.iterdir() if item.is_dir() or item.suffix.lower() not in video_extensions]
+        image_extensions = ANALYSIS_REQUIRED_SUFFIXES["image"]
+        valid_extensions = video_extensions + image_extensions
+
+        # 1. Check for unsupported file types
+        invalid_items = [item.name for item in folder_path.iterdir() if item.is_file() and item.suffix.lower() not in valid_extensions]
 
         if invalid_items:
             show_warning(
                 self.interface,
-                "Invalid Folder Content",
-                f"The folder contains non-video items: "
+                "Unsupported Files",
+                f"The folder contains unsupported file types: "
                 f"{', '.join(invalid_items[:5])}"
                 f"{'...' if len(invalid_items) > 5 else ''}\n\n"
-                "Please select a folder containing ONLY video files.",
+                "Please select a folder containing only video or image files.",
             )
             return
+
+        # 2. Check for mixed content (videos + images)
+        has_videos = any(item.is_file() and item.suffix.lower() in video_extensions for item in folder_path.iterdir())
+        has_images = any(item.is_file() and item.suffix.lower() in image_extensions for item in folder_path.iterdir())
+
+        if has_videos and has_images:
+            show_warning(
+                self.interface,
+                "Mixed Content Detected",
+                "The selected folder contains both video files and image files.\n\n"
+                "Please select a folder containing ONLY videos (to extract frames) or ONLY images (to process directly).",
+            )
+            return
+
+        mode = "image" if has_images else "video"
 
         request = DLCAnalyzeFramesRequest(
             config_path=config_path,
             frames_folder=frames_folder,
             frame_extension=self.interface.file_extension_confirmation_combobox_data_process.currentText().strip().lower(),
             number_of_frames=num_frames,
+            mode=mode,
         )
 
         self.logs.clear("dlc")

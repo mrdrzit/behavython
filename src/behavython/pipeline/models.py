@@ -119,6 +119,7 @@ class DLCAnalyzeFramesRequest:
     frames_folder: str
     frame_extension: str = ".jpg"
     number_of_frames: int | None = None
+    mode: str = "video"
 
 
 @dataclass(slots=True)
@@ -223,7 +224,11 @@ class Animal:
                 if expected_rois is not None and len(self.roi_paths) != expected_rois:
                     self.eligible = False
                     self.missing_files.append("roi_paths")
-                    self._log("ERROR", f"Experiment '{self.experiment_type}' requires exactly {expected_rois} ROI files, found {len(self.roi_paths)}", {"paths": self.roi_paths})
+                    self._log(
+                        "ERROR",
+                        f"Experiment '{self.experiment_type}' requires exactly {expected_rois} ROI files, found {len(self.roi_paths)}",
+                        {"paths": self.roi_paths},
+                    )
 
                 for path in self.roi_paths:
                     if path is None or not os.path.exists(path):
