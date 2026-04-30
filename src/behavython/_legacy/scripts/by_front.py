@@ -1,6 +1,6 @@
 import sys
 import os
-from behavython._legacy.scripts.dlc_helper_functions import *
+from dlc_helper_functions import *
 from PySide6 import QtCore, QtUiTools, QtGui, QtWidgets
 from PySide6.QtWidgets import QWidget
 
