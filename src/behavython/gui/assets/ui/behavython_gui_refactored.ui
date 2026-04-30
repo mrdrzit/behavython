@@ -774,7 +774,7 @@ QCheckBox:disabled {
 }</string>
                 </property>
                 <property name="text">
-                 <string>Plot data?</string>
+                 <string>Plot data?  </string>
                 </property>
                 <property name="checked">
                  <bool>false</bool>
