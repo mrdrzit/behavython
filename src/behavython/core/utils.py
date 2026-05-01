@@ -439,3 +439,25 @@ def detect_gpu():
         return len(gpus) > 0, gpus
     except Exception:
         return False, []
+
+
+def adjust_window_geometry(window, ratio=0.90):
+    """
+    Resizes the window to a percentage of the available screen
+    and centers it perfectly.
+    """
+    from PySide6.QtGui import QGuiApplication
+
+    screen = QGuiApplication.primaryScreen().availableGeometry()
+
+    # Calculate dimensions
+    width = int(screen.width() * ratio)
+    height = int(screen.height() * ratio)
+
+    # Apply resize
+    window.resize(width, height)
+
+    # Center the window
+    x = screen.x() + (screen.width() - width) // 2
+    y = screen.y() + (screen.height() - height) // 2
+    window.move(x, y)

@@ -25,7 +25,7 @@ GUI_RESOURCES_ROOT = GUI_ROOT / "assets"
 GUI_IMAGES_ROOT = GUI_RESOURCES_ROOT / "images"
 GUI_UI_ROOT = GUI_RESOURCES_ROOT / "ui"
 
-UI_FILE = GUI_UI_ROOT / "behavython_gui_refactored.ui"
+UI_FILE = GUI_UI_ROOT / "behavython_gui.ui"
 
 LOGO_PATH = GUI_IMAGES_ROOT / "logo.png"
 ICON_PATH = GUI_IMAGES_ROOT / "VY.ico"

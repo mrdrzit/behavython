@@ -6,6 +6,8 @@ from behavython.core.app_context import AppContext
 from behavython.gui.main_window import BehavythonMainWindow
 from behavython.core.paths import ICON_PATH, LOGO_PATH, UI_FILE
 from behavython.core.defaults import MAIN_WINDOW_TITLE, LOGO_WIDGET_NAME
+from behavython.core.utils import adjust_window_geometry
+
 
 def load_ui(ui_file: Path = UI_FILE):
     """
@@ -51,5 +53,6 @@ def bootstrap() -> BehavythonMainWindow:
     context = AppContext()
     interface = load_main_interface()
     window = BehavythonMainWindow(interface=interface, context=context)
+    adjust_window_geometry(interface)
     window.show()
     return window
