@@ -29,6 +29,7 @@
   - [Step-by-Step Installation (Manual)](#step-by-step-installation-manual)
   - [GPU Setup (Critical)](#gpu-setup-critical)
 - [Pretrained Models](#pretrained-models)
+- [Video Pre-processing](#video-pre-processing)
 - [Workflow & Configuration](#workflow--configuration)
 - [Outputs & Metrics](#outputs--metrics)
 - [Contributing](#contributing)
@@ -115,6 +116,42 @@ Extract these ZIP archives into .behavython/models/ folder in your home director
 - **Windows:** `C:\Users\<YourUsername>\.behavython\models\`
 - **Linux/Mac:** `~/.behavython/models/`
 - **Note:** Ensure the extracted model files are directly within the `models` folder, not nested inside additional subdirectories.
+
+-----
+
+## Video Pre-processing (Experimental)
+
+> ⚠️ **Note:** This is currently an **experimental feature** available only when running Behavython in debug mode. It can be toggled on demand, but please contact the developers for instructions on how to activate it for now.
+
+Behavython includes a dedicated pipeline for standardizing and cropping raw behavioral videos, ensuring they are optimized for computer vision analysis (DeepLabCut, SLEAP, etc.).
+
+### High-Performance Batch Cropping
+- **Interactive Designer:** Draw crop regions and define rotation angles directly on video previews.
+- **Hardware Acceleration:** Native support for **Nvidia NVENC**, enabling processing speeds of up to 800+ FPS.
+- **Batch Processing:** Define settings once and process entire folders in the background.
+- **Non-Destructive:** Original videos are preserved; results are saved in a `/cropped` subfolder.
+
+### Video Standardization
+Many acquisition systems save videos in legacy formats (like MPEG4 or AVI) that are not "reliably seekable." This can lead to desynced frames during tracking. Behavython's **Standardization Tool**:
+1. **Automatic Detection:** Background probing detects problematic codecs or variable frame rates.
+2. **Lossless Conversion:** Converts videos to a pristine H.264 format with Constant Frame Rate (CFR).
+3. **Unlocks GPU Speed:** Standardizing moves the decoding workload from the CPU to the GPU, often increasing processing speed by 5x to 10x.
+
+### Standard Workflow
+1. **Select Folder:** Click `GET FOLDER` to choose the directory where your videos are stored (ideally, this folder should only contain the videos you intend to crop).
+2. **Standardize (If Prompted):** If the interface detects legacy codecs, click the *Standardize Videos (Fix Codecs)* button to convert them safely.
+3. **Open Cropping Window:** Click *Open Cropping Window* to launch the interactive editor.
+4. **Draw Crops & Set Coordinates:** 
+   - Drag with the **Left Mouse Button** across the frame to draw a crop box.
+   - Use the **Mouse Wheel** to rotate the box (hold Ctrl/Shift to adjust rotation speed).
+   - Once the crop is perfect, click **Set Coordinates** for that video.
+   - *Note: If all your videos have different positions, you must select each video individually, draw the box, and click "Set Coordinates". If the position is identical across videos, simply use the **Apply to checked videos** button to propagate your settings.*
+5. **Video List Color Code:** The sidebar list uses colors to track your progress:
+   - 🟡 **Yellow:** Needs attention (Coordinates have not been set).
+   - 🟢 **Green:** Ready (Coordinates are set and saved).
+   - ⚪ **White:** Finished (The video has already been cropped in the `/cropped` folder).
+6. **Save Project:** Click *Save Project (JSON)* to write your coordinates to disk.
+7. **Execute:** Close the cropping window and click **CROP VIDEOS** in the main GUI to run the batch process.
 
 -----
 

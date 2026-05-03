@@ -29,7 +29,7 @@ from behavython.pipeline.plugins.dlc import (
     run_analyze_frames,
 )
 from behavython.services.validation import validate_json_config
-from behavython.gui.dialogs import ask_yes_no, show_info, show_warning, show_worker_error
+from behavython.gui.dialogs import ask_yes_no, show_warning, show_info, show_worker_error
 from behavython.gui.dialogs import select_file, select_files, select_folder, select_save_folder
 from behavython.services.logging import LoggingService
 from behavython.core.utils import get_ffmpeg_path, resolve_analysis_input, resolve_output_folder, resolve_video_input
@@ -43,6 +43,34 @@ from behavython.pipeline.models import (
 )
 from behavython.tasks.task_runner import TaskRunner
 from behavython.gui.dependencies import get_model_path, is_ffmpeg_installed, get_os_name, get_unix_install_instructions, dependencyDownloadDialog
+from PySide6.QtCore import QThread, Signal
+
+class CodecProbeThread(QThread):
+    warning_detected = Signal(list)  # list of problematic files
+
+    def __init__(self, folder_path, parent=None):
+        super().__init__(parent)
+        self.folder_path = folder_path
+
+    def run(self):
+        from pathlib import Path
+        from behavython.services.video_service import VideoService
+        from behavython.core.defaults import ANALYSIS_REQUIRED_SUFFIXES
+        
+        folder = Path(self.folder_path)
+        if not folder.exists():
+            return
+            
+        extensions = ANALYSIS_REQUIRED_SUFFIXES["video"]
+        videos = [p for p in folder.iterdir() if p.is_file() and p.suffix.lower() in extensions]
+        
+        problematic = []
+        for vid in videos:
+            if VideoService.is_legacy_codec(vid):
+                problematic.append(str(vid))
+                
+        if problematic:
+            self.warning_detected.emit(problematic)
 
 
 class BehavythonMainWindow(QWidget):
@@ -73,6 +101,7 @@ class BehavythonMainWindow(QWidget):
 
         self._connect_analysis_tab()
         self._connect_dlc_tab()
+        self._connect_video_editing_tab()
         self._initialize_ui_state()
 
         QTimer.singleShot(200, self._check_startup_dependencies)
@@ -95,6 +124,7 @@ class BehavythonMainWindow(QWidget):
         self.on_experiment_type_changed(self.interface.type_combobox.currentText())
         self.set_advanced_tabs_visible(False)
         self.on_crop_video_toggled()
+        self.toggle_video_editing_buttons()
         if hasattr(self.interface, "extract_frames_data_process_spinbox"):
             self.interface.extract_frames_data_process_spinbox.setValue(20)
         self.toggle_assisted_analysis_ready()
@@ -715,6 +745,129 @@ class BehavythonMainWindow(QWidget):
             self.logger.info("User deselected default network.")
 
     # ------------------------------------------------------------------
+    # Video Editing tab
+    # ------------------------------------------------------------------
+
+    def _connect_video_editing_tab(self) -> None:
+        if hasattr(self.interface, "get_videos_path_video_editing_button"):
+            self.interface.get_videos_path_video_editing_button.clicked.connect(self.on_select_video_editing_folder_clicked)
+            self.interface.call_crop_dialog_button.clicked.connect(self.on_call_crop_dialog_clicked)
+            self.interface.crop_videos_button.clicked.connect(self.on_execute_crop_videos_clicked)
+            self.interface.videos_to_crop_folder_video_editing_lineedit.textChanged.connect(self.toggle_video_editing_buttons)
+            if hasattr(self.interface, "standardize_videos_button_video_editing_button"):
+                self.interface.standardize_videos_button_video_editing_button.clicked.connect(self.on_standardize_videos_clicked)
+                self.interface.standardize_videos_button_video_editing_button.hide()
+                
+            if hasattr(self.interface, "codec_warning_label_video_editing_label"):
+                self.interface.codec_warning_label_video_editing_label.hide()
+                
+            self.probe_thread = None
+            self.problematic_videos = []
+
+    def on_select_video_editing_folder_clicked(self) -> None:
+        path = select_folder(self.interface, "Select video folder to crop")
+        if path:
+            self.interface.videos_to_crop_folder_video_editing_lineedit.setText(path)
+
+    def toggle_video_editing_buttons(self) -> None:
+        folder_path = self.interface.videos_to_crop_folder_video_editing_lineedit.text().strip()
+        is_ready = bool(folder_path) and os.path.exists(folder_path)
+        self.interface.call_crop_dialog_button.setEnabled(is_ready)
+        self.interface.crop_videos_button.setEnabled(is_ready)
+        
+        if hasattr(self.interface, "codec_warning_label_video_editing_label"):
+            self.interface.codec_warning_label_video_editing_label.hide()
+        if hasattr(self.interface, "standardize_videos_button_video_editing_button"):
+            self.interface.standardize_videos_button_video_editing_button.hide()
+            
+        if is_ready:
+            self.probe_thread = CodecProbeThread(folder_path, self.interface)
+            self.probe_thread.warning_detected.connect(self.on_codec_warning_detected)
+            self.probe_thread.start()
+
+    def on_codec_warning_detected(self, problematic_videos):
+        self.problematic_videos = problematic_videos
+        if hasattr(self.interface, "codec_warning_label_video_editing_label"):
+            self.interface.codec_warning_label_video_editing_label.show()
+        if hasattr(self.interface, "standardize_videos_button_video_editing_button"):
+            self.interface.standardize_videos_button_video_editing_button.show()
+        self._set_gui_log_message("dlc", f"WARNING: {len(problematic_videos)} legacy videos detected. Conversion highly recommended.")
+
+    def on_standardize_videos_clicked(self) -> None:
+        if not self.problematic_videos:
+            return
+            
+        from behavython.services.video_service import run_standardize_videos
+        request = {
+            "videos": self.problematic_videos
+        }
+        
+        self.logs.clear("dlc")
+        self.progress_bar.setValue(0)
+        
+        # After triggering standardizing, hide the warning
+        if hasattr(self.interface, "codec_warning_label_video_editing_label"):
+            self.interface.codec_warning_label_video_editing_label.hide()
+        if hasattr(self.interface, "standardize_videos_button_video_editing_button"):
+            self.interface.standardize_videos_button_video_editing_button.hide()
+        self.problematic_videos = []
+        
+        self.runner.submit(run_standardize_videos, request, debug_mode=self.debug_mode)
+
+    def on_call_crop_dialog_clicked(self) -> None:
+        from behavython.gui.video_cropper import VideoCropperDialog
+
+        folder_path = Path(self.interface.videos_to_crop_folder_video_editing_lineedit.text().strip())
+        if not folder_path.exists():
+            return
+
+        video_extensions = ANALYSIS_REQUIRED_SUFFIXES["video"]
+        videos = [str(item.resolve()) for item in folder_path.iterdir() if item.is_file() and item.suffix.lower() in video_extensions]
+
+        if not videos:
+            show_warning(self.interface, "No Videos", "No video files found in the selected folder.")
+            return
+
+        project_path = folder_path / "crop_project.json"
+        project_data = None
+        if project_path.exists():
+            import json
+
+            try:
+                with open(project_path, "r") as f:
+                    project_data = json.load(f)
+            except Exception as e:
+                self.logger.error(f"Failed to load crop project: {e}")
+
+        dialog = VideoCropperDialog(parent=self.interface, video_list=videos, project_data=project_data, project_path=project_path)
+        dialog.exec()
+
+    def on_execute_crop_videos_clicked(self) -> None:
+        folder_path = Path(self.interface.videos_to_crop_folder_video_editing_lineedit.text().strip())
+        project_path = folder_path / "crop_project.json"
+
+        if not project_path.exists():
+            show_warning(self.interface, "No Crop Project", "You must set the crop coordinates first using the Cropper Dialog.")
+            return
+
+        import json
+
+        try:
+            with open(project_path, "r") as f:
+                project_data = json.load(f)
+        except Exception as e:
+            show_warning(self.interface, "Error", f"Could not load project file: {e}")
+            return
+
+        from behavython.services.video_service import run_batch_crop
+
+        request = {"project_data": project_data, "project_path": str(project_path)}
+
+        self.logs.clear("dlc")
+        self.progress_bar.setValue(0)
+        self.runner.submit(run_batch_crop, request, debug_mode=self.debug_mode)
+
+    # ------------------------------------------------------------------
     # Worker callbacks
     # ------------------------------------------------------------------
 
@@ -784,6 +937,8 @@ class BehavythonMainWindow(QWidget):
                     "These files are essential for the analysis to work.\n"
                     "Check the analysis folder before continuing.",
                 )
+        elif kind == "batch_crop":
+            show_info(self.interface, "Cropping Complete", f"Successfully cropped {result['processed']} out of {result['total']} video(s).")
 
     def on_worker_error(self, error_info) -> None:
         self.logger.error("Worker error dialog shown: %s", error_info[1])

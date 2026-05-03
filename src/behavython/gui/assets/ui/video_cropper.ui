@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>CropperWindow</class>
+ <widget class="QDialog" name="CropperWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1276</width>
+    <height>749</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Behavython Batch Cropper</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QDialog { background-color: #353535; color: white; }</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="QWidget" name="leftPanel" native="true">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>74</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>300</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="label">
+        <property name="styleSheet">
+         <string notr="true">font-size: 16px; font-weight: bold; color: white;</string>
+        </property>
+        <property name="text">
+         <string>Video Queue</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QListWidget" name="video_list">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QListWidget { background-color: #2b2b2b; color: white; font-size: 14px; border: 1px solid #555; }
+QListWidget::indicator {
+    width: 15px;
+    height: 15px;
+    background-color: #606060;
+    border: 1px solid #7A7A7A;
+    border-radius: 4px;
+}
+QListWidget::indicator:checked {
+    background-color: #A21F27;
+    border: 1px solid #C52A34;
+}</string>
+        </property>
+        <property name="resizeMode">
+         <enum>QListView::ResizeMode::Adjust</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btn_copy_checked">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>36</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:10pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{background-color:#A21F27;}</string>
+        </property>
+        <property name="text">
+         <string>Copy to Checked</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btn_save_project">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>36</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton{border:2px solid #2CA153;border-radius:8px;background-color:#2CA153;color:#FFFFFF;font:10pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{background-color:#1E753B;border:2px solid #1E753B;}</string>
+        </property>
+        <property name="text">
+         <string>Save Project (JSON)</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <layout class="QVBoxLayout" name="rightLayout">
+     <item>
+      <widget class="QLabel" name="info_label">
+       <property name="styleSheet">
+        <string notr="true">font-size: 14px; font-weight: bold; color: white;</string>
+       </property>
+       <property name="text">
+        <string>Draw a box. Scroll mouse wheel to rotate (Hold Ctrl for 5x).</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QGraphicsView" name="graphicsView">
+       <property name="styleSheet">
+        <string notr="true">background-color: #1e1e1e; border: 2px solid #555;</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QLabel" name="mouse_position_label">
+         <property name="styleSheet">
+          <string notr="true">font-size: 16px; color: #a2d2ff;</string>
+         </property>
+         <property name="text">
+          <string>Current coordinate: </string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="mouse_position_lineedit">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">background: transparent; color: white; font-size: 16px;</string>
+         </property>
+         <property name="frame">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Orientation::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btn_set_coords">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>36</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:10pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{background-color:#A21F27;}</string>
+         </property>
+         <property name="text">
+          <string>Set Coordinates</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
