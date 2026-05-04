@@ -7,7 +7,7 @@ LOGO_WIDGET_NAME = "behavython_logo"
 
 DEFAULT_STYLE = """
 QWidget {
-    background-color: #4B4B4B;
+    background-color: #343434;
     color: #FFFFFF;
 }
 """.strip()
