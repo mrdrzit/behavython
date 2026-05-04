@@ -146,16 +146,29 @@ class VideoService:
         Uses FFmpeg with Nvidia hardware acceleration to rotate and crop the video.
         crop_data expects: {'x': int, 'y': int, 'width': int, 'height': int, 'rotation': float}
         """
-        x = crop_data.get("x", 0)
-        y = crop_data.get("y", 0)
-        w = crop_data.get("width", 0)
-        h = crop_data.get("height", 0)
+        x = int(crop_data.get("x", 0))
+        y = int(crop_data.get("y", 0))
+        w = int(crop_data.get("width", 0))
+        h = int(crop_data.get("height", 0))
         angle_deg = crop_data.get("rotation", 0.0)
+
+        # Force even dimensions (strictly required by H.264 / yuv420p)
+        if w % 2 != 0:
+            w -= 1
+        if h % 2 != 0:
+            h -= 1
 
         ffmpeg = get_ffmpeg_path()
         cmd = [ffmpeg, "-hide_banner", "-loglevel", "error", "-y"]
 
-        if cls.has_nvenc_support():
+        use_nvenc = cls.has_nvenc_support()
+
+        # NVENC has a hard limit on minimum frame sizes (often 128x128 or 144x144).
+        # CPU encoding a video this small is instantaneous anyway.
+        if use_nvenc and (w < 144 or h < 144):
+            use_nvenc = False
+
+        if use_nvenc:
             # HYBRID PIPELINE (CPU Filters for rotation/crop -> GPU Encode)
             filters = []
             if angle_deg != 0.0:
@@ -273,7 +286,7 @@ def run_batch_crop(request: dict, progress=None, log=None, warning=None) -> dict
                 prog_val = int(((i + 1) / total) * 100)
                 progress.emit(prog_val)
 
-    print('\r', end='', flush=True)  # Reset cursor to left margin without adding a newline
+    print("\r", end="", flush=True)  # Reset cursor to left margin without adding a newline
     logger.info(f"Finished cropping {processed} videos.")
     return {"kind": "batch_crop", "processed": processed, "total": total}
 
@@ -349,6 +362,6 @@ def run_standardize_videos(request: dict, progress=None, log=None, warning=None)
             if progress:
                 progress.emit(int(((i + 1) / total) * 100))
 
-    print('\r', end='', flush=True)  # Reset cursor to left margin without adding a newline
+    print("\r", end="", flush=True)  # Reset cursor to left margin without adding a newline
     logger.info(f"Finished normalizing {processed} videos.")
     return {"kind": "standardize", "processed": processed, "total": total}
