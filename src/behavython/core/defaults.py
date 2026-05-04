@@ -13,30 +13,22 @@ QWidget {
 """.strip()
 
 DEBUG_STYLE = """
-/* 1. Global Background and Text */
+/* Global colors only */
 QWidget {
     background-color: #1E1E1E;
     color: #CCCCCC;
 }
 
-/* 2. Text Areas and Logs (Make it look like a console) */
+/* Text areas */
 QTextEdit, QPlainTextEdit, QLineEdit {
     background-color: #121212;
-    color: #CE9178; /* VS Code String Orange */
-    border: 1px solid #d97706; /* Amber warning border */
-    border-radius: 4px;
-    font-family: "Consolas", monospace;
-    padding: 4px;
+    color: #CE9178;
 }
 
-/* 3. Buttons: Warning Amber outine, fills on hover */
+/* Buttons */
 QPushButton {
     background-color: #2D2D2D;
     color: #d97706;
-    border: 1px solid #d97706;
-    border-radius: 6px;
-    font-weight: bold;
-    padding: 6px;
 }
 
 QPushButton:hover {
@@ -46,36 +38,23 @@ QPushButton:hover {
 
 QPushButton:pressed {
     background-color: #b45309;
-    border: 1px solid #b45309;
     color: #FFFFFF;
 }
 
-/* 4. Progress Bar: Shift from blue to amber */
+/* Progress bar */
 QProgressBar {
-    border: 1px solid #3C3C3C;
-    border-radius: 4px;
     background-color: #252526;
-    text-align: center;
     color: #FFFFFF;
-    font-weight: bold;
 }
 
 QProgressBar::chunk {
     background-color: #d97706;
-    border-radius: 2px;
 }
 
-/* 5. ComboBoxes (Dropdowns) */
+/* ComboBox */
 QComboBox {
     background-color: #252526;
-    border: 1px solid #3C3C3C;
-    border-radius: 4px;
-    padding-left: 8px;
     color: #D4D4D4;
-}
-
-QComboBox::drop-down {
-    border: none;
 }
 
 QComboBox QAbstractItemView {
@@ -85,22 +64,13 @@ QComboBox QAbstractItemView {
     selection-color: #1E1E1E;
 }
 
-/* 6. Checkboxes */
+/* Checkbox */
 QCheckBox {
     color: #D4D4D4;
 }
 
-QCheckBox::indicator {
-    width: 15px;
-    height: 15px;
-    background-color: #252526;
-    border: 1px solid #555555;
-    border-radius: 4px;
-}
-
 QCheckBox::indicator:checked {
     background-color: #d97706;
-    border: 1px solid #d97706;
 }
 """.strip()
 

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>490</width>
-    <height>897</height>
+    <height>911</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -153,7 +153,7 @@ QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
         <x>0</x>
         <y>0</y>
         <width>472</width>
-        <height>879</height>
+        <height>893</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -173,7 +173,7 @@ QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
         <number>0</number>
        </property>
        <property name="topMargin">
-        <number>9</number>
+        <number>0</number>
        </property>
        <property name="rightMargin">
         <number>6</number>
@@ -184,72 +184,9 @@ QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
        <property name="horizontalSpacing">
         <number>6</number>
        </property>
-       <item row="0" column="2">
-        <spacer name="horizontalSpacer_20">
-         <property name="orientation">
-          <enum>Qt::Orientation::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>143</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item row="0" column="1">
-        <widget class="QLabel" name="behavython_logo">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>200</width>
-           <height>55</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>120</width>
-           <height>33</height>
-          </size>
-         </property>
-         <property name="layoutDirection">
-          <enum>Qt::LayoutDirection::LeftToRight</enum>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="pixmap">
-          <pixmap>../logo/logo.png</pixmap>
-         </property>
-         <property name="scaledContents">
-          <bool>true</bool>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignmentFlag::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="0">
-        <spacer name="horizontalSpacer">
-         <property name="orientation">
-          <enum>Qt::Orientation::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>143</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
+       <property name="verticalSpacing">
+        <number>9</number>
+       </property>
        <item row="1" column="0" colspan="3">
         <widget class="QTabWidget" name="tabWidget">
          <property name="sizePolicy">
@@ -471,6 +408,9 @@ QGroupBox::title {
               </item>
               <item row="2" column="1" alignment="Qt::AlignmentFlag::AlignHCenter">
                <widget class="QPushButton" name="clear_button">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -487,7 +427,34 @@ QGroupBox::title {
                  <cursorShape>PointingHandCursor</cursorShape>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">QPushButton{font:14pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:10pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+                 <string notr="true">/* Base button */
+QPushButton {
+    font: 10pt &quot;Arial&quot;;
+    font-weight: bold;
+
+    border: 2px solid #A21F27;
+    border-radius: 8px;
+
+    background-color: #2C53A1;
+    color: #FFFFFF;
+}
+
+/* Hover */
+QPushButton:hover {
+    background-color: #3A63B8; /* slightly lighter than base */
+}
+
+/* Pressed */
+QPushButton:pressed {
+    background-color: #A21F27;
+    color: #FFFFFF;
+}
+
+QPushButton:disabled {
+    background-color: gray;
+    color: white;
+    border: 2px solid darkgray;
+}</string>
                 </property>
                 <property name="text">
                  <string notr="true">RESET</string>
@@ -515,7 +482,34 @@ QGroupBox::title {
                  <cursorShape>PointingHandCursor</cursorShape>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">QPushButton{font:10pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:10pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+                 <string notr="true">/* Base button */
+QPushButton {
+    font: 10pt &quot;Arial&quot;;
+    font-weight: bold;
+
+    border: 2px solid #A21F27;
+    border-radius: 8px;
+
+    background-color: #2C53A1;
+    color: #FFFFFF;
+}
+
+/* Hover */
+QPushButton:hover {
+    background-color: #3A63B8; /* slightly lighter than base */
+}
+
+/* Pressed */
+QPushButton:pressed {
+    background-color: #A21F27;
+    color: #FFFFFF;
+}
+
+QPushButton:disabled {
+    background-color: gray;
+    color: white;
+    border: 2px solid darkgray;
+}</string>
                 </property>
                 <property name="text">
                  <string notr="true">ANALYZE</string>
@@ -566,7 +560,34 @@ QGroupBox::title {
                  <cursorShape>PointingHandCursor</cursorShape>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">QPushButton{font:14pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:10pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+                 <string notr="true">/* Base button */
+QPushButton {
+    font: 10pt &quot;Arial&quot;;
+    font-weight: bold;
+
+    border: 2px solid #A21F27;
+    border-radius: 8px;
+
+    background-color: #2C53A1;
+    color: #FFFFFF;
+}
+
+/* Hover */
+QPushButton:hover {
+    background-color: #3A63B8; /* slightly lighter than base */
+}
+
+/* Pressed */
+QPushButton:pressed {
+    background-color: #A21F27;
+    color: #FFFFFF;
+}
+
+QPushButton:disabled {
+    background-color: gray;
+    color: white;
+    border: 2px solid darkgray;
+}</string>
                 </property>
                 <property name="text">
                  <string notr="true">LOAD CONFIGURATION</string>
@@ -2302,7 +2323,7 @@ QGroupBox::title {
               <item row="0" column="3" colspan="2">
                <widget class="QPushButton" name="folder_to_create_annotated_video_button">
                 <property name="enabled">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -2334,20 +2355,29 @@ QGroupBox::title {
                  <cursorShape>PointingHandCursor</cursorShape>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">QPushButton {
-    border: 2px solid #A21F27;
-    border-radius: 8px;
-    background-color: #2C53A1;
-    color: #FFFFFF;
+                 <string notr="true">/* Base button */
+QPushButton {
     font: 8pt &quot;Arial&quot;;
     font-weight: bold;
-}
-QPushButton:pressed {
+
     border: 2px solid #A21F27;
     border-radius: 8px;
+
+    background-color: #2C53A1;
+    color: #FFFFFF;
+}
+
+/* Hover */
+QPushButton:hover {
+    background-color: #3A63B8; /* slightly lighter than base */
+}
+
+/* Pressed */
+QPushButton:pressed {
     background-color: #A21F27;
     color: #FFFFFF;
 }
+
 QPushButton:disabled {
     background-color: gray;
     color: white;
@@ -2432,11 +2462,33 @@ QPushButton:disabled {
                  <cursorShape>PointingHandCursor</cursorShape>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">QPushButton{font:10pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}
+                 <string notr="true">/* Base button */
+QPushButton {
+    font: 8pt &quot;Arial&quot;;
+    font-weight: bold;
+
+    border: 2px solid #A21F27;
+    border-radius: 8px;
+
+    background-color: #2C53A1;
+    color: #FFFFFF;
+}
+
+/* Hover */
+QPushButton:hover {
+    background-color: #3A63B8; /* slightly lighter than base */
+}
+
+/* Pressed */
+QPushButton:pressed {
+    background-color: #A21F27;
+    color: #FFFFFF;
+}
+
 QPushButton:disabled {
     background-color: gray;
-    color: white; /* Optional: change text color */
-    border: 2px solid darkgray; /* Optional: customize border */
+    color: white;
+    border: 2px solid darkgray;
 }</string>
                 </property>
                 <property name="text">
@@ -2540,11 +2592,33 @@ QGroupBox::title {
                  <cursorShape>PointingHandCursor</cursorShape>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">QPushButton{font:7pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}
+                 <string notr="true">/* Base button */
+QPushButton {
+    font: 8pt &quot;Arial&quot;;
+    font-weight: bold;
+
+    border: 2px solid #A21F27;
+    border-radius: 8px;
+
+    background-color: #2C53A1;
+    color: #FFFFFF;
+}
+
+/* Hover */
+QPushButton:hover {
+    background-color: #3A63B8; /* slightly lighter than base */
+}
+
+/* Pressed */
+QPushButton:pressed {
+    background-color: #A21F27;
+    color: #FFFFFF;
+}
+
 QPushButton:disabled {
     background-color: gray;
-    color: white; /* Optional: change text color */
-    border: 2px solid darkgray; /* Optional: customize border */
+    color: white;
+    border: 2px solid darkgray;
 }</string>
                 </property>
                 <property name="text">
@@ -2651,7 +2725,7 @@ QCheckBox:disabled {
               <item row="0" column="2" colspan="2">
                <widget class="QPushButton" name="get_frames_button">
                 <property name="enabled">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -2675,11 +2749,33 @@ QCheckBox:disabled {
                  <cursorShape>PointingHandCursor</cursorShape>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">QPushButton{font:7pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}
+                 <string notr="true">/* Base button */
+QPushButton {
+    font: 8pt &quot;Arial&quot;;
+    font-weight: bold;
+
+    border: 2px solid #A21F27;
+    border-radius: 8px;
+
+    background-color: #2C53A1;
+    color: #FFFFFF;
+}
+
+/* Hover */
+QPushButton:hover {
+    background-color: #3A63B8; /* slightly lighter than base */
+}
+
+/* Pressed */
+QPushButton:pressed {
+    background-color: #A21F27;
+    color: #FFFFFF;
+}
+
 QPushButton:disabled {
     background-color: gray;
-    color: white; /* Optional: change text color */
-    border: 2px solid darkgray; /* Optional: customize border */
+    color: white;
+    border: 2px solid darkgray;
 }</string>
                 </property>
                 <property name="text">
@@ -2974,20 +3070,29 @@ QCheckBox{font:7pt&quot;Arial&quot;;font-weight:bold}</string>
                  <cursorShape>PointingHandCursor</cursorShape>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">QPushButton {
-    border: 2px solid #A21F27;
-    border-radius: 8px;
-    background-color: #2C53A1;
-    color: #FFFFFF;
+                 <string notr="true">/* Base button */
+QPushButton {
     font: 8pt &quot;Arial&quot;;
     font-weight: bold;
-}
-QPushButton:pressed {
+
     border: 2px solid #A21F27;
     border-radius: 8px;
+
+    background-color: #2C53A1;
+    color: #FFFFFF;
+}
+
+/* Hover */
+QPushButton:hover {
+    background-color: #3A63B8; /* slightly lighter than base */
+}
+
+/* Pressed */
+QPushButton:pressed {
     background-color: #A21F27;
     color: #FFFFFF;
 }
+
 QPushButton:disabled {
     background-color: gray;
     color: white;
@@ -3040,6 +3145,9 @@ QPushButton:disabled {
               </item>
               <item row="0" column="3">
                <widget class="QPushButton" name="get_config_path_button">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                   <horstretch>0</horstretch>
@@ -3064,20 +3172,29 @@ QPushButton:disabled {
                  <cursorShape>PointingHandCursor</cursorShape>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">QPushButton {
-    border: 2px solid #A21F27;
-    border-radius: 8px;
-    background-color: #2C53A1;
-    color: #FFFFFF;
+                 <string notr="true">/* Base button */
+QPushButton {
     font: 8pt &quot;Arial&quot;;
     font-weight: bold;
-}
-QPushButton:pressed {
+
     border: 2px solid #A21F27;
     border-radius: 8px;
+
+    background-color: #2C53A1;
+    color: #FFFFFF;
+}
+
+/* Hover */
+QPushButton:hover {
+    background-color: #3A63B8; /* slightly lighter than base */
+}
+
+/* Pressed */
+QPushButton:pressed {
     background-color: #A21F27;
     color: #FFFFFF;
 }
+
 QPushButton:disabled {
     background-color: gray;
     color: white;
@@ -3213,11 +3330,33 @@ QPushButton:disabled {
                  <cursorShape>PointingHandCursor</cursorShape>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">QPushButton{font:7pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}
+                 <string notr="true">/* Base button */
+QPushButton {
+    font: 8pt &quot;Arial&quot;;
+    font-weight: bold;
+
+    border: 2px solid #A21F27;
+    border-radius: 8px;
+
+    background-color: #2C53A1;
+    color: #FFFFFF;
+}
+
+/* Hover */
+QPushButton:hover {
+    background-color: #3A63B8; /* slightly lighter than base */
+}
+
+/* Pressed */
+QPushButton:pressed {
+    background-color: #A21F27;
+    color: #FFFFFF;
+}
+
 QPushButton:disabled {
     background-color: gray;
-    color: white; /* Optional: change text color */
-    border: 2px solid darkgray; /* Optional: customize border */
+    color: white;
+    border: 2px solid darkgray;
 }</string>
                 </property>
                 <property name="text">
@@ -3450,6 +3589,9 @@ QGroupBox::title {
               </item>
               <item row="0" column="4">
                <widget class="QPushButton" name="get_file_to_analyze_button">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                   <horstretch>0</horstretch>
@@ -3474,20 +3616,29 @@ QGroupBox::title {
                  <cursorShape>PointingHandCursor</cursorShape>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">QPushButton {
-    border: 2px solid #A21F27;
-    border-radius: 8px;
-    background-color: #2C53A1;
-    color: #FFFFFF;
+                 <string notr="true">/* Base button */
+QPushButton {
     font: 8pt &quot;Arial&quot;;
     font-weight: bold;
-}
-QPushButton:pressed {
+
     border: 2px solid #A21F27;
     border-radius: 8px;
+
+    background-color: #2C53A1;
+    color: #FFFFFF;
+}
+
+/* Hover */
+QPushButton:hover {
+    background-color: #3A63B8; /* slightly lighter than base */
+}
+
+/* Pressed */
+QPushButton:pressed {
     background-color: #A21F27;
     color: #FFFFFF;
 }
+
 QPushButton:disabled {
     background-color: gray;
     color: white;
@@ -3590,24 +3741,33 @@ QPushButton:disabled {
                  <cursorShape>PointingHandCursor</cursorShape>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">QPushButton {
-	font: 8pt &quot;Arial&quot;;
-	font-weight: bold;
-    border: 2px solid #a21f27;
+                 <string notr="true">/* Base button */
+QPushButton {
+    font: 8pt &quot;Arial&quot;;
+    font-weight: bold;
+
+    border: 2px solid #A21F27;
     border-radius: 8px;
-    background-color: #2c53a1;
-    color: #ffffff;
+
+    background-color: #2C53A1;
+    color: #FFFFFF;
 }
+
+/* Hover */
+QPushButton:hover {
+    background-color: #3A63B8; /* slightly lighter than base */
+}
+
+/* Pressed */
 QPushButton:pressed {
-    border: 2px solid #a21f27;
-    border-radius: 8px;
-    background-color: #a21f27;
-    color: #ffffff;
+    background-color: #A21F27;
+    color: #FFFFFF;
 }
+
 QPushButton:disabled {
     background-color: gray;
-    color: white; /* Optional: change text color */
-    border: 2px solid darkgray; /* Optional: customize border */
+    color: white;
+    border: 2px solid darkgray;
 }</string>
                 </property>
                 <property name="text">
@@ -3650,24 +3810,33 @@ QPushButton:disabled {
                  <cursorShape>PointingHandCursor</cursorShape>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">QPushButton {
-	font: 8pt &quot;Arial&quot;;
-	font-weight: bold;
-    border: 2px solid #a21f27;
+                 <string notr="true">/* Base button */
+QPushButton {
+    font: 8pt &quot;Arial&quot;;
+    font-weight: bold;
+
+    border: 2px solid #A21F27;
     border-radius: 8px;
-    background-color: #2c53a1;
-    color: #ffffff;
+
+    background-color: #2C53A1;
+    color: #FFFFFF;
 }
+
+/* Hover */
+QPushButton:hover {
+    background-color: #3A63B8; /* slightly lighter than base */
+}
+
+/* Pressed */
 QPushButton:pressed {
-    border: 2px solid #a21f27;
-    border-radius: 8px;
-    background-color: #a21f27;
-    color: #ffffff;
+    background-color: #A21F27;
+    color: #FFFFFF;
 }
+
 QPushButton:disabled {
     background-color: gray;
-    color: white; /* Optional: change text color */
-    border: 2px solid darkgray; /* Optional: customize border */
+    color: white;
+    border: 2px solid darkgray;
 }</string>
                 </property>
                 <property name="text">
@@ -3907,11 +4076,33 @@ QSpinBox {
                  <cursorShape>PointingHandCursor</cursorShape>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">QPushButton{font:14pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}
+                 <string notr="true">/* Base button */
+QPushButton {
+    font: 8pt &quot;Arial&quot;;
+    font-weight: bold;
+
+    border: 2px solid #A21F27;
+    border-radius: 8px;
+
+    background-color: #2C53A1;
+    color: #FFFFFF;
+}
+
+/* Hover */
+QPushButton:hover {
+    background-color: #3A63B8; /* slightly lighter than base */
+}
+
+/* Pressed */
+QPushButton:pressed {
+    background-color: #A21F27;
+    color: #FFFFFF;
+}
+
 QPushButton:disabled {
     background-color: gray;
     color: white;
-    border: 2px solid darkgray; 
+    border: 2px solid darkgray;
 }</string>
                 </property>
                 <property name="text">
@@ -3967,7 +4158,34 @@ QPushButton:disabled {
                  <cursorShape>PointingHandCursor</cursorShape>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">QPushButton{font:6pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+                 <string notr="true">/* Base button */
+QPushButton {
+    font: 8pt &quot;Arial&quot;;
+    font-weight: bold;
+
+    border: 2px solid #A21F27;
+    border-radius: 8px;
+
+    background-color: #2C53A1;
+    color: #FFFFFF;
+}
+
+/* Hover */
+QPushButton:hover {
+    background-color: #3A63B8; /* slightly lighter than base */
+}
+
+/* Pressed */
+QPushButton:pressed {
+    background-color: #A21F27;
+    color: #FFFFFF;
+}
+
+QPushButton:disabled {
+    background-color: gray;
+    color: white;
+    border: 2px solid darkgray;
+}</string>
                 </property>
                 <property name="text">
                  <string notr="true">GET FOLDER</string>
@@ -4239,7 +4457,34 @@ QGroupBox::title {
                  <cursorShape>PointingHandCursor</cursorShape>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">QPushButton{font:10pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+                 <string notr="true">/* Base button */
+QPushButton {
+    font: 8pt &quot;Arial&quot;;
+    font-weight: bold;
+
+    border: 2px solid #A21F27;
+    border-radius: 8px;
+
+    background-color: #2C53A1;
+    color: #FFFFFF;
+}
+
+/* Hover */
+QPushButton:hover {
+    background-color: #3A63B8; /* slightly lighter than base */
+}
+
+/* Pressed */
+QPushButton:pressed {
+    background-color: #A21F27;
+    color: #FFFFFF;
+}
+
+QPushButton:disabled {
+    background-color: gray;
+    color: white;
+    border: 2px solid darkgray;
+}</string>
                 </property>
                 <property name="text">
                  <string notr="true">GET FILE</string>
@@ -4499,11 +4744,33 @@ p, li { white-space: pre-wrap; }
 </string>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">QPushButton{font:14pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}
+                 <string notr="true">/* Base button */
+QPushButton {
+    font: 8pt &quot;Arial&quot;;
+    font-weight: bold;
+
+    border: 2px solid #A21F27;
+    border-radius: 8px;
+
+    background-color: #2C53A1;
+    color: #FFFFFF;
+}
+
+/* Hover */
+QPushButton:hover {
+    background-color: #3A63B8; /* slightly lighter than base */
+}
+
+/* Pressed */
+QPushButton:pressed {
+    background-color: #A21F27;
+    color: #FFFFFF;
+}
+
 QPushButton:disabled {
     background-color: gray;
     color: white;
-    border: 2px solid darkgray; 
+    border: 2px solid darkgray;
 }</string>
                 </property>
                 <property name="text">
@@ -4554,11 +4821,33 @@ p, li { white-space: pre-wrap; }
 </string>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">QPushButton{font:14pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}
+                 <string notr="true">/* Base button */
+QPushButton {
+    font: 8pt &quot;Arial&quot;;
+    font-weight: bold;
+
+    border: 2px solid #A21F27;
+    border-radius: 8px;
+
+    background-color: #2C53A1;
+    color: #FFFFFF;
+}
+
+/* Hover */
+QPushButton:hover {
+    background-color: #3A63B8; /* slightly lighter than base */
+}
+
+/* Pressed */
+QPushButton:pressed {
+    background-color: #A21F27;
+    color: #FFFFFF;
+}
+
 QPushButton:disabled {
     background-color: gray;
     color: white;
-    border: 2px solid darkgray; 
+    border: 2px solid darkgray;
 }</string>
                 </property>
                 <property name="text">
@@ -4673,34 +4962,36 @@ p, li { white-space: pre-wrap; }
 </string>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">QPushButton{
-    font:14pt&quot;Arial&quot;;
-    font-weight:bold;
+                 <string notr="true">/* Base button */
+QPushButton {
+    font: 8pt &quot;Arial&quot;;
+    font-weight: bold;
+
+    border: 2px solid #653123;
+    border-radius: 8px;
+
+    background-color: #653123;
+    color: #FFFFFF;
 }
 
-QPushButton{
-    border:2px solid #A21F27;
-    border-radius:8px;
-    background-color:#5E0A0A;
-    color:#FFFFFF;
-    font:8pt&quot;Arial&quot;;
-    font-weight:bold;
+/* Hover (lighter) */
+QPushButton:hover {
+    background-color: #7A3C2B;
+    border: 2px solid #7A3C2B;
 }
 
-QPushButton:pressed{
-    border:2px solid #A21F27;
-    border-radius:8px;
-    background-color:#A21F27;
-    color:#FFFFFF;
+/* Pressed (darker) */
+QPushButton:pressed {
+    background-color: #4E261B;
+    border: 2px solid #4E261B;
 }
 
+/* Disabled (desaturated + lighter) */
 QPushButton:disabled {
-    background-color: gray;
-    color: white;
-    border: 2px solid darkgray; 
-}
-
-</string>
+    background-color: #A89A95;
+    border: 2px solid #8C807B;
+    color: #E5E5E5;
+}</string>
                 </property>
                 <property name="text">
                  <string notr="true">Standardize Videos
@@ -4766,7 +5057,34 @@ QPushButton:disabled {
                  <cursorShape>PointingHandCursor</cursorShape>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">QPushButton{font:6pt&quot;Arial&quot;;font-weight:bold;}QPushButton{border:2px solid #A21F27;border-radius:8px;background-color:#2C53A1;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}QPushButton:pressed{border:2px solid #A21F27;border-radius:8px;background-color:#A21F27;color:#FFFFFF;}</string>
+                 <string notr="true">/* Base button */
+QPushButton {
+    font: 8pt &quot;Arial&quot;;
+    font-weight: bold;
+
+    border: 2px solid #A21F27;
+    border-radius: 8px;
+
+    background-color: #2C53A1;
+    color: #FFFFFF;
+}
+
+/* Hover */
+QPushButton:hover {
+    background-color: #3A63B8; /* slightly lighter than base */
+}
+
+/* Pressed */
+QPushButton:pressed {
+    background-color: #A21F27;
+    color: #FFFFFF;
+}
+
+QPushButton:disabled {
+    background-color: gray;
+    color: white;
+    border: 2px solid darkgray;
+}</string>
                 </property>
                 <property name="text">
                  <string notr="true">GET FOLDER</string>
@@ -4778,6 +5096,46 @@ QPushButton:disabled {
            </item>
           </layout>
          </widget>
+        </widget>
+       </item>
+       <item row="0" column="0" colspan="3">
+        <widget class="QLabel" name="behavython_logo">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>452</width>
+           <height>65</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>452</width>
+           <height>65</height>
+          </size>
+         </property>
+         <property name="layoutDirection">
+          <enum>Qt::LayoutDirection::LeftToRight</enum>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="pixmap">
+          <pixmap>../logo/logo.png</pixmap>
+         </property>
+         <property name="scaledContents">
+          <bool>true</bool>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignmentFlag::AlignCenter</set>
+         </property>
         </widget>
        </item>
       </layout>
