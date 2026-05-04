@@ -285,7 +285,12 @@ class VideoCropperDialog:
         temp_img = Path(tempfile.gettempdir()) / f"crop_preview_{video_path.name}.jpg"
 
         if video_path.exists():
-            if VideoService.extract_preview_frame(video_path, temp_img):
+            success, width, height = VideoService.extract_preview_frame(video_path, temp_img)
+            if success:
+                # Store dimensions in the database for later use in cropping
+                self.crop_database[self.current_video]["orig_w"] = width
+                self.crop_database[self.current_video]["orig_h"] = height
+
                 pixmap = QPixmap(str(temp_img))
                 if not pixmap.isNull():
                     # Remove old background if it exists
@@ -329,6 +334,8 @@ class VideoCropperDialog:
                 "width": int(self.crop_box.rect().width()),
                 "height": int(self.crop_box.rect().height()),
                 "rotation": self.crop_box.rotation(),
+                "orig_w": self.crop_database[self.current_video].get("orig_w"),
+                "orig_h": self.crop_database[self.current_video].get("orig_h"),
             }
             self.crop_database[self.current_video]["coordinates"] = c
             self.crop_database[self.current_video]["coordinates_set"] = True

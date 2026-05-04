@@ -2,6 +2,7 @@ import cv2
 import subprocess
 import logging
 import threading
+import math
 from pathlib import Path
 from behavython.core.utils import get_ffmpeg_path, get_ffprobe_path
 
@@ -10,27 +11,29 @@ logger = logging.getLogger("behavython.console")
 
 class VideoService:
     @staticmethod
-    def extract_preview_frame(video_path: Path, output_path: Path) -> bool:
+    def extract_preview_frame(video_path: Path, output_path: Path) -> tuple[bool, int, int]:
         """
         Extracts the first frame of a video using OpenCV and saves it to output_path.
-        OpenCV is completely synchronous and very fast for single frame extraction.
+        Returns (success, width, height).
         """
         try:
             cap = cv2.VideoCapture(str(video_path))
             if not cap.isOpened():
                 logger.error(f"Failed to open video: {video_path}")
-                return False
+                return False, 0, 0
 
+            width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
             ret, frame = cap.read()
             cap.release()
 
             if ret:
                 cv2.imwrite(str(output_path), frame)
-                return True
-            return False
+                return True, width, height
+            return False, width, height
         except Exception as e:
             logger.error(f"Error extracting frame: {e}")
-            return False
+            return False, 0, 0
 
     _nvenc_available = None
     _nvenc_lock = threading.Lock()
@@ -144,13 +147,23 @@ class VideoService:
     def crop_video(cls, video_path: Path, output_path: Path, crop_data: dict, position: int = None) -> bool:
         """
         Uses FFmpeg with Nvidia hardware acceleration to rotate and crop the video.
-        crop_data expects: {'x': int, 'y': int, 'width': int, 'height': int, 'rotation': float}
+        crop_data expects: {'x': int, 'y': int, 'width': int, 'height': int, 'rotation': float, 'orig_w': int, 'orig_h': int}
         """
-        x = int(crop_data.get("x", 0))
-        y = int(crop_data.get("y", 0))
+        x = float(crop_data.get("x", 0))
+        y = float(crop_data.get("y", 0))
         w = int(crop_data.get("width", 0))
         h = int(crop_data.get("height", 0))
-        angle_deg = crop_data.get("rotation", 0.0)
+        angle_deg = float(crop_data.get("rotation", 0.0))
+
+        # Get video dimensions to calculate rotation shift (use provided or open if missing)
+        w_orig = crop_data.get("orig_w")
+        h_orig = crop_data.get("orig_h")
+
+        if w_orig is None or h_orig is None:
+            cap = cv2.VideoCapture(str(video_path))
+            w_orig = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+            h_orig = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+            cap.release()
 
         # Force even dimensions (strictly required by H.264 / yuv420p)
         if w % 2 != 0:
@@ -158,23 +171,59 @@ class VideoService:
         if h % 2 != 0:
             h -= 1
 
+        # Coordinate transformation if rotation is applied
+        if angle_deg != 0.0:
+            # Center of original image
+            cx_orig, cy_orig = w_orig / 2.0, h_orig / 2.0
+            # Center of the crop box in original image
+            bx_orig, by_orig = x + w / 2.0, y + h / 2.0
+
+            # Relative to center
+            dx, dy = bx_orig - cx_orig, by_orig - cy_orig
+
+            # To straighten a CW tilted box (Qt angle), we rotate image CCW (negative angle)
+            # FFmpeg rotate filter uses radians and rotates CW for positive values.
+            alpha = math.radians(-angle_deg)
+            new_dx = dx * math.cos(alpha) - dy * math.sin(alpha)
+            new_dy = dx * math.sin(alpha) + dy * math.cos(alpha)
+
+            # Expanded frame size used in rotate filter (ow='hypot(iw,ih)')
+            l_new = math.hypot(w_orig, h_orig)
+
+            # New center in the expanded frame
+            bx_new = new_dx + l_new / 2.0
+            by_new = new_dy + l_new / 2.0
+
+            # New top-left coordinates for crop
+            x = int(bx_new - w / 2.0)
+            y = int(by_new - h / 2.0)
+            vf_angle = -angle_deg
+        else:
+            x = int(x)
+            y = int(y)
+            vf_angle = 0.0
+
+        # Enforce even x and y (required for yuv420p chroma subsampling)
+        x = x & ~1
+        y = y & ~1
+
         ffmpeg = get_ffmpeg_path()
         cmd = [ffmpeg, "-hide_banner", "-loglevel", "error", "-y"]
 
         use_nvenc = cls.has_nvenc_support()
 
         # NVENC has a hard limit on minimum frame sizes (often 128x128 or 144x144).
-        # CPU encoding a video this small is instantaneous anyway.
         if use_nvenc and (w < 144 or h < 144):
             use_nvenc = False
 
+        filters = []
+        if vf_angle != 0.0:
+            # We use ow=hypot(iw,ih) to ensure the rotated frame contains all pixels
+            filters.append(f"rotate={vf_angle}*PI/180:ow='hypot(iw,ih)':oh=ow:c=black")
+        filters.append(f"crop={w}:{h}:{x}:{y}")
+        vf_string = ",".join(filters)
+
         if use_nvenc:
-            # HYBRID PIPELINE (CPU Filters for rotation/crop -> GPU Encode)
-            filters = []
-            if angle_deg != 0.0:
-                filters.append(f"rotate={angle_deg}*PI/180:ow='hypot(iw,ih)':oh=ow:c=black")
-            filters.append(f"crop={w}:{h}:{x}:{y}")
-            vf_string = ",".join(filters)
             cmd.extend(
                 [
                     "-threads",
@@ -196,13 +245,6 @@ class VideoService:
                 ]
             )
         else:
-            # CPU Fallback path
-            filters = []
-            if angle_deg != 0.0:
-                filters.append(f"rotate={angle_deg}*PI/180:ow='hypot(iw,ih)':oh=ow:c=black")
-            filters.append(f"crop={w}:{h}:{x}:{y}")
-            vf_string = ",".join(filters)
-
             cmd.extend(["-i", str(video_path), "-vf", vf_string, "-c:v", "libx264", "-preset", "fast", "-crf", "23"])
 
         cmd.extend(["-c:a", "copy", str(output_path)])
