@@ -205,6 +205,7 @@ class VideoCropperDialog:
         self.dialog = loader.load(str(ui_path), parent)
 
         self.project_path = project_path
+        logger.info("Started crop video interface.")
 
         # Database to hold state
         # format: { "video_name.mp4": { "coordinates": dict, "coordinates_set": bool, "video_cropped": bool } }
@@ -331,6 +332,7 @@ class VideoCropperDialog:
             }
             self.crop_database[self.current_video]["coordinates"] = c
             self.crop_database[self.current_video]["coordinates_set"] = True
+            logger.info(f"Coordinates set for {self.current_video}.")
 
             # Update UI color
             current_item = self.dialog.video_list.currentItem()
@@ -352,6 +354,7 @@ class VideoCropperDialog:
                         self.crop_database[vid]["coordinates"] = c.copy()
                         self.crop_database[vid]["coordinates_set"] = True
                         self.update_item_color(item, self.crop_database[vid])
+                        logger.info(f"Propagated coordinates to {vid}.")
 
     def on_mouse_press(self, scene_pos: QPointF, button):
         if button == Qt.LeftButton:
