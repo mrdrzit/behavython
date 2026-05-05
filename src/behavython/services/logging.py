@@ -198,6 +198,7 @@ class AppLoggingService:
         logging.getLogger("deeplabcut").setLevel(logging.WARNING)
         logging.getLogger("matplotlib").setLevel(logging.ERROR)
         logging.getLogger("tensorflow").setLevel(logging.ERROR)
+        logging.getLogger("torch").setLevel(logging.ERROR)
         logging.getLogger("h5py").setLevel(logging.ERROR)
         logging.getLogger("PIL").setLevel(logging.WARNING)
 

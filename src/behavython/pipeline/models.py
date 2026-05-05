@@ -114,6 +114,12 @@ class DLCAnnotatedVideoRequest:
 
 
 @dataclass(slots=True)
+class DLCLikelihoodPlotRequest:
+    config_path: str
+    folder_path: str
+
+
+@dataclass(slots=True)
 class DLCAnalyzeFramesRequest:
     config_path: str
     frames_folder: str

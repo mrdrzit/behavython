@@ -4,6 +4,7 @@ import os
 import time
 import logging
 from pathlib import Path
+from natsort import os_sorted
 from PySide6.QtWidgets import QWidget, QMessageBox, QListWidgetItem
 from PySide6.QtCore import QEvent, Qt, QTimer
 from behavython.pipeline.workflow import run_analysis_workflow
@@ -41,6 +42,7 @@ from behavython.pipeline.models import (
     ResolvedVideoInput,
     VideoInputSource,
 )
+from behavython.gui.video_cropper import VideoCropperDialog
 from behavython.tasks.task_runner import TaskRunner
 from behavython.gui.dependencies import get_model_path, is_ffmpeg_installed, get_os_name, get_unix_install_instructions, dependencyDownloadDialog
 from PySide6.QtCore import QThread, Signal
@@ -461,6 +463,10 @@ class BehavythonMainWindow(QWidget):
         self.interface.video_folder_data_process.textChanged.connect(self.toggle_assisted_analysis_ready)
         self.interface.extract_frames_data_process_spinbox.valueChanged.connect(self.toggle_assisted_analysis_ready)
 
+        if hasattr(self.interface, "generate_likelihood_plots_button"):
+            self.interface.generate_likelihood_plots_button.clicked.connect(self.on_generate_likelihood_plots_clicked)
+            self.interface.generate_likelihood_plots_button.setEnabled(False)
+
     def on_select_dlc_config_clicked(self) -> None:
         path = select_file(self.interface, "Select config.yaml", "YAML files (*.yaml)")
         if path:
@@ -491,11 +497,41 @@ class BehavythonMainWindow(QWidget):
         self.interface.dlc_video_analyze_button.setEnabled(enabled)
         self.interface.create_annotated_video_button.setEnabled(enabled)
         self.interface.folder_to_create_annotated_video_button.setEnabled(enabled)
+        self._toggle_likelihood_button()
 
     def enable_analysis_buttons(self) -> None:
         enabled = bool(self.interface.video_folder_lineedit.text().strip())
         self.interface.get_frames_button.setEnabled(enabled)
         self.interface.clear_unused_files_button.setEnabled(enabled)
+        self._toggle_likelihood_button()
+
+    def _toggle_likelihood_button(self) -> None:
+        if not hasattr(self.interface, "generate_likelihood_plots_button"):
+            return
+
+        config_ok = self.interface.config_path_lineedit.text().lower().endswith(".yaml")
+        folder_path = self.interface.video_folder_lineedit.text().strip()
+        folder_ok = bool(folder_path) and os.path.isdir(folder_path)
+
+        has_data = False
+        if folder_ok:
+            has_data = any(f.endswith(".h5") for f in os.listdir(folder_path))
+
+        self.interface.generate_likelihood_plots_button.setEnabled(config_ok and folder_ok and has_data)
+
+    def on_generate_likelihood_plots_clicked(self) -> None:
+        config_path = self.interface.config_path_lineedit.text().strip()
+        folder_path = self.interface.video_folder_lineedit.text().strip()
+
+        from behavython.pipeline.models import DLCLikelihoodPlotRequest
+        from behavython.pipeline.plugins.dlc import run_generate_likelihood_plots
+
+        request = DLCLikelihoodPlotRequest(config_path=config_path, folder_path=folder_path)
+
+        self.logs.clear("dlc")
+        self.progress_bar.setValue(0)
+        self.runner.submit(run_generate_likelihood_plots, request, debug_mode=self.debug_mode)
+        self.logger.info("Likelihood plot generation submitted for folder: %s", folder_path)
 
     def toggle_analyze_from_file_button(self) -> None:
         file_path = self.interface.analyze_from_file_lineedit.text().strip()
@@ -886,14 +922,12 @@ class BehavythonMainWindow(QWidget):
         self.runner.submit(run_standardize_videos, request, debug_mode=self.debug_mode)
 
     def on_call_crop_dialog_clicked(self) -> None:
-        from behavython.gui.video_cropper import VideoCropperDialog
-
         folder_path = Path(self.interface.videos_to_crop_folder_video_editing_lineedit.text().strip())
         if not folder_path.exists():
             return
 
         video_extensions = ANALYSIS_REQUIRED_SUFFIXES["video"]
-        videos = [str(item.resolve()) for item in folder_path.iterdir() if item.is_file() and item.suffix.lower() in video_extensions]
+        videos = os_sorted([str(item.resolve()) for item in folder_path.iterdir() if item.is_file() and item.suffix.lower() in video_extensions])
 
         if not videos:
             show_warning(self.interface, "No Videos", "No video files found in the selected folder.")

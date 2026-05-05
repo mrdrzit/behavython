@@ -252,8 +252,11 @@ class VideoCropperDialog:
         QTimer.singleShot(0, lambda: self.dialog.graphicsView.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatio))
 
     def populate_list(self):
+        from natsort import os_sorted
+
         self.dialog.video_list.clear()
-        for vid, data in self.crop_database.items():
+        for vid in os_sorted(self.crop_database.keys()):
+            data = self.crop_database[vid]
             item = QListWidgetItem(vid)
             item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
             item.setCheckState(Qt.Unchecked)

@@ -20,6 +20,7 @@ from behavython.pipeline.models import (
     DLCVideoAnalysisRequest,
     DLCAnnotatedVideoRequest,
     DLCAnalyzeFramesRequest,
+    DLCLikelihoodPlotRequest,
 )
 
 app_logger = logging.getLogger("behavython")
@@ -167,22 +168,9 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
         )
 
     if request.create_plots:
-        if log:
-            log.emit("dlc", "Generating trajectory plots...")
-        dlc_logger.info("Calling deeplabcut.plot_trajectories")
-
+        dlc_logger.info("Custom plotting is handled separately via DLCLikelihoodPlotRequest.")
         if progress:
             progress.emit(80)
-
-        console_logger.info("Generating trajectory plots with DeepLabCut for %d video(s)", len(request.video_paths))
-        with capture_external_output("behavython.external"):
-            deeplabcut.plot_trajectories(
-                usable_config_path,
-                request.video_paths,
-                videotype=extension,
-                showfigures=False,
-                filtered=True,
-            )
 
     if progress:
         progress.emit(100)
@@ -629,4 +617,62 @@ def run_analyze_frames(request: DLCAnalyzeFramesRequest, progress=None, log=None
         "standardized_labels_created": len(generated_files),
         "scorer": session.model_metadata.get("scorer", ""),
         "target_folder": str(session.target_folder),
+    }
+
+
+def run_generate_likelihood_plots(request: DLCLikelihoodPlotRequest, progress=None, log=None, warning=None) -> dict:
+    from behavython.pipeline.plotting import plot_custom_likelihood
+    
+    if log:
+        log.emit("dlc", "Starting custom likelihood plot generation...")
+        
+    config_dict, usable_config_path, was_repaired = prepare_dlc_config(request.config_path)
+    
+    folder = Path(request.folder_path)
+    if not folder.exists() or not folder.is_dir():
+        raise AnalysisError(f"Invalid folder: {folder}")
+        
+    # Find all .h5 files
+    h5_files = list(folder.glob("*_filtered.h5")) + list(folder.glob("CollectedData_*.h5"))
+    h5_files = list(set(h5_files)) # Remove duplicates if any overlap
+    
+    if not h5_files:
+        raise AnalysisError(f"No DLC tracking data (.h5) found in {folder.name}.")
+        
+    total = len(h5_files)
+    generated_count = 0
+    
+    if progress:
+        progress.emit(10)
+        
+    console_logger.info(f"Generating custom likelihood plots for {total} files in {folder.name}")
+    
+    for idx, h5_file in enumerate(h5_files, start=1):
+        try:
+            output_name = h5_file.stem + "_likelihood.png"
+            output_path = folder / output_name
+            
+            plot_custom_likelihood(str(h5_file), config_dict, str(output_path))
+            generated_count += 1
+            
+            if log:
+                log.emit("dlc", f"Generated: {output_name}")
+                
+        except Exception as e:
+            dlc_logger.error(f"Failed to plot {h5_file.name}: {e}")
+            if warning:
+                warning.emit("Warning", f"Failed to plot likelihood for {h5_file.name}: {e}")
+                
+        if progress:
+            progress.emit(10 + int(90 * (idx / total)))
+
+    console_logger.info(f"Finished generating {generated_count} likelihood plot(s).")
+    
+    if progress:
+        progress.emit(100)
+        
+    return {
+        "kind": "dlc_likelihood_plots",
+        "plots_generated": generated_count,
+        "folder": str(folder),
     }

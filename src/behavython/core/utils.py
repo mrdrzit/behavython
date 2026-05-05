@@ -433,6 +433,17 @@ def get_ffprobe_path() -> str:
 
 def detect_gpu():
     try:
+        import torch
+
+        if torch.cuda.is_available():
+            device_count = torch.cuda.device_count()
+            if device_count > 0:
+                gpus = [torch.cuda.get_device_name(i) for i in range(device_count)]
+                return True, gpus
+    except Exception:
+        pass
+
+    try:
         import tensorflow as tf
 
         gpus = tf.config.list_physical_devices("GPU")

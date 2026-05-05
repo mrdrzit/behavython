@@ -9,6 +9,7 @@ import logging
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+import pandas as pd
 from tqdm import tqdm
 
 from behavython.core.paths import USER_BIN_ROOT
@@ -16,7 +17,6 @@ from matplotlib.animation import FuncAnimation
 from behavython.pipeline.models import Animal, AnalysisRequest
 from behavython.pipeline import geometry
 
-# Import our new style variables
 from behavython.core.defaults import (
     FALLBACK_ZONE_STYLE,
     MAZE_EXPERIMENT_TYPES,
@@ -36,6 +36,91 @@ from behavython.core.defaults import (
 )
 
 console_logger = logging.getLogger("behavython.console")
+
+
+def apply_scientific_style():
+    """Applies publication-ready style with light-weight typography."""
+    import matplotlib.font_manager as fm
+    import glob
+
+    # 1. Register system fonts if on Windows
+    if os.name == "nt":
+        font_dirs = [
+            r"C:\Windows\Fonts",
+            os.path.join(os.environ.get("LOCALAPPDATA", ""), r"Microsoft\Windows\Fonts"),
+        ]
+        for font_path in [f for d in font_dirs for f in glob.glob(d + r"\*.ttf") + glob.glob(d + r"\*.otf")]:
+            try:
+                fm.fontManager.addfont(font_path)
+            except Exception:
+                pass
+
+    # 2. Update rcParams
+    plt.rcParams.update(
+        {
+            "font.family": "sans-serif",
+            "font.sans-serif": [
+                "Helvetica Neue Light",
+                "Helvetica Light",
+                "Segoe UI Light",
+                "Roboto Condensed Light",
+                "Roboto Light",
+                "Inter Light",
+                "Avenir Next",
+                "Helvetica Neue",
+                "Helvetica",
+                "Arial",
+                "DejaVu Sans",
+            ],
+            "font.weight": "light",
+            "axes.labelweight": "light",
+            "axes.titleweight": "light",
+            "legend.fontsize": 8,
+            "axes.labelsize": 10,
+            "axes.titlesize": 10,
+            "legend.frameon": True,
+            "legend.facecolor": "white",
+            "legend.edgecolor": "none",
+            "legend.framealpha": 0.8,
+        }
+    )
+
+
+def plot_custom_likelihood(h5_path: str, config_dict: dict, output_path: str):
+    """Generates a likelihood plot with y-axis fixed to 0-1, using config colormap."""
+
+    apply_scientific_style()
+    df = pd.read_hdf(h5_path)
+
+    scorer = df.columns.get_level_values("scorer")[0]
+    bodyparts = df.columns.get_level_values("bodyparts").unique()
+    p_cutoff = config_dict.get("pcutoff", 0.6)
+
+    cmap_name = config_dict.get("colormap", "Set2")
+    try:
+        cmap = plt.get_cmap(cmap_name)
+    except Exception:
+        cmap = plt.get_cmap("Set2")
+
+    bp_colors = [cmap(i / max(1, len(bodyparts) - 1)) for i in range(len(bodyparts))]
+
+    fig, ax = plt.subplots(figsize=(12, 4))
+
+    for idx, bp in enumerate(bodyparts):
+        if "likelihood" in df[scorer][bp]:
+            likelihoods = df[scorer][bp]["likelihood"]
+            ax.plot(likelihoods, label=bp, color=bp_colors[idx], alpha=0.7)
+
+    ax.axhline(y=p_cutoff, color="r", linestyle="-.", linewidth=0.8, alpha=0.5, label=f"p-cutoff ({p_cutoff})")
+    ax.set_ylim(0, 1.00)
+    ax.set_title("Likelihood")
+    ax.set_xlabel("Frame Index")
+    ax.set_ylabel("Likelihood")
+    ax.legend(loc="center left", bbox_to_anchor=(1, 0.5), frameon=True, framealpha=0.4, edgecolor="none")
+
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=120)
+    plt.close(fig)
 
 
 def plot_animal_analysis(animal: Animal, result: dict, request: AnalysisRequest) -> None:

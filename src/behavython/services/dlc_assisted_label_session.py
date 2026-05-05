@@ -5,10 +5,8 @@ import uuid
 import shutil
 import logging
 import subprocess
-import glob
 import numpy as np
 import pandas as pd
-import matplotlib.font_manager as fm
 from typing import Any, List
 from natsort import os_sorted
 from pathlib import Path
@@ -473,7 +471,7 @@ class DLCAssistedLabelSession:
                 [
                     pd.Series(["labeled-data"] * len(df), dtype=str),
                     pd.Series([str(folder_name)] * len(df), dtype=str),
-                    pd.Series([str(n) for n in image_names], dtype=str)
+                    pd.Series([str(n) for n in image_names], dtype=str),
                 ],
                 names=None,
             )
@@ -503,49 +501,9 @@ class DLCAssistedLabelSession:
 
     def _apply_scientific_style(self):
         """Applies publication-ready style with light-weight typography."""
-        import matplotlib.pyplot as plt
+        from behavython.pipeline.plotting import apply_scientific_style
 
-        # 1. Register system fonts if on Windows
-        if os.name == "nt":
-            font_dirs = [
-                r"C:\Windows\Fonts",
-                os.path.join(os.environ.get("LOCALAPPDATA", ""), r"Microsoft\Windows\Fonts"),
-            ]
-            for font_path in [f for d in font_dirs for f in glob.glob(d + r"\*.ttf") + glob.glob(d + r"\*.otf")]:
-                try:
-                    fm.fontManager.addfont(font_path)
-                except Exception:
-                    pass
-
-        # 2. Update rcParams
-        plt.rcParams.update(
-            {
-                "font.family": "sans-serif",
-                "font.sans-serif": [
-                    "Helvetica Neue Light",
-                    "Helvetica Light",
-                    "Segoe UI Light",
-                    "Roboto Condensed Light",
-                    "Roboto Light",
-                    "Inter Light",
-                    "Avenir Next",
-                    "Helvetica Neue",
-                    "Helvetica",
-                    "Arial",
-                    "DejaVu Sans",
-                ],
-                "font.weight": "light",
-                "axes.labelweight": "light",
-                "axes.titleweight": "light",
-                "legend.fontsize": 8,
-                "axes.labelsize": 10,
-                "axes.titlesize": 10,
-                "legend.frameon": True,
-                "legend.facecolor": "white",
-                "legend.edgecolor": "none",
-                "legend.framealpha": 0.8,
-            }
-        )
+        apply_scientific_style()
 
     def generate_verification_plots(self, machinelabels_path: Path) -> Path:
         """
