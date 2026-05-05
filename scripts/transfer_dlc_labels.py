@@ -5,7 +5,7 @@ import yaml
 import shutil
 
 
-def transfer_dlc_labels(folders: list[str], target_config_path: str):
+def transfer_dlc_labels(folders: list[str], target_config_path: str, output_dir: str = None):
     """
     Transfers DLC labels from a source project to a newly created target project.
 
@@ -18,7 +18,8 @@ def transfer_dlc_labels(folders: list[str], target_config_path: str):
       3. For each folder, finds the `CollectedData_[scorer].csv`.
       4. Strips out any bodyparts not present in the target config.
       5. Renames the scorer in the DataFrame to match the target config.
-      6. Creates a new subfolder (`transferred_to_[new_scorer]`).
+      6. Creates a new subfolder with the same name as the original folder
+         (either nested inside the original or inside the provided `--output` directory).
       7. Saves the modified `.csv` and `.h5` files into the new subfolder.
       8. Copies all image frames to the new subfolder.
 
@@ -76,6 +77,11 @@ def transfer_dlc_labels(folders: list[str], target_config_path: str):
 
         try:
             df = pd.read_csv(csv_file, header=[0, 1, 2], index_col=[0, 1, 2])
+            # Force index to be strings. `read_csv` might parse "1" as an integer, 
+            # causing napari-deeplabcut to crash when it calls Path() on the index.
+            df.index = df.index.set_levels([df.index.levels[0].astype(str), 
+                                            df.index.levels[1].astype(str), 
+                                            df.index.levels[2].astype(str)])
         except Exception as e:
             print(f"  Error reading CSV: {e}")
             continue
@@ -99,7 +105,13 @@ def transfer_dlc_labels(folders: list[str], target_config_path: str):
         df_stripped.columns = df_stripped.columns.set_levels([target_scorer], level=0)
 
         # 5. Create output directory
-        out_dir = folder_path / f"transferred_to_{target_scorer}"
+        if output_dir:
+            base_out = Path(output_dir)
+            base_out.mkdir(parents=True, exist_ok=True)
+            out_dir = base_out / folder_path.name
+        else:
+            out_dir = folder_path / folder_path.name
+            
         out_dir.mkdir(exist_ok=True)
 
         out_csv = out_dir / f"CollectedData_{target_scorer}.csv"
@@ -150,5 +162,12 @@ if __name__ == "__main__":
              "  - The .png/.jpg frame images"
     )
 
+    parser.add_argument(
+        "-o", "--output",
+        help="Optional master output directory. If provided, all processed folders\n"
+             "will be saved here instead of being nested inside their original directories.",
+        default=None
+    )
+
     args = parser.parse_args()
-    transfer_dlc_labels(args.folders, args.config_path)
+    transfer_dlc_labels(args.folders, args.config_path, args.output)

@@ -470,8 +470,12 @@ class DLCAssistedLabelSession:
                 image_names = [Path(str(idx)).name for idx in df.index]
 
             new_index = pd.MultiIndex.from_arrays(
-                [["labeled-data"] * len(df), [folder_name] * len(df), image_names],
-                names=None,  # DLC indices typically don't name the levels here
+                [
+                    pd.Series(["labeled-data"] * len(df), dtype=str),
+                    pd.Series([str(folder_name)] * len(df), dtype=str),
+                    pd.Series([str(n) for n in image_names], dtype=str)
+                ],
+                names=None,
             )
             df.index = new_index
 
