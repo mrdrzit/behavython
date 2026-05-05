@@ -19,7 +19,7 @@
   <property name="minimumSize">
    <size>
     <width>490</width>
-    <height>300</height>
+    <height>400</height>
    </size>
   </property>
   <property name="maximumSize">
@@ -126,6 +126,12 @@ QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
      <property name="styleSheet">
       <string notr="true">QScrollArea {
     border: none;
@@ -163,16 +169,10 @@ QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
        </rect>
       </property>
       <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
-      </property>
-      <property name="minimumSize">
-       <size>
-        <width>0</width>
-        <height>0</height>
-       </size>
       </property>
       <layout class="QGridLayout" name="gridLayout_12">
        <item row="0" column="0">
@@ -241,18 +241,18 @@ QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
          </property>
         </spacer>
        </item>
-       <item row="1" column="0" colspan="3">
+       <item row="1" column="0" colspan="3" alignment="Qt::AlignmentFlag::AlignTop">
         <widget class="QTabWidget" name="tabWidget">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
-         <property name="minimumSize">
+         <property name="maximumSize">
           <size>
-           <width>0</width>
-           <height>0</height>
+           <width>16777215</width>
+           <height>820</height>
           </size>
          </property>
          <property name="styleSheet">
@@ -299,7 +299,7 @@ QTabBar::tab:disabled {
           <enum>QTabWidget::TabShape::Rounded</enum>
          </property>
          <property name="currentIndex">
-          <number>1</number>
+          <number>2</number>
          </property>
          <property name="usesScrollButtons">
           <bool>true</bool>
@@ -2215,80 +2215,6 @@ QComboBox {
            <property name="rightMargin">
             <number>0</number>
            </property>
-           <item row="4" column="0">
-            <widget class="QTextEdit" name="clear_unused_files_lineedit">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>116</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>116</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <family>Arial</family>
-               <pointsize>7</pointsize>
-               <italic>false</italic>
-               <bold>true</bold>
-              </font>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">QTextEdit{
-	color:#FFFFFF;
-	font:7pt&quot;Arial&quot;;
-	font-weight:bold;
-	border: 1px solid #969696;
-}
-
-QScrollBar:horizontal {
-    background-color: #353535;
-    height: 10px;
-}
-
-QScrollBar::handle:horizontal {
-    background-color: #2C53A1;
-    min-width: 20px;
-}
-
-QScrollBar::add-page:horizontal,
-QScrollBar::sub-page:horizontal {
-    background-color: #353535;
-}
-
-QScrollBar:vertical {
-    background-color: #353535;
-    width: 10px;
-}
-
-QScrollBar::handle:vertical {
-    background-color: #2C53A1;
-    min-height: 20px;
-}
-
-QScrollBar::add-page:vertical,
-QScrollBar::sub-page:vertical {
-    background-color: #353535;
-}</string>
-             </property>
-             <property name="frameShape">
-              <enum>QFrame::Shape::NoFrame</enum>
-             </property>
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
            <item row="3" column="0">
             <widget class="QGroupBox" name="groupBox_5">
              <property name="minimumSize">
@@ -2607,12 +2533,12 @@ QPushButton:disabled {
              </layout>
             </widget>
            </item>
-           <item row="1" column="0">
-            <widget class="QGroupBox" name="groupBox_3">
+           <item row="2" column="0">
+            <widget class="QGroupBox" name="groupBox_4">
              <property name="minimumSize">
               <size>
                <width>0</width>
-               <height>121</height>
+               <height>125</height>
               </size>
              </property>
              <property name="styleSheet">
@@ -2642,19 +2568,72 @@ QGroupBox::title {
 </string>
              </property>
              <property name="title">
-              <string>DATA REFINING</string>
+              <string>ANALYZE FROM FILE</string>
              </property>
-             <layout class="QGridLayout" name="gridLayout_8">
+             <layout class="QGridLayout" name="gridLayout_3" columnminimumwidth="0,0,0,0,0">
               <property name="leftMargin">
                <number>14</number>
+              </property>
+              <property name="topMargin">
+               <number>9</number>
               </property>
               <property name="rightMargin">
                <number>14</number>
               </property>
-              <item row="2" column="2" colspan="2">
-               <widget class="QPushButton" name="clear_unused_files_button">
+              <property name="bottomMargin">
+               <number>9</number>
+              </property>
+              <property name="horizontalSpacing">
+               <number>7</number>
+              </property>
+              <property name="verticalSpacing">
+               <number>6</number>
+              </property>
+              <item row="0" column="0" colspan="3">
+               <widget class="QLabel" name="path_to_file_label">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>183</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="cursor">
+                 <cursorShape>WhatsThisCursor</cursorShape>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Select a &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;.txt&lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt; file containing the list of video file paths to be analyzed.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Each line in the file should correspond to a valid video allowing batch processing without manually selecting files.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;Example format:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;C:\data\video1.mp4&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;C:\data\video2.mp4&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QLabel{color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}</string>
+                </property>
+                <property name="text">
+                 <string notr="true">Path to the txt file containing the paths</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="3">
+               <spacer name="horizontalSpacer_2">
+                <property name="orientation">
+                 <enum>Qt::Orientation::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>52</width>
+                  <height>18</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="0" column="4">
+               <widget class="QPushButton" name="get_file_to_analyze_button">
                 <property name="enabled">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -2664,8 +2643,8 @@ QGroupBox::title {
                 </property>
                 <property name="minimumSize">
                  <size>
-                  <width>0</width>
-                  <height>25</height>
+                  <width>91</width>
+                  <height>30</height>
                  </size>
                 </property>
                 <property name="maximumSize">
@@ -2673,6 +2652,14 @@ QGroupBox::title {
                   <width>16777215</width>
                   <height>30</height>
                  </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>Arial</family>
+                  <pointsize>8</pointsize>
+                  <italic>false</italic>
+                  <bold>true</bold>
+                 </font>
                 </property>
                 <property name="cursor">
                  <cursorShape>PointingHandCursor</cursorShape>
@@ -2708,22 +2695,19 @@ QPushButton:disabled {
 }</string>
                 </property>
                 <property name="text">
-                 <string notr="true">CLEANUP FOLDER</string>
+                 <string notr="true">GET FILE</string>
                 </property>
                </widget>
               </item>
-              <item row="1" column="2">
-               <widget class="QLineEdit" name="override_frame_extraction_lineedit">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
+              <item row="1" column="0" colspan="5">
+               <widget class="QLineEdit" name="analyze_from_file_lineedit">
+                <property name="enabled">
+                 <bool>true</bool>
                 </property>
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>0</height>
+                  <height>20</height>
                  </size>
                 </property>
                 <property name="maximumSize">
@@ -2732,86 +2716,49 @@ QPushButton:disabled {
                   <height>20</height>
                  </size>
                 </property>
+                <property name="mouseTracking">
+                 <bool>false</bool>
+                </property>
                 <property name="styleSheet">
-                 <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+                 <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
                 </property>
                 <property name="text">
-                 <string notr="true">4500</string>
+                 <string notr="true"/>
+                </property>
+                <property name="frame">
+                 <bool>false</bool>
+                </property>
+                <property name="cursorPosition">
+                 <number>0</number>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignmentFlag::AlignCenter</set>
                 </property>
-               </widget>
-              </item>
-              <item row="1" column="3">
-               <widget class="QCheckBox" name="override_frame_extraction_checkbox">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QCheckBox {
-    font-family: Arial;
-    font-size: 8pt;
-}
-
-QCheckBox {
-    font-family: Arial;
-    font-size: 8pt;
-    spacing: 6px;
-    color: #E6E6E6;
-background: transparent;
-}
-
-QCheckBox::indicator {
-    width: 14px;
-    height: 14px;
-    background-color: #606060;
-    border: 1px solid #7A7A7A;
-    border-radius: 4px;
-}
-
-QCheckBox::indicator:hover {
-    background-color: #6D6D6D;
-    border: 1px solid #909090;
-}
-
-QCheckBox::indicator:pressed {
-    background-color: #555555;
-}
-
-QCheckBox::indicator:checked {
-    background-color: #A21F27;
-    border: 1px solid #C52A34;
-}
-
-QCheckBox::indicator:checked:hover {
-    background-color: #B5232C;
-}
-
-QCheckBox::indicator:disabled {
-    background-color: #3F3F3F;
-    border: 1px solid #555555;
-}
-
-QCheckBox:disabled {
-    color: #7A7A7A;
-}</string>
-                </property>
-                <property name="text">
-                 <string>Enable</string>
-                </property>
-                <property name="checked">
-                 <bool>false</bool>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="2" colspan="2">
-               <widget class="QPushButton" name="get_frames_button">
-                <property name="enabled">
+                <property name="readOnly">
                  <bool>true</bool>
+                </property>
+                <property name="placeholderText">
+                 <string>path\to\text_file\</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <spacer name="horizontalSpacer_3">
+                <property name="orientation">
+                 <enum>Qt::Orientation::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>79</width>
+                  <height>18</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="2" column="1">
+               <widget class="QPushButton" name="analyze_from_file_button">
+                <property name="enabled">
+                 <bool>false</bool>
                 </property>
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -2821,15 +2768,92 @@ QCheckBox:disabled {
                 </property>
                 <property name="minimumSize">
                  <size>
-                  <width>0</width>
-                  <height>30</height>
+                  <width>125</width>
+                  <height>35</height>
                  </size>
                 </property>
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>30</height>
+                  <height>35</height>
                  </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>Arial</family>
+                  <pointsize>8</pointsize>
+                  <italic>false</italic>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="cursor">
+                 <cursorShape>PointingHandCursor</cursorShape>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">/* Base button */
+QPushButton {
+    font: 8pt &quot;Arial&quot;;
+    font-weight: bold;
+
+    border: 2px solid #A21F27;
+    border-radius: 8px;
+
+    background-color: #2C53A1;
+    color: #FFFFFF;
+}
+
+/* Hover */
+QPushButton:hover {
+    background-color: #3A63B8; /* slightly lighter than base */
+}
+
+/* Pressed */
+QPushButton:pressed {
+    background-color: #A21F27;
+    color: #FFFFFF;
+}
+
+QPushButton:disabled {
+    background-color: gray;
+    color: white;
+    border: 2px solid darkgray;
+}</string>
+                </property>
+                <property name="text">
+                 <string notr="true">ANALYZE FROM FILE</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="2" colspan="2">
+               <widget class="QPushButton" name="analyze_from_file_get_frames_button">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>60</width>
+                  <height>35</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>35</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>Arial</family>
+                  <pointsize>8</pointsize>
+                  <italic>false</italic>
+                  <bold>true</bold>
+                 </font>
                 </property>
                 <property name="cursor">
                  <cursorShape>PointingHandCursor</cursorShape>
@@ -2869,126 +2893,18 @@ QPushButton:disabled {
                 </property>
                </widget>
               </item>
-              <item row="2" column="0">
-               <widget class="QLabel" name="clear_unused_files_title">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="cursor">
-                 <cursorShape>WhatsThisCursor</cursorShape>
-                </property>
-                <property name="toolTip">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Remove files that are not required for the current analysis.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Keeps only relevant inputs (e.g., videos, tracking CSVs, ROI files) to avoid conflicts or incorrect file matching.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QLabel{color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}</string>
-                </property>
-                <property name="text">
-                 <string notr="true">Remove unnecessary files</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="1">
-               <spacer name="horizontalSpacer_25">
+              <item row="2" column="4">
+               <spacer name="horizontalSpacer_4">
                 <property name="orientation">
                  <enum>Qt::Orientation::Horizontal</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
-                  <width>38</width>
-                  <height>20</height>
+                  <width>88</width>
+                  <height>18</height>
                  </size>
                 </property>
                </spacer>
-              </item>
-              <item row="1" column="0">
-               <widget class="QLabel" name="override_frame_extraction_label">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="cursor">
-                 <cursorShape>WhatsThisCursor</cursorShape>
-                </property>
-                <property name="toolTip">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;
-
-&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Manually specify which frame should be extracted from each video.&lt;/span&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Overrides the default automatic frame selection and uses the exact frame index provided.&lt;/span&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;Use this when you need a consistent or specific moment (e.g., empty arena, stable lighting) for ROI definition or geometry setup.&lt;/span&gt;&lt;/p&gt;
-
-&lt;/body&gt;&lt;/html&gt;</string>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QLabel{color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}</string>
-                </property>
-                <property name="text">
-                 <string notr="true">Override frame extraction</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignCenter</set>
-                </property>
-                <property name="wordWrap">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="1">
-               <spacer name="horizontalSpacer_24">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>38</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item row="0" column="0">
-               <widget class="QLabel" name="get_frames_label">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>165</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="cursor">
-                 <cursorShape>WhatsThisCursor</cursorShape>
-                </property>
-                <property name="toolTip">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Extract a representative frame from each video in the selected folder.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;These frames are used as background images for validation, ROI definition, geometry setup (e.g., in ImageJ) and plotting.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;Useful to prepare arena coordinates (.json) or ROI files before running the full analysis.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QLabel{color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}</string>
-                </property>
-                <property name="text">
-                 <string notr="true">Get a frame from every video</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignCenter</set>
-                </property>
-                <property name="wordWrap">
-                 <bool>true</bool>
-                </property>
-               </widget>
               </item>
              </layout>
             </widget>
@@ -3599,12 +3515,12 @@ QPushButton:disabled {
              </layout>
             </widget>
            </item>
-           <item row="2" column="0">
-            <widget class="QGroupBox" name="groupBox_4">
+           <item row="1" column="0">
+            <widget class="QGroupBox" name="groupBox_3">
              <property name="minimumSize">
               <size>
                <width>0</width>
-               <height>125</height>
+               <height>121</height>
               </size>
              </property>
              <property name="styleSheet">
@@ -3634,223 +3550,37 @@ QGroupBox::title {
 </string>
              </property>
              <property name="title">
-              <string>ANALYZE FROM FILE</string>
+              <string>DATA REFINING</string>
              </property>
-             <layout class="QGridLayout" name="gridLayout_3" columnminimumwidth="0,0,0,0,0">
+             <layout class="QGridLayout" name="gridLayout_8">
               <property name="leftMargin">
                <number>14</number>
-              </property>
-              <property name="topMargin">
-               <number>9</number>
               </property>
               <property name="rightMargin">
                <number>14</number>
               </property>
-              <property name="bottomMargin">
-               <number>9</number>
-              </property>
-              <property name="horizontalSpacing">
-               <number>7</number>
-              </property>
-              <property name="verticalSpacing">
-               <number>6</number>
-              </property>
-              <item row="0" column="0" colspan="3">
-               <widget class="QLabel" name="path_to_file_label">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>183</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="cursor">
-                 <cursorShape>WhatsThisCursor</cursorShape>
-                </property>
-                <property name="toolTip">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Select a &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;.txt&lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt; file containing the list of video file paths to be analyzed.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Each line in the file should correspond to a valid video allowing batch processing without manually selecting files.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;Example format:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;C:\data\video1.mp4&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;C:\data\video2.mp4&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QLabel{color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}</string>
-                </property>
-                <property name="text">
-                 <string notr="true">Path to the txt file containing the paths</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="3">
-               <spacer name="horizontalSpacer_2">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>52</width>
-                  <height>18</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item row="0" column="4">
-               <widget class="QPushButton" name="get_file_to_analyze_button">
+              <item row="2" column="2" colspan="2">
+               <widget class="QPushButton" name="clear_unused_files_button">
                 <property name="enabled">
-                 <bool>true</bool>
+                 <bool>false</bool>
                 </property>
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>91</width>
-                  <height>30</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>30</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <family>Arial</family>
-                  <pointsize>8</pointsize>
-                  <italic>false</italic>
-                  <bold>true</bold>
-                 </font>
-                </property>
-                <property name="cursor">
-                 <cursorShape>PointingHandCursor</cursorShape>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">/* Base button */
-QPushButton {
-    font: 8pt &quot;Arial&quot;;
-    font-weight: bold;
-
-    border: 2px solid #A21F27;
-    border-radius: 8px;
-
-    background-color: #2C53A1;
-    color: #FFFFFF;
-}
-
-/* Hover */
-QPushButton:hover {
-    background-color: #3A63B8; /* slightly lighter than base */
-}
-
-/* Pressed */
-QPushButton:pressed {
-    background-color: #A21F27;
-    color: #FFFFFF;
-}
-
-QPushButton:disabled {
-    background-color: gray;
-    color: white;
-    border: 2px solid darkgray;
-}</string>
-                </property>
-                <property name="text">
-                 <string notr="true">GET FILE</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0" colspan="5">
-               <widget class="QLineEdit" name="analyze_from_file_lineedit">
-                <property name="enabled">
-                 <bool>true</bool>
                 </property>
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>20</height>
+                  <height>25</height>
                  </size>
                 </property>
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>20</height>
+                  <height>30</height>
                  </size>
-                </property>
-                <property name="mouseTracking">
-                 <bool>false</bool>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
-                </property>
-                <property name="text">
-                 <string notr="true"/>
-                </property>
-                <property name="frame">
-                 <bool>false</bool>
-                </property>
-                <property name="cursorPosition">
-                 <number>0</number>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignCenter</set>
-                </property>
-                <property name="readOnly">
-                 <bool>true</bool>
-                </property>
-                <property name="placeholderText">
-                 <string>path\to\text_file\</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0">
-               <spacer name="horizontalSpacer_3">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>79</width>
-                  <height>18</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item row="2" column="1">
-               <widget class="QPushButton" name="analyze_from_file_button">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>125</width>
-                  <height>35</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>35</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <family>Arial</family>
-                  <pointsize>8</pointsize>
-                  <italic>false</italic>
-                  <bold>true</bold>
-                 </font>
                 </property>
                 <property name="cursor">
                  <cursorShape>PointingHandCursor</cursorShape>
@@ -3886,14 +3616,110 @@ QPushButton:disabled {
 }</string>
                 </property>
                 <property name="text">
-                 <string notr="true">ANALYZE FROM FILE</string>
+                 <string notr="true">CLEANUP FOLDER</string>
                 </property>
                </widget>
               </item>
-              <item row="2" column="2" colspan="2">
-               <widget class="QPushButton" name="analyze_from_file_get_frames_button">
-                <property name="enabled">
+              <item row="1" column="2">
+               <widget class="QLineEdit" name="override_frame_extraction_lineedit">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>20</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+                </property>
+                <property name="text">
+                 <string notr="true">4500</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="3">
+               <widget class="QCheckBox" name="override_frame_extraction_checkbox">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QCheckBox {
+    font-family: Arial;
+    font-size: 8pt;
+}
+
+QCheckBox {
+    font-family: Arial;
+    font-size: 8pt;
+    spacing: 6px;
+    color: #E6E6E6;
+background: transparent;
+}
+
+QCheckBox::indicator {
+    width: 14px;
+    height: 14px;
+    background-color: #606060;
+    border: 1px solid #7A7A7A;
+    border-radius: 4px;
+}
+
+QCheckBox::indicator:hover {
+    background-color: #6D6D6D;
+    border: 1px solid #909090;
+}
+
+QCheckBox::indicator:pressed {
+    background-color: #555555;
+}
+
+QCheckBox::indicator:checked {
+    background-color: #A21F27;
+    border: 1px solid #C52A34;
+}
+
+QCheckBox::indicator:checked:hover {
+    background-color: #B5232C;
+}
+
+QCheckBox::indicator:disabled {
+    background-color: #3F3F3F;
+    border: 1px solid #555555;
+}
+
+QCheckBox:disabled {
+    color: #7A7A7A;
+}</string>
+                </property>
+                <property name="text">
+                 <string>Enable</string>
+                </property>
+                <property name="checked">
                  <bool>false</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2" colspan="2">
+               <widget class="QPushButton" name="get_frames_button">
+                <property name="enabled">
+                 <bool>true</bool>
                 </property>
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -3903,23 +3729,15 @@ QPushButton:disabled {
                 </property>
                 <property name="minimumSize">
                  <size>
-                  <width>60</width>
-                  <height>35</height>
+                  <width>0</width>
+                  <height>30</height>
                  </size>
                 </property>
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>35</height>
+                  <height>30</height>
                  </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <family>Arial</family>
-                  <pointsize>8</pointsize>
-                  <italic>false</italic>
-                  <bold>true</bold>
-                 </font>
                 </property>
                 <property name="cursor">
                  <cursorShape>PointingHandCursor</cursorShape>
@@ -3959,21 +3777,216 @@ QPushButton:disabled {
                 </property>
                </widget>
               </item>
-              <item row="2" column="4">
-               <spacer name="horizontalSpacer_4">
+              <item row="2" column="0">
+               <widget class="QLabel" name="clear_unused_files_title">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="cursor">
+                 <cursorShape>WhatsThisCursor</cursorShape>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Remove files that are not required for the current analysis.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Keeps only relevant inputs (e.g., videos, tracking CSVs, ROI files) to avoid conflicts or incorrect file matching.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QLabel{color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}</string>
+                </property>
+                <property name="text">
+                 <string notr="true">Remove unnecessary files</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <spacer name="horizontalSpacer_25">
                 <property name="orientation">
                  <enum>Qt::Orientation::Horizontal</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
-                  <width>88</width>
-                  <height>18</height>
+                  <width>38</width>
+                  <height>20</height>
                  </size>
                 </property>
                </spacer>
               </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="override_frame_extraction_label">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="cursor">
+                 <cursorShape>WhatsThisCursor</cursorShape>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;
+
+&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Manually specify which frame should be extracted from each video.&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Overrides the default automatic frame selection and uses the exact frame index provided.&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;Use this when you need a consistent or specific moment (e.g., empty arena, stable lighting) for ROI definition or geometry setup.&lt;/span&gt;&lt;/p&gt;
+
+&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QLabel{color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}</string>
+                </property>
+                <property name="text">
+                 <string notr="true">Override frame extraction</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
+                </property>
+                <property name="wordWrap">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <spacer name="horizontalSpacer_24">
+                <property name="orientation">
+                 <enum>Qt::Orientation::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>38</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="0" column="0">
+               <widget class="QLabel" name="get_frames_label">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>165</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="cursor">
+                 <cursorShape>WhatsThisCursor</cursorShape>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Extract a representative frame from each video in the selected folder.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;These frames are used as background images for validation, ROI definition, geometry setup (e.g., in ImageJ) and plotting.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;Useful to prepare arena coordinates (.json) or ROI files before running the full analysis.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QLabel{color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}</string>
+                </property>
+                <property name="text">
+                 <string notr="true">Get a frame from every video</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
+                </property>
+                <property name="wordWrap">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
              </layout>
             </widget>
+           </item>
+           <item row="4" column="0">
+            <widget class="QTextEdit" name="clear_unused_files_lineedit">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>116</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>116</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>7</pointsize>
+               <italic>false</italic>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QTextEdit{
+	color:#FFFFFF;
+	font:7pt&quot;Arial&quot;;
+	font-weight:bold;
+	border: 1px solid #969696;
+}
+
+QScrollBar:horizontal {
+    background-color: #353535;
+    height: 10px;
+}
+
+QScrollBar::handle:horizontal {
+    background-color: #2C53A1;
+    min-width: 20px;
+}
+
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal {
+    background-color: #353535;
+}
+
+QScrollBar:vertical {
+    background-color: #353535;
+    width: 10px;
+}
+
+QScrollBar::handle:vertical {
+    background-color: #2C53A1;
+    min-height: 20px;
+}
+
+QScrollBar::add-page:vertical,
+QScrollBar::sub-page:vertical {
+    background-color: #353535;
+}</string>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::Shape::NoFrame</enum>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="0">
+            <spacer name="verticalSpacer">
+             <property name="orientation">
+              <enum>Qt::Orientation::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
            </item>
           </layout>
          </widget>
@@ -4320,7 +4333,7 @@ QPushButton:disabled {
                 </property>
                </widget>
               </item>
-              <item row="0" column="4">
+              <item row="0" column="4" alignment="Qt::AlignmentFlag::AlignHCenter">
                <widget class="QComboBox" name="file_extension_confirmation_combobox_data_process">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -4353,17 +4366,17 @@ QPushButton:disabled {
                  <string notr="true">QComboBox{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QListView{color:#FFFFFF;font:8pt&quot;Century Gothic&quot;;font-weight:bold;background-color:#969696;border:0px;}QListView{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QComboBox::drop-down{width:20px;border:5px;}QComboBox::down-arrow{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #FFFFFF;width:0.5px;height:1px;border-radius:2px;}QComboBox::down-arrow:hover{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #A21F27;width:0.5px;height:1px;border-radius:2px;}QAbstractItemView{border:2px solid #969696;selection-background-color:#2C53A1;}</string>
                 </property>
                 <property name="currentText">
-                 <string notr="true">        .png</string>
+                 <string notr="true">         .jpg</string>
                 </property>
                 <property name="currentIndex">
-                 <number>1</number>
+                 <number>0</number>
                 </property>
                 <property name="sizeAdjustPolicy">
                  <enum>QComboBox::SizeAdjustPolicy::AdjustToContents</enum>
                 </property>
                 <item>
                  <property name="text">
-                  <string>.jpg</string>
+                  <string>         .jpg</string>
                  </property>
                 </item>
                 <item>
@@ -4373,7 +4386,7 @@ QPushButton:disabled {
                 </item>
                 <item>
                  <property name="text">
-                  <string>.jpeg</string>
+                  <string>       .jpeg</string>
                  </property>
                 </item>
                </widget>
@@ -4503,6 +4516,12 @@ QPushButton:disabled {
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
              <property name="styleSheet">
               <string notr="true">QGroupBox {
     border: none;
@@ -4533,12 +4552,6 @@ QGroupBox::title {
               <string>ASSISTED LABELED NETWORK SETTINGS</string>
              </property>
              <layout class="QGridLayout" name="gridLayout_6">
-              <property name="leftMargin">
-               <number>14</number>
-              </property>
-              <property name="rightMargin">
-               <number>14</number>
-              </property>
               <item row="0" column="0">
                <widget class="QLabel" name="config_path_data_process">
                 <property name="sizePolicy">
@@ -4568,6 +4581,19 @@ QGroupBox::title {
                  <string notr="true">Path to the config.yaml file </string>
                 </property>
                </widget>
+              </item>
+              <item row="0" column="1">
+               <spacer name="horizontalSpacer_8">
+                <property name="orientation">
+                 <enum>Qt::Orientation::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>77</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
               </item>
               <item row="0" column="2">
                <widget class="QPushButton" name="get_config_path_data_process">
@@ -4635,19 +4661,6 @@ QPushButton:disabled {
                 </property>
                </widget>
               </item>
-              <item row="0" column="1">
-               <spacer name="horizontalSpacer_8">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>77</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
               <item row="1" column="0" colspan="3">
                <widget class="QLineEdit" name="config_path_data_process_path">
                 <property name="enabled">
@@ -4688,6 +4701,93 @@ QPushButton:disabled {
                 </property>
                 <property name="placeholderText">
                  <string>path\to\project_folder\config.yaml</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0" colspan="3">
+               <widget class="QListWidget" name="bodyparts_listview_data_process">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>140</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>140</height>
+                 </size>
+                </property>
+                <property name="cursor" stdset="0">
+                 <cursorShape>WhatsThisCursor</cursorShape>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;
+&lt;head/&gt;
+&lt;body&gt;
+&lt;p&gt;&lt;b&gt;&lt;span style=&quot; font-size:10pt; color:#d97706;&quot;&gt;Target Body Parts Filter&lt;/span&gt;&lt;/b&gt;&lt;/p&gt;
+&lt;p&gt;Select which body parts you want the network to automatically label for you during this session.&lt;/p&gt;
+&lt;p&gt;&lt;b&gt;Why does this appear now?&lt;/b&gt;&lt;br/&gt;
+This list is dynamically generated from your selected &lt;i&gt;config.yaml&lt;/i&gt; file. It shows exactly what the loaded neural network was trained to detect.&lt;/p&gt;
+&lt;p&gt;&lt;b&gt;How it affects the output:&lt;/b&gt;&lt;br/&gt;
+DeepLabCut will analyze the frames, but &lt;i&gt;only the checked parts&lt;/i&gt; will have their coordinates saved to your final dataset. Unchecked parts will be saved as blank (unlabeled) points, allowing you to manually label them in the DLC GUI without the network's predictions getting in the way.&lt;/p&gt;
+&lt;p&gt;&lt;span style=&quot; color:#ff5555;&quot;&gt;&lt;b&gt;⚠️ Warning:&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;
+If you uncheck body parts that are explicitly required by downstream Behavython analysis modules (e.g., the nose or center for Maze Tracking), those analysis steps will fail unless you manually label those missing points yourself before running them.&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QListView {
+    background-color: #252526;
+    color: #D4D4D4;
+    border: 1px solid #3c3c3c;
+    border-radius: 4px;
+    padding: 4px;
+    outline: none; /* Removes the dotted focus ring */
+}
+
+QListView::item {
+    padding: 4px;
+    border-radius: 2px;
+}
+
+QListView::item:hover {
+    background-color: #343434;
+}
+
+QListView::item:selected {
+    background-color: #404040;
+    color: #FFFFFF;
+}
+
+/* Checkbox indicator styles */
+QListView::indicator {
+    width: 14px;
+    height: 14px;
+    background-color: #1E1E1E;
+    border: 1px solid #555555;
+    border-radius: 3px;
+    margin-right: 4px;
+}
+
+QListView::indicator:hover {
+    border: 1px solid #d97706;
+}
+
+QListView::indicator:checked {
+    background-color: #d97706;
+    border: 1px solid #d97706;
+    /* Optional: Add a checkmark image if you have one in your resources */
+    /* image: url(:/icons/check.png); */
+}
+</string>
                 </property>
                </widget>
               </item>

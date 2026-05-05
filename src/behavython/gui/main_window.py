@@ -4,7 +4,7 @@ import os
 import time
 import logging
 from pathlib import Path
-from PySide6.QtWidgets import QWidget, QMessageBox
+from PySide6.QtWidgets import QWidget, QMessageBox, QListWidgetItem
 from PySide6.QtCore import QEvent, Qt, QTimer
 from behavython.pipeline.workflow import run_analysis_workflow
 from behavython.services.validation import is_model_installed, validate_analysis_request
@@ -32,7 +32,7 @@ from behavython.services.validation import validate_json_config
 from behavython.gui.dialogs import ask_yes_no, show_warning, show_info, show_worker_error
 from behavython.gui.dialogs import select_file, select_files, select_folder, select_save_folder
 from behavython.services.logging import LoggingService
-from behavython.core.utils import get_ffmpeg_path, resolve_analysis_input, resolve_output_folder, resolve_video_input
+from behavython.core.utils import get_ffmpeg_path, resolve_analysis_input, resolve_output_folder, resolve_video_input, load_or_repair_dlc_yaml
 from behavython.pipeline.models import (
     AnalysisInputSource,
     OutputFolderSource,
@@ -45,6 +45,24 @@ from behavython.tasks.task_runner import TaskRunner
 from behavython.gui.dependencies import get_model_path, is_ffmpeg_installed, get_os_name, get_unix_install_instructions, dependencyDownloadDialog
 from PySide6.QtCore import QThread, Signal
 
+
+class ConfigLoaderThread(QThread):
+    config_loaded = Signal(list)
+    error_occurred = Signal(str)
+
+    def __init__(self, config_path, parent=None):
+        super().__init__(parent)
+        self.config_path = config_path
+
+    def run(self):
+        try:
+            config_dict, _, _ = load_or_repair_dlc_yaml(self.config_path)
+            bodyparts = config_dict.get("bodyparts", [])
+            self.config_loaded.emit(bodyparts)
+        except Exception as e:
+            self.error_occurred.emit(str(e))
+
+
 class CodecProbeThread(QThread):
     warning_detected = Signal(list)  # list of problematic files
 
@@ -56,19 +74,19 @@ class CodecProbeThread(QThread):
         from pathlib import Path
         from behavython.services.video_service import VideoService
         from behavython.core.defaults import ANALYSIS_REQUIRED_SUFFIXES
-        
+
         folder = Path(self.folder_path)
         if not folder.exists():
             return
-            
+
         extensions = ANALYSIS_REQUIRED_SUFFIXES["video"]
         videos = [p for p in folder.iterdir() if p.is_file() and p.suffix.lower() in extensions]
-        
+
         problematic = []
         for vid in videos:
             if VideoService.is_legacy_codec(vid):
                 problematic.append(str(vid))
-                
+
         if problematic:
             self.warning_detected.emit(problematic)
 
@@ -639,8 +657,51 @@ class BehavythonMainWindow(QWidget):
         config_path = self.interface.config_path_data_process_path.text().strip()
         frames_folder = self.interface.video_folder_data_process.text().strip()
 
-        is_ready = bool(config_path) and os.path.exists(config_path) and bool(frames_folder) and os.path.exists(frames_folder)
+        is_config_valid = bool(config_path) and os.path.exists(config_path)
+        is_ready = is_config_valid and bool(frames_folder) and os.path.exists(frames_folder)
         analysis_button.setEnabled(is_ready)
+
+        if hasattr(self.interface, "bodyparts_listview_data_process"):
+            self.interface.bodyparts_listview_data_process.setVisible(is_config_valid)
+
+        if is_config_valid:
+            self._populate_bodyparts_list(config_path)
+        elif hasattr(self.interface, "bodyparts_listview_data_process"):
+            self.interface.bodyparts_listview_data_process.clear()
+            self._current_loaded_bodyparts_config = None
+
+    def _populate_bodyparts_list(self, config_path: str) -> None:
+        if not hasattr(self.interface, "bodyparts_listview_data_process"):
+            return
+
+        # Avoid reloading if it's the same config
+        current_loaded = getattr(self, "_current_loaded_bodyparts_config", None)
+        if current_loaded == config_path:
+            return
+
+        list_widget = self.interface.bodyparts_listview_data_process
+        list_widget.clear()
+
+        # Eager cache update to prevent redundant thread spawns
+        self._current_loaded_bodyparts_config = config_path
+
+        self._config_thread = ConfigLoaderThread(config_path, self)
+        self._config_thread.config_loaded.connect(self._on_bodyparts_loaded)
+        self._config_thread.error_occurred.connect(lambda err: self.logger.error(f"Failed to load bodyparts from {config_path}: {err}"))
+        self._config_thread.start()
+
+    def _on_bodyparts_loaded(self, bodyparts: list) -> None:
+        if not hasattr(self.interface, "bodyparts_listview_data_process"):
+            return
+
+        list_widget = self.interface.bodyparts_listview_data_process
+        list_widget.clear()
+
+        for bp in bodyparts:
+            item = QListWidgetItem(bp)
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+            item.setCheckState(Qt.CheckState.Checked)
+            list_widget.addItem(item)
 
     def on_run_analyze_frames_clicked(self) -> None:
         config_path = self.interface.config_path_data_process_path.text().strip()
@@ -689,12 +750,23 @@ class BehavythonMainWindow(QWidget):
 
         mode = "image" if has_images else "video"
 
+        target_bodyparts = None
+        if hasattr(self.interface, "bodyparts_listview_data_process"):
+            list_widget = self.interface.bodyparts_listview_data_process
+            if list_widget.count() > 0:
+                target_bodyparts = []
+                for i in range(list_widget.count()):
+                    item = list_widget.item(i)
+                    if item.checkState() == Qt.CheckState.Checked:
+                        target_bodyparts.append(item.text())
+
         request = DLCAnalyzeFramesRequest(
             config_path=config_path,
             frames_folder=frames_folder,
             frame_extension=self.interface.file_extension_confirmation_combobox_data_process.currentText().strip().lower(),
             number_of_frames=num_frames,
             mode=mode,
+            target_bodyparts=target_bodyparts,
         )
 
         self.logs.clear("dlc")
@@ -757,10 +829,10 @@ class BehavythonMainWindow(QWidget):
             if hasattr(self.interface, "standardize_videos_button_video_editing_button"):
                 self.interface.standardize_videos_button_video_editing_button.clicked.connect(self.on_standardize_videos_clicked)
                 self.interface.standardize_videos_button_video_editing_button.hide()
-                
+
             if hasattr(self.interface, "codec_warning_label_video_editing_label"):
                 self.interface.codec_warning_label_video_editing_label.hide()
-                
+
             self.probe_thread = None
             self.problematic_videos = []
 
@@ -774,12 +846,12 @@ class BehavythonMainWindow(QWidget):
         is_ready = bool(folder_path) and os.path.exists(folder_path)
         self.interface.call_crop_dialog_button.setEnabled(is_ready)
         self.interface.crop_videos_button.setEnabled(is_ready)
-        
+
         if hasattr(self.interface, "codec_warning_label_video_editing_label"):
             self.interface.codec_warning_label_video_editing_label.hide()
         if hasattr(self.interface, "standardize_videos_button_video_editing_button"):
             self.interface.standardize_videos_button_video_editing_button.hide()
-            
+
         if is_ready:
             self.probe_thread = CodecProbeThread(folder_path, self.interface)
             self.probe_thread.warning_detected.connect(self.on_codec_warning_detected)
@@ -796,22 +868,21 @@ class BehavythonMainWindow(QWidget):
     def on_standardize_videos_clicked(self) -> None:
         if not self.problematic_videos:
             return
-            
+
         from behavython.services.video_service import run_standardize_videos
-        request = {
-            "videos": self.problematic_videos
-        }
-        
+
+        request = {"videos": self.problematic_videos}
+
         self.logs.clear("dlc")
         self.progress_bar.setValue(0)
-        
+
         # After triggering standardizing, hide the warning
         if hasattr(self.interface, "codec_warning_label_video_editing_label"):
             self.interface.codec_warning_label_video_editing_label.hide()
         if hasattr(self.interface, "standardize_videos_button_video_editing_button"):
             self.interface.standardize_videos_button_video_editing_button.hide()
         self.problematic_videos = []
-        
+
         self.runner.submit(run_standardize_videos, request, debug_mode=self.debug_mode)
 
     def on_call_crop_dialog_clicked(self) -> None:

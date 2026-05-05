@@ -442,8 +442,15 @@ class DLCAssistedLabelSession:
             # Rebuild a temporary MultiIndex from tuples to ensure we can map values correctly
             # if the scorer name was different in the raw inference file.
             flat_data = []
+            target_bps = self.request.target_bodyparts
+
             for bp in bodyparts:
                 for c in coords:
+                    if target_bps is not None and bp not in target_bps:
+                        # Fill with NaN if bodypart was explicitly excluded by the user
+                        flat_data.append(pd.Series(np.nan, index=df.index))
+                        continue
+
                     try:
                         # Try to find data for this bp/coord regardless of old scorer name
                         val = df.xs((bp, c), level=("bodyparts", "coords"), axis=1)
@@ -607,6 +614,10 @@ class DLCAssistedLabelSession:
             for idx, bp in enumerate(bodyparts):
                 x = row[scorer, bp, "x"]
                 y = row[scorer, bp, "y"]
+
+                if pd.isna(x) or pd.isna(y):
+                    continue
+
                 color = bp_colors[idx]
                 ax.plot(x, y, "x", color=color, markersize=4, markeredgewidth=1, label=bp)
 

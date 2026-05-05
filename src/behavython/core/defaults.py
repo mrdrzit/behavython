@@ -5,12 +5,84 @@ APP_NAME = "Behavython"
 MAIN_WINDOW_TITLE = "Behavython"
 LOGO_WIDGET_NAME = "behavython_logo"
 
+SCROLLBAR_STYLE = """
+/* =========================================
+   VERTICAL SCROLLBAR
+   ========================================= */
+QScrollBar:vertical {
+    border: none;
+    background: #2b2b2b;
+    width: 12px;
+    margin: 0px;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:vertical {
+    background: #5c5c5c;
+    min-height: 30px;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #7a7a7a;
+}
+
+QScrollBar::handle:vertical:pressed {
+    background: #3a539b;
+}
+
+QScrollBar::sub-line:vertical, QScrollBar::add-line:vertical {
+    border: none;
+    background: none;
+    height: 0px;
+}
+
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+    background: none;
+}
+
+/* =========================================
+   HORIZONTAL SCROLLBAR
+   ========================================= */
+QScrollBar:horizontal {
+    border: none;
+    background: #2b2b2b;
+    height: 12px;
+    margin: 0px;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:horizontal {
+    background: #5c5c5c;
+    min-width: 30px;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background: #7a7a7a;
+}
+
+QScrollBar::handle:horizontal:pressed {
+    background: #3a539b;
+}
+
+QScrollBar::sub-line:horizontal, QScrollBar::add-line:horizontal {
+    border: none;
+    background: none;
+    width: 0px;
+}
+
+QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
+    background: none;
+}
+"""
+
 DEFAULT_STYLE = """
 QWidget {
     background-color: #343434;
     color: #FFFFFF;
 }
-""".strip()
+""" + "\n" + SCROLLBAR_STYLE
 
 DEBUG_STYLE = """
 /* Global colors only */
@@ -72,7 +144,7 @@ QCheckBox {
 QCheckBox::indicator:checked {
     background-color: #d97706;
 }
-""".strip()
+""" + "\n" + SCROLLBAR_STYLE
 
 # Validation checkbox states
 VALIDATION_CHECKBOX_ACTIVE = """

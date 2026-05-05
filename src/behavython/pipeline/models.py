@@ -120,6 +120,7 @@ class DLCAnalyzeFramesRequest:
     frame_extension: str = ".jpg"
     number_of_frames: int | None = None
     mode: str = "video"
+    target_bodyparts: list[str] | None = None
 
 
 @dataclass(slots=True)
