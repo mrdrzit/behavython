@@ -183,6 +183,9 @@ def group_analysis_files(file_paths: list[str]) -> list[dict]:
         if name_lower.endswith(".mp4"):
             return "video"
 
+        if name_lower.endswith(".json"):
+            return "config"
+
         return "unknown"
 
     def extract_raw_id(name: str, name_lower: str, file_type: str) -> str | None:
@@ -200,6 +203,9 @@ def group_analysis_files(file_paths: list[str]) -> list[dict]:
         elif file_type == "roi":
             return re.sub(r"_?roi[lr]?\.csv$", "", name, flags=re.IGNORECASE)
 
+        elif file_type == "config":
+            return re.sub(r"(_maze|_config|_roi)?\.json$", "", name, flags=re.IGNORECASE)
+
         elif file_type in ("image", "video"):
             return name.rsplit(".", 1)[0]
 
@@ -214,6 +220,7 @@ def group_analysis_files(file_paths: list[str]) -> list[dict]:
                 "roi": [],
                 "image": [],
                 "video": [],
+                "config": [],
             },
         }
     )

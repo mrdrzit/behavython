@@ -8,7 +8,7 @@ import pandas as pd
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-from behavython.core.defaults import BODYPART_MAPPING, CANONICAL_BODYPARTS, MAZE_EXPERIMENT_TYPES, TOTAL_SESSION_STORAGE_QUOTA, ROI_COUNT_BY_EXPERIMENT
+from behavython.core.defaults import BODYPART_MAPPING, MAZE_EXPERIMENT_TYPES, TOTAL_SESSION_STORAGE_QUOTA, ROI_COUNT_BY_EXPERIMENT
 from behavython.core.exceptions import AnalysisError
 
 
@@ -161,7 +161,17 @@ class MappedFormatter(logging.Formatter):
 
 
 class Animal:
-    def __init__(self, animal_id, position_csv, image_path, skeleton_csv=None, roi_paths=None, video_path=None, experiment_type="object_recognition"):
+    def __init__(
+        self,
+        animal_id,
+        position_csv,
+        image_path,
+        skeleton_csv=None,
+        roi_paths=None,
+        video_path=None,
+        experiment_type="object_recognition",
+        config_path=None,
+    ):
         self.id = animal_id
         self.experiment_type = experiment_type
 
@@ -173,6 +183,7 @@ class Animal:
         self.roi_paths = [] if roi_paths is None else [roi_paths] if isinstance(roi_paths, str) else list(roi_paths)
         self.image_path = image_path
         self.video_path = video_path
+        self.config_path = config_path
 
         # Data containers
         self.bodyparts = {}
@@ -269,7 +280,6 @@ class Animal:
     def _load_position(self):
         try:
             self.bodyparts = {}
-            seen_unknown = set()
 
             df = pd.read_csv(self.position_csv, header=[0, 1, 2])
             df.columns = df.columns.droplevel(0)
@@ -280,13 +290,7 @@ class Animal:
 
                 bp_norm = bp.strip().lower()
 
-                if bp_norm not in BODYPART_MAPPING:
-                    if bp_norm not in seen_unknown:
-                        self.logs.append({"level": "warning", "message": f"Unmapped bodypart ignored: {bp}", "context": "position_loading"})
-                        seen_unknown.add(bp_norm)
-                    continue
-
-                canonical = BODYPART_MAPPING[bp_norm]
+                canonical = BODYPART_MAPPING.get(bp_norm, bp_norm)
 
                 if canonical in self.bodyparts:
                     self.logs.append(
@@ -304,11 +308,23 @@ class Animal:
                 except KeyError:
                     self.logs.append({"level": "error", "message": f"Incomplete data for bodypart: {bp}", "context": "position_loading"})
 
-            missing = [bp for bp in CANONICAL_BODYPARTS if bp not in self.bodyparts]
+            if self.experiment_type in MAZE_EXPERIMENT_TYPES:
+                if not self.bodyparts:
+                    self.logs.append({"level": "error", "message": "No valid bodyparts found in tracking data", "context": "position_loading"})
+                    self.eligible = False
+            else:
+                required = ["nose", "left_ear", "right_ear"]
+                missing = [bp for bp in required if bp not in self.bodyparts]
 
-            if missing:
-                self.logs.append({"level": "error", "message": f"Missing required bodyparts: {', '.join(missing)}", "context": "position_loading"})
-                self.eligible = False
+                if missing:
+                    self.logs.append(
+                        {
+                            "level": "error",
+                            "message": f"Missing required bodyparts for {self.experiment_type}: {', '.join(missing)}",
+                            "context": "position_loading",
+                        }
+                    )
+                    self.eligible = False
 
         except Exception as e:
             self.logs.append({"level": "error", "message": str(e), "context": "position_loading"})

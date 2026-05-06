@@ -33,7 +33,7 @@ from behavython.services.validation import validate_json_config
 from behavython.gui.dialogs import ask_yes_no, show_warning, show_info, show_worker_error
 from behavython.gui.dialogs import select_file, select_files, select_folder, select_save_folder
 from behavython.services.logging import LoggingService
-from behavython.core.utils import get_ffmpeg_path, resolve_analysis_input, resolve_output_folder, resolve_video_input, load_or_repair_dlc_yaml
+from behavython.core.utils import get_ffmpeg_path, resolve_analysis_input, resolve_output_folder, resolve_video_input, load_or_repair_dlc_yaml, group_analysis_files
 from behavython.pipeline.models import (
     AnalysisInputSource,
     OutputFolderSource,
@@ -378,11 +378,14 @@ class BehavythonMainWindow(QWidget):
         # Prompt for batch configuration if the experiment requires geometry
         config_path = None
         if options.experiment_type in ["open_field", "elevated_plus_maze"]:
-            # Ensure select_file is imported from your dialogs module
-            config_path = select_file(self.interface, "Select Arena Batch Configuration", "JSON Files (*.json)")
-            if not config_path:
-                show_warning(self.interface, "Missing Configuration", "You must select an arena configuration JSON to run a maze analysis.")
-                return
+            groups = group_analysis_files(resolved_input.paths)
+            missing_configs = any(not group["files"]["config"] for group in groups)
+
+            if missing_configs:
+                config_path = select_file(self.interface, "Select Global Fallback Configuration (Optional if all animals have configs)", "JSON Files (*.json)")
+                if not config_path:
+                    show_warning(self.interface, "Missing Configuration", "You must select an arena configuration JSON to run a maze analysis for animals missing individual configs.")
+                    return
 
         request = AnalysisRequest(
             input_files=resolved_input.paths,

@@ -202,6 +202,7 @@ def run_analysis_workflow(request: AnalysisRequest, progress: Callable = None, l
             roi_paths=files["roi"] if files["roi"] else None,
             video_path=files["video"][0] if files["video"] else None,
             experiment_type=request.options.experiment_type,
+            config_path=files["config"][0] if files["config"] else None,
         )
         animals.append(animal)
 
@@ -220,13 +221,19 @@ def run_analysis_workflow(request: AnalysisRequest, progress: Callable = None, l
                 arena_corners = []
                 maze_points = []
 
-                if request.config_path and os.path.exists(request.config_path):
-                    with open(request.config_path, "r", encoding="utf-8") as f:
+                active_config_path = animal.config_path if animal.config_path else request.config_path
+
+                if active_config_path and os.path.exists(active_config_path):
+                    with open(active_config_path, "r", encoding="utf-8") as f:
                         config_data = json.load(f)
                         if request.options.experiment_type == "open_field":
                             arena_corners = config_data.get("arena_corners", [])
                         elif request.options.experiment_type == "elevated_plus_maze":
                             maze_points = config_data.get("maze_points", [])
+                    
+                    if log:
+                        config_type = "individual" if animal.config_path else "global fallback"
+                        log.emit("resume", f"[{animal.id}] Using {config_type} config: {os.path.basename(active_config_path)}")
                 else:
                     raise AnalysisError("Arena configuration file is missing or invalid.")
 

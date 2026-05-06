@@ -373,27 +373,43 @@ def _opencv_animate_maze_crossings(animal: Animal, result: dict, request: Analys
     ratio = min(max_w / img_w, max_h / img_h) if img_w > 0 and img_h > 0 else 1
     new_w, new_h = int(img_w * ratio), int(img_h * ratio)
 
-    # Create the base background
+    # We keep base_canvas as a fallback
     if animal.image is not None:
         base_canvas = cv2.cvtColor(animal.image, cv2.COLOR_RGB2BGR)
         base_canvas = cv2.resize(base_canvas, (new_w, new_h))
     else:
         base_canvas = np.full((new_h, new_w, 3), 255, dtype=np.uint8)
 
-    # 3. Draw the Maze Geometry (Semi-transparent overlay)
+    # Pre-draw the base canvas overlay so we don't have to if we're falling back
     overlay = base_canvas.copy()
+    
+    # Pre-calculate polygon coordinates to avoid doing it per frame
+    rendered_polygons = []
     for zone_name, poly in polygons.items():
         px, py = poly.exterior.xy
         pts = np.array([[int(x * ratio), int(y * ratio)] for x, y in zip(px, py)], np.int32).reshape((-1, 1, 2))
-
         style = ZONE_STYLES.get(zone_name, FALLBACK_ZONE_STYLE)
-        cv2.fillPoly(overlay, [pts], style["cv2"])  # Correct BGR color
+        rendered_polygons.append((pts, style["cv2"]))
+        
+        cv2.fillPoly(overlay, [pts], style["cv2"])
         cv2.polylines(overlay, [pts], isClosed=True, color=CV2_GEOMETRY_OUTLINE, thickness=1)
 
-    # Apply transparency (alpha blending)
     cv2.addWeighted(overlay, 0.3, base_canvas, 0.7, 0, base_canvas)
 
-    # 4. Setup Video Writer
+    # 4. Setup Video Capture
+    cap = None
+    has_video = False
+    if getattr(animal, "video_path", None):
+        cap = cv2.VideoCapture(animal.video_path)
+        if cap is not None and cap.isOpened():
+            has_video = True
+            start_frame = int(request.options.trim_amount * fps) if request.options.crop_video else 0
+            if start_frame > 0:
+                cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
+        else:
+            console_logger.warning(f"Video could not be opened for {animal.id}. Falling back to static background.")
+
+    # 5. Setup Video Writer
     save_path = os.path.join(save_folder, f"{animal_name} - Validation Video.mp4")
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     video_writer = cv2.VideoWriter(save_path, fourcc, fps, (new_w, new_h))
@@ -405,9 +421,22 @@ def _opencv_animate_maze_crossings(animal: Animal, result: dict, request: Analys
     active_annotations = []
     frames_to_keep_text = int(fps * 2)
 
-    # 5. Render Loop
+    # 6. Render Loop
     for frame_idx in tqdm(range(len(scaled_x)), desc=f"Rendering {animal_name}", unit="frame", leave=False):
-        frame_img = base_canvas.copy()
+        frame_img = None
+        if has_video:
+            ok, fr = cap.read()
+            if ok and fr is not None:
+                frame_img = cv2.resize(fr, (new_w, new_h))
+                # Add the overlay
+                frame_overlay = frame_img.copy()
+                for pts, cv2_color in rendered_polygons:
+                    cv2.fillPoly(frame_overlay, [pts], cv2_color)
+                    cv2.polylines(frame_overlay, [pts], isClosed=True, color=CV2_GEOMETRY_OUTLINE, thickness=1)
+                cv2.addWeighted(frame_overlay, 0.3, frame_img, 0.7, 0, frame_img)
+        
+        if frame_img is None:
+            frame_img = base_canvas.copy()
 
         # Draw Trajectory Trail (last 15 frames)
         trail_start = max(0, frame_idx - 15)
@@ -448,6 +477,8 @@ def _opencv_animate_maze_crossings(animal: Animal, result: dict, request: Analys
         video_writer.write(frame_img)
 
     video_writer.release()
+    if cap is not None:
+        cap.release()
 
 
 def _matplotlib_animate_maze_crossings(animal: Animal, result: dict, request: AnalysisRequest, polygons: dict) -> None:

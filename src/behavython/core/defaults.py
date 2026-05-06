@@ -326,10 +326,10 @@ CV2_POLY_COLORS = [
 # UNIFIED ZONE & ROI STYLES
 # ==========================================
 ZONE_STYLES = {
-    "top_open": {"mpl": "#FF0000", "cv2": (0, 0, 255)},
-    "right_closed": {"mpl": "#0000FF", "cv2": (255, 0, 0)},
-    "bottom_open": {"mpl": "#008000", "cv2": (0, 128, 0)},
-    "left_closed": {"mpl": "#FFFF00", "cv2": (0, 255, 255)},
+    "top_open": {"mpl": "#ff4500", "cv2": (0, 69, 255)},        # orangered
+    "right_closed": {"mpl": "#00ff7f", "cv2": (127, 255, 0)},   # springgreen
+    "bottom_open": {"mpl": "#1e90ff", "cv2": (255, 144, 30)},   # dodgerblue
+    "left_closed": {"mpl": "#ba55d3", "cv2": (211, 85, 186)},   # mediumorchid
     "center": {"mpl": "#800080", "cv2": (128, 0, 128)},
     "none": {"mpl": HEX_MAGENTA, "cv2": BGR_MAGENTA},
     "missing": {"mpl": HEX_MAGENTA, "cv2": BGR_MAGENTA},

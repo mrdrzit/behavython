@@ -63,6 +63,44 @@ def _emit_config_repair_logs(original_path: str, usable_path: str, was_repaired:
         log.emit("dlc", "Config.yaml validated successfully.")
 
 
+def get_dlc_file_status(video_path: str) -> dict:
+    video = Path(video_path)
+    stem = video.stem
+    folder = video.parent
+
+    has_base = False
+    has_filtered = False
+
+    if not folder.exists() or not folder.is_dir():
+        return {"needs_analysis": True, "needs_filtering": True}
+
+    for file in folder.iterdir():
+        if not file.is_file():
+            continue
+
+        if not file.name.startswith(stem):
+            continue
+
+        remaining = file.name[len(stem):]
+        if not (remaining.startswith("DLC") or remaining.startswith("SuperAnimal") or remaining.startswith("CollectedData")):
+            continue
+
+        # Ignore known non-dlc tracking files
+        if file.name.endswith(("_roi.csv", "roil.csv", "roir.csv", ".jpg", ".mp4", ".avi", ".mov", ".pickle", ".yaml", ".json")):
+            continue
+
+        if file.suffix in [".h5", ".csv"]:
+            if "filtered" in file.name:
+                has_filtered = True
+            else:
+                has_base = True
+
+    needs_analysis = not has_base and not has_filtered
+    needs_filtering = not has_filtered
+
+    return {"needs_analysis": needs_analysis, "needs_filtering": needs_filtering}
+
+
 def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=None, warning=None):
     errors = validate_config_path(request.config_path) + validate_video_paths(request.video_paths)
 
@@ -98,6 +136,30 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
     _, usable_config_path, was_repaired = prepare_dlc_config(request.config_path)
     _emit_config_repair_logs(request.config_path, usable_config_path, was_repaired, log)
 
+    videos_to_analyze = []
+    videos_to_filter = []
+
+    for video in request.video_paths:
+        status = get_dlc_file_status(video)
+        if status["needs_analysis"]:
+            videos_to_analyze.append(video)
+            videos_to_filter.append(video)
+        elif status["needs_filtering"]:
+            videos_to_filter.append(video)
+        else:
+            console_logger.info(f"Skipping {Path(video).name}: Already analyzed and filtered.")
+
+    if not videos_to_analyze and not videos_to_filter:
+        console_logger.info("All videos are already fully processed. Skipping DLC analysis.")
+        if progress:
+            progress.emit(100)
+        return {
+            "kind": "dlc_analysis",
+            "videos": len(request.video_paths),
+            "config_path_used": usable_config_path,
+            "config_was_repaired": was_repaired,
+        }
+
     deeplabcut = load_deeplabcut()
 
     if log:
@@ -105,67 +167,69 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
 
     extension = os.path.splitext(request.video_paths[0])[1].lower()
 
-    if log:
-        log.emit("dlc", "Analyzing videos...")
-    dlc_logger.info("Calling deeplabcut.analyze_videos")
+    if videos_to_analyze:
+        if log:
+            log.emit("dlc", "Analyzing videos...")
+        dlc_logger.info("Calling deeplabcut.analyze_videos")
 
-    if progress:
-        progress.emit(40)
+        if progress:
+            progress.emit(40)
 
-    # Admittedly, not the best approach to log progress as I'm inserting
-    # a little bit of overhead by analyzing videos one by one,
-    # but deeplabcut doesn't provide a way to get progress when analyzing
-    # multiple videos at once, and this way i can at least log the some
-    # information about which video is being analyzed in the console output.
-    console_logger.info(f"DLC analysis start | videos={len(request.video_paths)}")
-    console_logger.info("DLC note | Progress bar may appear stuck during first video")
-    console_logger.info("DLC note | Processing is approximately real-time for GPUs like the RTX 3060")
-    console_logger.info("DLC note | It may be fast for newer GPUs and slower for older GPUs or CPU-only")
-    for video in tqdm(request.video_paths, desc="Analyzing videos", unit="video"):
-        # repair config for each video in case DLC moves or creates files during analysis that break the config.yaml
-        # this is a bit of a band-aid for DLC's tendency to break the config.yaml, but it should help make the process more robust overall
-        # Need to look into why DLC corrupts the config.yaml every time it analyzes a video
-        # Also done below
-        _, usable_config_path, was_repaired = prepare_dlc_config(request.config_path)
+        console_logger.info(f"DLC analysis start | videos={len(videos_to_analyze)}")
+        console_logger.info("DLC note | Progress bar may appear stuck during first video")
+        console_logger.info("DLC note | Processing is approximately real-time for GPUs like the RTX 3060")
+        console_logger.info("DLC note | It may be fast for newer GPUs and slower for older GPUs or CPU-only")
+        for video in tqdm(videos_to_analyze, desc="Analyzing videos", unit="video"):
+            _, usable_config_path, was_repaired = prepare_dlc_config(request.config_path)
+            with capture_external_output("behavython.external"):
+                deeplabcut.analyze_videos(
+                    usable_config_path,
+                    [video],
+                    videotype=extension,
+                    shuffle=1,
+                    trainingsetindex=0,
+                    gputouse=gpu_to_use,
+                    allow_growth=True,
+                    save_as_csv=True,
+                )
+
+    if videos_to_filter:
+        if log:
+            log.emit("dlc", "Filtering predictions...")
+        dlc_logger.info("Calling deeplabcut.filterpredictions")
+
+        if progress:
+            progress.emit(60)
+
+        console_logger.info(f"Filtering predictions with DeepLabCut for {len(videos_to_filter)} video(s)")
         with capture_external_output("behavython.external"):
-            deeplabcut.analyze_videos(
+            _, usable_config_path, was_repaired = prepare_dlc_config(request.config_path)
+            deeplabcut.filterpredictions(
                 usable_config_path,
-                [video],
+                videos_to_filter,
                 videotype=extension,
                 shuffle=1,
                 trainingsetindex=0,
-                gputouse=gpu_to_use,
-                allow_growth=True,
+                filtertype="median",
                 save_as_csv=True,
             )
-
-    if log:
-        log.emit("dlc", "Filtering predictions...")
-    dlc_logger.info("Calling deeplabcut.filterpredictions")
-
-    if progress:
-        progress.emit(60)
-
-    console_logger.info(f"Filtering predictions with DeepLabCut for {len(request.video_paths)} video(s)")
-    with capture_external_output("behavython.external"):
-        _, usable_config_path, was_repaired = prepare_dlc_config(request.config_path)
-        deeplabcut.filterpredictions(
-            usable_config_path,
-            request.video_paths,
-            videotype=extension,
-            shuffle=1,
-            trainingsetindex=0,
-            filtertype="median",
-            save_as_csv=True,
-        )
-        deeplabcut.analyzeskeleton(
-            usable_config_path,
-            request.video_paths,
-            shuffle=1,
-            trainingsetindex=0,
-            filtered=True,
-            save_as_csv=True,
-        )
+            try:
+                deeplabcut.analyzeskeleton(
+                    usable_config_path,
+                    videos_to_filter,
+                    shuffle=1,
+                    trainingsetindex=0,
+                    filtered=True,
+                    save_as_csv=True,
+                )
+            except Exception as e:
+                if "skeleton" in str(e).lower():
+                    msg = "No skeleton defined in config.yaml. Skipping skeleton analysis."
+                    console_logger.warning(msg)
+                    if warning:
+                        warning.emit("Warning", msg)
+                else:
+                    raise
 
     if request.create_plots:
         dlc_logger.info("Custom plotting is handled separately via DLCLikelihoodPlotRequest.")
@@ -622,55 +686,59 @@ def run_analyze_frames(request: DLCAnalyzeFramesRequest, progress=None, log=None
 
 def run_generate_likelihood_plots(request: DLCLikelihoodPlotRequest, progress=None, log=None, warning=None) -> dict:
     from behavython.pipeline.plotting import plot_custom_likelihood
-    
+
     if log:
         log.emit("dlc", "Starting custom likelihood plot generation...")
-        
+
     config_dict, usable_config_path, was_repaired = prepare_dlc_config(request.config_path)
-    
+
     folder = Path(request.folder_path)
     if not folder.exists() or not folder.is_dir():
         raise AnalysisError(f"Invalid folder: {folder}")
-        
+
     # Find all .h5 files
     h5_files = list(folder.glob("*_filtered.h5")) + list(folder.glob("CollectedData_*.h5"))
-    h5_files = list(set(h5_files)) # Remove duplicates if any overlap
-    
+    unwanted = folder / "unwanted_files"
+    if unwanted.exists() and unwanted.is_dir():
+        h5_files.extend(unwanted.glob("*_filtered.h5"))
+        h5_files.extend(unwanted.glob("CollectedData_*.h5"))
+    h5_files = list(set(h5_files))  # Remove duplicates if any overlap
+
     if not h5_files:
         raise AnalysisError(f"No DLC tracking data (.h5) found in {folder.name}.")
-        
+
     total = len(h5_files)
     generated_count = 0
-    
+
     if progress:
         progress.emit(10)
-        
+
     console_logger.info(f"Generating custom likelihood plots for {total} files in {folder.name}")
-    
+
     for idx, h5_file in enumerate(h5_files, start=1):
         try:
             output_name = h5_file.stem + "_likelihood.png"
             output_path = folder / output_name
-            
+
             plot_custom_likelihood(str(h5_file), config_dict, str(output_path))
             generated_count += 1
-            
+
             if log:
                 log.emit("dlc", f"Generated: {output_name}")
-                
+
         except Exception as e:
             dlc_logger.error(f"Failed to plot {h5_file.name}: {e}")
             if warning:
                 warning.emit("Warning", f"Failed to plot likelihood for {h5_file.name}: {e}")
-                
+
         if progress:
             progress.emit(10 + int(90 * (idx / total)))
 
     console_logger.info(f"Finished generating {generated_count} likelihood plot(s).")
-    
+
     if progress:
         progress.emit(100)
-        
+
     return {
         "kind": "dlc_likelihood_plots",
         "plots_generated": generated_count,
