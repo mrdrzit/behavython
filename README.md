@@ -27,7 +27,8 @@
 - [Getting Started](#getting-started)
   - [Automated Installation (Windows)](#automated-installation-windows)
   - [Step-by-Step Installation (Manual)](#step-by-step-installation-manual)
-  - [GPU Setup (Critical)](#gpu-setup-critical)
+  - [GPU Setup](#gpu-setup)
+- [CLI Usage](#cli-usage)
 - [Pretrained Models](#pretrained-models)
 - [Video Pre-processing](#video-pre-processing)
 - [Workflow & Configuration](#workflow--configuration)
@@ -84,22 +85,67 @@ mamba activate behavython
 **3. Install Behavython:**
 Use `pip` inside the activated environment. **Crucial:** You must include the extra index URL to fetch the correct GPU-compiled PyTorch wheels. Omitting this may result in an incompatible CPU-only installation.
 
+**Option A: TensorFlow (Stable / DLC 2.3.x)**
+Recommended for most established pipelines.
 ```bash
-pip install behavython --extra-index-url https://download.pytorch.org/whl/cu118
+pip install "behavython[tf]"
 ```
 
-### GPU Setup (Critical)
-
-> ⚠️ **Required for correct execution**
-
-Behavython relies heavily on GPU-accelerated frameworks. You must install the NVIDIA CUDA toolkit and cuDNN **AFTER** you have completed the pip installation above, and it must be done **INSIDE** the active `behavython` environment.
-
+**Option B: PyTorch (Experimental / DLC 3.x)**
+Recommended for the latest DeepLabCut features. For GPU support (e.g., CUDA 12.6), install the backend wheels first:
 ```bash
-# Ensure you are still inside the 'behavython' environment
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
+pip install "behavython[torch]"
+```
+
+To use your NVIDIA GPU for tracking, you must have the appropriate drivers and libraries installed.
+
+**For TensorFlow (Option A):**
+TensorFlow 2.10 requires specific versions of the CUDA toolkit and cuDNN. Run this inside your environment to install them:
+```bash
 mamba install -c conda-forge cudatoolkit=11.2 cudnn=8.1.0
 ```
 
-Failure to configure the GPU dependencies correctly will result in severe processing slowdowns and potential runtime memory errors during DeepLabCut operations.
+Failure to configure the GPU dependencies correctly will result in severe processing slowdowns during DeepLabCut operations.
+
+**For PyTorch (Option B):**
+The `pip install` command above with the `--index-url` bundles the necessary CUDA kernels within the wheels. You only need to ensure your **system NVIDIA drivers** are up to date
+
+-----
+
+## CLI Usage
+
+Behavython ships a headless command-line entry point (`behavython-cli`) for batch processing without opening the GUI. This is useful for server-side automation or scripted pipelines.
+
+**Basic usage:**
+```bash
+behavython-cli --config run.json
+```
+
+**With overrides:**
+```bash
+behavython-cli --config run.json --output /data/results --no-plots
+```
+
+A ready-to-edit config template ships with the package at `behavython/config/cli_config.json`. Fields:
+
+| Field | Description | Default |
+|---|---|---|
+| `experiment_type` | One of: `open_field`, `elevated_plus_maze`, `social_recognition`, `social_discrimination`, `object_discrimination` | — |
+| `input_folder` | Folder containing all animal files (CSVs, images, ROI/JSON configs) | — |
+| `output_folder` | Destination directory for results | — |
+| `config_path` | Global fallback arena JSON (maze experiments only) | `null` |
+| `arena_width` / `arena_height` | Physical arena dimensions in cm | `30` |
+| `frames_per_second` | Recording frame rate | `30` |
+| `task_duration` | Analysis window in seconds | `300` |
+| `trim_amount` | Seconds to skip at video start | `0` |
+| `crop_video` | Restrict analysis to `[trim, trim + duration]` | `false` |
+| `animal` | `mouse` or `rat` (sets body-length threshold) | `mouse` |
+| `figure_resolution` | Max plot resolution: `640x480`, `1280x720`, `1920x1080`, `2560x1440` | `1920x1080` |
+| `no_plots` | Skip plot generation | `false` |
+| `generate_video` | Generate annotated output video | `false` |
+
+Return codes: `0` = all animals valid, `1` = fatal error, `2` = completed with warnings/invalid animals.
 
 -----
 

@@ -36,19 +36,21 @@ dependencies = [
     "flask",
     "shapely",
 
-    # TensorFlow Stack (DLC 2.3 specific)
+    # Core GUI
+    "PySide6==6.7.3"
+]
+
+[project.optional-dependencies]
+tf = [
+    "deeplabcut[gui]==2.3.10",
     "tensorflow<2.11",
     "tensorpack",
     "tf_slim",
-
-    # PyTorch Stack
+]
+torch = [
+    "deeplabcut[gui]==3.0.0rc14",
     "torch",
     "torchvision",
-    "torchaudio",
-
-    # DeepLabCut + GUI
-    "deeplabcut==2.3.10",
-    "PySide6==6.7.3"
 ]
 
 [project.urls]
@@ -56,7 +58,8 @@ dependencies = [
 "Bug Tracker" = "https://github.com/mrdrzit/Behavython/issues"
 
 [project.scripts]
-behavython = "behavython.main:main"
+behavython     = "behavython.main:main"
+behavython-cli = "behavython.cli:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -71,4 +74,5 @@ behavython = [
     "gui/assets/**/*",
     "ffmpeg/bin/*",
     "ffmpeg/**/*",
+    "config/*",
 ]

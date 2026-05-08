@@ -1,0 +1,18 @@
+{
+    "experiment_type": "social_recognition",
+    "input_folder": "C:/data/experiment/",
+    "input_files": [],
+    "output_folder": "C:/data/results",
+    "config_path": null,
+    "arena_width": 30,
+    "arena_height": 30,
+    "frames_per_second": 30,
+    "task_duration": 300,
+    "trim_amount": 0,
+    "crop_video": false,
+    "animal": "mouse",
+    "figure_resolution": "1920x1080",
+    "no_plots": false,
+    "generate_video": false,
+    "algo_type": "deeplabcut"
+}
