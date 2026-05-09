@@ -6,7 +6,7 @@ import shutil
 import logging
 import subprocess
 import pandas as pd
-from tqdm import tqdm
+
 from pathlib import Path
 from typing import Any
 from behavython.core.defaults import ANALYSIS_REQUIRED_SUFFIXES, MAZE_EXPERIMENT_TYPES
@@ -176,7 +176,8 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
             progress.emit(40)
 
         console_logger.info(f"DLC analysis start | videos={len(videos_to_analyze)}")
-        for video in tqdm(videos_to_analyze, desc="Analyzing videos", unit="video"):
+        for i, video in enumerate(videos_to_analyze, 1):
+            console_logger.info(f"Processing video {i}/{len(videos_to_analyze)}: {Path(video).name}")
             _, usable_config_path, was_repaired = prepare_dlc_config(request.config_path)
             with capture_external_output("behavython.external"):
                 deeplabcut.analyze_videos(

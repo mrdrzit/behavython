@@ -44,12 +44,14 @@ class _FilteredExternalStream(io.TextIOBase):
         self,
         logger: logging.Logger,
         level: int,
+        is_cli: bool = False,
     ) -> None:
         super().__init__()
         self.logger = logger
         self.level = level
         self._buffer = ""
         self._last_percent = -1
+        self.is_cli = is_cli
 
     def _is_tqdm_text(self, text: str) -> bool:
         tqdm_markers = ("%|", "it/s]", "|█")
@@ -91,8 +93,12 @@ class _FilteredExternalStream(io.TextIOBase):
         return any(pattern in line for pattern in noisy_patterns)
 
     def _emit_line(self, line: str) -> None:
-        stripped_line = line.strip()
-        if not stripped_line:
+        ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+        clean_line = ansi_escape.sub("", line)
+        stripped_line = clean_line.strip()
+
+        # tqdm sometimes leaves trailing bracket artifacts if escapes were mangled
+        if stripped_line == "[A" or not stripped_line:
             return
 
         if self._is_tqdm_text(stripped_line):
@@ -101,7 +107,12 @@ class _FilteredExternalStream(io.TextIOBase):
             if match:
                 percent = int(match.group(1))
                 if percent % 10 == 0 and percent != self._last_percent:
-                    self.logger.log(self.level, f"Progress: {percent}%")
+                    speed_match = re.search(r"([0-9.]+\s*(?:it/s|s/it))", stripped_line)
+                    speed_str = f" | {speed_match.group(1)}" if speed_match else ""
+                    msg = f"Progress: {percent}%{speed_str}"
+                    self.logger.log(self.level, msg)
+                    if not self.is_cli:
+                        logging.getLogger("behavython.console").info(msg)
                     self._last_percent = percent
             return
 
@@ -262,12 +273,14 @@ class AppLoggingService:
         stdout_stream = _FilteredExternalStream(
             logger=logger,
             level=logging.INFO,
+            is_cli=self.is_cli,
             # passthrough_stream=sys.__stdout__,
             # allow_terminal_progress=True,
         )
         stderr_stream = _FilteredExternalStream(
             logger=logger,
             level=logging.INFO,
+            is_cli=self.is_cli,
             # passthrough_stream=sys.__stdout__,
             # allow_terminal_progress=True,
         )
