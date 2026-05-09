@@ -18,10 +18,10 @@ def main() -> int:
     _window = bootstrap()
 
     try:
-        os.system("cls")
+        os.system("cls" if os.name == "nt" else "clear")
         startup = _()
-        os.system(f"echo {startup}")
-        os.system("echo.")
+        print(startup)
+        print()
     except Exception:
         pass
 

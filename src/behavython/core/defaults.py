@@ -5,6 +5,27 @@ APP_NAME = "Behavython"
 MAIN_WINDOW_TITLE = "Behavython"
 LOGO_WIDGET_NAME = "behavython_logo"
 
+# ==========================================
+# FFMPEG DOWNLOAD URLS
+# ==========================================
+# Windows + Linux: BtbN automated GitHub Actions builds.
+#   Both ffmpeg and ffprobe are bundled in a single archive.
+#   Archive structure: <root>/<name>/bin/ffmpeg[.exe]
+#
+# macOS: evermeet.cx static builds (John Van Sickle).
+#   Third-party but widely trusted; FFmpeg's own download page references it.
+#   ffmpeg and ffprobe are distributed as SEPARATE zip archives.
+#   Archive structure: flat zip containing just the binary at the root.
+#   Using the un-versioned URLs so users always get the latest build.
+FFMPEG_DOWNLOAD_URLS: dict[str, str | None] = {
+    "Windows": "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip",
+    "Linux":   "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz",
+    "Darwin":  "https://evermeet.cx/ffmpeg/ffmpeg.zip",
+}
+
+# macOS only: separate ffprobe download (evermeet.cx distributes the two binaries separately)
+FFPROBE_MACOS_URL: str = "https://evermeet.cx/ffprobe/ffprobe.zip"
+
 SCROLLBAR_STYLE = """
 /* =========================================
    VERTICAL SCROLLBAR
