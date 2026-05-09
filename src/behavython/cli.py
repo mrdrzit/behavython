@@ -7,8 +7,6 @@ to run_analysis_workflow(), the same function the GUI uses internally.
 
 Usage:
     behavython-cli --config run.json [--files file1.csv ...] [--output /path/to/out] [--no-plots]
-
-See: cli_config.example.json for the expected config format.
 """
 
 from __future__ import annotations
@@ -20,6 +18,11 @@ import os
 import sys
 from pathlib import Path
 from typing import Any
+from behavython.core.defaults import (
+    EXPERIMENT_TYPES,
+    MAZE_EXPERIMENT_TYPES,
+    ANALYSIS_REQUIRED_SUFFIXES,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -34,11 +37,13 @@ class _ProgressAdapter:
     """Mimics a Qt Signal with a single .emit(value: int) method."""
 
     def emit(self, value: int) -> None:
-        # Overwrite the current line with a progress bar
+        # Clear the current line and overwrite with progress bar
         bar_len = 30
         filled = int(bar_len * value / 100)
         bar = "█" * filled + "░" * (bar_len - filled)
-        print(f"\r  Progress [{bar}] {value:3d}%", end="", flush=True)
+        # Use \x1b[2K to clear the line and \r to return to start
+        sys.stdout.write(f"\r\x1b[2K  Progress [{bar}] {value:3d}%")
+        sys.stdout.flush()
         if value >= 100:
             print()  # newline on completion
 
@@ -57,20 +62,17 @@ class _WarningAdapter:
     """Mimics a Qt Signal with a .emit(title: str, message: str) method."""
 
     def emit(self, title: str, message: str) -> None:
-        print(f"\n[WARNING] {title}: {message}", file=sys.stderr)
+        # Avoid duplicate "Warning: Warning" by checking message
+        msg = f"{title}: {message}" if title.lower() not in message.lower() else message
+        print(f"\r\x1b[2K[WARNING] {msg}", file=sys.stderr)
 
 
 # ---------------------------------------------------------------------------
-# Config validation and AnalysisOptions construction
+# Config validation constants — derived from core.defaults to avoid drift
 # ---------------------------------------------------------------------------
 
-_VALID_EXPERIMENT_TYPES = {
-    "open_field",
-    "elevated_plus_maze",
-    "social_recognition",
-    "social_discrimination",
-    "object_discrimination",
-}
+# All valid experiment types: maze + interaction paradigms
+_VALID_EXPERIMENT_TYPES: frozenset[str] = frozenset(EXPERIMENT_TYPES) | MAZE_EXPERIMENT_TYPES
 
 _VALID_FIG_RESOLUTIONS = {
     "640x480": ["640", "480"],
@@ -89,18 +91,10 @@ _ANIMAL_THRESHOLD = {
 # Folder-based file collection
 # ---------------------------------------------------------------------------
 
-# All suffixes that the analysis pipeline understands.
-# Derived from ANALYSIS_REQUIRED_SUFFIXES in defaults.py.
-_ANALYSIS_SUFFIXES = (
-    ".png",
-    ".jpg",
-    ".jpeg",
-    ".tiff",  # image
-    ".mp4",
-    ".avi",
-    ".mov",  # video
-    ".csv",  # position, skeleton, roi
-    ".json",  # maze/arena config
+# Flat set of file extensions the analysis pipeline understands,
+# derived from ANALYSIS_REQUIRED_SUFFIXES so it stays in sync automatically.
+_ANALYSIS_SUFFIXES: frozenset[str] = frozenset(
+    Path(s).suffix if not s.startswith(".") else s for values in ANALYSIS_REQUIRED_SUFFIXES.values() for s in values
 )
 
 
@@ -207,9 +201,17 @@ def _build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 examples:
+  # Run full analysis from a config file
   behavython-cli --config run.json
-  behavython-cli --config run.json --output /data/results --no-plots
-  behavython-cli --config run.json --files a_filtered.csv a.png a_roi.csv
+
+  # Standardize all videos in a folder
+  behavython-cli --input-folder ./raw_videos --standardize
+
+  # Run batch cropping from a saved project
+  behavython-cli --input-folder ./data --run-cropping --crop-config project.json
+
+  # Run DeepLabCut tracking on a folder
+  behavython-cli --input-folder ./videos --run-tracking --dlc-config config.yaml
         """,
     )
 
@@ -252,6 +254,79 @@ examples:
         help=f"Experiment type. One of: {', '.join(sorted(_VALID_EXPERIMENT_TYPES))}",
     )
     parser.add_argument(
+        "--run-tracking",
+        action="store_true",
+        help="Run DeepLabCut tracking (analysis + filtering) on the input videos.",
+    )
+    parser.add_argument(
+        "--dlc-config",
+        metavar="PATH",
+        help="Path to the DeepLabCut config.yaml file (required for --run-tracking).",
+    )
+    parser.add_argument(
+        "--standardize",
+        action="store_true",
+        help="Standardize videos in the input folder to a compatible codec (H.264/CFR).",
+    )
+    parser.add_argument(
+        "--run-cropping",
+        action="store_true",
+        help="Run batch cropping on videos using a previously saved cropping project JSON.",
+    )
+    parser.add_argument(
+        "--crop-config",
+        metavar="PATH",
+        help="Path to the cropping project JSON file (required for --run-cropping).",
+    )
+    parser.add_argument(
+        "--extract-frames",
+        action="store_true",
+        help="Extract one representative frame per video (at 50%% duration by default).",
+    )
+    parser.add_argument(
+        "--frame-number",
+        type=int,
+        metavar="N",
+        default=None,
+        help="Override the frame index used by --extract-frames (default: 50%% of video duration).",
+    )
+    parser.add_argument(
+        "--cleanup",
+        action="store_true",
+        help="Move files not needed for the given experiment type to an 'unwanted_files/' subfolder.",
+    )
+    parser.add_argument(
+        "--likelihood-plots",
+        action="store_true",
+        help="Generate custom likelihood plots for all filtered .h5 tracking files in the folder.",
+    )
+    parser.add_argument(
+        "--annotate-video",
+        action="store_true",
+        help="Create DeepLabCut annotated videos (keypoints overlaid) for all videos in the folder.",
+    )
+    parser.add_argument(
+        "--init",
+        action="store_true",
+        help=(
+            "Copy template config files to a directory. Use --experiment-type to get the matching arena config, or omit it to export all templates."
+        ),
+    )
+    parser.add_argument(
+        "--transfer-labels",
+        action="store_true",
+        help=(
+            "Transfer DLC labels from one project to another, stripping bodyparts "
+            "not present in the target config. Requires --dlc-config and --label-folders."
+        ),
+    )
+    parser.add_argument(
+        "--label-folders",
+        nargs="+",
+        metavar="DIR",
+        help="One or more labeled-data directories to transfer (used with --transfer-labels).",
+    )
+    parser.add_argument(
         "--verbose",
         "-v",
         action="store_true",
@@ -259,6 +334,64 @@ examples:
     )
 
     return parser
+
+
+# ---------------------------------------------------------------------------
+# Argument validation
+# ---------------------------------------------------------------------------
+
+_DLC_ACTIONS = frozenset(["run_tracking", "likelihood_plots", "annotate_video", "transfer_labels"])
+
+
+def _validate_args(args: argparse.Namespace) -> list[str]:
+    """
+    Validates argument combinations upfront, before any actions run.
+    Returns a list of human-readable error strings. An empty list means valid.
+    """
+    errors: list[str] = []
+
+    # --- Orphaned modifiers (flags that require a parent action) ---
+    if args.frame_number is not None and not args.extract_frames:
+        errors.append("--frame-number has no effect without --extract-frames.")
+
+    if args.crop_config and not args.run_cropping:
+        errors.append("--crop-config has no effect without --run-cropping.")
+
+    if args.dlc_config and not any(getattr(args, a, False) for a in _DLC_ACTIONS):
+        errors.append("--dlc-config has no effect without a DLC action (--run-tracking, --likelihood-plots, --annotate-video, or --transfer-labels).")
+
+    if args.label_folders and not args.transfer_labels:
+        errors.append("--label-folders has no effect without --transfer-labels.")
+
+    if args.no_plots and not any([args.config, args.experiment_type]):
+        errors.append("--no-plots has no effect without a behavioral analysis step (--config or --experiment-type).")
+
+    # --- Required companions (actions that need a specific flag) ---
+    if args.run_cropping and not args.crop_config:
+        errors.append("--run-cropping requires --crop-config <PATH>.")
+
+    if args.run_tracking and not args.dlc_config:
+        errors.append("--run-tracking requires --dlc-config <PATH>.")
+
+    if args.likelihood_plots and not args.dlc_config:
+        errors.append("--likelihood-plots requires --dlc-config <PATH>.")
+
+    if args.annotate_video and not args.dlc_config:
+        errors.append("--annotate-video requires --dlc-config <PATH>.")
+
+    if args.transfer_labels and not args.dlc_config:
+        errors.append("--transfer-labels requires --dlc-config <PATH> (the TARGET project's config.yaml).")
+
+    if args.transfer_labels and not args.label_folders:
+        errors.append("--transfer-labels requires --label-folders <DIR> [DIR ...].")
+
+    if args.cleanup and not args.experiment_type and not args.config:
+        errors.append("--cleanup requires --experiment-type <TYPE> (or 'experiment_type' in --config).")
+
+    # --- Mutually exclusive pairs ---
+    # (none currently, but this is where they would go)
+
+    return errors
 
 
 # ---------------------------------------------------------------------------
@@ -270,15 +403,161 @@ def main() -> int:
     parser = _build_parser()
     args = parser.parse_args()
 
-    # --- Logging setup ---
-    log_level = logging.DEBUG if args.verbose else logging.INFO
-    logging.basicConfig(
-        level=log_level,
-        format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
-        datefmt="%H:%M:%S",
-        stream=sys.stdout,
+    # --- Upfront argument validation (fail fast, fail clearly) ---
+    arg_errors = _validate_args(args)
+    if arg_errors:
+        print("[ERROR] Invalid argument combination(s):", file=sys.stderr)
+        for err in arg_errors:
+            print(f"  \u2022 {err}", file=sys.stderr)
+        print("\nRun 'behavython-cli --help' for usage information.", file=sys.stderr)
+        return 1
+
+    # --- ACTION: Init (no logging needed, runs before everything) ---
+    if args.init:
+        import shutil
+        from behavython.core.paths import PACKAGE_ROOT
+
+        dest = Path(args.output).resolve() if args.output else Path.cwd()
+        dest.mkdir(parents=True, exist_ok=True)
+
+        # Always copy the CLI config template
+        config_src = PACKAGE_ROOT / "config" / "cli_config.example.json"
+        if config_src.exists():
+            shutil.copy2(config_src, dest / "cli_config.example.json")
+            print(f"  [INIT] cli_config.example.json -> {dest}")
+        else:
+            print(f"  [INIT] WARNING: cli_config.example.json not found at {config_src}", file=sys.stderr)
+
+        # Arena config: export matching type, or all if unspecified
+        arena_map = {
+            "open_field": "arena_config_open_field.json",
+            "elevated_plus_maze": "arena_config_elevated_plus_maze.json",
+        }
+        exp_type = args.experiment_type
+        if exp_type:
+            # Export only the matching arena config
+            targets = {exp_type: arena_map[exp_type]} if exp_type in arena_map else {}
+            if not targets:
+                print(f"  [INIT] No arena template for experiment type '{exp_type}' (not a maze experiment).")
+        else:
+            targets = arena_map
+
+        arena_config_root = PACKAGE_ROOT / "assets" / "config"
+        for exp, filename in targets.items():
+            src = arena_config_root / filename
+            if src.exists():
+                shutil.copy2(src, dest / filename)
+                print(f"  [INIT] {filename} ({exp}) -> {dest}")
+            else:
+                print(f"  [INIT] WARNING: {filename} not found at {src}", file=sys.stderr)
+
+        # Build a clear, file-specific summary
+        copied_cli = dest / "cli_configexample.json"
+        print()
+        print("  Files copied to:", dest)
+        print()
+        if copied_cli.exists():
+            print("  cli_config.example.json")
+            print("    -> Fill in experiment_type, input_folder, output_folder, fps, etc.")
+            print("    -> Then run: behavython-cli --config cli_config.example.json")
+            print()
+        for exp, filename in targets.items():
+            arena_dest = dest / filename
+            if arena_dest.exists():
+                print(f"  {filename}  [{exp}]")
+                print("    -> Fill in the pixel coordinates for your arena/maze.")
+                print("    -> Then use it as: behavython-cli --arena-config", arena_dest.name, "--config cli_config.example.json")
+                print()
+
+        # --init can be combined with real pipeline actions (e.g. --init --run-tracking).
+        # --experiment-type is a modifier, not a standalone action, so it must NOT be counted here
+        # (otherwise `--init --experiment-type X` would fall through into input file resolution).
+        _other_pipeline_actions = any(
+            [
+                args.run_tracking,
+                args.standardize,
+                args.run_cropping,
+                args.extract_frames,
+                args.cleanup,
+                args.likelihood_plots,
+                args.annotate_video,
+                args.transfer_labels,
+                args.config,
+            ]
+        )
+        if not _other_pipeline_actions:
+            return 0
+
+    # --- ACTION: Transfer DLC Labels ---
+    if args.transfer_labels:
+        from behavython.scripts.transfer_dlc_labels import transfer_dlc_labels
+
+        output_dir = args.output or None
+        print(f"[TRANSFER] Target config : {args.dlc_config}")
+        print(f"[TRANSFER] Source folders: {len(args.label_folders)}")
+        if output_dir:
+            print(f"[TRANSFER] Output dir    : {output_dir}")
+
+        transfer_dlc_labels(
+            folders=args.label_folders,
+            target_config_path=args.dlc_config,
+            output_dir=output_dir,
+        )
+
+        _other_actions = any(
+            [
+                args.run_tracking,
+                args.standardize,
+                args.run_cropping,
+                args.extract_frames,
+                args.cleanup,
+                args.likelihood_plots,
+                args.annotate_video,
+                args.config,
+                args.experiment_type,
+            ]
+        )
+        if not _other_actions:
+            return 0
+
+    # --- Logging setup: reuse the same AppLoggingService as the GUI ---
+    # This gives us: rotating file logs, structured format, filtered external
+    # output, and the same noise suppression for TF/Torch/matplotlib.
+    from behavython.core.paths import RUNTIME_ROOT, DATA_ROOT
+    from behavython.pipeline.models import RuntimeStorageConfig
+    from behavython.services.storage import RuntimeStorage
+    from behavython.services.logging import AppLoggingService, register_logging_service
+
+    runtime_storage = RuntimeStorage(
+        config=RuntimeStorageConfig(
+            runtime_root=RUNTIME_ROOT,
+            data_root=DATA_ROOT,
+            keep_last_sessions=10,
+        )
     )
+    app_logging = AppLoggingService(runtime_storage)
+    register_logging_service(app_logging)
+
+    # The GUI routes console output to a Qt widget. In the CLI we route it
+    # to stdout instead so the user sees the same messages in the terminal.
+    _cli_console_handler = logging.StreamHandler(sys.stdout)
+    _cli_console_handler.setLevel(logging.DEBUG if args.verbose else logging.INFO)
+    _cli_console_handler.setFormatter(
+        logging.Formatter(
+            fmt="%(asctime)s | %(levelname)-7s | %(message)s",
+            datefmt="%H:%M:%S",
+        )
+    )
+    console_logger = logging.getLogger("behavython.console")
+    console_logger.addHandler(_cli_console_handler)
+
+    # Also print behavython.cli and behavython.dlc to the terminal
+    for _name in ("behavython.cli", "behavython.dlc", "behavython"):
+        _lg = logging.getLogger(_name)
+        _lg.addHandler(_cli_console_handler)
+
     logger = logging.getLogger("behavython.cli")
+    logger.setLevel(logging.DEBUG if args.verbose else logging.INFO)
 
     # --- Load config file ---
     file_config: dict[str, Any] = {}
@@ -294,9 +573,22 @@ def main() -> int:
                 logger.error("Failed to parse config file: %s", exc)
                 return 1
         logger.info("Loaded config: %s", config_path)
-    elif not any([args.input_folder, args.output, args.experiment_type]):
+    elif not any(
+        [
+            args.input_folder,
+            args.output,
+            args.experiment_type,
+            args.run_tracking,
+            args.standardize,
+            args.run_cropping,
+            args.extract_frames,
+            args.cleanup,
+            args.likelihood_plots,
+            args.annotate_video,
+        ]
+    ):
         parser.print_help()
-        print("\n[ERROR] Provide at least --config or --files + --output + --experiment-type.", file=sys.stderr)
+        print("\n[ERROR] Provide at least --config or an action flag.", file=sys.stderr)
         return 1
 
     # --- Resolve input files ---
@@ -332,6 +624,237 @@ def main() -> int:
             for p in missing:
                 logger.error("  %s", p)
             return 1
+
+    # --- ACTION: Video Standardization ---
+    if args.standardize:
+        video_extensions = (".mp4", ".avi", ".mov", ".mkv")
+        video_files = [f for f in input_files if f.lower().endswith(video_extensions)]
+
+        if not video_files:
+            logger.error("No video files found for standardization in: %s", input_folder or "provided files")
+            return 1
+
+        logger.info("Videos to process: %d", len(video_files))
+
+        from behavython.services.video_service import run_standardize_videos
+
+        try:
+            run_standardize_videos(
+                request={"videos": video_files},
+                progress=_ProgressAdapter(),
+                log=_LogAdapter(logger),
+                warning=_WarningAdapter(),
+            )
+            logger.info("Standardization complete.")
+        except Exception as exc:
+            logger.error("Standardization failed: %s", exc)
+            return 1
+
+        # If this was the only action requested, we exit.
+        if not any([args.config, args.experiment_type, args.run_cropping, args.run_tracking]):
+            return 0
+
+    # --- ACTION: Batch Cropping ---
+    if args.run_cropping:
+        if not args.crop_config:
+            logger.error("--crop-config is required when using --run-cropping.")
+            return 1
+        if not os.path.isfile(args.crop_config):
+            logger.error("Cropping project JSON not found: %s", args.crop_config)
+            return 1
+
+        with open(args.crop_config, "r", encoding="utf-8") as f:
+            try:
+                project_data = json.load(f)
+            except json.JSONDecodeError as exc:
+                logger.error("Failed to parse crop config: %s", exc)
+                return 1
+
+        logger.info("Project: %s", args.crop_config)
+
+        from behavython.services.video_service import run_batch_crop
+
+        try:
+            run_batch_crop(
+                request={"project_data": project_data, "project_path": args.crop_config},
+                progress=_ProgressAdapter(),
+                log=_LogAdapter(logger),
+                warning=_WarningAdapter(),
+            )
+            logger.info("Cropping complete.")
+        except Exception as exc:
+            logger.error("Cropping failed: %s", exc)
+            return 1
+
+        # If this was the last action requested, we exit.
+        if not any(
+            [args.config, args.experiment_type, args.run_tracking, args.extract_frames, args.cleanup, args.likelihood_plots, args.annotate_video]
+        ):
+            return 0
+
+    # --- ACTION: Frame Extraction ---
+    if args.extract_frames:
+        video_extensions = tuple(ANALYSIS_REQUIRED_SUFFIXES["video"])
+        video_files = [f for f in input_files if f.lower().endswith(video_extensions)]
+
+        if not video_files:
+            logger.error("No video files found for frame extraction in: %s", input_folder or "provided files")
+            return 1
+
+        logger.info("Videos: %d | Frame override: %s", len(video_files), args.frame_number or "50%% of duration")
+
+        from behavython.pipeline.models import DLCFrameExtractionRequest
+        from behavython.pipeline.plugins.dlc import run_extract_frames
+
+        try:
+            run_extract_frames(
+                request=DLCFrameExtractionRequest(
+                    video_paths=video_files,
+                    override_frame_number=args.frame_number,
+                ),
+                progress=_ProgressAdapter(),
+                log=_LogAdapter(logger),
+                warning=_WarningAdapter(),
+            )
+            logger.info("Frame extraction complete.")
+        except Exception as exc:
+            logger.error("Frame extraction failed: %s", exc)
+            return 1
+
+        if not any([args.config, args.experiment_type, args.run_tracking, args.cleanup, args.likelihood_plots, args.annotate_video]):
+            return 0
+
+    # --- ACTION: Folder Cleanup ---
+    if args.cleanup:
+        experiment_type = args.experiment_type or file_config.get("experiment_type", "")
+        logger.info("Experiment type: %s", experiment_type)
+        logger.info("Folder: %s", input_folder or "provided files")
+
+        from behavython.pipeline.models import DLCClearUnusedFilesRequest
+        from behavython.pipeline.plugins.dlc import run_clear_unused_files
+
+        try:
+            result = run_clear_unused_files(
+                request=DLCClearUnusedFilesRequest(
+                    folder_path=input_folder,
+                    task_type=experiment_type,
+                ),
+                progress=_ProgressAdapter(),
+                log=_LogAdapter(logger),
+                warning=_WarningAdapter(),
+            )
+            logger.info("Cleanup complete. Moved %d file(s).", len(result.get("moved_files", [])))
+            if result.get("missing_files"):
+                for mf in result["missing_files"]:
+                    logger.warning("Missing required file: %s", mf)
+        except Exception as exc:
+            logger.error("Cleanup failed: %s", exc)
+            return 1
+
+        if not any([args.config, args.experiment_type and not args.cleanup, args.run_tracking, args.likelihood_plots, args.annotate_video]):
+            return 0
+
+    # --- ACTION: DeepLabCut Tracking ---
+    if args.run_tracking:
+        video_extensions = tuple(ANALYSIS_REQUIRED_SUFFIXES["video"])
+        video_files = [f for f in input_files if f.lower().endswith(video_extensions)]
+
+        if not video_files:
+            logger.error("No video files found for tracking in: %s", input_folder or "provided files")
+            return 1
+
+        logger.info("Videos: %d", len(video_files))
+        logger.info("Config: %s", args.dlc_config)
+
+        from behavython.pipeline.models import DLCVideoAnalysisRequest
+        from behavython.pipeline.plugins.dlc import run_dlc_video_analysis
+
+        tracking_request = DLCVideoAnalysisRequest(
+            config_path=args.dlc_config,
+            video_paths=video_files,
+            create_plots=False,
+        )
+
+        try:
+            run_dlc_video_analysis(
+                request=tracking_request,
+                progress=_ProgressAdapter(),
+                log=_LogAdapter(logger),
+                warning=_WarningAdapter(),
+            )
+            logger.info("Tracking task complete.")
+        except Exception as exc:
+            logger.error("Tracking failed: %s", exc)
+            return 1
+
+        # If no analysis config is provided, we stop here.
+        if not any([args.config, args.experiment_type, args.likelihood_plots, args.annotate_video]):
+            logger.info("No analysis configuration provided. Exiting.")
+            return 0
+
+    # --- ACTION: Likelihood Plots ---
+    if args.likelihood_plots:
+        logger.info("Folder: %s", input_folder or "provided files")
+        logger.info("Config: %s", args.dlc_config)
+
+        from behavython.pipeline.models import DLCLikelihoodPlotRequest
+        from behavython.pipeline.plugins.dlc import run_generate_likelihood_plots
+
+        try:
+            result = run_generate_likelihood_plots(
+                request=DLCLikelihoodPlotRequest(
+                    config_path=args.dlc_config,
+                    folder_path=input_folder,
+                ),
+                progress=_ProgressAdapter(),
+                log=_LogAdapter(logger),
+                warning=_WarningAdapter(),
+            )
+            logger.info("Generated %d likelihood plot(s).", result.get("plots_generated", 0))
+        except Exception as exc:
+            logger.error("Likelihood plot generation failed: %s", exc)
+            return 1
+
+        if not any([args.config, args.experiment_type, args.annotate_video]):
+            return 0
+
+    # --- ACTION: Create Annotated Video ---
+    if args.annotate_video:
+        video_extensions = tuple(ANALYSIS_REQUIRED_SUFFIXES["video"])
+        video_files = [f for f in input_files if f.lower().endswith(video_extensions)]
+
+        if not video_files:
+            logger.error("No video files found for annotation in: %s", input_folder or "provided files")
+            return 1
+
+        output_folder_annotated = args.output or file_config.get("output_folder", input_folder)
+        os.makedirs(output_folder_annotated, exist_ok=True)
+
+        logger.info("Videos: %d", len(video_files))
+        logger.info("Config: %s", args.dlc_config)
+        logger.info("Output: %s", output_folder_annotated)
+
+        from behavython.pipeline.models import DLCAnnotatedVideoRequest
+        from behavython.pipeline.plugins.dlc import run_create_annotated_video
+
+        try:
+            run_create_annotated_video(
+                request=DLCAnnotatedVideoRequest(
+                    config_path=args.dlc_config,
+                    video_paths=video_files,
+                    output_path=output_folder_annotated,
+                ),
+                progress=_ProgressAdapter(),
+                log=_LogAdapter(logger),
+                warning=_WarningAdapter(),
+            )
+            logger.info("Annotated video creation complete.")
+        except Exception as exc:
+            logger.error("Annotated video creation failed: %s", exc)
+            return 1
+
+        if not any([args.config, args.experiment_type]):
+            return 0
 
     # --- Resolve output folder ---
     output_folder: str = args.output or file_config.get("output_folder", "")
