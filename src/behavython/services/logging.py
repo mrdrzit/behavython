@@ -4,6 +4,8 @@ import io
 import logging
 import warnings
 import os
+import sys
+import re
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from logging.handlers import RotatingFileHandler
 from behavython.core.defaults import LOGGING_NAME_MAP
@@ -47,6 +49,7 @@ class _FilteredExternalStream(io.TextIOBase):
         self.logger = logger
         self.level = level
         self._buffer = ""
+        self._last_percent = -1
 
     def _is_tqdm_text(self, text: str) -> bool:
         tqdm_markers = ("%|", "it/s]", "|█")
@@ -54,6 +57,7 @@ class _FilteredExternalStream(io.TextIOBase):
 
     def _should_skip_line(self, line: str) -> bool:
         noisy_patterns = (
+            # System Noise
             'Call to CreateProcess failed. Error code: 2, command: \'"ptxas.exe"',
             "Couldn't get ptxas version string",
             "Relying on driver to perform ptx compilation.",
@@ -73,6 +77,16 @@ class _FilteredExternalStream(io.TextIOBase):
             "MLIR V1 optimization pass is not enabled",
             "This TensorFlow binary is optimized with oneAPI",
             "light mode",
+            # DLC Fluff
+            "The videos are analyzed. Now your research can truly start!",
+            "You can create labeled videos with",
+            "If the tracking is not satisfactory",
+            "extract_outlier_frames",
+            "Saving filtered csv poses!",
+            "Starting to extract posture",
+            "Saving csv poses!",
+            "Processing ",
+            "Loading ",
         )
         return any(pattern in line for pattern in noisy_patterns)
 
@@ -82,6 +96,13 @@ class _FilteredExternalStream(io.TextIOBase):
             return
 
         if self._is_tqdm_text(stripped_line):
+            # Milestone-based progress (every 10%)
+            match = re.search(r"(\d+)%", stripped_line)
+            if match:
+                percent = int(match.group(1))
+                if percent % 10 == 0 and percent != self._last_percent:
+                    self.logger.log(self.level, f"Progress: {percent}%")
+                    self._last_percent = percent
             return
 
         if self._should_skip_line(stripped_line):
@@ -107,35 +128,62 @@ class _FilteredExternalStream(io.TextIOBase):
         self._buffer = ""
 
 
+class CLIQuietFilter(logging.Filter):
+    """Silences redundant or interactive-only logs for the CLI."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        noise = (
+            "Calling deeplabcut.",
+            "Filtering predictions with DeepLabCut for",
+        )
+        msg = record.getMessage()
+        return not any(p in msg for p in noise)
+
+
 class AppLoggingService:
-    def __init__(self, runtime_storage: RuntimeStorage) -> None:
+    def __init__(
+        self,
+        runtime_storage: RuntimeStorage,
+        is_cli: bool = False,
+        console_level: int = logging.INFO,
+    ) -> None:
         self.runtime_storage = runtime_storage
+        self.is_cli = is_cli
+        self.console_level = console_level
 
         self.app_logger = logging.getLogger("behavython")
         self.dlc_logger = logging.getLogger("behavython.dlc")
         self.external_logger = logging.getLogger("behavython.external")
+        self.console_logger = logging.getLogger("behavython.console")
+        self.cli_logger = logging.getLogger("behavython.cli")
 
         self._configure()
 
     def _configure(self) -> None:
-        self.app_logger.setLevel(logging.DEBUG)
-        self.dlc_logger.setLevel(logging.DEBUG)
-        self.external_logger.setLevel(logging.DEBUG)
+        # Base level for all managed loggers
+        for lg in [self.app_logger, self.dlc_logger, self.external_logger, self.console_logger, self.cli_logger]:
+            lg.setLevel(logging.DEBUG)
+            lg.propagate = False  # Each is a branch head for our logging system
+            self._clear_handlers(lg)
 
-        self.app_logger.propagate = False
-        self.dlc_logger.propagate = False
-        self.external_logger.propagate = False
-
-        self._clear_handlers(self.app_logger)
-        self._clear_handlers(self.dlc_logger)
-        self._clear_handlers(self.external_logger)
-
-        formatter = MappedFormatter(
+        # 1. Formatters
+        # Rich formatter for file logs and GUI console
+        file_formatter = MappedFormatter(
             fmt="%(asctime)s | %(levelname)-7s | %(name)-4s | %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
             name_map=LOGGING_NAME_MAP,
         )
 
+        # Compact formatter for CLI terminal
+        if self.is_cli:
+            console_formatter = logging.Formatter(
+                fmt="%(asctime)s | %(levelname)-7s | %(message)s",
+                datefmt="%H:%M:%S",
+            )
+        else:
+            console_formatter = file_formatter
+
+        # 2. Handlers
         persistent_log_path = self.runtime_storage.logs_root / "app.log"
         session_log_path = self.runtime_storage.session_logs_dir / "session.log"
         external_log_path = self.runtime_storage.session_dlc_output_dir / "external_output.log"
@@ -147,42 +195,41 @@ class AppLoggingService:
             encoding="utf-8",
         )
         persistent_handler.setLevel(logging.DEBUG)
-        persistent_handler.setFormatter(formatter)
+        persistent_handler.setFormatter(file_formatter)
 
         session_handler = logging.FileHandler(session_log_path, encoding="utf-8")
         session_handler.setLevel(logging.DEBUG)
-        session_handler.setFormatter(formatter)
+        session_handler.setFormatter(file_formatter)
 
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.WARNING)
-        console_handler.setFormatter(formatter)
+        # Unified Console Handler
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setLevel(self.console_level)
+        console_handler.setFormatter(console_formatter)
+
+        if self.is_cli:
+            console_handler.addFilter(CLIQuietFilter())
 
         external_handler = logging.FileHandler(external_log_path, encoding="utf-8")
         external_handler.setLevel(logging.DEBUG)
-        external_handler.setFormatter(formatter)
+        external_handler.setFormatter(file_formatter)
 
-        self.app_logger.addHandler(persistent_handler)
-        self.app_logger.addHandler(session_handler)
-        self.app_logger.addHandler(console_handler)
+        # 3. Attachment
+        # Core loggers get file + terminal
+        for lg in [self.app_logger, self.dlc_logger, self.cli_logger]:
+            lg.addHandler(persistent_handler)
+            lg.addHandler(session_handler)
+            lg.addHandler(console_handler)
 
-        self.dlc_logger.addHandler(persistent_handler)
-        self.dlc_logger.addHandler(session_handler)
-        self.dlc_logger.addHandler(console_handler)
+        # Console logger only gets terminal (used for specific SYSTEM messages)
+        self.console_logger.addHandler(console_handler)
 
+        # External logger (TF/DLC output) always gets file logs
         self.external_logger.addHandler(external_handler)
         self.external_logger.addHandler(session_handler)
 
-        self.console_logger = logging.getLogger("behavython.console")
-        self.console_logger.setLevel(logging.INFO)
-        self.console_logger.propagate = False
-
-        self._clear_handlers(self.console_logger)
-
-        console_only_handler = logging.StreamHandler()
-        console_only_handler.setLevel(logging.INFO)
-        console_only_handler.setFormatter(formatter)
-
-        self.console_logger.addHandler(console_only_handler)
+        # In CLI mode, we also want external output in the terminal
+        if self.is_cli:
+            self.external_logger.addHandler(console_handler)
 
         self._quiet_noisy_loggers()
 
@@ -192,15 +239,16 @@ class AppLoggingService:
             handler.close()
 
     def _quiet_noisy_loggers(self) -> None:
+        """Normally silences external loggers, but unlocked for auditing."""
         logging.captureWarnings(True)
 
-        logging.getLogger("py.warnings").setLevel(logging.WARNING)
-        logging.getLogger("deeplabcut").setLevel(logging.WARNING)
+        logging.getLogger("py.warnings").setLevel(logging.ERROR)
+        logging.getLogger("deeplabcut").setLevel(logging.DEBUG)
         logging.getLogger("matplotlib").setLevel(logging.ERROR)
         logging.getLogger("tensorflow").setLevel(logging.ERROR)
-        logging.getLogger("torch").setLevel(logging.ERROR)
+        logging.getLogger("torch").setLevel(logging.DEBUG)
         logging.getLogger("h5py").setLevel(logging.ERROR)
-        logging.getLogger("PIL").setLevel(logging.WARNING)
+        logging.getLogger("PIL").setLevel(logging.ERROR)
 
         warnings.filterwarnings(
             "ignore",
@@ -219,8 +267,8 @@ class AppLoggingService:
         )
         stderr_stream = _FilteredExternalStream(
             logger=logger,
-            level=logging.ERROR,
-            # passthrough_stream=sys.__stderr__,
+            level=logging.INFO,
+            # passthrough_stream=sys.__stdout__,
             # allow_terminal_progress=True,
         )
 
