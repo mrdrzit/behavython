@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "behavython"
-version = "0.9.8"
+version = "0.9.9rc1"
 description = "Automated behavioral analysis software and pipeline for neuroscience."
 readme = "README.md"
 requires-python = ">=3.10, <3.11"
@@ -75,4 +75,5 @@ behavython = [
     "ffmpeg/bin/*",
     "ffmpeg/**/*",
     "config/*",
+    "assets/config/**/*",
 ]
