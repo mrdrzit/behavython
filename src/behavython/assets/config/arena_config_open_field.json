@@ -1,0 +1,26 @@
+{
+  "experiment_type": "open_field",
+  "arena_corners": [
+    [126.0, 72.0],
+    [637.0, 74.0],
+    [633.0, 581.0],
+    [128.0, 581.0]
+  ],
+
+  "_docs": {
+    "_warning": "This is an example configuration file. Fill in the values with your own data.",
+    "_warning_1": "Dont edit the docs section, only edit the values above.",
+    "_comment": "Open Field arena configuration. Fill in the 4 corner coordinates using ImageJ.",
+
+    "_NOTE_ImageJ_1": "ImageJ uses (x,y) or (column,row), NOT (y,x).",
+    "_NOTE_ImageJ_2": "Make sure the points are in the same order as the _corner_order list.",
+    "_NOTE_ImageJ_3": "Use the point tool to create a ROI and then save as arbitrary x,y coordinates.",
+
+    "_corner_order": [
+      "top-left",
+      "top-right",
+      "bottom-right",
+      "bottom-left"
+    ]
+  }
+}

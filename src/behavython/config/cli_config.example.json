@@ -1,48 +1,55 @@
 {
-    "_comment": "Behavython CLI config. Copy this file, remove _comment keys, and fill in your values.",
+  "experiment_type": "social_recognition",
 
-    "experiment_type": "social_recognition",
+  "input_folder": "C:/data/experiment/",
+  "input_files": [],
+  "output_folder": "C:/data/results",
+
+  "config_path": null,
+
+  "arena_width": 30,
+  "arena_height": 30,
+
+  "frames_per_second": 30,
+  "task_duration": 300,
+  "trim_amount": 0,
+  "crop_video": false,
+
+  "animal": "mouse",
+
+  "figure_resolution": "1920x1080",
+  "no_plots": false,
+  "generate_video": false,
+
+  "algo_type": "deeplabcut",
+
+
+
+
+  "_docs": {
+    "_comment": "Behavython CLI config. Copy this file, remove the _docs block, and fill in your values.",
+
     "_experiment_type_options": [
-        "open_field",
-        "elevated_plus_maze",
-        "social_recognition",
-        "social_discrimination",
-        "object_discrimination"
+      "open_field",
+      "elevated_plus_maze",
+      "social_recognition",
+      "social_discrimination",
+      "object_discrimination"
     ],
 
-    "input_folder": "C:/data/experiment/",
-    "_input_folder_comment": "Folder containing all animal files. The pipeline auto-discovers and groups them by animal ID.",
+    "_input_folder": "Folder containing all animal files. The pipeline auto-discovers and groups them by animal ID.",
+    "_input_files": "Advanced: explicit file list. Only use if your folder layout is non-standard. Ignored when input_folder is set.",
 
-    "_input_files_comment": "Advanced: explicit file list. Only use if your folder layout is non-standard. Ignored when input_folder is set.",
-    "input_files": [],
+    "_config_path": "Required for open_field / elevated_plus_maze if animals lack individual config JSONs. Set to null otherwise.",
 
-    "output_folder": "C:/data/results",
-
-    "config_path": null,
-    "_config_path_comment": "Required for open_field / elevated_plus_maze if animals lack individual config JSONs. Set to null otherwise.",
-
-    "arena_width": 30,
-    "arena_height": 30,
     "_arena_units": "centimeters",
 
-    "frames_per_second": 30,
-    "task_duration": 300,
     "_task_duration_units": "seconds",
+    "_trim_amount": "Seconds to skip at the start of the recording.",
+    "_crop_video": "If true, only the window [trim_amount to (trim_amount + task_duration)] is analyzed.",
 
-    "trim_amount": 0,
-    "_trim_amount_comment": "Seconds to skip at the start of the recording.",
-
-    "crop_video": false,
-    "_crop_video_comment": "If true, only the window [trim_amount, trim_amount + task_duration] is analyzed.",
-
-    "animal": "mouse",
     "_animal_options": ["mouse", "rat"],
 
-    "figure_resolution": "1920x1080",
-    "_figure_resolution_options": ["640x480", "1280x720", "1920x1080", "2560x1440"],
-
-    "no_plots": false,
-    "generate_video": false,
-
-    "algo_type": "deeplabcut"
+    "_figure_resolution_options": ["640x480", "1280x720", "1920x1080", "2560x1440"]
+  }
 }
