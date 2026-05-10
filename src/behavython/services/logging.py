@@ -109,7 +109,7 @@ class _FilteredExternalStream(io.TextIOBase):
                 if percent % 10 == 0 and percent != self._last_percent:
                     speed_match = re.search(r"([0-9.]+\s*(?:it/s|s/it))", stripped_line)
                     speed_str = f" | {speed_match.group(1)}" if speed_match else ""
-                    msg = f"Progress: {percent}%{speed_str}"
+                    msg = f"Progress: {percent}%{speed_str}".replace("it/s", " frames/sec")
                     self.logger.log(self.level, msg)
                     if not self.is_cli:
                         logging.getLogger("behavython.console").info(msg)

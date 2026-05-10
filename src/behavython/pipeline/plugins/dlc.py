@@ -194,7 +194,6 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
     if videos_to_filter:
         if log:
             log.emit("dlc", "Filtering predictions...")
-        dlc_logger.info("Calling deeplabcut.filterpredictions")
 
         if progress:
             progress.emit(60)
@@ -229,7 +228,6 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
                     raise
 
     if request.create_plots:
-        dlc_logger.info("Custom plotting is handled separately via DLCLikelihoodPlotRequest.")
         if progress:
             progress.emit(80)
 

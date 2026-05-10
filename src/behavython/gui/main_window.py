@@ -496,7 +496,8 @@ class BehavythonMainWindow(QWidget):
             self.interface.analyze_from_file_lineedit.setText(path)
 
     def enable_analysis(self) -> None:
-        enabled = self.interface.config_path_lineedit.text().lower().endswith(".yaml")
+        path = self.interface.config_path_lineedit.text().lower()
+        enabled = path.endswith(".yaml") or path.endswith(".yml")
         self.interface.dlc_video_analyze_button.setEnabled(enabled)
         self.interface.create_annotated_video_button.setEnabled(enabled)
         self.interface.folder_to_create_annotated_video_button.setEnabled(enabled)
@@ -512,13 +513,22 @@ class BehavythonMainWindow(QWidget):
         if not hasattr(self.interface, "generate_likelihood_plots_button"):
             return
 
-        config_ok = self.interface.config_path_lineedit.text().lower().endswith(".yaml")
+        path = self.interface.config_path_lineedit.text().lower()
+        config_ok = path.endswith(".yaml") or path.endswith(".yml")
         folder_path = self.interface.video_folder_lineedit.text().strip()
         folder_ok = bool(folder_path) and os.path.isdir(folder_path)
 
         has_data = False
         if folder_ok:
-            has_data = any(f.endswith(".h5") for f in os.listdir(folder_path))
+            # Check main folder for any tracking results
+            files = os.listdir(folder_path)
+            has_data = any(f.endswith(".h5") for f in files)
+
+            # Also check 'unwanted_files' subfolder (common if user ran Cleanup Folder)
+            if not has_data:
+                unwanted = os.path.join(folder_path, "unwanted_files")
+                if os.path.isdir(unwanted):
+                    has_data = any(f.endswith(".h5") for f in os.listdir(unwanted))
 
         self.interface.generate_likelihood_plots_button.setEnabled(config_ok and folder_ok and has_data)
 
@@ -1047,6 +1057,9 @@ class BehavythonMainWindow(QWidget):
                 )
         elif kind == "batch_crop":
             show_info(self.interface, "Cropping Complete", f"Successfully cropped {result['processed']} out of {result['total']} video(s).")
+
+        # Ensure the UI reflects the new state of the folders
+        self._toggle_likelihood_button()
 
     def on_worker_error(self, error_info) -> None:
         self.logger.error("Worker error dialog shown: %s", error_info[1])
