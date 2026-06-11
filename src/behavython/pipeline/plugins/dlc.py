@@ -101,6 +101,49 @@ def get_dlc_file_status(video_path: str) -> dict:
     return {"needs_analysis": needs_analysis, "needs_filtering": needs_filtering}
 
 
+def infer_dlc_shuffle_and_trainingsetindex(config_path: str, config_dict: dict) -> tuple[int, int]:
+    """
+    Attempts to infer the optimal shuffle and trainingsetindex by inspecting
+    the dlc-models folder for the current iteration.
+    Falls back to (1, 0) if inference fails.
+    """
+    import re
+
+    project_path = Path(config_path).parent
+    iteration = config_dict.get("iteration", 0)
+    dlc_models = project_path / "dlc-models" / f"iteration-{iteration}"
+    
+    default_shuffle, default_trainingsetindex = 1, 0
+    
+    if not dlc_models.exists() or not dlc_models.is_dir():
+        return default_shuffle, default_trainingsetindex
+        
+    pattern = re.compile(r"trainset(\d+)shuffle(\d+)")
+    
+    found = []
+    for d in dlc_models.iterdir():
+        if d.is_dir():
+            match = pattern.search(d.name)
+            if match:
+                fraction_pct, shuffle = int(match.group(1)), int(match.group(2))
+                found.append((fraction_pct, shuffle))
+                
+    if not found:
+        return default_shuffle, default_trainingsetindex
+        
+    found.sort(key=lambda x: (x[1], x[0]), reverse=True)
+    fraction_pct, shuffle = found[0]
+    
+    training_fractions = config_dict.get("TrainingFraction", [0.95])
+    trainingsetindex = 0
+    for i, frac in enumerate(training_fractions):
+        if int(frac * 100) == fraction_pct:
+            trainingsetindex = i
+            break
+            
+    return shuffle, trainingsetindex
+
+
 def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=None, warning=None):
     errors = validate_config_path(request.config_path) + validate_video_paths(request.video_paths)
 
@@ -133,8 +176,17 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
     if progress:
         progress.emit(20)
 
-    _, usable_config_path, was_repaired = prepare_dlc_config(request.config_path)
+    config_dict, usable_config_path, was_repaired = prepare_dlc_config(request.config_path)
     _emit_config_repair_logs(request.config_path, usable_config_path, was_repaired, log)
+
+    if request.shuffle is None or request.trainingsetindex is None:
+        inferred_shuffle, inferred_index = infer_dlc_shuffle_and_trainingsetindex(usable_config_path, config_dict)
+        shuffle = request.shuffle if request.shuffle is not None else inferred_shuffle
+        trainingsetindex = request.trainingsetindex if request.trainingsetindex is not None else inferred_index
+        dlc_logger.info(f"Inferred shuffle={shuffle}, trainingsetindex={trainingsetindex}")
+    else:
+        shuffle = request.shuffle
+        trainingsetindex = request.trainingsetindex
 
     videos_to_analyze = []
     videos_to_filter = []
@@ -184,6 +236,8 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
                     usable_config_path,
                     [video],
                     videotype=extension,
+                    shuffle=shuffle,
+                    trainingsetindex=trainingsetindex,
                     gputouse=gpu_to_use,
                     save_as_csv=True,
                 )
@@ -202,6 +256,8 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
                 usable_config_path,
                 videos_to_filter,
                 videotype=extension,
+                shuffle=shuffle,
+                trainingsetindex=trainingsetindex,
                 filtertype="median",
                 save_as_csv=True,
             )
@@ -209,6 +265,8 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
                 deeplabcut.analyzeskeleton(
                     usable_config_path,
                     videos_to_filter,
+                    shuffle=shuffle,
+                    trainingsetindex=trainingsetindex,
                     filtered=True,
                     save_as_csv=True,
                 )

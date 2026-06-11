@@ -11,7 +11,7 @@ from typing import Any, List
 from natsort import os_sorted
 from pathlib import Path
 from dataclasses import dataclass, field
-from behavython.pipeline.plugins.dlc import load_deeplabcut
+from behavython.pipeline.plugins.dlc import load_deeplabcut, infer_dlc_shuffle_and_trainingsetindex
 from behavython.pipeline.models import DLCAnalyzeFramesRequest
 from behavython.core.defaults import ANALYSIS_REQUIRED_SUFFIXES
 from behavython.services.logging import capture_external_output
@@ -376,8 +376,17 @@ class DLCAssistedLabelSession:
         except Exception:
             gpu_to_use = None
 
-        _, usable_config_path, was_repaired = load_or_repair_dlc_yaml(str(self.config_path))
+        config_dict, usable_config_path, was_repaired = load_or_repair_dlc_yaml(str(self.config_path))
         deeplabcut = load_deeplabcut()
+
+        if self.request.shuffle is None or self.request.trainingsetindex is None:
+            inferred_shuffle, inferred_index = infer_dlc_shuffle_and_trainingsetindex(str(usable_config_path), config_dict)
+            shuffle = self.request.shuffle if self.request.shuffle is not None else inferred_shuffle
+            trainingsetindex = self.request.trainingsetindex if self.request.trainingsetindex is not None else inferred_index
+            logger.info(f"Inferred shuffle={shuffle}, trainingsetindex={trainingsetindex}")
+        else:
+            shuffle = self.request.shuffle
+            trainingsetindex = self.request.trainingsetindex
 
         final_label_files = []
 
@@ -389,6 +398,8 @@ class DLCAssistedLabelSession:
                     str(usable_config_path),
                     str(folder),
                     frametype=self.request.frame_extension,
+                    shuffle=shuffle,
+                    trainingsetindex=trainingsetindex,
                     gputouse=gpu_to_use,
                     save_as_csv=True,
                 )

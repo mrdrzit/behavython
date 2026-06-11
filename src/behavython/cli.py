@@ -310,6 +310,8 @@ examples:
     parser.add_argument("--experiment-type", metavar="TYPE", help=f"Experiment type. One of: {', '.join(sorted(_VALID_EXPERIMENT_TYPES))}")
     parser.add_argument("--run-tracking", action="store_true", help="Run DeepLabCut tracking (analysis + filtering) on the input videos.")
     parser.add_argument("--dlc-config", metavar="PATH", help="Path to the DeepLabCut config.yaml file (required for --run-tracking).")
+    parser.add_argument("--shuffle", type=int, default=None, help="DeepLabCut shuffle index (inferred automatically if not provided).")
+    parser.add_argument("--trainingsetindex", type=int, default=None, help="DeepLabCut training set index (inferred automatically if not provided).")
     parser.add_argument("--standardize", action="store_true", help="Standardize videos in the input folder to a compatible codec (H.264/CFR).")
     parser.add_argument("--run-cropping", action="store_true", help="Run batch cropping on videos using a previously saved cropping project JSON.")
     parser.add_argument("--crop-config", metavar="PATH", help="Path to the cropping project JSON file (required for --run-cropping).")
@@ -567,6 +569,8 @@ def _run_tracking(ctx: _ActionContext) -> bool:
                 config_path=ctx.args.dlc_config,
                 video_paths=video_files,
                 create_plots=False,
+                shuffle=ctx.args.shuffle,
+                trainingsetindex=ctx.args.trainingsetindex,
             ),
             progress=ctx.progress,
             log=ctx.log,
