@@ -389,8 +389,6 @@ class DLCAssistedLabelSession:
                     str(usable_config_path),
                     str(folder),
                     frametype=self.request.frame_extension,
-                    shuffle=1,
-                    trainingsetindex=0,
                     gputouse=gpu_to_use,
                     save_as_csv=True,
                 )

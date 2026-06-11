@@ -184,10 +184,7 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
                     usable_config_path,
                     [video],
                     videotype=extension,
-                    shuffle=1,
-                    trainingsetindex=0,
                     gputouse=gpu_to_use,
-                    allow_growth=True,
                     save_as_csv=True,
                 )
 
@@ -205,8 +202,6 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
                 usable_config_path,
                 videos_to_filter,
                 videotype=extension,
-                shuffle=1,
-                trainingsetindex=0,
                 filtertype="median",
                 save_as_csv=True,
             )
@@ -214,8 +209,6 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
                 deeplabcut.analyzeskeleton(
                     usable_config_path,
                     videos_to_filter,
-                    shuffle=1,
-                    trainingsetindex=0,
                     filtered=True,
                     save_as_csv=True,
                 )
