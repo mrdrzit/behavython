@@ -231,22 +231,31 @@ def _load_config(args: argparse.Namespace, logger: logging.Logger) -> dict[str, 
 
 
 def _resolve_inputs(args: argparse.Namespace, file_config: dict[str, Any], logger: logging.Logger) -> tuple[str, list[str]]:
-    input_folder: str = args.input_folder or file_config.get("input_folder", "")
+    cli_folders = args.input_folder if args.input_folder else []
+    if isinstance(cli_folders, str):
+        cli_folders = [cli_folders]
+        
+    config_folder = file_config.get("input_folder", "")
+    config_folders = file_config.get("input_folders", [])
+    
+    input_folders = cli_folders or config_folders or ([config_folder] if config_folder else [])
     input_files: list[str] = []
 
-    if input_folder:
-        try:
-            input_files = _collect_analysis_files_from_folder(input_folder)
-        except ValueError as exc:
-            logger.error("%s", exc)
-            raise
+    if input_folders:
+        for folder in input_folders:
+            try:
+                input_files.extend(_collect_analysis_files_from_folder(folder))
+            except ValueError as exc:
+                logger.error("%s", exc)
+                raise
 
         if not input_files:
-            logger.error("No recognizable analysis files found in folder: %s", input_folder)
+            logger.error("No recognizable analysis files found in folders: %s", ", ".join(input_folders))
             logger.error("Expected extensions: %s", ", ".join(_ANALYSIS_SUFFIXES))
-            raise ValueError("No recognizable analysis files found in folder.")
+            raise ValueError("No recognizable analysis files found in folders.")
 
-        logger.info("Collected %d file(s) from folder: %s", len(input_files), input_folder)
+        logger.info("Collected %d file(s) from %d folder(s).", len(input_files), len(input_folders))
+        primary_folder = input_folders[0]
 
     else:
         input_files = file_config.get("input_files", [])
@@ -261,7 +270,7 @@ def _resolve_inputs(args: argparse.Namespace, file_config: dict[str, Any], logge
                 logger.error("  %s", p)
             raise ValueError("One or more required input files do not exist.")
 
-    return input_folder, input_files
+    return primary_folder if input_folders else "", input_files
 
 
 # ===========================================================================
@@ -297,9 +306,10 @@ examples:
     parser.add_argument(
         "--input-folder",
         "-f",
+        nargs="+",
         metavar="DIR",
         help=(
-            "Folder containing all analysis files (CSVs, images, ROI files, JSONs). "
+            "One or more folders containing analysis files. "
             "Overrides 'input_folder' in config. "
             "Alternatively, set 'input_files' in the config for a hand-picked file list."
         ),
