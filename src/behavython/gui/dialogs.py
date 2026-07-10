@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QPlainTextEdit, QVBoxLayout, QWidget
-from PySide6.QtWidgets import QFileDialog
+from PySide6.QtWidgets import QFileDialog, QDialogButtonBox
 
 def show_warning(parent: QWidget | None, title: str, text: str) -> None:
     QMessageBox.warning(parent, title, text)
@@ -12,15 +12,34 @@ def show_info(parent: QWidget | None, title: str, text: str) -> None:
     QMessageBox.information(parent, title, text)
 
 
+class ScrollableQuestionDialog(QDialog):
+    def __init__(self, parent: QWidget | None, title: str, text: str) -> None:
+        super().__init__(parent)
+        self.setWindowTitle(title)
+        self.setMinimumSize(400, 300)
+        self.resize(600, 400)
+        self.setModal(True)
+
+        layout = QVBoxLayout(self)
+
+        self.text_edit = QPlainTextEdit()
+        self.text_edit.setReadOnly(True)
+        self.text_edit.setPlainText(text)
+        self.text_edit.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
+        layout.addWidget(self.text_edit, 1)
+
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Yes | QDialogButtonBox.StandardButton.No)
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
+        layout.addWidget(button_box)
+
+
 def ask_yes_no(parent: QWidget | None, title: str, text: str) -> bool:
-    result = QMessageBox.question(
-        parent,
-        title,
-        text,
-        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-        QMessageBox.StandardButton.Yes,
-    )
-    return result == QMessageBox.StandardButton.Yes
+    dialog = ScrollableQuestionDialog(parent, title, text)
+    # PySide6 exec() can return int (1 for Accepted) or QDialog.DialogCode.Accepted
+    # Depending on the PySide6 version, casting or comparing to int is safest 
+    # to avoid Enum equality issues, or simply compare to QDialog.DialogCode.Accepted
+    return int(dialog.exec()) == int(QDialog.DialogCode.Accepted)
 
 def show_worker_error(parent: QWidget | None, error_info: tuple) -> None:
     dialog = WorkerErrorDialog(parent, error_info)
