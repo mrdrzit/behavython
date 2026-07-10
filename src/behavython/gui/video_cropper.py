@@ -208,13 +208,15 @@ class VideoCropperDialog:
         logger.info("Started crop video interface.")
 
         # Database to hold state
-        # format: { "video_name.mp4": { "coordinates": dict, "coordinates_set": bool, "video_cropped": bool } }
+        # format: { "video_name.mp4": { "coordinates": dict, "coordinates_set": bool, "video_cropped": bool, "trim_start": float, "trim_end": float } }
         self.crop_database = {}
         if project_data:
             self.crop_database = project_data
         elif video_list:
             for vid in video_list:
-                self.crop_database[vid] = {"coordinates": None, "coordinates_set": False, "video_cropped": False}
+                self.crop_database[vid] = self._default_video_state()
+
+        self._normalize_crop_database()
 
         # Initialize the list widget
         self.populate_list()
@@ -224,6 +226,10 @@ class VideoCropperDialog:
         self.dialog.btn_set_coords.clicked.connect(self.on_set_coords)
         self.dialog.btn_copy_checked.clicked.connect(self.on_copy_checked)
         self.dialog.btn_save_project.clicked.connect(self.on_save_project)
+        if hasattr(self.dialog, "trim_start_spinbox"):
+            self.dialog.trim_start_spinbox.valueChanged.connect(self.on_trim_values_changed)
+        if hasattr(self.dialog, "trim_end_spinbox"):
+            self.dialog.trim_end_spinbox.valueChanged.connect(self.on_trim_values_changed)
 
         self.scene = QGraphicsScene()
         self.dialog.graphicsView.setScene(self.scene)
@@ -240,6 +246,7 @@ class VideoCropperDialog:
         self.is_drawing = False
         self.draw_start_pos = None
         self.current_video = None
+        self._loading_video_state = False
 
         # Mouse tracking for coordinates and drawing
         self.dialog.graphicsView.viewport().setMouseTracking(True)
@@ -270,12 +277,77 @@ class VideoCropperDialog:
         if data["video_cropped"]:
             item.setBackground(QColor(255, 255, 255))  # White
             item.setForeground(QColor(0, 0, 0))  # Black text for readability
-        elif data["coordinates_set"]:
+        elif self._has_export_settings(data):
             item.setBackground(QColor(44, 161, 83))  # Green
             item.setForeground(QColor(255, 255, 255))
         else:
             item.setBackground(QColor(200, 160, 40))  # Yellow
             item.setForeground(QColor(255, 255, 255))
+
+    @staticmethod
+    def _default_video_state() -> dict:
+        return {"coordinates": None, "coordinates_set": False, "video_cropped": False, "trim_start": 0.0, "trim_end": 0.0}
+
+    @staticmethod
+    def _coerce_trim_value(value) -> float:
+        try:
+            return max(0.0, float(value or 0.0))
+        except (TypeError, ValueError):
+            return 0.0
+
+    def _normalize_crop_database(self) -> None:
+        normalized = {}
+        for video_path, data in self.crop_database.items():
+            entry = self._default_video_state()
+            if isinstance(data, dict):
+                entry.update(data)
+            entry["coordinates_set"] = bool(entry.get("coordinates_set"))
+            entry["video_cropped"] = bool(entry.get("video_cropped"))
+            entry["trim_start"] = self._coerce_trim_value(entry.get("trim_start", 0.0))
+            entry["trim_end"] = self._coerce_trim_value(entry.get("trim_end", 0.0))
+            normalized[video_path] = entry
+        self.crop_database = normalized
+
+    @staticmethod
+    def _has_trim_settings(data: dict) -> bool:
+        return bool(
+            VideoCropperDialog._coerce_trim_value(data.get("trim_start", 0.0)) or VideoCropperDialog._coerce_trim_value(data.get("trim_end", 0.0))
+        )
+
+    @staticmethod
+    def _has_coordinates(data: dict) -> bool:
+        return bool(data.get("coordinates_set") and data.get("coordinates"))
+
+    def _has_export_settings(self, data: dict) -> bool:
+        return self._has_coordinates(data) or self._has_trim_settings(data)
+
+    def _sync_trim_fields_to_current_video(self) -> None:
+        if self._loading_video_state or not self.current_video:
+            return
+        data = self.crop_database.setdefault(self.current_video, self._default_video_state())
+        if hasattr(self.dialog, "trim_start_spinbox"):
+            data["trim_start"] = self._coerce_trim_value(self.dialog.trim_start_spinbox.value())
+        if hasattr(self.dialog, "trim_end_spinbox"):
+            data["trim_end"] = self._coerce_trim_value(self.dialog.trim_end_spinbox.value())
+        current_item = self.dialog.video_list.currentItem()
+        if current_item is not None:
+            self.update_item_color(current_item, data)
+
+    def on_trim_values_changed(self, *args) -> None:
+        self._sync_trim_fields_to_current_video()
+
+    def _load_current_video_state_into_ui(self) -> None:
+        if not self.current_video:
+            return
+        data = self.crop_database.setdefault(self.current_video, self._default_video_state())
+        self._loading_video_state = True
+        try:
+            if hasattr(self.dialog, "trim_start_spinbox"):
+                self.dialog.trim_start_spinbox.setValue(self._coerce_trim_value(data.get("trim_start", 0.0)))
+            if hasattr(self.dialog, "trim_end_spinbox"):
+                self.dialog.trim_end_spinbox.setValue(self._coerce_trim_value(data.get("trim_end", 0.0)))
+        finally:
+            self._loading_video_state = False
 
     def on_video_selected(self, index):
         if index < 0:
@@ -328,6 +400,8 @@ class VideoCropperDialog:
             self.scene.addItem(self.crop_box)
             self.crop_box.setSelected(True)
 
+        self._load_current_video_state_into_ui()
+
     def on_set_coords(self):
         if self.current_video and self.crop_box:
             # Save local position to exactly restore it
@@ -349,22 +423,31 @@ class VideoCropperDialog:
             self.update_item_color(current_item, self.crop_database[self.current_video])
 
     def on_copy_checked(self):
-        if self.current_video and self.crop_box:
-            # We must set current first to make sure we have the latest
-            self.on_set_coords()
-            c = self.crop_database[self.current_video]["coordinates"]
+        if not self.current_video:
+            return
 
-            # Copy to checked items
-            for i in range(self.dialog.video_list.count()):
-                item = self.dialog.video_list.item(i)
-                if item.checkState() == Qt.Checked:
-                    vid = item.text()
-                    # Don't overwrite finished videos
-                    if not self.crop_database[vid]["video_cropped"]:
-                        self.crop_database[vid]["coordinates"] = c.copy()
+        # Keep any in-progress trim edits and crop box changes from the active video.
+        self._sync_trim_fields_to_current_video()
+        if self.crop_box:
+            self.on_set_coords()
+
+        current_data = self.crop_database[self.current_video]
+        current_coordinates = current_data.get("coordinates")
+
+        # Copy to checked items
+        for i in range(self.dialog.video_list.count()):
+            item = self.dialog.video_list.item(i)
+            if item.checkState() == Qt.Checked:
+                vid = item.text()
+                # Don't overwrite finished videos
+                if not self.crop_database[vid]["video_cropped"]:
+                    if current_coordinates and current_data.get("coordinates_set"):
+                        self.crop_database[vid]["coordinates"] = current_coordinates.copy()
                         self.crop_database[vid]["coordinates_set"] = True
-                        self.update_item_color(item, self.crop_database[vid])
-                        logger.info(f"Propagated coordinates to {vid}.")
+                    self.crop_database[vid]["trim_start"] = current_data.get("trim_start", 0.0)
+                    self.crop_database[vid]["trim_end"] = current_data.get("trim_end", 0.0)
+                    self.update_item_color(item, self.crop_database[vid])
+                    logger.info(f"Propagated settings to {vid}.")
 
     def on_mouse_press(self, scene_pos: QPointF, button):
         if button == Qt.LeftButton:
@@ -433,6 +516,7 @@ class VideoCropperDialog:
         return False
 
     def on_save_project(self):
+        self._sync_trim_fields_to_current_video()
         self.final_db = self.crop_database
         if self.project_path:
             import json
@@ -440,22 +524,23 @@ class VideoCropperDialog:
             try:
                 with open(self.project_path, "w") as f:
                     json.dump(self.final_db, f, indent=4)
-                logger.info(f"Crop coordinates saved to {self.project_path}")
+                logger.info(f"Crop project saved to {self.project_path}")
 
                 from PySide6.QtWidgets import QMessageBox
 
-                QMessageBox.information(self.dialog, "Saved", "Crop coordinates were saved successfully!")
+                QMessageBox.information(self.dialog, "Saved", "Crop and trim settings were saved successfully!")
             except Exception as e:
                 logger.error(f"Failed to save project: {e}")
                 from PySide6.QtWidgets import QMessageBox
 
-                QMessageBox.critical(self.dialog, "Error", f"Failed to save coordinates:\n{e}")
+                QMessageBox.critical(self.dialog, "Error", f"Failed to save project:\n{e}")
         else:
             # Fallback for standalone testing
             logger.info("Project saved (standalone mode).")
 
     def accept(self):
         # We save the state and exit
+        self._sync_trim_fields_to_current_video()
         self.final_db = self.crop_database
         self.dialog.accept()
 

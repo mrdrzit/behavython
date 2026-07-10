@@ -33,7 +33,14 @@ from behavython.services.validation import validate_json_config
 from behavython.gui.dialogs import ask_yes_no, show_warning, show_info, show_worker_error
 from behavython.gui.dialogs import select_file, select_files, select_folder, select_save_folder
 from behavython.services.logging import LoggingService
-from behavython.core.utils import get_ffmpeg_path, resolve_analysis_input, resolve_output_folder, resolve_video_input, load_or_repair_dlc_yaml, group_analysis_files
+from behavython.core.utils import (
+    get_ffmpeg_path,
+    resolve_analysis_input,
+    resolve_output_folder,
+    resolve_video_input,
+    load_or_repair_dlc_yaml,
+    group_analysis_files,
+)
 from behavython.pipeline.models import (
     AnalysisInputSource,
     OutputFolderSource,
@@ -382,9 +389,15 @@ class BehavythonMainWindow(QWidget):
             missing_configs = any(not group["files"]["config"] for group in groups)
 
             if missing_configs:
-                config_path = select_file(self.interface, "Select Global Fallback Configuration (Optional if all animals have configs)", "JSON Files (*.json)")
+                config_path = select_file(
+                    self.interface, "Select Global Fallback Configuration (Optional if all animals have configs)", "JSON Files (*.json)"
+                )
                 if not config_path:
-                    show_warning(self.interface, "Missing Configuration", "You must select an arena configuration JSON to run a maze analysis for animals missing individual configs.")
+                    show_warning(
+                        self.interface,
+                        "Missing Configuration",
+                        "You must select an arena configuration JSON to run a maze analysis for animals missing individual configs.",
+                    )
                     return
 
         request = AnalysisRequest(
@@ -965,7 +978,7 @@ class BehavythonMainWindow(QWidget):
         project_path = folder_path / "crop_project.json"
 
         if not project_path.exists():
-            show_warning(self.interface, "No Crop Project", "You must set the crop coordinates first using the Cropper Dialog.")
+            show_warning(self.interface, "No Crop Project", "You must set crop or trim settings first using the Cropper Dialog.")
             return
 
         import json
