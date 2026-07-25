@@ -112,14 +112,14 @@ def infer_dlc_shuffle_and_trainingsetindex(config_path: str, config_dict: dict) 
     project_path = Path(config_path).parent
     iteration = config_dict.get("iteration", 0)
     dlc_models = project_path / "dlc-models" / f"iteration-{iteration}"
-    
+
     default_shuffle, default_trainingsetindex = 1, 0
-    
+
     if not dlc_models.exists() or not dlc_models.is_dir():
         return default_shuffle, default_trainingsetindex
-        
+
     pattern = re.compile(r"trainset(\d+)shuffle(\d+)")
-    
+
     found = []
     for d in dlc_models.iterdir():
         if d.is_dir():
@@ -127,20 +127,20 @@ def infer_dlc_shuffle_and_trainingsetindex(config_path: str, config_dict: dict) 
             if match:
                 fraction_pct, shuffle = int(match.group(1)), int(match.group(2))
                 found.append((fraction_pct, shuffle))
-                
+
     if not found:
         return default_shuffle, default_trainingsetindex
-        
+
     found.sort(key=lambda x: (x[1], x[0]), reverse=True)
     fraction_pct, shuffle = found[0]
-    
+
     training_fractions = config_dict.get("TrainingFraction", [0.95])
     trainingsetindex = 0
     for i, frac in enumerate(training_fractions):
         if int(frac * 100) == fraction_pct:
             trainingsetindex = i
             break
-            
+
     return shuffle, trainingsetindex
 
 
@@ -236,8 +236,6 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
                     usable_config_path,
                     [video],
                     videotype=extension,
-                    shuffle=shuffle,
-                    trainingsetindex=trainingsetindex,
                     gputouse=gpu_to_use,
                     save_as_csv=True,
                 )
@@ -256,8 +254,6 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
                 usable_config_path,
                 videos_to_filter,
                 videotype=extension,
-                shuffle=shuffle,
-                trainingsetindex=trainingsetindex,
                 filtertype="median",
                 save_as_csv=True,
             )
@@ -265,8 +261,6 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
                 deeplabcut.analyzeskeleton(
                     usable_config_path,
                     videos_to_filter,
-                    shuffle=shuffle,
-                    trainingsetindex=trainingsetindex,
                     filtered=True,
                     save_as_csv=True,
                 )
