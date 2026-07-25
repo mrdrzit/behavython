@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "behavython"
-version = "0.9.9rc7"
+version = "0.9.9rc8"
 description = "Automated behavioral analysis software and pipeline for neuroscience."
 readme = "README.md"
 requires-python = ">=3.10, <3.11"
@@ -48,7 +48,7 @@ tf = [
     "tf_slim",
 ]
 torch = [
-    "deeplabcut[gui]==3.0.0rc14",
+    "deeplabcut[gui]==3.0.0",
     "torch",
     "torchvision",
 ]

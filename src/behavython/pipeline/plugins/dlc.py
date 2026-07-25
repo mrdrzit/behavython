@@ -176,17 +176,8 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
     if progress:
         progress.emit(20)
 
-    config_dict, usable_config_path, was_repaired = prepare_dlc_config(request.config_path)
+    _, usable_config_path, was_repaired = prepare_dlc_config(request.config_path)
     _emit_config_repair_logs(request.config_path, usable_config_path, was_repaired, log)
-
-    if request.shuffle is None or request.trainingsetindex is None:
-        inferred_shuffle, inferred_index = infer_dlc_shuffle_and_trainingsetindex(usable_config_path, config_dict)
-        shuffle = request.shuffle if request.shuffle is not None else inferred_shuffle
-        trainingsetindex = request.trainingsetindex if request.trainingsetindex is not None else inferred_index
-        dlc_logger.info(f"Inferred shuffle={shuffle}, trainingsetindex={trainingsetindex}")
-    else:
-        shuffle = request.shuffle
-        trainingsetindex = request.trainingsetindex
 
     videos_to_analyze = []
     videos_to_filter = []
