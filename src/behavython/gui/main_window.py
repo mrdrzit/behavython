@@ -462,6 +462,8 @@ class BehavythonMainWindow(QWidget):
         self.interface.config_path_lineedit.textChanged.connect(self.enable_analysis)
         self.interface.video_folder_lineedit.textChanged.connect(self.enable_analysis_buttons)
         self.interface.analyze_from_file_lineedit.textChanged.connect(self.toggle_analyze_from_file_button)
+        self.interface.config_path_lineedit.textChanged.connect(self._toggle_likelihood_button)
+        self.interface.video_folder_lineedit.textChanged.connect(self._toggle_likelihood_button)
 
         self.interface.dlc_video_analyze_button.clicked.connect(self.on_run_dlc_analysis_clicked)
         self.interface.analyze_from_file_button.clicked.connect(self.on_run_dlc_analysis_from_file_clicked)
@@ -514,13 +516,11 @@ class BehavythonMainWindow(QWidget):
         self.interface.dlc_video_analyze_button.setEnabled(enabled)
         self.interface.create_annotated_video_button.setEnabled(enabled)
         self.interface.folder_to_create_annotated_video_button.setEnabled(enabled)
-        self._toggle_likelihood_button()
 
     def enable_analysis_buttons(self) -> None:
         enabled = bool(self.interface.video_folder_lineedit.text().strip())
         self.interface.get_frames_button.setEnabled(enabled)
         self.interface.clear_unused_files_button.setEnabled(enabled)
-        self._toggle_likelihood_button()
 
     def _toggle_likelihood_button(self) -> None:
         if not hasattr(self.interface, "generate_likelihood_plots_button"):
