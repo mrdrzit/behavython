@@ -1,0 +1,41 @@
+{
+  "experiment_type": "elevated_plus_maze",
+  "maze_points": [
+    [200.0, 50.0],
+    [400.0, 50.0],
+    [400.0, 250.0],
+    [200.0, 250.0],
+
+    [400.0, 250.0],
+    [600.0, 250.0],
+    [600.0, 450.0],
+    [400.0, 450.0],
+
+    [200.0, 450.0],
+    [400.0, 450.0],
+    [400.0, 650.0],
+    [200.0, 650.0],
+
+    [50.0, 250.0],
+    [200.0, 250.0],
+    [200.0, 450.0],
+    [50.0, 450.0]
+  ],
+
+  "_docs": {
+    "_warning": "This is an example configuration file. Fill in the values with your own data.",
+    "_warning_1": "Dont edit the docs section, only edit the values above.",
+    "_comment": "Elevated Plus Maze arena configuration. Fill in the 12 maze points using ImageJ.",
+
+    "_NOTE_ImageJ_1": "ImageJ uses (x,y) or (column,row), NOT (y,x).",
+    "_NOTE_ImageJ_2": "Make sure the points are in the same order as the _point_order list.",
+    "_NOTE_ImageJ_3": "Use the point tool to create a ROI and then save as arbitrary x,y coordinates.",
+
+    "_point_order": [
+      "top-open arm: top-left, top-right, bottom-right, bottom-left",
+      "right-closed arm: top-left, top-right, bottom-right, bottom-left",
+      "bottom-open arm: top-left, top-right, bottom-right, bottom-left (same order as top arm, opposite side)",
+      "left-closed arm: top-left, top-right, bottom-right, bottom-left"
+    ]
+  }
+}

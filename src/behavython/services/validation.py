@@ -4,7 +4,7 @@ from flask import json
 from typing import Any, Optional
 from pathlib import Path
 from behavython.core.defaults import ANALYSIS_REQUIRED_SUFFIXES
-from behavython.core.paths import USER_BIN_ROOT, USER_MODELS_ROOT
+from behavython.core.paths import USER_MODELS_ROOT
 from behavython.pipeline.models import AnalysisRequest
 from behavython.core.exceptions import AnalysisError
 
@@ -13,11 +13,11 @@ def validate_config_path(path: str) -> list[str]:
     errors: list[str] = []
 
     if not path:
-        errors.append("No config.yaml was selected.")
+        errors.append("No configuration file was selected.")
     elif not os.path.exists(path):
         errors.append(f"Config path does not exist: {path}")
-    elif not path.lower().endswith(".yaml"):
-        errors.append("Config path must be a .yaml file.")
+    elif not (path.lower().endswith(".yaml") or path.lower().endswith(".yml")):
+        errors.append("Config path must be a .yaml or .yml file.")
 
     return errors
 
@@ -82,9 +82,14 @@ def validate_analysis_request(request: AnalysisRequest) -> list[str]:
 
 
 def is_ffmpeg_installed() -> bool:
-    ffmpeg_exe = USER_BIN_ROOT / "ffmpeg.exe"
-    ffprobe_exe = USER_BIN_ROOT / "ffprobe.exe"
-    return ffmpeg_exe.exists() and ffprobe_exe.exists()
+    from behavython.core.utils import resolve_binary
+
+    try:
+        resolve_binary("ffmpeg")
+        resolve_binary("ffprobe")
+        return True
+    except RuntimeError:
+        return False
 
 
 def is_model_installed(model_name: str) -> bool:

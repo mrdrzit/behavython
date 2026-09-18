@@ -92,6 +92,8 @@ class DLCVideoAnalysisRequest:
     config_path: str
     video_paths: list[str]
     create_plots: bool = True
+    shuffle: int | None = None
+    trainingsetindex: int | None = None
 
 
 @dataclass(slots=True)
@@ -127,6 +129,8 @@ class DLCAnalyzeFramesRequest:
     number_of_frames: int | None = None
     mode: str = "video"
     target_bodyparts: list[str] | None = None
+    shuffle: int | None = None
+    trainingsetindex: int | None = None
 
 
 @dataclass(slots=True)

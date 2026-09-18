@@ -1,0 +1,50 @@
+#compdef behavython-cli
+#
+# Zsh completion for behavython-cli
+#
+# Installation:
+# 1. Create a completions directory if you don't have one:
+#    mkdir -p ~/.zsh/completions
+# 2. Copy this file into it:
+#    cp _behavython-cli ~/.zsh/completions/
+# 3. Add the following to your ~/.zshrc BEFORE the line that calls `compinit`:
+#    fpath=(~/.zsh/completions $fpath)
+# 4. Restart your shell or run `rm -f ~/.zcompdump; compinit`.
+
+_behavython_cli() {
+    local -a experiment_types
+    experiment_types=(
+        'open_field:Open Field'
+        'elevated_plus_maze:Elevated Plus Maze'
+        'zero_maze:Zero Maze'
+        'y_maze:Y-Maze'
+        't_maze:T-Maze'
+        'novel_object:Novel Object'
+        'social_interaction:Social Interaction'
+    )
+
+    _arguments -s \
+        '(-c --config)'{-c,--config}'[Path to a JSON config file]:config_file:_files -g "*.json"' \
+        '(-f --input-folder)'{-f,--input-folder}'[Folder containing all analysis files]:input_dir:_dirs' \
+        '(-o --output)'{-o,--output}'[Output directory for results]:output_dir:_dirs' \
+        '--arena-config[Global fallback arena/maze JSON config]:arena_config:_files -g "*.json"' \
+        '--no-plots[Disable plot generation]' \
+        '--experiment-type[Experiment type]:experiment_type:(($experiment_types))' \
+        '--run-tracking[Run DeepLabCut tracking (analysis + filtering)]' \
+        '--dlc-config[Path to the DeepLabCut config.yaml file]:dlc_config:_files -g "*.yaml"' \
+        '--standardize[Standardize videos to a compatible codec (H.264/CFR)]' \
+        '--run-cropping[Run batch cropping on videos]' \
+        '--crop-config[Path to the cropping project JSON file]:crop_config:_files -g "*.json"' \
+        '--extract-frames[Extract one representative frame per video]' \
+        '--frame-number[Override the frame index used by --extract-frames]:frame_number:' \
+        '--cleanup[Move unused files to unwanted_files/]' \
+        '--likelihood-plots[Generate custom likelihood plots]' \
+        '--annotate-video[Create DeepLabCut annotated videos]' \
+        '--init[Copy template config files to a directory]' \
+        '--transfer-labels[Transfer DLC labels from one project to another]' \
+        '--label-folders[One or more labeled-data directories to transfer]:label_dir:_dirs' \
+        '(-v --verbose)'{-v,--verbose}'[Enable verbose logging to stdout]' \
+        && return 0
+}
+
+_behavython_cli "$@"

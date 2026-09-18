@@ -6,7 +6,7 @@ import shutil
 import logging
 import subprocess
 import pandas as pd
-from tqdm import tqdm
+
 from pathlib import Path
 from typing import Any
 from behavython.core.defaults import ANALYSIS_REQUIRED_SUFFIXES, MAZE_EXPERIMENT_TYPES
@@ -81,7 +81,7 @@ def get_dlc_file_status(video_path: str) -> dict:
         if not file.name.startswith(stem):
             continue
 
-        remaining = file.name[len(stem):]
+        remaining = file.name[len(stem) :]
         if not (remaining.startswith("DLC") or remaining.startswith("SuperAnimal") or remaining.startswith("CollectedData")):
             continue
 
@@ -99,6 +99,49 @@ def get_dlc_file_status(video_path: str) -> dict:
     needs_filtering = not has_filtered
 
     return {"needs_analysis": needs_analysis, "needs_filtering": needs_filtering}
+
+
+def infer_dlc_shuffle_and_trainingsetindex(config_path: str, config_dict: dict) -> tuple[int, int]:
+    """
+    Attempts to infer the optimal shuffle and trainingsetindex by inspecting
+    the dlc-models folder for the current iteration.
+    Falls back to (1, 0) if inference fails.
+    """
+    import re
+
+    project_path = Path(config_path).parent
+    iteration = config_dict.get("iteration", 0)
+    dlc_models = project_path / "dlc-models" / f"iteration-{iteration}"
+
+    default_shuffle, default_trainingsetindex = 1, 0
+
+    if not dlc_models.exists() or not dlc_models.is_dir():
+        return default_shuffle, default_trainingsetindex
+
+    pattern = re.compile(r"trainset(\d+)shuffle(\d+)")
+
+    found = []
+    for d in dlc_models.iterdir():
+        if d.is_dir():
+            match = pattern.search(d.name)
+            if match:
+                fraction_pct, shuffle = int(match.group(1)), int(match.group(2))
+                found.append((fraction_pct, shuffle))
+
+    if not found:
+        return default_shuffle, default_trainingsetindex
+
+    found.sort(key=lambda x: (x[1], x[0]), reverse=True)
+    fraction_pct, shuffle = found[0]
+
+    training_fractions = config_dict.get("TrainingFraction", [0.95])
+    trainingsetindex = 0
+    for i, frac in enumerate(training_fractions):
+        if int(frac * 100) == fraction_pct:
+            trainingsetindex = i
+            break
+
+    return shuffle, trainingsetindex
 
 
 def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=None, warning=None):
@@ -176,27 +219,21 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
             progress.emit(40)
 
         console_logger.info(f"DLC analysis start | videos={len(videos_to_analyze)}")
-        console_logger.info("DLC note | Progress bar may appear stuck during first video")
-        console_logger.info("DLC note | Processing is approximately real-time for GPUs like the RTX 3060")
-        console_logger.info("DLC note | It may be fast for newer GPUs and slower for older GPUs or CPU-only")
-        for video in tqdm(videos_to_analyze, desc="Analyzing videos", unit="video"):
+        for i, video in enumerate(videos_to_analyze, 1):
+            console_logger.info(f"Processing video {i}/{len(videos_to_analyze)}: {Path(video).name}")
             _, usable_config_path, was_repaired = prepare_dlc_config(request.config_path)
             with capture_external_output("behavython.external"):
                 deeplabcut.analyze_videos(
                     usable_config_path,
                     [video],
                     videotype=extension,
-                    shuffle=1,
-                    trainingsetindex=0,
                     gputouse=gpu_to_use,
-                    allow_growth=True,
                     save_as_csv=True,
                 )
 
     if videos_to_filter:
         if log:
             log.emit("dlc", "Filtering predictions...")
-        dlc_logger.info("Calling deeplabcut.filterpredictions")
 
         if progress:
             progress.emit(60)
@@ -208,8 +245,6 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
                 usable_config_path,
                 videos_to_filter,
                 videotype=extension,
-                shuffle=1,
-                trainingsetindex=0,
                 filtertype="median",
                 save_as_csv=True,
             )
@@ -217,29 +252,25 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
                 deeplabcut.analyzeskeleton(
                     usable_config_path,
                     videos_to_filter,
-                    shuffle=1,
-                    trainingsetindex=0,
                     filtered=True,
                     save_as_csv=True,
                 )
             except Exception as e:
                 if "skeleton" in str(e).lower():
                     msg = "No skeleton defined in config.yaml. Skipping skeleton analysis."
-                    console_logger.warning(msg)
                     if warning:
                         warning.emit("Warning", msg)
                 else:
                     raise
 
     if request.create_plots:
-        dlc_logger.info("Custom plotting is handled separately via DLCLikelihoodPlotRequest.")
         if progress:
             progress.emit(80)
 
     if progress:
         progress.emit(100)
 
-    dlc_logger.info("run_dlc_video_analysis finished successfully")
+    dlc_logger.info("DLC analysis finished successfully")
 
     return {
         "kind": "dlc_analysis",

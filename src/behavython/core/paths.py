@@ -1,5 +1,7 @@
 import os
+import platform
 from pathlib import Path
+from behavython.core.defaults import FFMPEG_DOWNLOAD_URLS
 
 PACKAGE_ROOT = Path(__file__).resolve().parent.parent
 
@@ -31,7 +33,10 @@ LOGO_PATH = GUI_IMAGES_ROOT / "logo.png"
 ICON_PATH = GUI_IMAGES_ROOT / "VY.ico"
 
 # --- EXTERNAL URLS ---
-FFMPEG_URL = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip"
+# FFMPEG_URL is resolved at import time from the platform-keyed dict in defaults.
+# On macOS it will be None — the GUI dependency dialog shows Homebrew instructions instead.
+
+FFMPEG_URL: str | None = FFMPEG_DOWNLOAD_URLS.get(platform.system())
 MODELS_URLS = {
     "c57_network_2025_minified": "https://github.com/mrdrzit/behavython/releases/download/models-v1.0/c57_network_2025_minified.zip",
     "roi_network": "https://github.com/mrdrzit/behavython/releases/download/models-v1.0/roi_network.zip",

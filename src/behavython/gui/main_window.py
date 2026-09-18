@@ -33,7 +33,14 @@ from behavython.services.validation import validate_json_config
 from behavython.gui.dialogs import ask_yes_no, show_warning, show_info, show_worker_error
 from behavython.gui.dialogs import select_file, select_files, select_folder, select_save_folder
 from behavython.services.logging import LoggingService
-from behavython.core.utils import get_ffmpeg_path, resolve_analysis_input, resolve_output_folder, resolve_video_input, load_or_repair_dlc_yaml, group_analysis_files
+from behavython.core.utils import (
+    get_ffmpeg_path,
+    resolve_analysis_input,
+    resolve_output_folder,
+    resolve_video_input,
+    load_or_repair_dlc_yaml,
+    group_analysis_files,
+)
 from behavython.pipeline.models import (
     AnalysisInputSource,
     OutputFolderSource,
@@ -382,9 +389,15 @@ class BehavythonMainWindow(QWidget):
             missing_configs = any(not group["files"]["config"] for group in groups)
 
             if missing_configs:
-                config_path = select_file(self.interface, "Select Global Fallback Configuration (Optional if all animals have configs)", "JSON Files (*.json)")
+                config_path = select_file(
+                    self.interface, "Select Global Fallback Configuration (Optional if all animals have configs)", "JSON Files (*.json)"
+                )
                 if not config_path:
-                    show_warning(self.interface, "Missing Configuration", "You must select an arena configuration JSON to run a maze analysis for animals missing individual configs.")
+                    show_warning(
+                        self.interface,
+                        "Missing Configuration",
+                        "You must select an arena configuration JSON to run a maze analysis for animals missing individual configs.",
+                    )
                     return
 
         request = AnalysisRequest(
@@ -449,6 +462,8 @@ class BehavythonMainWindow(QWidget):
         self.interface.config_path_lineedit.textChanged.connect(self.enable_analysis)
         self.interface.video_folder_lineedit.textChanged.connect(self.enable_analysis_buttons)
         self.interface.analyze_from_file_lineedit.textChanged.connect(self.toggle_analyze_from_file_button)
+        self.interface.config_path_lineedit.textChanged.connect(self._toggle_likelihood_button)
+        self.interface.video_folder_lineedit.textChanged.connect(self._toggle_likelihood_button)
 
         self.interface.dlc_video_analyze_button.clicked.connect(self.on_run_dlc_analysis_clicked)
         self.interface.analyze_from_file_button.clicked.connect(self.on_run_dlc_analysis_from_file_clicked)
@@ -496,29 +511,37 @@ class BehavythonMainWindow(QWidget):
             self.interface.analyze_from_file_lineedit.setText(path)
 
     def enable_analysis(self) -> None:
-        enabled = self.interface.config_path_lineedit.text().lower().endswith(".yaml")
+        path = self.interface.config_path_lineedit.text().lower()
+        enabled = path.endswith(".yaml") or path.endswith(".yml")
         self.interface.dlc_video_analyze_button.setEnabled(enabled)
         self.interface.create_annotated_video_button.setEnabled(enabled)
         self.interface.folder_to_create_annotated_video_button.setEnabled(enabled)
-        self._toggle_likelihood_button()
 
     def enable_analysis_buttons(self) -> None:
         enabled = bool(self.interface.video_folder_lineedit.text().strip())
         self.interface.get_frames_button.setEnabled(enabled)
         self.interface.clear_unused_files_button.setEnabled(enabled)
-        self._toggle_likelihood_button()
 
     def _toggle_likelihood_button(self) -> None:
         if not hasattr(self.interface, "generate_likelihood_plots_button"):
             return
 
-        config_ok = self.interface.config_path_lineedit.text().lower().endswith(".yaml")
+        path = self.interface.config_path_lineedit.text().lower()
+        config_ok = path.endswith(".yaml") or path.endswith(".yml")
         folder_path = self.interface.video_folder_lineedit.text().strip()
         folder_ok = bool(folder_path) and os.path.isdir(folder_path)
 
         has_data = False
         if folder_ok:
-            has_data = any(f.endswith(".h5") for f in os.listdir(folder_path))
+            # Check main folder for any tracking results
+            files = os.listdir(folder_path)
+            has_data = any(f.endswith(".h5") for f in files)
+
+            # Also check 'unwanted_files' subfolder (common if user ran Cleanup Folder)
+            if not has_data:
+                unwanted = os.path.join(folder_path, "unwanted_files")
+                if os.path.isdir(unwanted):
+                    has_data = any(f.endswith(".h5") for f in os.listdir(unwanted))
 
         self.interface.generate_likelihood_plots_button.setEnabled(config_ok and folder_ok and has_data)
 
@@ -955,7 +978,7 @@ class BehavythonMainWindow(QWidget):
         project_path = folder_path / "crop_project.json"
 
         if not project_path.exists():
-            show_warning(self.interface, "No Crop Project", "You must set the crop coordinates first using the Cropper Dialog.")
+            show_warning(self.interface, "No Crop Project", "You must set crop or trim settings first using the Cropper Dialog.")
             return
 
         import json
@@ -1047,6 +1070,9 @@ class BehavythonMainWindow(QWidget):
                 )
         elif kind == "batch_crop":
             show_info(self.interface, "Cropping Complete", f"Successfully cropped {result['processed']} out of {result['total']} video(s).")
+
+        # Ensure the UI reflects the new state of the folders
+        self._toggle_likelihood_button()
 
     def on_worker_error(self, error_info) -> None:
         self.logger.error("Worker error dialog shown: %s", error_info[1])

@@ -93,7 +93,28 @@ class VideoService:
             return True  # Flag as problematic if ffprobe fails
 
     @staticmethod
-    def run_ffmpeg_with_tqdm(cmd: list, video_path: Path, desc: str, position: int = None) -> bool:
+    def _get_video_duration_seconds(video_path: Path) -> float:
+        """
+        Returns the video duration in seconds, using OpenCV as a fast fallback and ffprobe for precision.
+        """
+        cap = cv2.VideoCapture(str(video_path))
+        fps = float(cap.get(cv2.CAP_PROP_FPS) or 0.0)
+        frame_count = float(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0.0)
+        cap.release()
+
+        if fps > 0 and frame_count > 0:
+            return frame_count / fps
+
+        ffprobe = get_ffprobe_path()
+        cmd = [ffprobe, "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", str(video_path)]
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            return float(result.stdout.strip())
+        except Exception:
+            return 0.0
+
+    @staticmethod
+    def run_ffmpeg_with_tqdm(cmd: list, video_path: Path, desc: str, position: int = None, total_frames: int | None = None) -> bool:
         """
         Runs FFmpeg and uses tqdm to display a progress bar based on frame count.
         """
@@ -103,9 +124,11 @@ class VideoService:
         from collections import deque
 
         # Get total frames for the progress bar
-        cap = cv2.VideoCapture(str(video_path))
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        cap.release()
+        if total_frames is None:
+            cap = cv2.VideoCapture(str(video_path))
+            total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            cap.release()
+        total_frames = max(int(total_frames or 0), 1)
 
         # Remove manual console flags so tqdm can parse stderr cleanly
         cmd_clean = [c for c in cmd if c not in ["-hide_banner", "-loglevel", "error", "-stats"]]
@@ -144,71 +167,101 @@ class VideoService:
             return False
 
     @classmethod
-    def crop_video(cls, video_path: Path, output_path: Path, crop_data: dict, position: int = None) -> bool:
+    def crop_video(
+        cls,
+        video_path: Path,
+        output_path: Path,
+        crop_data: dict | None,
+        trim_start_seconds: float = 0.0,
+        trim_end_seconds: float = 0.0,
+        position: int = None,
+    ) -> bool:
         """
-        Uses FFmpeg with Nvidia hardware acceleration to rotate and crop the video.
+        Uses FFmpeg with Nvidia hardware acceleration to crop and/or trim the video.
         crop_data expects: {'x': int, 'y': int, 'width': int, 'height': int, 'rotation': float, 'orig_w': int, 'orig_h': int}
         """
-        x = float(crop_data.get("x", 0))
-        y = float(crop_data.get("y", 0))
-        w = int(crop_data.get("width", 0))
-        h = int(crop_data.get("height", 0))
-        angle_deg = float(crop_data.get("rotation", 0.0))
+        trim_start_seconds = max(0.0, float(trim_start_seconds or 0.0))
+        trim_end_seconds = max(0.0, float(trim_end_seconds or 0.0))
 
-        # Get video dimensions to calculate rotation shift (use provided or open if missing)
-        w_orig = crop_data.get("orig_w")
-        h_orig = crop_data.get("orig_h")
+        has_crop = bool(crop_data and crop_data.get("width") and crop_data.get("height"))
+        x = y = 0
+        w = h = 0
+        angle_deg = 0.0
+        w_orig = h_orig = None
 
-        if w_orig is None or h_orig is None:
-            cap = cv2.VideoCapture(str(video_path))
-            w_orig = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-            h_orig = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-            cap.release()
+        if has_crop and crop_data is not None:
+            x = float(crop_data.get("x", 0))
+            y = float(crop_data.get("y", 0))
+            w = int(crop_data.get("width", 0))
+            h = int(crop_data.get("height", 0))
+            angle_deg = float(crop_data.get("rotation", 0.0))
 
-        # Force even dimensions (strictly required by H.264 / yuv420p)
-        if w % 2 != 0:
-            w -= 1
-        if h % 2 != 0:
-            h -= 1
+            # Get video dimensions to calculate rotation shift (use provided or open if missing)
+            w_orig = crop_data.get("orig_w")
+            h_orig = crop_data.get("orig_h")
 
-        # Coordinate transformation if rotation is applied
-        if angle_deg != 0.0:
-            # Center of original image
-            cx_orig, cy_orig = w_orig / 2.0, h_orig / 2.0
-            # Center of the crop box in original image
-            bx_orig, by_orig = x + w / 2.0, y + h / 2.0
+            if w_orig is None or h_orig is None:
+                cap = cv2.VideoCapture(str(video_path))
+                w_orig = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+                h_orig = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+                cap.release()
 
-            # Relative to center
-            dx, dy = bx_orig - cx_orig, by_orig - cy_orig
+            # Force even dimensions (strictly required by H.264 / yuv420p)
+            if w % 2 != 0:
+                w -= 1
+            if h % 2 != 0:
+                h -= 1
 
-            # To straighten a CW tilted box (Qt angle), we rotate image CCW (negative angle)
-            # FFmpeg rotate filter uses radians and rotates CW for positive values.
-            alpha = math.radians(-angle_deg)
-            new_dx = dx * math.cos(alpha) - dy * math.sin(alpha)
-            new_dy = dx * math.sin(alpha) + dy * math.cos(alpha)
+            # Coordinate transformation if rotation is applied
+            if angle_deg != 0.0:
+                # Center of original image
+                cx_orig, cy_orig = w_orig / 2.0, h_orig / 2.0
+                # Center of the crop box in original image
+                bx_orig, by_orig = x + w / 2.0, y + h / 2.0
 
-            # Expanded frame size used in rotate filter (ow='hypot(iw,ih)')
-            l_new = math.hypot(w_orig, h_orig)
+                # Relative to center
+                dx, dy = bx_orig - cx_orig, by_orig - cy_orig
 
-            # New center in the expanded frame
-            bx_new = new_dx + l_new / 2.0
-            by_new = new_dy + l_new / 2.0
+                # To straighten a CW tilted box (Qt angle), we rotate image CCW (negative angle)
+                # FFmpeg rotate filter uses radians and rotates CW for positive values.
+                alpha = math.radians(-angle_deg)
+                new_dx = dx * math.cos(alpha) - dy * math.sin(alpha)
+                new_dy = dx * math.sin(alpha) + dy * math.cos(alpha)
 
-            # New top-left coordinates for crop
-            x = int(bx_new - w / 2.0)
-            y = int(by_new - h / 2.0)
-            vf_angle = -angle_deg
-        else:
-            x = int(x)
-            y = int(y)
-            vf_angle = 0.0
+                # Expanded frame size used in rotate filter (ow='hypot(iw,ih)')
+                l_new = math.hypot(w_orig, h_orig)
 
-        # Enforce even x and y (required for yuv420p chroma subsampling)
-        x = x & ~1
-        y = y & ~1
+                # New center in the expanded frame
+                bx_new = new_dx + l_new / 2.0
+                by_new = new_dy + l_new / 2.0
+
+                # New top-left coordinates for crop
+                x = int(bx_new - w / 2.0)
+                y = int(by_new - h / 2.0)
+                vf_angle = -angle_deg
+            else:
+                x = int(x)
+                y = int(y)
+                vf_angle = 0.0
+
+            # Enforce even x and y (required for yuv420p chroma subsampling)
+            x = x & ~1
+            y = y & ~1
+
+        total_duration = cls._get_video_duration_seconds(video_path)
+        output_duration = total_duration - trim_start_seconds - trim_end_seconds if total_duration > 0 else 0.0
+        if trim_end_seconds > 0 and total_duration <= 0:
+            logger.error(f"Could not determine duration for {video_path.name}; trim end cannot be applied safely.")
+            return False
+        if total_duration > 0 and output_duration <= 0:
+            logger.error(f"Trim settings remove all content from {video_path.name}.")
+            return False
 
         ffmpeg = get_ffmpeg_path()
         cmd = [ffmpeg, "-hide_banner", "-loglevel", "error", "-y"]
+
+        if trim_start_seconds > 0:
+            cmd.extend(["-ss", f"{trim_start_seconds:.3f}"])
 
         use_nvenc = cls.has_nvenc_support()
 
@@ -217,39 +270,39 @@ class VideoService:
             use_nvenc = False
 
         filters = []
-        if vf_angle != 0.0:
-            # We use ow=hypot(iw,ih) to ensure the rotated frame contains all pixels
-            filters.append(f"rotate={vf_angle}*PI/180:ow='hypot(iw,ih)':oh=ow:c=black")
-        filters.append(f"crop={w}:{h}:{x}:{y}")
+        if has_crop:
+            if vf_angle != 0.0:
+                # We use ow=hypot(iw,ih) to ensure the rotated frame contains all pixels
+                filters.append(f"rotate={vf_angle}*PI/180:ow='hypot(iw,ih)':oh=ow:c=black")
+            filters.append(f"crop={w}:{h}:{x}:{y}")
         vf_string = ",".join(filters)
 
         if use_nvenc:
-            cmd.extend(
-                [
-                    "-threads",
-                    "0",
-                    "-hwaccel",
-                    "auto",
-                    "-i",
-                    str(video_path),
-                    "-vf",
-                    vf_string,
-                    "-c:v",
-                    "h264_nvenc",
-                    "-preset",
-                    "p2",
-                    "-cq",
-                    "23",
-                    "-b:v",
-                    "0",
-                ]
-            )
+            cmd.extend(["-threads", "0", "-hwaccel", "auto", "-i", str(video_path)])
+            if vf_string:
+                cmd.extend(["-vf", vf_string])
+            cmd.extend(["-c:v", "h264_nvenc", "-preset", "p2", "-cq", "23", "-b:v", "0"])
         else:
-            cmd.extend(["-i", str(video_path), "-vf", vf_string, "-c:v", "libx264", "-preset", "fast", "-crf", "23"])
+            cmd.extend(["-i", str(video_path)])
+            if vf_string:
+                cmd.extend(["-vf", vf_string])
+            cmd.extend(["-c:v", "libx264", "-preset", "fast", "-crf", "23"])
+
+        if trim_end_seconds > 0 and total_duration > 0:
+            cmd.extend(["-t", f"{output_duration:.3f}"])
 
         cmd.extend(["-c:a", "copy", str(output_path)])
 
-        return cls.run_ffmpeg_with_tqdm(cmd, video_path, f"Cropping {video_path.name}", position=position)
+        estimated_frames = None
+        if total_duration > 0 and output_duration > 0:
+            cap = cv2.VideoCapture(str(video_path))
+            fps = float(cap.get(cv2.CAP_PROP_FPS) or 0.0)
+            cap.release()
+            if fps > 0:
+                estimated_frames = max(int(fps * output_duration), 1)
+
+        action = "Cropping" if has_crop and (trim_start_seconds == 0 and trim_end_seconds == 0) else "Exporting"
+        return cls.run_ffmpeg_with_tqdm(cmd, video_path, f"{action} {video_path.name}", position=position, total_frames=estimated_frames)
 
 
 def run_batch_crop(request: dict, progress=None, log=None, warning=None) -> dict:
@@ -265,18 +318,24 @@ def run_batch_crop(request: dict, progress=None, log=None, warning=None) -> dict
     project_data = request["project_data"]
     project_path = Path(request["project_path"])
 
-    # Filter videos that are ready and not yet cropped
-    videos_to_process = [vid for vid, data in project_data.items() if data.get("coordinates_set") and not data.get("video_cropped")]
+    def has_export_settings(data: dict) -> bool:
+        trim_start = float(data.get("trim_start", 0.0) or 0.0)
+        trim_end = float(data.get("trim_end", 0.0) or 0.0)
+        has_coordinates = bool(data.get("coordinates_set") and data.get("coordinates"))
+        return has_coordinates or trim_start > 0 or trim_end > 0
+
+    # Filter videos that are ready and not yet exported
+    videos_to_process = [vid for vid, data in project_data.items() if has_export_settings(data) and not data.get("video_cropped")]
 
     if not videos_to_process:
         if log:
-            log.emit("dlc", "No new videos to crop (or no coordinates set).")
+            log.emit("dlc", "No new videos to export (or no crop/trim settings set).")
         return {"kind": "batch_crop", "processed": 0, "total": 0}
 
     total = len(videos_to_process)
     processed = 0
     io_lock = threading.Lock()
-    logger.info(f"Starting to crop {total} videos.")
+    logger.info(f"Starting to export {total} videos.")
 
     def process_single_video(vid, index):
         video_path = Path(vid)
@@ -287,19 +346,45 @@ def run_batch_crop(request: dict, progress=None, log=None, warning=None) -> dict
             return False
 
         data = project_data[vid]
-        c = data["coordinates"]
+        c = data.get("coordinates") if data.get("coordinates_set") else None
+        trim_start = float(data.get("trim_start", 0.0) or 0.0)
+        trim_end = float(data.get("trim_end", 0.0) or 0.0)
+        has_crop = bool(c)
+        has_trim = trim_start > 0 or trim_end > 0
 
-        # Create output directory
-        output_dir = video_path.parent / "cropped"
-        output_dir.mkdir(exist_ok=True)
-        output_path = output_dir / video_path.name
+        def build_output_path() -> Path:
+            if has_crop and has_trim:
+                output_dir = video_path.parent / "cropped_trimmed"
+                output_name = f"{video_path.stem}{video_path.suffix}"
+            elif has_crop:
+                output_dir = video_path.parent / "cropped"
+                output_name = video_path.name
+            else:
+                output_dir = video_path.parent / "trimmed"
+                output_name = f"{video_path.stem}{video_path.suffix}"
+            output_dir.mkdir(exist_ok=True)
+            return output_dir / output_name
+
+        output_path = build_output_path()
 
         with io_lock:
             if log:
-                log.emit("dlc", f"[{index + 1}/{total}] Cropping {video_path.name}...")
+                if has_crop and has_trim:
+                    log.emit("dlc", f"[{index + 1}/{total}] Cropping and trimming {video_path.name}...")
+                elif has_crop:
+                    log.emit("dlc", f"[{index + 1}/{total}] Cropping {video_path.name}...")
+                else:
+                    log.emit("dlc", f"[{index + 1}/{total}] Trimming {video_path.name}...")
 
         # Run FFmpeg with tqdm progress bar
-        success = VideoService.crop_video(video_path, output_path, c, position=index % 2)
+        success = VideoService.crop_video(
+            video_path,
+            output_path,
+            c,
+            trim_start_seconds=trim_start,
+            trim_end_seconds=trim_end,
+            position=index % 2,
+        )
 
         if success:
             with io_lock:
@@ -312,7 +397,7 @@ def run_batch_crop(request: dict, progress=None, log=None, warning=None) -> dict
         else:
             with io_lock:
                 if log:
-                    log.emit("dlc", f"FFmpeg failed to crop {video_path.name}")
+                    log.emit("dlc", f"FFmpeg failed to export {video_path.name}")
 
         return success
 
@@ -329,7 +414,7 @@ def run_batch_crop(request: dict, progress=None, log=None, warning=None) -> dict
                 progress.emit(prog_val)
 
     print("\r", end="", flush=True)  # Reset cursor to left margin without adding a newline
-    logger.info(f"Finished cropping {processed} videos.")
+    logger.info(f"Finished exporting {processed} videos.")
     return {"kind": "batch_crop", "processed": processed, "total": total}
 
 

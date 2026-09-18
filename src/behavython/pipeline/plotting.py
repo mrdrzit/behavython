@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from behavython.core.paths import USER_BIN_ROOT
+from behavython.core.utils import get_ffmpeg_path
 from matplotlib.animation import FuncAnimation
 from behavython.pipeline.models import Animal, AnalysisRequest
 from behavython.pipeline import geometry
@@ -382,7 +382,7 @@ def _opencv_animate_maze_crossings(animal: Animal, result: dict, request: Analys
 
     # Pre-draw the base canvas overlay so we don't have to if we're falling back
     overlay = base_canvas.copy()
-    
+
     # Pre-calculate polygon coordinates to avoid doing it per frame
     rendered_polygons = []
     for zone_name, poly in polygons.items():
@@ -390,7 +390,7 @@ def _opencv_animate_maze_crossings(animal: Animal, result: dict, request: Analys
         pts = np.array([[int(x * ratio), int(y * ratio)] for x, y in zip(px, py)], np.int32).reshape((-1, 1, 2))
         style = ZONE_STYLES.get(zone_name, FALLBACK_ZONE_STYLE)
         rendered_polygons.append((pts, style["cv2"]))
-        
+
         cv2.fillPoly(overlay, [pts], style["cv2"])
         cv2.polylines(overlay, [pts], isClosed=True, color=CV2_GEOMETRY_OUTLINE, thickness=1)
 
@@ -434,7 +434,7 @@ def _opencv_animate_maze_crossings(animal: Animal, result: dict, request: Analys
                     cv2.fillPoly(frame_overlay, [pts], cv2_color)
                     cv2.polylines(frame_overlay, [pts], isClosed=True, color=CV2_GEOMETRY_OUTLINE, thickness=1)
                 cv2.addWeighted(frame_overlay, 0.3, frame_img, 0.7, 0, frame_img)
-        
+
         if frame_img is None:
             frame_img = base_canvas.copy()
 
@@ -573,7 +573,7 @@ def _matplotlib_animate_maze_crossings(animal: Animal, result: dict, request: An
                 pbar.update(1)
 
             try:
-                ani.save(save_path, writer=USER_BIN_ROOT / "ffmpeg", fps=fps, progress_callback=progress_callback)
+                ani.save(save_path, writer=get_ffmpeg_path(), fps=fps, progress_callback=progress_callback)
             except Exception as e:
                 console_logger.error(f"Failed to save animation for {animal_name}. Error: {e}")
 
