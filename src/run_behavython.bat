@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-set "ENV_NAME=behavython"
+set "ENV_NAME=dlc"
 set "APP_MODULE=behavython.main"
 set "CONDA_CMD="
 
