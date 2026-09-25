@@ -67,49 +67,33 @@ For a streamlined setup, we provide a batch script that automates the entire pro
 
 ### Step-by-Step Installation (Manual)
 
-We strongly recommend using mamba (or Miniconda/Mamba) to manage your isolated Python environment to prevent dependency conflicts.
+We recommend using mamba (or conda) to manage isolated Python environments. DeepLabCut 2.3.x (TensorFlow) and DeepLabCut 3.0+ (PyTorch) require distinct CUDA runtimes and package versions, so they should be installed into separate environments.
 
-**1. Create the environment:**
-Create a clean environment explicitly using Python 3.10.
-```bash
-mamba create -n behavython python=3.10
-````
-
-**2. Activate the environment:**
-You must be inside the environment for the next steps.
+#### Option A: TensorFlow Environment (DLC < 3.0)
+Use this environment for models trained on TensorFlow or created before DeepLabCut 3.0.
 
 ```bash
-mamba activate behavython
-```
-
-**3. Install Behavython:**
-Use `pip` inside the activated environment. **Crucial:** You must include the extra index URL to fetch the correct GPU-compiled PyTorch wheels. Omitting this may result in an incompatible CPU-only installation.
-
-**Option A: TensorFlow (Stable / DLC 2.3.x)**
-Recommended for most established pipelines.
-```bash
+mamba create -n behavython-tf python=3.10
+mamba activate behavython-tf
+mamba install -c conda-forge cudatoolkit=11.2 cudnn=8.1.0
 pip install "behavython[tf]"
 ```
 
-**Option B: PyTorch (Experimental / DLC 3.x)**
-Recommended for the latest DeepLabCut features. For GPU support (e.g., CUDA 12.6), install the backend wheels first:
+#### Option B: PyTorch Environment (DLC 3.0+)
+Use this environment for models trained on PyTorch with DeepLabCut 3.0+.
+
 ```bash
+mamba create -n behavython-torch python=3.10
+mamba activate behavython-torch
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
 pip install "behavython[torch]"
 ```
 
-To use your NVIDIA GPU for tracking, you must have the appropriate drivers and libraries installed.
-
-**For TensorFlow (Option A):**
-TensorFlow 2.10 requires specific versions of the CUDA toolkit and cuDNN. Run this inside your environment to install them:
-```bash
-mamba install -c conda-forge cudatoolkit=11.2 cudnn=8.1.0
-```
-
-Failure to configure the GPU dependencies correctly will result in severe processing slowdowns during DeepLabCut operations.
-
-**For PyTorch (Option B):**
-The `pip install` command above with the `--index-url` bundles the necessary CUDA kernels within the wheels. You only need to ensure your **system NVIDIA drivers** are up to date
+#### DeepLabCut Engine Detection & Backend Validation
+Behavython checks backend availability before starting video analysis or assisted labeling:
+- **Explicit setting:** Reads `config.yaml` for `engine: pytorch` (or `torch`) and `engine: tensorflow` (or `tf`).
+- **Automatic detection:** When `engine` is omitted (standard for networks trained before DLC 3.0), Behavython inspects the model folder structure: `dlc-models-pytorch/` resolves to PyTorch, and `dlc-models/` resolves to TensorFlow.
+- **Dependency checks:** If the required backend (`torch` or `tensorflow`/`tf_slim`) is missing from the active environment, Behavython halts early with `MissingBackendError` and names the missing packages.
 
 -----
 
