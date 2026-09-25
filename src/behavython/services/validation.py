@@ -3,10 +3,11 @@ import yaml
 from flask import json
 from typing import Any, Optional
 from pathlib import Path
+from importlib.util import find_spec
 from behavython.core.defaults import ANALYSIS_REQUIRED_SUFFIXES
 from behavython.core.paths import USER_MODELS_ROOT
 from behavython.pipeline.models import AnalysisRequest
-from behavython.core.exceptions import AnalysisError
+from behavython.core.exceptions import AnalysisError, UnsupportedBackendError, MissingBackendError
 
 
 def validate_config_path(path: str) -> list[str]:
@@ -95,3 +96,79 @@ def is_ffmpeg_installed() -> bool:
 def is_model_installed(model_name: str) -> bool:
     model_dir = USER_MODELS_ROOT / model_name
     return model_dir.exists() and any(model_dir.iterdir())
+
+
+ENGINE_ALIASES: dict[str, str] = {
+    "tensorflow": "tensorflow",
+    "tf": "tensorflow",
+    "pytorch": "pytorch",
+    "torch": "pytorch",
+}
+
+BACKEND_PACKAGES: dict[str, list[str]] = {
+    "pytorch": ["torch"],
+    "tensorflow": ["tensorflow", "tf_slim"],
+}
+
+
+def _infer_engine_from_folders(project_root: Path) -> Optional[str]:
+    """Infers engine based on DeepLabCut model folder conventions."""
+    if not project_root.exists() or not project_root.is_dir():
+        return None
+
+    has_pytorch_models = (project_root / "dlc-models-pytorch").is_dir()
+    has_tf_models = (project_root / "dlc-models").is_dir()
+
+    if has_pytorch_models and not has_tf_models:
+        return "pytorch"
+    if has_tf_models and not has_pytorch_models:
+        return "tensorflow"
+    return None
+
+
+def validate_dlc_backend(config: dict[str, Any], config_path: str | Path | None = None) -> str:
+    """
+    Validate that the backend required by the DLC network is installed.
+
+    DeepLabCut networks without an explicit ``engine`` key check for
+    engine-specific model directories, falling back to TensorFlow for
+    pre-3.0 compatibility.
+
+    Returns:
+        The backend that will be used: ``"pytorch"`` or ``"tensorflow"``.
+
+    Raises:
+        UnsupportedBackendError: If the config specifies an unknown engine.
+        MissingBackendError: If the required backend is not installed.
+    """
+    raw_engine = config.get("engine")
+    engine_candidate: Optional[str] = None
+
+    if isinstance(raw_engine, str) and raw_engine.strip():
+        normalized = raw_engine.strip().lower()
+        if normalized not in ENGINE_ALIASES:
+            supported = ", ".join(sorted(set(ENGINE_ALIASES.values())))
+            raise UnsupportedBackendError(f"Unsupported DeepLabCut engine: {raw_engine!r}. Expected one of: {supported}.")
+        engine_candidate = ENGINE_ALIASES[normalized]
+
+    if engine_candidate is None:
+        project_dir: Optional[Path] = None
+        if config_path:
+            project_dir = Path(config_path).resolve().parent
+        elif config.get("project_path"):
+            project_dir = Path(config["project_path"]).resolve()
+
+        if project_dir:
+            engine_candidate = _infer_engine_from_folders(project_dir)
+
+        if engine_candidate is None:
+            engine_candidate = "tensorflow"
+
+    required_packages = BACKEND_PACKAGES.get(engine_candidate, [])
+    missing_packages = [pkg for pkg in required_packages if find_spec(pkg) is None]
+
+    if missing_packages:
+        pkgs_str = ", ".join(repr(p) for p in missing_packages)
+        raise MissingBackendError(f"This DeepLabCut network requires the {engine_candidate} backend, but {pkgs_str} is not installed.")
+
+    return engine_candidate

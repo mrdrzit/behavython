@@ -1,0 +1,12 @@
+line-length = 100
+
+[lint]
+ignore = [
+  "E501",   # line too long
+  "F401",   # imported but unused
+  "F841",   # assigned but unused
+  "ANN001", # missing type annotation for function argument
+  "ANN201", # missing return type annotation
+  "I001",
+  "BLE001"
+]

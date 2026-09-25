@@ -17,6 +17,7 @@ from behavython.core.defaults import ANALYSIS_REQUIRED_SUFFIXES
 from behavython.services.logging import capture_external_output
 from behavython.core.utils import load_or_repair_dlc_yaml, get_ffmpeg_path, get_ffprobe_path, detect_gpu
 from behavython.core.exceptions import AnalysisError, BackupError, BodypartMismatchError, ProjectIntegrityError, ScorerMismatchError
+from behavython.services.validation import validate_dlc_backend
 
 logger = logging.getLogger("behavython.dlc")
 console_logger = logging.getLogger("behavython.console")
@@ -176,6 +177,7 @@ class DLCAssistedLabelSession:
         Raises ScorerMismatchError or BodypartMismatchError on incompatibility.
         """
         config = self.inventory.config
+        validate_dlc_backend(config, self.config_path)
 
         config_scorer: str = config.get("scorer", "")
         config_bodyparts: list[str] = config.get("bodyparts", [])

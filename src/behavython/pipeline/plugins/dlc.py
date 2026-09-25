@@ -12,7 +12,7 @@ from typing import Any
 from behavython.core.defaults import ANALYSIS_REQUIRED_SUFFIXES, MAZE_EXPERIMENT_TYPES
 from behavython.core.utils import load_or_repair_dlc_yaml, get_ffmpeg_path, get_ffprobe_path, detect_gpu
 from behavython.core.exceptions import AnalysisError
-from behavython.services.validation import validate_config_path, validate_video_paths
+from behavython.services.validation import validate_config_path, validate_video_paths, validate_dlc_backend
 from behavython.services.logging import capture_external_output
 from behavython.pipeline.models import (
     DLCClearUnusedFilesRequest,
@@ -146,6 +146,21 @@ def infer_dlc_shuffle_and_trainingsetindex(config_path: str, config_dict: dict) 
 
 def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=None, warning=None):
     errors = validate_config_path(request.config_path) + validate_video_paths(request.video_paths)
+
+    if errors:
+        raise AnalysisError("\n".join(errors))
+
+    config_dict, usable_config_path, was_repaired = prepare_dlc_config(request.config_path)
+    _emit_config_repair_logs(
+        request.config_path,
+        usable_config_path,
+        was_repaired,
+        log,
+    )
+
+    backend = validate_dlc_backend(config_dict)
+
+    dlc_logger.info("DeepLabCut network backend: %s", backend)
 
     # Check if the user has a gpu available for DLC to use, and if not, warn them that the analysis may be very slow
     try:
