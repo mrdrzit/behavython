@@ -2,10 +2,10 @@
 setlocal EnableExtensions EnableDelayedExpansion
 
 :: ======================================================
-:: Behavython installer (pip-first)
-:: - mamba/conda used mainly for env creation + run
-:: - most packages installed with pip
-:: - optional conda CUDA/cuDNN for TensorFlow on Windows
+:: Behavython installer (PyTorch + DeepLabCut 3.0+)
+:: - mamba/conda used for env creation
+:: - PyTorch installed with CUDA support
+:: - DeepLabCut 3.0+ with GUI installed via pip
 :: ======================================================
 
 set "ENV_NAME=behavython"
@@ -138,7 +138,7 @@ echo ======================================================
 
 call "%CONDA_CMD%" run -n %ENV_NAME% python -m pip install ^
     "numpy<2.0" ^
-    "matplotlib==3.8.3" ^
+    "matplotlib>=3.8.3,<4.0" ^
     seaborn ^
     pandas ^
     scipy ^
@@ -149,7 +149,11 @@ call "%CONDA_CMD%" run -n %ENV_NAME% python -m pip install ^
     PyYAML ^
     tqdm ^
     debugpy ^
-	flask
+    natsort ^
+    pyarrow ^
+    flask ^
+    shapely ^
+    requests
 
 if errorlevel 1 (
     echo [ERROR] Core pip package installation failed.
@@ -158,70 +162,31 @@ if errorlevel 1 (
 )
 
 :: ------------------------------------------------------
-:: STEP 5 - Optional TensorFlow GPU support on Windows
+:: STEP 5 - Install PyTorch with CUDA support
 :: ------------------------------------------------------
 echo.
 echo ======================================================
-echo [STEP 5] Installing CUDA/TensorFlow stack
+echo [STEP 5] Installing PyTorch with CUDA support
 echo ======================================================
-
-call "%CONDA_CMD%" install -y -n %ENV_NAME% -c conda-forge cudatoolkit=11.2 cudnn=8.1.0
-if errorlevel 1 (
-    echo [ERROR] Failed to install cudatoolkit/cudnn.
-    pause
-    exit /b 1
-)
-
-call "%CONDA_CMD%" run -n %ENV_NAME% python -m pip install "tensorflow<2.11"
-if errorlevel 1 (
-    echo [ERROR] TensorFlow installation failed.
-    pause
-    exit /b 1
-)
-
+echo [INFO] Installing PyTorch with DeepLabCut 3.0+ backend.
+echo [WARNING] DeepLabCut 3.0+ is incompatible with networks trained in DeepLabCut 2.3!
 echo.
-echo [INFO] Checking TensorFlow GPU visibility...
-call "%CONDA_CMD%" run -n %ENV_NAME% python -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))"
-if errorlevel 1 (
-    echo [ERROR] TensorFlow GPU device check failed.
-    pause
-    exit /b 1
-)
 
-echo.
-echo [INFO] Running TensorFlow compute test...
-call "%CONDA_CMD%" run -n %ENV_NAME% python -c "import tensorflow as tf; print(tf.reduce_sum(tf.random.normal([1000, 1000])))"
-if errorlevel 1 (
-    echo [ERROR] TensorFlow compute test failed.
-    pause
-    exit /b 1
-)
-
-:: ------------------------------------------------------
-:: STEP 6 - Install PyTorch with pip
-:: Choose ONE of the blocks below
-:: ------------------------------------------------------
-echo.
-echo ======================================================
-echo [STEP 6] Installing PyTorch with pip
-echo ======================================================
-
-:: CPU-only:
-call "%CONDA_CMD%" run -n %ENV_NAME% python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+call "%CONDA_CMD%" run -n %ENV_NAME% python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
 if errorlevel 1 (
     echo [ERROR] PyTorch installation failed.
     pause
     exit /b 1
 )
 
-call "%CONDA_CMD%" run -n %ENV_NAME% python -c "import torch; print(torch.__version__)"
+call "%CONDA_CMD%" run -n %ENV_NAME% python -c "import torch; print('PyTorch version:', torch.__version__)"
 if errorlevel 1 (
     echo [ERROR] PyTorch import test failed.
     pause
     exit /b 1
 )
 
-call "%CONDA_CMD%" run -n %ENV_NAME% python -c "import torch; print(torch.cuda.is_available())"
+call "%CONDA_CMD%" run -n %ENV_NAME% python -c "import torch; print('CUDA available:', torch.cuda.is_available())"
 if errorlevel 1 (
     echo [ERROR] PyTorch CUDA check failed.
     pause
@@ -229,14 +194,14 @@ if errorlevel 1 (
 )
 
 :: ------------------------------------------------------
-:: STEP 7 - Install DeepLabCut + extras with pip
+:: STEP 6 - Install DeepLabCut 3.0+ with GUI
 :: ------------------------------------------------------
 echo.
 echo ======================================================
-echo [STEP 7] Installing DeepLabCut with GUI
+echo [STEP 6] Installing DeepLabCut 3.0+ with GUI
 echo ======================================================
 
-call "%CONDA_CMD%" run -n %ENV_NAME% python -m pip install --upgrade "deeplabcut[gui]==2.3.10" tensorpack tf_slim
+call "%CONDA_CMD%" run -n %ENV_NAME% python -m pip install --upgrade "deeplabcut[gui]>=3.0.2"
 if errorlevel 1 (
     echo [ERROR] DeepLabCut installation failed.
     pause
@@ -244,29 +209,29 @@ if errorlevel 1 (
 )
 
 :: ------------------------------------------------------
-:: STEP 8 - Optional PySide6 upgrade after DLC install
+:: STEP 7 - Ensure PySide6 GUI dependencies
 :: ------------------------------------------------------
 echo.
 echo ======================================================
-echo [STEP 8] Upgrading PySide6 after DLC install
+echo [STEP 7] Ensuring PySide6 GUI dependencies
 echo ======================================================
 
-call "%CONDA_CMD%" run -n %ENV_NAME% python -m pip install --upgrade "PySide6==6.7.3"
+call "%CONDA_CMD%" run -n %ENV_NAME% python -m pip install --upgrade "PySide6>=6.7.0"
 if errorlevel 1 (
-    echo [ERROR] PySide6 upgrade failed.
+    echo [ERROR] PySide6 installation/upgrade failed.
     pause
     exit /b 1
 )
 
 :: ------------------------------------------------------
-:: STEP 9 - Verify imports
+:: STEP 8 - Verify imports
 :: ------------------------------------------------------
 echo.
 echo ======================================================
-echo [STEP 9] Verifying DeepLabCut, NumPy, PyTorch, PySide6
+echo [STEP 8] Verifying DeepLabCut, NumPy, PyTorch, PySide6
 echo ======================================================
 
-call "%CONDA_CMD%" run -n %ENV_NAME% python -c "import numpy; import numpy.core._multiarray_umath; print('NumPy OK:', numpy.__version__)"
+call "%CONDA_CMD%" run -n %ENV_NAME% python -c "import numpy; print('NumPy OK:', numpy.__version__)"
 if errorlevel 1 (
     echo [ERROR] NumPy binary check failed.
     pause
@@ -287,7 +252,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-call "%CONDA_CMD%" run -n %ENV_NAME% python -c "import torch; import deeplabcut; print('DeepLabCut OK:', deeplabcut.__version__)"
+call "%CONDA_CMD%" run -n %ENV_NAME% python -c "import deeplabcut; print('DeepLabCut OK:', deeplabcut.__version__)"
 if errorlevel 1 (
     echo [ERROR] DeepLabCut import test failed.
     pause
@@ -295,11 +260,11 @@ if errorlevel 1 (
 )
 
 :: ------------------------------------------------------
-:: STEP 10 - Clone or update repo
+:: STEP 9 - Clone or update repo
 :: ------------------------------------------------------
 echo.
 echo ======================================================
-echo [STEP 10] Getting Behavython repository
+echo [STEP 9] Getting Behavython repository
 echo ======================================================
 
 if exist "%TARGET_DIR%\.git" (
@@ -331,7 +296,7 @@ if exist "%TARGET_DIR%\.git" (
 )
 
 :: ------------------------------------------------------
-:: STEP 11 - Final info
+:: STEP 10 - Final info
 :: ------------------------------------------------------
 echo.
 echo ======================================================
@@ -339,8 +304,8 @@ echo Setup complete
 echo ======================================================
 echo.
 echo Run Behavython with:
-echo   cd /d "%TARGET_DIR%"
-echo   "%CONDA_CMD%" run -n %ENV_NAME% python by_front.py
+echo   cd /d "%TARGET_DIR%\src"
+echo   run_behavython.bat
 echo.
 pause
 exit /b 0

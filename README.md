@@ -82,6 +82,8 @@ pip install "behavython[tf]"
 #### Option B: PyTorch Environment (DLC 3.0+)
 Use this environment for models trained on PyTorch with DeepLabCut 3.0+.
 
+> **Note:** DeepLabCut 3.0+ is incompatible with networks trained in DeepLabCut 2.3.
+
 ```bash
 mamba create -n behavython-torch python=3.10
 mamba activate behavython-torch

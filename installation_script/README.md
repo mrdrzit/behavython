@@ -28,14 +28,14 @@ Ensure the following components are installed and properly configured before pro
 
 ## 2. What the Installer Does
 
-The installation script provisions a TensorFlow-based scientific environment:
+The installation script provisions a PyTorch-based scientific environment:
 
 * **Environment Setup:** Creates a Conda environment named `behavython` with Python 3.10.18.
-* **GPU / ML Stack:** Installs CUDA Toolkit 11.2, cuDNN 8.1.0, and TensorFlow dependencies.
-* **Behavioral Analysis:** Installs DeepLabCut 2.3.10 with GUI support (`behavython[tf]`).
+* **GPU / ML Stack:** Installs PyTorch and Torchvision with CUDA support.
+* **Behavioral Analysis:** Installs DeepLabCut 3.0+ with GUI support (`behavython[torch]`).
 * **Project Setup:** Clones or updates the repository to `%USERPROFILE%\Documents\behavython`.
 
-*Note: For DeepLabCut 3.0+ (PyTorch), follow the manual installation steps in the main README.md to create a separate `behavython-torch` environment.*
+> **Warning:** DeepLabCut 3.0+ runs on PyTorch and is **incompatible** with models/networks trained on DeepLabCut 2.3 (TensorFlow). For legacy TensorFlow models, refer to the manual TensorFlow setup instructions in the main README.md.
 
 ---
 

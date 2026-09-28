@@ -13,10 +13,10 @@ echo.
 echo [INFO] Searching for conda/mamba...
 
 :: Check PATH first
-for /f "delims=" %%I in ('where mamba.exe 2^>nul') do if not defined CONDA_CMD set "CONDA_CMD=%%~fI"
+for /f "delims=" %%I in ('where mamba.bat 2^>nul') do if not defined CONDA_CMD set "CONDA_CMD=%%~fI"
+if not defined CONDA_CMD for /f "delims=" %%I in ('where mamba.exe 2^>nul') do if not defined CONDA_CMD set "CONDA_CMD=%%~fI"
 if not defined CONDA_CMD for /f "delims=" %%I in ('where conda.bat 2^>nul') do if not defined CONDA_CMD set "CONDA_CMD=%%~fI"
 if not defined CONDA_CMD for /f "delims=" %%I in ('where conda.exe 2^>nul') do if not defined CONDA_CMD set "CONDA_CMD=%%~fI"
-
 if defined CONDA_CMD (
     echo [INFO] Found on PATH: %CONDA_CMD%
 ) else (
@@ -50,7 +50,14 @@ if defined CONDA_CMD (
 
     if not errorlevel 1 (
         echo [INFO] Environment found. Launching Behavython...
-        call "%CONDA_CMD%" run --no-capture-output -n "%ENV_NAME%" python -m %APP_MODULE%
+
+        echo %CONDA_CMD% | find /I "mamba" >nul
+        if not errorlevel 1 (
+            call "%CONDA_CMD%" run -n "%ENV_NAME%" python -m %APP_MODULE%
+        ) else (
+            call "%CONDA_CMD%" run --no-capture-output -n "%ENV_NAME%" python -m %APP_MODULE%
+        )
+
         goto :end
     ) else (
         goto :errorEnvNotFound
@@ -59,7 +66,6 @@ if defined CONDA_CMD (
     echo [WARN] No conda/mamba installation found.
     echo [WARN] Please follow the repo instructions to install Behavython on your computer.
 )
-
 :: --- Fallback ---
 echo [INFO] Falling back to system Python...
 python -m %APP_MODULE%
