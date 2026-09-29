@@ -1,0 +1,29 @@
+Behavython — Version 0.9.9rc10 (PyTorch Edition)
+
+========================================================
+1. DEEPLABCUT & PYTORCH ENGINE NOTICE
+========================================================
+This installer bundles Behavython with PyTorch and
+DeepLabCut 3.0+.
+
+If your lab requires older DeepLabCut 2.3.x (TensorFlow):
+Do NOT use this standalone installer. Instead, follow
+repository instructions to install 'behavython[tf]'
+via pip in a dedicated Conda environment.
+
+========================================================
+2. HARDWARE SPECIFICATIONS & GPU ACCELERATION
+========================================================
+- Minimum GPU: NVIDIA GeForce RTX 3060, RTX 2080,
+  or equivalent.
+- Dedicated VRAM: 12 GB VRAM (minimum recommended
+  for DeepLabCut / SuperAnimal deep tracking).
+- NVIDIA Driver: Version 528.00 or higher (driver > 528
+  required for bundled CUDA 12 runtime).
+- Operating System: 64-bit Windows 10 or Windows 11.
+
+[CPU Fallback]
+Behavython will function on CPU-only machines, but
+video tracking and neural network analysis will be
+significantly slower without GPU acceleration.
+

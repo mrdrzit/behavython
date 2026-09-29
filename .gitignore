@@ -106,6 +106,7 @@ src/behavython/test/07_video_editing/
 
 test/
 *.txt
+!packaging/*.txt
 
 # 1. Ignore everything inside the legacy folder
 src/behavython/_legacy/*

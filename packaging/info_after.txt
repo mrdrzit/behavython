@@ -1,0 +1,26 @@
+Behavython has been successfully installed!
+
+========================================================
+DEVELOPERS & CONTACT
+========================================================
+Developed by:
+  • Matheus Costa — matheuscosta3004@gmail.com
+  • João Pedro    — mcjpedro@gmail.com
+
+========================================================
+ACKNOWLEDGMENTS
+========================================================
+Special thanks to:
+  • Flávio Mourão (https://github.com/fgmourao)
+  • Núcleo de Neurociências (NNC)
+    Universidade Federal de Minas Gerais (UFMG)
+    http://www.nnc.ufmg.br
+
+========================================================
+GETTING STARTED & DOCUMENTATION
+========================================================
+- Launch Behavython via Desktop shortcut or Start Menu.
+- Documentation: https://github.com/mrdrzit/Behavython
+- PyPI Package:  https://pypi.org/project/behavython/
+- Issue Tracker: https://github.com/mrdrzit/Behavython/issues
+
