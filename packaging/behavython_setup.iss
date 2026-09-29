@@ -8,7 +8,7 @@
 ; #define TEST_BUILD
 
 #define MyAppName "Behavython"
-#define MyAppVersion "0.9.9rc10"
+#define MyAppVersion "0.9.9rc11"
 #define MyAppPublisher "Matheus Costa & João Pedro"
 #define MyAppURL "https://github.com/mrdrzit/Behavython"
 #define MyAppExeName "python.exe"

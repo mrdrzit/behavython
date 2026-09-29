@@ -1,6 +1,7 @@
 [![Issues](https://img.shields.io/github/issues/mrdrzit/Behavython)](https://github.com/mrdrzit/Behavython/issues)
 [![Closed Issues](https://img.shields.io/github/issues-closed/mrdrzit/Behavython?color=21e00b)](https://github.com/mrdrzit/Behavython/issues?q=is%3Aissue+is%3Aclosed)
 [![License](https://img.shields.io/github/license/mrdrzit/Behavython)](https://github.com/mrdrzit/Behavython/blob/main/LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23044777.svg)](https://zenodo.org/)
 
 <br/>
 
@@ -25,6 +26,7 @@
 ## Table of Contents
 - [About](#about)
 - [Getting Started](#getting-started)
+  - [Standalone Offline Installer (Windows)](#standalone-offline-installer-windows)
   - [Automated Installation (Windows)](#automated-installation-windows)
   - [Step-by-Step Installation (Manual)](#step-by-step-installation-manual)
   - [GPU Setup](#gpu-setup)
@@ -34,6 +36,7 @@
 - [Workflow & Configuration](#workflow--configuration)
 - [Outputs & Metrics](#outputs--metrics)
 - [Contributing](#contributing)
+- [Citation](#citation)
 - [License](#license)
 - [Contact](#contact)
 
@@ -52,6 +55,15 @@ The software enforces strict scientific reproducibility through automated enviro
 ---
 
 ## Getting Started
+
+### Standalone Offline Installer (Windows)
+
+For machines without Conda, Python, or administrative permissions to download packages at runtime, we provide a self-contained offline installer bundling Python 3.10, PyTorch, DeepLabCut 3.0+, and the complete CUDA runtime:
+
+* **Download on Zenodo:** [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23044777.svg)](https://zenodo.org/)
+* Simply download `Behavython-Setup-0.9.9rc11.exe`, run the setup wizard, and launch Behavython from your Desktop or Start Menu.
+
+---
 
 ### Automated Installation (Windows)
 
@@ -321,6 +333,25 @@ Contributions to the codebase and scientific pipelines are welcome.
 
   * Open an issue to report bugs or suggest features.
   * Submit a pull request for code changes. Ensure modifications align with the project's modular architecture and strict type-hinting standards.
+
+-----
+
+## Citation
+
+If you use Behavython in your research, please cite:
+
+```bibtex
+@software{passos_moreira_behavython_2026,
+  author       = {Passos, Matheus Costa and Carvalho Moreira, João Pedro},
+  title        = {Behavython: Automated behavioral analysis software and pipeline for neuroscience},
+  year         = {2026},
+  publisher    = {Zenodo},
+  version      = {0.9.9rc11},
+  url          = {https://github.com/mrdrzit/behavython}
+}
+```
+
+Metadata is also available in [CITATION.cff](CITATION.cff).
 
 -----
 

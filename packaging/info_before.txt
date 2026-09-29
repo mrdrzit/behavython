@@ -1,4 +1,4 @@
-Behavython — Version 0.9.9rc10 (PyTorch Edition)
+Behavython — Version 0.9.9rc11 (PyTorch Edition)
 
 ========================================================
 1. DEEPLABCUT & PYTORCH ENGINE NOTICE
