@@ -1,7 +1,7 @@
 [![Issues](https://img.shields.io/github/issues/mrdrzit/Behavython)](https://github.com/mrdrzit/Behavython/issues)
 [![Closed Issues](https://img.shields.io/github/issues-closed/mrdrzit/Behavython?color=21e00b)](https://github.com/mrdrzit/Behavython/issues?q=is%3Aissue+is%3Aclosed)
 [![License](https://img.shields.io/github/license/mrdrzit/Behavython)](https://github.com/mrdrzit/Behavython/blob/main/LICENSE)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23044777.svg)](https://zenodo.org/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23044777.svg)](https://doi.org/10.5281/zenodo.23044777)
 
 <br/>
 
