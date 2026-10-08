@@ -51,12 +51,7 @@ if defined CONDA_CMD (
     if not errorlevel 1 (
         echo [INFO] Environment found. Launching Behavython...
 
-        echo %CONDA_CMD% | find /I "mamba" >nul
-        if not errorlevel 1 (
-            call "%CONDA_CMD%" run -n "%ENV_NAME%" python -m %APP_MODULE%
-        ) else (
-            call "%CONDA_CMD%" run --no-capture-output -n "%ENV_NAME%" python -m %APP_MODULE%
-        )
+        call "%CONDA_CMD%" run --no-capture-output -n "%ENV_NAME%" python -m %APP_MODULE%
 
         goto :end
     ) else (

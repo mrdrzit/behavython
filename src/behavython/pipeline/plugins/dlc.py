@@ -191,9 +191,6 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
     if progress:
         progress.emit(20)
 
-    _, usable_config_path, was_repaired = prepare_dlc_config(request.config_path)
-    _emit_config_repair_logs(request.config_path, usable_config_path, was_repaired, log)
-
     videos_to_analyze = []
     videos_to_filter = []
 
