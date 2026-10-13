@@ -2265,7 +2265,7 @@ QGroupBox::title {
               <property name="spacing">
                <number>6</number>
               </property>
-              <item row="2" column="0" colspan="4">
+              <item row="2" column="0" colspan="3">
                <widget class="QCheckBox" name="use_default_network_button">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -2530,6 +2530,55 @@ QPushButton:disabled {
                 </property>
                 <property name="text">
                  <string notr="true">GET FILE</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="3">
+               <widget class="QPushButton" name="select_snapshot_button">
+                <property name="minimumSize">
+                 <size>
+                  <width>91</width>
+                  <height>24</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>24</height>
+                 </size>
+                </property>
+                <property name="cursor">
+                 <cursorShape>PointingHandCursor</cursorShape>
+                </property>
+                <property name="contextMenuPolicy">
+                 <enum>Qt::ContextMenuPolicy::CustomContextMenu</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Pick a specific PyTorch snapshot from dlc-models-pytorch. Right-click to go back to the config.yaml snapshotindex.</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton {
+    font: 7pt &quot;Arial&quot;;
+    font-weight: bold;
+    border: 2px solid #A21F27;
+    border-radius: 8px;
+    background-color: #2C53A1;
+    color: #FFFFFF;
+}
+QPushButton:hover {
+    background-color: #3A63B8;
+}
+QPushButton:pressed {
+    background-color: #A21F27;
+}
+QPushButton:disabled {
+    background-color: gray;
+    color: white;
+    border: 2px solid darkgray;
+}</string>
+                </property>
+                <property name="text">
+                 <string notr="true">SNAPSHOT</string>
                 </property>
                </widget>
               </item>

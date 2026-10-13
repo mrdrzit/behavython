@@ -584,11 +584,13 @@ def compute_crossings(state_array: pd.Series, experiment_type: str) -> dict:
     return counts
 
 
-def compute_social_behavior_metrics(collisions_df: pd.DataFrame, fps: float, min_frames: int = 3, link_window: int = 30) -> dict:
+def compute_social_behavior_metrics(collisions_df: pd.DataFrame, fps: float, min_frames: int = 3, link_window_s: float = 1.0) -> dict:
     """
     Extracts bout counts, mean inter-bout intervals, and outcome proportions
     (investigation, approach, abortive) based on the social behavior dissertation logic.
+    `link_window_s` is the maximum gap in seconds for linking approach -> collision -> retreat.
     """
+    link_window = round(link_window_s * fps)
     if collisions_df.empty:
         return {
             "total_bouts": 0,

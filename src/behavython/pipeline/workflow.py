@@ -4,7 +4,7 @@ import json
 import logging
 from tqdm import tqdm
 from typing import Callable
-from behavython.core.defaults import MAZE_EXPERIMENT_TYPES, MIN_EVENT_FRAMES, LINK_WINDOW
+from behavython.core.defaults import MAZE_EXPERIMENT_TYPES, MIN_EVENT_FRAMES, LINK_WINDOW_S
 from behavython.pipeline import filters, geometry  # noqa: F401
 from behavython.pipeline.models import AnalysisRequest, Animal, MazeAnimal
 from behavython.pipeline.metrics import (
@@ -60,7 +60,7 @@ def analyze_animal(animal: Animal, request: AnalysisRequest) -> dict:
     spatial_metrics = compute_spatial_metrics(data, movement_metrics)
 
     latent_social_behavior_metrics = compute_social_behavior_metrics(
-        collisions_df=interaction_data["collisions"], fps=data["fps"], min_frames=MIN_EVENT_FRAMES, link_window=LINK_WINDOW
+        collisions_df=interaction_data["collisions"], fps=data["fps"], min_frames=MIN_EVENT_FRAMES, link_window_s=LINK_WINDOW_S
     )
 
     return {

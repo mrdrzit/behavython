@@ -191,7 +191,7 @@ class DLCAssistedLabelSession:
             "bodyparts": config_bodyparts,
             "network_name": config.get("default_net_type", "unknown"),
             "iteration": config.get("iteration", 0),
-            "snapshot_index": config.get("snapshotindex", -1),
+            "snapshot_index": self.request.snapshot_index if self.request.snapshot_index is not None else config.get("snapshotindex", -1),
         }
         logger.info(
             f"Config validated | scorer={config_scorer} | "
@@ -396,15 +396,31 @@ class DLCAssistedLabelSession:
             console_logger.info(f"Analyzing folder: {folder.name}...")
 
             with capture_external_output("behavython.external"):
-                deeplabcut.analyze_time_lapse_frames(
-                    str(usable_config_path),
-                    str(folder),
-                    frametype=self.request.frame_extension,
-                    shuffle=shuffle,
-                    trainingsetindex=trainingsetindex,
-                    gputouse=gpu_to_use,
-                    save_as_csv=True,
-                )
+                if self.request.snapshot_index is None:
+                    deeplabcut.analyze_time_lapse_frames(
+                        str(usable_config_path),
+                        str(folder),
+                        frametype=self.request.frame_extension,
+                        shuffle=shuffle,
+                        trainingsetindex=trainingsetindex,
+                        gputouse=gpu_to_use,
+                        save_as_csv=True,
+                    )
+                else:
+                    # analyze_time_lapse_frames doesn't forward snapshot_index, so call the PyTorch API directly
+                    from deeplabcut.pose_estimation_pytorch import analyze_images
+
+                    analyze_images(
+                        config=str(usable_config_path),
+                        images=str(folder),
+                        frame_type=self.request.frame_extension,
+                        output_dir=str(folder),
+                        shuffle=shuffle,
+                        trainingsetindex=trainingsetindex,
+                        snapshot_index=self.request.snapshot_index,
+                        device=None if gpu_to_use is None else f"cuda:{gpu_to_use}",
+                        save_as_csv=True,
+                    )
 
             # Find the generated H5 (DLC names it based on iterations/date)
             h5_files = list(folder.glob("*.h5"))

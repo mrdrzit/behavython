@@ -201,12 +201,18 @@ DEFAULT_FRAMES_PER_SECOND = 30
 DEFAULT_TASK_DURATION_SECONDS = 300
 DEFAULT_TRIM_AMOUNT_SECONDS = 0
 MIN_EVENT_FRAMES = 3
-LINK_WINDOW = 30
+LINK_WINDOW_S = 1.0
 ANGLE_CONE_ENTER = 45.0
 ANGLE_CONE_EXIT = 60.0
 ROI_DELTA_LOOKBACK_FRAMES = 3
 APPROACH_THRESHOLD_BL = 0.1
 LOCOMOTION_THRESHOLD_BL = 0.02
+
+# Per-frame displacement (cm) below which movement is treated as tracking jitter
+MOVEMENT_THRESHOLD_CM_BY_ANIMAL = {
+    "mouse": 0.0267,  # C57BL/6
+    "rat": 0.0667,  # Wistar
+}
 
 DEFAULT_ANALYSIS_PARAMETERS = {
     "frames_per_second": 30,
@@ -214,7 +220,6 @@ DEFAULT_ANALYSIS_PARAMETERS = {
     "arena_height": 30,
     "task_duration": 300,
     "trim_amount": 0,
-    "threshold": 5,
 }
 
 # ==========================================

@@ -222,6 +222,8 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
 
     extension = os.path.splitext(request.video_paths[0])[1].lower()
 
+    snapshot_kwargs = {} if request.snapshot_index is None else {"snapshot_index": request.snapshot_index}
+
     if videos_to_analyze:
         if log:
             log.emit("dlc", "Analyzing videos...")
@@ -241,6 +243,7 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
                     videotype=extension,
                     gputouse=gpu_to_use,
                     save_as_csv=True,
+                    **snapshot_kwargs,
                 )
 
     if videos_to_filter:
@@ -259,6 +262,7 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
                 videotype=extension,
                 filtertype="median",
                 save_as_csv=True,
+                **snapshot_kwargs,
             )
             try:
                 deeplabcut.analyzeskeleton(
@@ -266,6 +270,7 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
                     videos_to_filter,
                     filtered=True,
                     save_as_csv=True,
+                    **snapshot_kwargs,
                 )
             except Exception as e:
                 if "skeleton" in str(e).lower():
@@ -278,6 +283,29 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
     if request.create_plots:
         if progress:
             progress.emit(80)
+        if log:
+            log.emit("dlc", "Generating likelihood plots...")
+
+        from behavython.pipeline.plotting import plot_custom_likelihood
+
+        scorer = _scorer_for_snapshot(usable_config_path, request.snapshot_index)
+        for video in videos_to_filter:
+            video_path = Path(video)
+            candidates = [
+                f
+                for f in video_path.parent.glob(f"{video_path.stem}*_filtered.h5")
+                if scorer is None or scorer in f.name
+            ]
+            if not candidates:
+                dlc_logger.warning("No filtered .h5 found for %s; skipping likelihood plot.", video_path.name)
+                continue
+            h5_file = max(candidates, key=lambda f: f.stat().st_mtime)
+            try:
+                plot_custom_likelihood(str(h5_file), config_dict, str(h5_file.with_name(h5_file.stem + "_likelihood.png")))
+            except Exception as e:
+                dlc_logger.error(f"Failed to plot {h5_file.name}: {e}")
+                if warning:
+                    warning.emit("Warning", f"Failed to plot likelihood for {h5_file.name}: {e}")
 
     if progress:
         progress.emit(100)
@@ -290,6 +318,19 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
         "config_path_used": usable_config_path,
         "config_was_repaired": was_repaired,
     }
+
+
+def _scorer_for_snapshot(config_path: str, snapshot_index: int | None) -> str | None:
+    """DLC scorer name (embedded in output file names) for a snapshot, or None if no snapshot was chosen."""
+    if snapshot_index is None:
+        return None
+    from deeplabcut.utils import auxiliaryfunctions
+
+    cfg = auxiliaryfunctions.read_config(config_path)
+    scorer, _ = auxiliaryfunctions.get_scorer_name(
+        cfg, 1, trainFraction=cfg["TrainingFraction"][0], snapshot_index=snapshot_index
+    )
+    return scorer
 
 
 def _get_video_fps(video_path: str) -> float:
@@ -611,7 +652,8 @@ def run_create_annotated_video(request: DLCAnnotatedVideoRequest, progress=None,
 
     try:
         deeplabcut.create_labeled_video(
-            str(config_path_used), request.video_paths, videotype=videotype, filtered=True, draw_skeleton=True, destfolder=request.output_path
+            str(config_path_used), request.video_paths, videotype=videotype, filtered=True, draw_skeleton=True, destfolder=request.output_path,
+            **({} if request.snapshot_index is None else {"snapshot_index": request.snapshot_index}),
         )
     except AnalysisError as e:
         dlc_logger.exception("DLC labeled video creation failed")
@@ -746,6 +788,10 @@ def run_generate_likelihood_plots(request: DLCLikelihoodPlotRequest, progress=No
         h5_files.extend(unwanted.glob("*_filtered.h5"))
         h5_files.extend(unwanted.glob("CollectedData_*.h5"))
     h5_files = list(set(h5_files))  # Remove duplicates if any overlap
+
+    scorer = _scorer_for_snapshot(usable_config_path, request.snapshot_index)
+    if scorer is not None:
+        h5_files = [f for f in h5_files if f.name.startswith("CollectedData_") or scorer in f.name]
 
     if not h5_files:
         raise AnalysisError(f"No DLC tracking data (.h5) found in {folder.name}.")

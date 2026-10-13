@@ -10,7 +10,14 @@ from PySide6.QtCore import QEvent, Qt, QTimer
 from behavython.pipeline.workflow import run_analysis_workflow
 from behavython.services.validation import is_model_installed, validate_analysis_request
 from behavython.core.app_context import AppContext
-from behavython.core.defaults import DEBUG_STYLE, DEFAULT_STYLE, VALIDATION_CHECKBOX_ACTIVE, VALIDATION_CHECKBOX_FADED, ANALYSIS_REQUIRED_SUFFIXES
+from behavython.core.defaults import (
+    DEBUG_STYLE,
+    DEFAULT_STYLE,
+    VALIDATION_CHECKBOX_ACTIVE,
+    VALIDATION_CHECKBOX_FADED,
+    ANALYSIS_REQUIRED_SUFFIXES,
+    MOVEMENT_THRESHOLD_CM_BY_ANIMAL,
+)
 from behavython.core.paths import FFMPEG_URL, MODELS_URLS
 from behavython.pipeline.models import (
     AnalysisOptions,
@@ -333,7 +340,8 @@ class BehavythonMainWindow(QWidget):
                     self.logger.warning("Could not parse config value '%s' for %s", data[key], key)
 
     def build_analysis_options(self) -> AnalysisOptions:
-        threshold = 0.0267 if self.interface.animal_combobox.currentIndex() == 0 else 0.0667
+        animal = self.interface.animal_combobox.currentText().strip().lower()
+        threshold = MOVEMENT_THRESHOLD_CM_BY_ANIMAL[animal]
 
         return AnalysisOptions(
             arena_width=self.interface.arena_width_spinbox.value(),
@@ -454,6 +462,12 @@ class BehavythonMainWindow(QWidget):
     # ------------------------------------------------------------------
 
     def _connect_dlc_tab(self) -> None:
+        self.snapshot_index: int | None = None
+        self.snapshot_config: Path | None = None
+        # A snapshot index only means something for the project it was picked from.
+        self.interface.config_path_lineedit.textChanged.connect(self._reset_snapshot_if_set)
+        self.interface.select_snapshot_button.clicked.connect(self.on_select_snapshot_clicked)
+        self.interface.select_snapshot_button.customContextMenuRequested.connect(lambda _: self._set_snapshot(None, None))
         self.interface.get_config_path_button.clicked.connect(self.on_select_dlc_config_clicked)
         self.interface.get_videos_path_button.clicked.connect(self.on_select_video_folder_clicked)
         self.interface.get_file_to_analyze_button.clicked.connect(self.on_select_video_list_clicked)
@@ -489,6 +503,46 @@ class BehavythonMainWindow(QWidget):
         path = select_file(self.interface, "Select config.yaml", "YAML files (*.yaml)")
         if path:
             self.interface.config_path_lineedit.setText(path)
+
+    def _set_snapshot(self, index: int | None, name: str | None) -> None:
+        self.snapshot_index = index
+        if index is None:
+            self.snapshot_config = None
+        button = self.interface.select_snapshot_button
+        if name is None:
+            button.setText("SNAPSHOT")
+            self.logs.append("dlc", "Snapshot reset to config.yaml snapshotindex.")
+        else:
+            button.setText(name.removeprefix("snapshot-").removesuffix(".pt").upper())
+            self.logs.append("dlc", f"Using snapshot {name} (index {index}).")
+
+    def on_select_snapshot_clicked(self) -> None:
+        config_path = self.interface.config_path_lineedit.text().strip()
+        if not config_path:
+            show_warning(self.interface, "Snapshot", "Select the config.yaml first.")
+            return
+        models_dir = Path(config_path).parent / "dlc-models-pytorch"
+        path = select_file(self.interface, "Select snapshot", "PyTorch snapshot (snapshot-*.pt)", str(models_dir))
+        if not path:
+            return
+        folder = Path(path).parent
+        # Same ordering DLC uses: by epoch, with the "best" snapshot last.
+        snapshots = [p for p in folder.glob("snapshot-*.pt") if "detector" not in p.name]
+
+        def sort_key(p: Path) -> tuple[bool, int]:
+            digits = "".join(c for c in p.stem if c.isdigit())
+            return ("best" in p.stem, int(digits) if digits else 0)
+
+        names = [p.name for p in sorted(snapshots, key=sort_key)]
+        if Path(path).name not in names:
+            show_warning(self.interface, "Snapshot", "Please select a regular (non-detector) snapshot-*.pt file.")
+            return
+        self._set_snapshot(names.index(Path(path).name), Path(path).name)
+        self.snapshot_config = Path(config_path).resolve()
+
+    def _reset_snapshot_if_set(self, *_) -> None:
+        if self.snapshot_index is not None:
+            self._set_snapshot(None, None)
 
     def on_select_refining_dlc_config_clicked(self) -> None:
         path = select_file(self.interface, "Select config.yaml", "YAML files (*.yaml)")
@@ -552,7 +606,7 @@ class BehavythonMainWindow(QWidget):
         from behavython.pipeline.models import DLCLikelihoodPlotRequest
         from behavython.pipeline.plugins.dlc import run_generate_likelihood_plots
 
-        request = DLCLikelihoodPlotRequest(config_path=config_path, folder_path=folder_path)
+        request = DLCLikelihoodPlotRequest(config_path=config_path, folder_path=folder_path, snapshot_index=self.snapshot_index)
 
         self.logs.clear("dlc")
         self.progress_bar.setValue(0)
@@ -619,7 +673,7 @@ class BehavythonMainWindow(QWidget):
             show_warning(self.interface, "Annotated Video Validation", "\n".join(errors))
             return
 
-        request = DLCAnnotatedVideoRequest(config_path=config_path, video_paths=resolved_video_input.paths, output_path=output_path)
+        request = DLCAnnotatedVideoRequest(config_path=config_path, video_paths=resolved_video_input.paths, output_path=output_path, snapshot_index=self.snapshot_index)
 
         self.logs.clear("dlc")
         self.progress_bar.setValue(0)
@@ -685,6 +739,7 @@ class BehavythonMainWindow(QWidget):
         request = DLCVideoAnalysisRequest(
             config_path=config_path,
             video_paths=resolved_video_input.paths,
+            snapshot_index=self.snapshot_index,
         )
         self.logs.clear("dlc")
         self.progress_bar.setValue(0)
@@ -774,6 +829,15 @@ class BehavythonMainWindow(QWidget):
             show_warning(self.interface, "Missing Information", "Please select both a config.yaml and a video folder.")
             return
 
+        if self.snapshot_index is not None and Path(config_path).resolve() != self.snapshot_config:
+            show_warning(
+                self.interface,
+                "Snapshot mismatch",
+                "The snapshot selected in the DeepLabCut tab belongs to a different project than this config.yaml.\n\n"
+                "Right-click the SNAPSHOT button to reset it, or use the same config.yaml in both tabs.",
+            )
+            return
+
         folder_path = Path(frames_folder)
         if not folder_path.exists():
             show_warning(self.interface, "Invalid Folder", "The selected folder does not exist.")
@@ -829,6 +893,7 @@ class BehavythonMainWindow(QWidget):
             number_of_frames=num_frames,
             mode=mode,
             target_bodyparts=target_bodyparts,
+            snapshot_index=self.snapshot_index,
         )
 
         self.logs.clear("dlc")

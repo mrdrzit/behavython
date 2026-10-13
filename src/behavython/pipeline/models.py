@@ -94,6 +94,7 @@ class DLCVideoAnalysisRequest:
     create_plots: bool = True
     shuffle: int | None = None
     trainingsetindex: int | None = None
+    snapshot_index: int | None = None
 
 
 @dataclass(slots=True)
@@ -113,12 +114,14 @@ class DLCAnnotatedVideoRequest:
     config_path: str
     video_paths: list[str]
     output_path: str
+    snapshot_index: int | None = None
 
 
 @dataclass(slots=True)
 class DLCLikelihoodPlotRequest:
     config_path: str
     folder_path: str
+    snapshot_index: int | None = None
 
 
 @dataclass(slots=True)
@@ -131,6 +134,7 @@ class DLCAnalyzeFramesRequest:
     target_bodyparts: list[str] | None = None
     shuffle: int | None = None
     trainingsetindex: int | None = None
+    snapshot_index: int | None = None
 
 
 @dataclass(slots=True)

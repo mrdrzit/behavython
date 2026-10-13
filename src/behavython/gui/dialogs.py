@@ -45,8 +45,8 @@ def show_worker_error(parent: QWidget | None, error_info: tuple) -> None:
     dialog = WorkerErrorDialog(parent, error_info)
     dialog.exec()
 
-def select_file(parent: QWidget, title: str, filter_str: str = "All Files (*)") -> str:
-    path, _ = QFileDialog.getOpenFileName(parent, title, "", filter_str)
+def select_file(parent: QWidget, title: str, filter_str: str = "All Files (*)", start_dir: str = "") -> str:
+    path, _ = QFileDialog.getOpenFileName(parent, title, start_dir, filter_str)
     return path
 
 

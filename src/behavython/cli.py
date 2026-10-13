@@ -28,6 +28,7 @@ from behavython.core.defaults import (
     EXPERIMENT_TYPES,
     MAZE_EXPERIMENT_TYPES,
     ANALYSIS_REQUIRED_SUFFIXES,
+    MOVEMENT_THRESHOLD_CM_BY_ANIMAL,
 )
 from behavython.core.paths import PACKAGE_ROOT
 
@@ -43,11 +44,6 @@ _VALID_FIG_RESOLUTIONS = {
     "1280x720": ["1280", "720"],
     "1920x1080": ["1920", "1080"],
     "2560x1440": ["2560", "1440"],
-}
-
-_ANIMAL_THRESHOLD = {
-    "mouse": 0.0267,
-    "rat": 0.0667,
 }
 
 _ANALYSIS_SUFFIXES: frozenset[str] = frozenset(
@@ -168,9 +164,9 @@ def _build_options_from_config(config: dict[str, Any], overrides: dict[str, Any]
     algo_type = merged.get("algo_type", "deeplabcut").lower().strip()
 
     animal = merged.get("animal", "mouse").lower().strip()
-    if animal not in _ANIMAL_THRESHOLD:
-        raise ValueError(f"Invalid animal '{animal}'. Valid values: {', '.join(_ANIMAL_THRESHOLD)}.")
-    threshold = _ANIMAL_THRESHOLD[animal]
+    if animal not in MOVEMENT_THRESHOLD_CM_BY_ANIMAL:
+        raise ValueError(f"Invalid animal '{animal}'. Valid values: {', '.join(MOVEMENT_THRESHOLD_CM_BY_ANIMAL)}.")
+    threshold = MOVEMENT_THRESHOLD_CM_BY_ANIMAL[animal]
 
     fig_res_raw = merged.get("figure_resolution", "1920x1080")
     max_fig_res = _parse_fig_res(str(fig_res_raw))
