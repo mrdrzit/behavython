@@ -170,7 +170,9 @@ def _plot_object_recognition(animal: Animal, result: dict, request: AnalysisRequ
         ax1.set_title(f"Center Position Heatmap: {animal_name}")
         ax1.imshow(position_grid, cmap=PLOT_COLORMAP, interpolation="bessel")
         ax1.axis("off")
-        fig1.savefig(os.path.join(save_folder, f"{animal_name} - Overall heatmap of the mice's position (nose).png"), bbox_inches="tight", dpi=dpi)
+        fig1.savefig(
+            os.path.join(save_folder, f"{animal_name} - Overall heatmap of the mice's position (nose).png"), bbox_inches="tight", dpi=dpi
+        )
 
         # 2. Exploration Map
         fig2, ax2 = plt.subplots(figsize=new_size)
@@ -472,7 +474,9 @@ def _opencv_animate_maze_crossings(animal: Animal, result: dict, request: Analys
             cv2.rectangle(frame_img, box_tl, box_br, CV2_TEXT_COLOR, 1)
 
             # Draw text
-            cv2.putText(frame_img, ann["text"], (ann["x"] + 10, ann["y"] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, CV2_TEXT_COLOR, 1, cv2.LINE_AA)
+            cv2.putText(
+                frame_img, ann["text"], (ann["x"] + 10, ann["y"] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, CV2_TEXT_COLOR, 1, cv2.LINE_AA
+            )
 
         video_writer.write(frame_img)
 
@@ -657,10 +661,16 @@ def _opencv_animate_roi_interactions(animal: Animal, result: dict, request: Anal
             video_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         else:
             animal.logs.append(
-                {"level": "warning", "message": "Video could not be opened. Rendering animation on static background.", "context": "plotting"}
+                {
+                    "level": "warning",
+                    "message": "Video could not be opened. Rendering animation on static background.",
+                    "context": "plotting",
+                }
             )
     else:
-        animal.logs.append({"level": "warning", "message": "No video provided. Rendering animation on static background.", "context": "plotting"})
+        animal.logs.append(
+            {"level": "warning", "message": "No video provided. Rendering animation on static background.", "context": "plotting"}
+        )
 
     if (video_w <= 0 or video_h <= 0) and animal.image is not None:
         video_h, video_w = animal.image.shape[:2]
@@ -847,10 +857,14 @@ def _opencv_animate_roi_interactions(animal: Animal, result: dict, request: Anal
                 roi_name_col = rows_sorted["roi_name"].to_numpy()
                 state_col = rows_sorted["interaction_state"].to_numpy()
 
-                in_cone_col = rows_sorted["in_cone"].to_numpy() if "in_cone" in rows_sorted.columns else np.zeros(len(rows_sorted), dtype=bool)
+                in_cone_col = (
+                    rows_sorted["in_cone"].to_numpy() if "in_cone" in rows_sorted.columns else np.zeros(len(rows_sorted), dtype=bool)
+                )
 
                 angle_col = (
-                    rows_sorted["angle_to_roi"].to_numpy() if "angle_to_roi" in rows_sorted.columns else np.full(len(rows_sorted), None, dtype=object)
+                    rows_sorted["angle_to_roi"].to_numpy()
+                    if "angle_to_roi" in rows_sorted.columns
+                    else np.full(len(rows_sorted), None, dtype=object)
                 )
 
                 dist_col = (
@@ -866,7 +880,9 @@ def _opencv_animate_roi_interactions(animal: Animal, result: dict, request: Anal
                 )
 
                 coll_flag_col = (
-                    rows_sorted["collision_flag"].to_numpy() if "collision_flag" in rows_sorted.columns else np.zeros(len(rows_sorted), dtype=np.int32)
+                    rows_sorted["collision_flag"].to_numpy()
+                    if "collision_flag" in rows_sorted.columns
+                    else np.zeros(len(rows_sorted), dtype=np.int32)
                 )
 
                 coll_pos_col = (

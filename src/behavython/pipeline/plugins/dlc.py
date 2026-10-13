@@ -291,11 +291,7 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
         scorer = _scorer_for_snapshot(usable_config_path, request.snapshot_index)
         for video in videos_to_filter:
             video_path = Path(video)
-            candidates = [
-                f
-                for f in video_path.parent.glob(f"{video_path.stem}*_filtered.h5")
-                if scorer is None or scorer in f.name
-            ]
+            candidates = [f for f in video_path.parent.glob(f"{video_path.stem}*_filtered.h5") if scorer is None or scorer in f.name]
             if not candidates:
                 dlc_logger.warning("No filtered .h5 found for %s; skipping likelihood plot.", video_path.name)
                 continue
@@ -327,9 +323,7 @@ def _scorer_for_snapshot(config_path: str, snapshot_index: int | None) -> str | 
     from deeplabcut.utils import auxiliaryfunctions
 
     cfg = auxiliaryfunctions.read_config(config_path)
-    scorer, _ = auxiliaryfunctions.get_scorer_name(
-        cfg, 1, trainFraction=cfg["TrainingFraction"][0], snapshot_index=snapshot_index
-    )
+    scorer, _ = auxiliaryfunctions.get_scorer_name(cfg, 1, trainFraction=cfg["TrainingFraction"][0], snapshot_index=snapshot_index)
     return scorer
 
 
@@ -485,11 +479,14 @@ def _get_required_files_status(folder_path: Path, task_type: str) -> tuple[dict[
     status = {
         "has_video": any(name.endswith(ANALYSIS_REQUIRED_SUFFIXES["video"]) for name in lower_names),
         "has_filtered_csv": any(
-            name.endswith(ANALYSIS_REQUIRED_SUFFIXES["position"]) and not name.endswith(ANALYSIS_REQUIRED_SUFFIXES["skeleton"]) for name in lower_names
+            name.endswith(ANALYSIS_REQUIRED_SUFFIXES["position"]) and not name.endswith(ANALYSIS_REQUIRED_SUFFIXES["skeleton"])
+            for name in lower_names
         ),
         "has_skeleton_filtered_csv": any(name.endswith(ANALYSIS_REQUIRED_SUFFIXES["skeleton"]) for name in lower_names),
         "has_image_file": any(name.endswith(ANALYSIS_REQUIRED_SUFFIXES["image"]) for name in lower_names),
-        "has_roi_file": any(name.endswith(ending) for name in lower_names for ending in ANALYSIS_REQUIRED_SUFFIXES["social_recognition_rois"]),
+        "has_roi_file": any(
+            name.endswith(ending) for name in lower_names for ending in ANALYSIS_REQUIRED_SUFFIXES["social_recognition_rois"]
+        ),
         "has_left_roi_file": any(name.endswith("roil.csv") for name in lower_names),
         "has_right_roi_file": any(name.endswith("roir.csv") for name in lower_names),
         "has_geometry_json": any(name.endswith(ANALYSIS_REQUIRED_SUFFIXES["maze_rois"]) for name in lower_names),
@@ -652,7 +649,12 @@ def run_create_annotated_video(request: DLCAnnotatedVideoRequest, progress=None,
 
     try:
         deeplabcut.create_labeled_video(
-            str(config_path_used), request.video_paths, videotype=videotype, filtered=True, draw_skeleton=True, destfolder=request.output_path,
+            str(config_path_used),
+            request.video_paths,
+            videotype=videotype,
+            filtered=True,
+            draw_skeleton=True,
+            destfolder=request.output_path,
             **({} if request.snapshot_index is None else {"snapshot_index": request.snapshot_index}),
         )
     except AnalysisError as e:

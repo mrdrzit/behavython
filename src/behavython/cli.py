@@ -71,6 +71,7 @@ _TERMINAL_ACTIONS: tuple[str, ...] = (
 # Section: CLI Adapters
 # ===========================================================================
 
+
 class _ProgressAdapter:
     """Mimics a Qt Signal with a single .emit(value: int) method."""
 
@@ -104,6 +105,7 @@ class _WarningAdapter:
 # Section: Data Models
 # ===========================================================================
 
+
 @dataclass
 class _ActionContext:
     args: argparse.Namespace
@@ -119,6 +121,7 @@ class _ActionContext:
 # ===========================================================================
 # Section: Core Helpers
 # ===========================================================================
+
 
 def _collect_analysis_files_from_folder(folder: str) -> list[str]:
     folder_path = Path(folder).resolve()
@@ -200,11 +203,7 @@ def _setup_logging(args: argparse.Namespace) -> tuple[AppLoggingService, logging
             keep_last_sessions=10,
         )
     )
-    app_logging = AppLoggingService(
-        runtime_storage,
-        is_cli=True,
-        console_level=logging.DEBUG if args.verbose else logging.INFO
-    )
+    app_logging = AppLoggingService(runtime_storage, is_cli=True, console_level=logging.DEBUG if args.verbose else logging.INFO)
     register_logging_service(app_logging)
     return app_logging, app_logging.cli_logger
 
@@ -230,10 +229,10 @@ def _resolve_inputs(args: argparse.Namespace, file_config: dict[str, Any], logge
     cli_folders = args.input_folder if args.input_folder else []
     if isinstance(cli_folders, str):
         cli_folders = [cli_folders]
-        
+
     config_folder = file_config.get("input_folder", "")
     config_folders = file_config.get("input_folders", [])
-    
+
     input_folders = cli_folders or config_folders or ([config_folder] if config_folder else [])
     input_files: list[str] = []
 
@@ -273,6 +272,7 @@ def _resolve_inputs(args: argparse.Namespace, file_config: dict[str, Any], logge
 # Section: Argument Parsing & Validation
 # ===========================================================================
 
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="behavython-cli",
@@ -311,20 +311,42 @@ examples:
         ),
     )
     parser.add_argument("--output", "-o", metavar="DIR", help="Output directory for results. Overrides 'output_folder' in config.")
-    parser.add_argument("--arena-config", metavar="PATH", help="Global fallback arena/maze JSON config (required for maze experiments if animals lack individual configs). Overrides 'config_path' in config.")
+    parser.add_argument(
+        "--arena-config",
+        metavar="PATH",
+        help="Global fallback arena/maze JSON config (required for maze experiments if animals lack individual configs). Overrides 'config_path' in config.",
+    )
     parser.add_argument("--no-plots", action="store_true", default=None, help="Disable plot generation. Overrides 'no_plots' in config.")
     parser.add_argument("--experiment-type", metavar="TYPE", help=f"Experiment type. One of: {', '.join(sorted(_VALID_EXPERIMENT_TYPES))}")
     parser.add_argument("--run-tracking", action="store_true", help="Run DeepLabCut tracking (analysis + filtering) on the input videos.")
     parser.add_argument("--dlc-config", metavar="PATH", help="Path to the DeepLabCut config.yaml file (required for --run-tracking).")
     parser.add_argument("--shuffle", type=int, default=None, help="DeepLabCut shuffle index (inferred automatically if not provided).")
-    parser.add_argument("--trainingsetindex", type=int, default=None, help="DeepLabCut training set index (inferred automatically if not provided).")
-    parser.add_argument("--standardize", action="store_true", help="Standardize videos in the input folder to a compatible codec (H.264/CFR).")
-    parser.add_argument("--run-cropping", action="store_true", help="Run batch cropping on videos using a previously saved cropping project JSON.")
+    parser.add_argument(
+        "--trainingsetindex", type=int, default=None, help="DeepLabCut training set index (inferred automatically if not provided)."
+    )
+    parser.add_argument(
+        "--standardize", action="store_true", help="Standardize videos in the input folder to a compatible codec (H.264/CFR)."
+    )
+    parser.add_argument(
+        "--run-cropping", action="store_true", help="Run batch cropping on videos using a previously saved cropping project JSON."
+    )
     parser.add_argument("--crop-config", metavar="PATH", help="Path to the cropping project JSON file (required for --run-cropping).")
-    parser.add_argument("--extract-frames", action="store_true", help="Extract one representative frame per video (at 50%% duration by default).")
-    parser.add_argument("--frame-number", type=int, metavar="N", default=None, help="Override the frame index used by --extract-frames (default: 50%% of video duration).")
-    parser.add_argument("--cleanup", action="store_true", help="Move files not needed for the given experiment type to an 'unwanted_files/' subfolder.")
-    parser.add_argument("--likelihood-plots", action="store_true", help="Generate custom likelihood plots for all filtered .h5 tracking files.")
+    parser.add_argument(
+        "--extract-frames", action="store_true", help="Extract one representative frame per video (at 50%% duration by default)."
+    )
+    parser.add_argument(
+        "--frame-number",
+        type=int,
+        metavar="N",
+        default=None,
+        help="Override the frame index used by --extract-frames (default: 50%% of video duration).",
+    )
+    parser.add_argument(
+        "--cleanup", action="store_true", help="Move files not needed for the given experiment type to an 'unwanted_files/' subfolder."
+    )
+    parser.add_argument(
+        "--likelihood-plots", action="store_true", help="Generate custom likelihood plots for all filtered .h5 tracking files."
+    )
     parser.add_argument("--annotate-video", action="store_true", help="Create DeepLabCut annotated videos.")
     parser.add_argument(
         "--init",
@@ -341,7 +363,9 @@ examples:
             "not present in the target config. Requires --dlc-config and --label-folders."
         ),
     )
-    parser.add_argument("--label-folders", nargs="+", metavar="DIR", help="One or more labeled-data directories to transfer (used with --transfer-labels).")
+    parser.add_argument(
+        "--label-folders", nargs="+", metavar="DIR", help="One or more labeled-data directories to transfer (used with --transfer-labels)."
+    )
     parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging to stdout.")
 
     return parser
@@ -355,7 +379,9 @@ def _validate_args(args: argparse.Namespace) -> list[str]:
     if args.crop_config and not args.run_cropping:
         errors.append("--crop-config has no effect without --run-cropping.")
     if args.dlc_config and not any(getattr(args, a, False) for a in _DLC_ACTIONS):
-        errors.append("--dlc-config has no effect without a DLC action (--run-tracking, --likelihood-plots, --annotate-video, or --transfer-labels).")
+        errors.append(
+            "--dlc-config has no effect without a DLC action (--run-tracking, --likelihood-plots, --annotate-video, or --transfer-labels)."
+        )
     if args.label_folders and not args.transfer_labels:
         errors.append("--label-folders has no effect without --transfer-labels.")
     if args.no_plots and not any([args.config, args.experiment_type]):
@@ -382,6 +408,7 @@ def _validate_args(args: argparse.Namespace) -> list[str]:
 # ===========================================================================
 # Section: Action Handlers
 # ===========================================================================
+
 
 def _run_init(ctx: _ActionContext) -> bool:
     dest = Path(ctx.args.output).resolve() if ctx.args.output else Path.cwd()
@@ -438,6 +465,7 @@ def _run_init(ctx: _ActionContext) -> bool:
 
 def _run_transfer_labels(ctx: _ActionContext) -> bool:
     from behavython.scripts.transfer_dlc_labels import transfer_dlc_labels
+
     output_dir = ctx.args.output or None
     print(f"[TRANSFER] Target config : {ctx.args.dlc_config}")
     print(f"[TRANSFER] Source folders: {len(ctx.args.label_folders)}")
@@ -461,6 +489,7 @@ def _run_standardize(ctx: _ActionContext) -> bool:
 
     ctx.logger.info("Videos to process: %d", len(video_files))
     from behavython.services.video_service import run_standardize_videos
+
     try:
         run_standardize_videos(
             request={"videos": video_files},
@@ -489,6 +518,7 @@ def _run_cropping(ctx: _ActionContext) -> bool:
 
     ctx.logger.info("Project: %s", ctx.args.crop_config)
     from behavython.services.video_service import run_batch_crop
+
     try:
         run_batch_crop(
             request={"project_data": project_data, "project_path": ctx.args.crop_config},
@@ -513,6 +543,7 @@ def _run_extract_frames(ctx: _ActionContext) -> bool:
     ctx.logger.info("Videos: %d | Frame override: %s", len(video_files), ctx.args.frame_number or "50%% of duration")
     from behavython.pipeline.models import DLCFrameExtractionRequest
     from behavython.pipeline.plugins.dlc import run_extract_frames
+
     try:
         run_extract_frames(
             request=DLCFrameExtractionRequest(
@@ -537,6 +568,7 @@ def _run_cleanup(ctx: _ActionContext) -> bool:
 
     from behavython.pipeline.models import DLCClearUnusedFilesRequest
     from behavython.pipeline.plugins.dlc import run_clear_unused_files
+
     try:
         result = run_clear_unused_files(
             request=DLCClearUnusedFilesRequest(
@@ -569,6 +601,7 @@ def _run_tracking(ctx: _ActionContext) -> bool:
 
     from behavython.pipeline.models import DLCVideoAnalysisRequest
     from behavython.pipeline.plugins.dlc import run_dlc_video_analysis
+
     try:
         run_dlc_video_analysis(
             request=DLCVideoAnalysisRequest(
@@ -595,6 +628,7 @@ def _run_likelihood_plots(ctx: _ActionContext) -> bool:
 
     from behavython.pipeline.models import DLCLikelihoodPlotRequest
     from behavython.pipeline.plugins.dlc import run_generate_likelihood_plots
+
     try:
         result = run_generate_likelihood_plots(
             request=DLCLikelihoodPlotRequest(
@@ -628,6 +662,7 @@ def _run_annotate_video(ctx: _ActionContext) -> bool:
 
     from behavython.pipeline.models import DLCAnnotatedVideoRequest
     from behavython.pipeline.plugins.dlc import run_create_annotated_video
+
     try:
         run_create_annotated_video(
             request=DLCAnnotatedVideoRequest(
@@ -663,6 +698,7 @@ _ACTION_MAP: dict[str, Callable[[_ActionContext], bool]] = {
 # Section: Orchestrator
 # ===========================================================================
 
+
 def main() -> int:
     parser = _build_parser()
     args = parser.parse_args()
@@ -688,13 +724,7 @@ def main() -> int:
         return 1
 
     needs_inputs = (
-        args.config
-        or args.experiment_type
-        or any(
-            getattr(args, a, False)
-            for a in _TERMINAL_ACTIONS
-            if a not in _INPUTLESS_ACTIONS
-        )
+        args.config or args.experiment_type or any(getattr(args, a, False) for a in _TERMINAL_ACTIONS if a not in _INPUTLESS_ACTIONS)
     )
 
     input_folder = ""
@@ -720,10 +750,10 @@ def main() -> int:
         if getattr(args, action, False):
             if not _ACTION_MAP[action](ctx):
                 return 1
-            
-            remaining_actions = _TERMINAL_ACTIONS[index + 1:]
+
+            remaining_actions = _TERMINAL_ACTIONS[index + 1 :]
             has_remaining = any(getattr(args, a, False) for a in remaining_actions)
-            
+
             if not has_remaining and not args.config and not args.experiment_type:
                 return 0
 
@@ -749,6 +779,7 @@ def main() -> int:
         return 1
 
     from behavython.pipeline.models import AnalysisRequest
+
     request = AnalysisRequest(
         input_files=input_files,
         output_folder=output_folder,

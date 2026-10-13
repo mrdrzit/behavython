@@ -12,8 +12,8 @@ from behavython.core.defaults import FFPROBE_MACOS_URL
 
 # Binary names differ by platform
 _IS_WINDOWS = os.name == "nt"
-_IS_MACOS   = platform.system() == "Darwin"
-_FFMPEG_BIN  = "ffmpeg.exe"  if _IS_WINDOWS else "ffmpeg"
+_IS_MACOS = platform.system() == "Darwin"
+_FFMPEG_BIN = "ffmpeg.exe" if _IS_WINDOWS else "ffmpeg"
 _FFPROBE_BIN = "ffprobe.exe" if _IS_WINDOWS else "ffprobe"
 
 

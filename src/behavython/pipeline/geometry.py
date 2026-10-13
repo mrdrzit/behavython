@@ -100,7 +100,9 @@ def detect_collision(line_segment_start, line_segment_end, circle_center, circle
     discriminant_numerator = (
         line_start_x_relative_to_circle * line_end_y_relative_to_circle - line_end_x_relative_to_circle * line_start_y_relative_to_circle
     )
-    discriminant = circle_radius * circle_radius * line_segment_length * line_segment_length - discriminant_numerator * discriminant_numerator
+    discriminant = (
+        circle_radius * circle_radius * line_segment_length * line_segment_length - discriminant_numerator * discriminant_numerator
+    )
     if discriminant < 0:
         return []
     if discriminant == 0:
@@ -309,11 +311,12 @@ def create_frequency_grid(x_values, y_values, bin_size, analysis_range, speed=No
 
     return grid.astype(int)
 
+
 def build_plus_maze_geometry(points: list[tuple[float, float]]) -> dict[str, Polygon]:
     """
     Builds the 5 standard polygons for the elevated plus maze.
     Expects exactly 12 points outlining the maze structure in a continuous loop.
-    
+
     Mapping based on standard reference points:
     points[0:4]   -> Top Open Arm (Top-Left, Top-Right, Center-Top-Right, Center-Top-Left)
     points[3:7]   -> Right Closed Arm (Center-Top-Right, Top-Right, Bottom-Right, Center-Bottom-Right)
@@ -328,13 +331,11 @@ def build_plus_maze_geometry(points: list[tuple[float, float]]) -> dict[str, Pol
         "right_closed": Polygon(points[3:7]),
         "bottom_open": Polygon(points[6:10]),
         "left_closed": Polygon(points[9:12] + [points[0]]),
-        "center": Polygon([points[3], points[6], points[9], points[0]])
+        "center": Polygon([points[3], points[6], points[9], points[0]]),
     }
 
-def build_grid_open_field_geometry(
-    corners: list[tuple[float, float]], 
-    grid_size: tuple[int, int] = (3, 3)
-) -> dict[str, Polygon]:
+
+def build_grid_open_field_geometry(corners: list[tuple[float, float]], grid_size: tuple[int, int] = (3, 3)) -> dict[str, Polygon]:
     """
     Mathematically interpolates an NxM grid from 4 outer corners.
     Expected corners clicking order: [Top-Left, Top-Right, Bottom-Right, Bottom-Left]
@@ -344,22 +345,22 @@ def build_grid_open_field_geometry(
 
     rows, cols = grid_size
     tl, tr, br, bl = [np.array(pt) for pt in corners]
-    
+
     grid_polygons = {}
-    
+
     for row in range(rows):
         for col in range(cols):
             y_frac_top = row / rows
             y_frac_bottom = (row + 1) / rows
             x_frac_left = col / cols
             x_frac_right = (col + 1) / cols
-            
+
             cell_tl = tl + (tr - tl) * x_frac_left + (bl - tl) * y_frac_top
             cell_tr = tl + (tr - tl) * x_frac_right + (bl - tl) * y_frac_top
             cell_br = tl + (tr - tl) * x_frac_right + (bl - tl) * y_frac_bottom
             cell_bl = tl + (tr - tl) * x_frac_left + (bl - tl) * y_frac_bottom
-            
+
             zone_name = f"zone_r{row}_c{col}"
             grid_polygons[zone_name] = Polygon([cell_tl, cell_tr, cell_br, cell_bl])
-            
+
     return grid_polygons

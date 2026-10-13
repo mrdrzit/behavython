@@ -1,4 +1,4 @@
-line-length = 121
+line-length = 141
 extend-exclude = ["src/behavython/_legacy"]
 
 [lint]

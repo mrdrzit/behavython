@@ -77,11 +77,9 @@ def transfer_dlc_labels(folders: list[str], target_config_path: str, output_dir:
 
         try:
             df = pd.read_csv(csv_file, header=[0, 1, 2], index_col=[0, 1, 2])
-            # Force index to be strings. `read_csv` might parse "1" as an integer, 
+            # Force index to be strings. `read_csv` might parse "1" as an integer,
             # causing napari-deeplabcut to crash when it calls Path() on the index.
-            df.index = df.index.set_levels([df.index.levels[0].astype(str), 
-                                            df.index.levels[1].astype(str), 
-                                            df.index.levels[2].astype(str)])
+            df.index = df.index.set_levels([df.index.levels[0].astype(str), df.index.levels[1].astype(str), df.index.levels[2].astype(str)])
         except Exception as e:
             print(f"  Error reading CSV: {e}")
             continue
@@ -111,7 +109,7 @@ def transfer_dlc_labels(folders: list[str], target_config_path: str, output_dir:
             out_dir = base_out / folder_path.name
         else:
             out_dir = folder_path / folder_path.name
-            
+
         out_dir.mkdir(exist_ok=True)
 
         out_csv = out_dir / f"CollectedData_{target_scorer}.csv"
@@ -141,32 +139,30 @@ if __name__ == "__main__":
         "them into self-contained directories ready to be copied to the target project."
     )
 
-    parser = argparse.ArgumentParser(
-        description=description,
-        formatter_class=argparse.RawTextHelpFormatter
-    )
+    parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter)
 
     parser.add_argument(
         "config_path",
         help="Path to the TARGET project's config.yaml file.\n"
-             "The script will read this file to determine which bodyparts to keep\n"
-             "and what the new scorer name should be."
+        "The script will read this file to determine which bodyparts to keep\n"
+        "and what the new scorer name should be.",
     )
 
     parser.add_argument(
         "folders",
         nargs="+",
         help="One or more directory paths. Each directory MUST contain:\n"
-             "  - A CollectedData_*.csv file\n"
-             "  - The corresponding .h5 file\n"
-             "  - The .png/.jpg frame images"
+        "  - A CollectedData_*.csv file\n"
+        "  - The corresponding .h5 file\n"
+        "  - The .png/.jpg frame images",
     )
 
     parser.add_argument(
-        "-o", "--output",
+        "-o",
+        "--output",
         help="Optional master output directory. If provided, all processed folders\n"
-             "will be saved here instead of being nested inside their original directories.",
-        default=None
+        "will be saved here instead of being nested inside their original directories.",
+        default=None,
     )
 
     args = parser.parse_args()

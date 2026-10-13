@@ -1180,7 +1180,9 @@ class ExtractionWorker(QThread):
         frame_indices = indices
         if self.config.extract_frames and self.config.limit_frames and len(indices) > self.config.max_frames:
             frame_indices = IndexProvider.subsample_uniform(indices, self.config.max_frames)
-            self.log(f"Frame limit active: extracting {len(frame_indices)} frames (subsampled uniformly from {len(indices)} detected frames).")
+            self.log(
+                f"Frame limit active: extracting {len(frame_indices)} frames (subsampled uniformly from {len(indices)} detected frames)."
+            )
 
         # ------------------------------------------------------------
         # Filter files

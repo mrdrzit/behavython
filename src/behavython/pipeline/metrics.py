@@ -4,7 +4,13 @@ from shapely.geometry import Point
 from scipy import stats
 from collections import deque
 from behavython.pipeline.geometry import line_trough_triangle_vertex, detect_collision, create_frequency_grid
-from behavython.core.defaults import ANGLE_CONE_ENTER, ANGLE_CONE_EXIT, ROI_DELTA_LOOKBACK_FRAMES, APPROACH_THRESHOLD_BL, LOCOMOTION_THRESHOLD_BL
+from behavython.core.defaults import (
+    ANGLE_CONE_ENTER,
+    ANGLE_CONE_EXIT,
+    ROI_DELTA_LOOKBACK_FRAMES,
+    APPROACH_THRESHOLD_BL,
+    LOCOMOTION_THRESHOLD_BL,
+)
 from behavython.core.exceptions import AnalysisError
 
 

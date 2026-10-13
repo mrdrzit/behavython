@@ -150,7 +150,12 @@ def analyze_maze_animal(maze_animal: MazeAnimal, request: AnalysisRequest) -> di
     # 4. Kinematics (reusing your existing compute_movement_metrics)
     # We pass scale_x/y as 1.0 here if pixel-to-cm conversion is handled in preprocessing
     kinematics = compute_movement_metrics(
-        centro_x=filtered_x.values, centro_y=filtered_y.values, fps=fps, scale_x=scale_x, scale_y=scale_y, threshold=request.options.threshold
+        centro_x=filtered_x.values,
+        centro_y=filtered_y.values,
+        fps=fps,
+        scale_x=scale_x,
+        scale_y=scale_y,
+        threshold=request.options.threshold,
     )
 
     # 5. Geometry & Spatial Events
@@ -230,7 +235,7 @@ def run_analysis_workflow(request: AnalysisRequest, progress: Callable = None, l
                             arena_corners = config_data.get("arena_corners", [])
                         elif request.options.experiment_type == "elevated_plus_maze":
                             maze_points = config_data.get("maze_points", [])
-                    
+
                     if log:
                         config_type = "individual" if animal.config_path else "global fallback"
                         log.emit("resume", f"[{animal.id}] Using {config_type} config: {os.path.basename(active_config_path)}")

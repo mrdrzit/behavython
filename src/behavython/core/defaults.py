@@ -19,8 +19,8 @@ LOGO_WIDGET_NAME = "behavython_logo"
 #   Using the un-versioned URLs so users always get the latest build.
 FFMPEG_DOWNLOAD_URLS: dict[str, str | None] = {
     "Windows": "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip",
-    "Linux":   "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz",
-    "Darwin":  "https://evermeet.cx/ffmpeg/ffmpeg.zip",
+    "Linux": "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz",
+    "Darwin": "https://evermeet.cx/ffmpeg/ffmpeg.zip",
 }
 
 # macOS only: separate ffprobe download (evermeet.cx distributes the two binaries separately)
@@ -98,14 +98,19 @@ QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
 }
 """
 
-DEFAULT_STYLE = """
+DEFAULT_STYLE = (
+    """
 QWidget {
     background-color: #343434;
     color: #FFFFFF;
 }
-""" + "\n" + SCROLLBAR_STYLE
+"""
+    + "\n"
+    + SCROLLBAR_STYLE
+)
 
-DEBUG_STYLE = """
+DEBUG_STYLE = (
+    """
 /* Global colors only */
 QWidget {
     background-color: #1E1E1E;
@@ -165,7 +170,10 @@ QCheckBox {
 QCheckBox::indicator:checked {
     background-color: #d97706;
 }
-""" + "\n" + SCROLLBAR_STYLE
+"""
+    + "\n"
+    + SCROLLBAR_STYLE
+)
 
 # Validation checkbox states
 VALIDATION_CHECKBOX_ACTIVE = """
@@ -352,10 +360,10 @@ CV2_POLY_COLORS = [
 # UNIFIED ZONE & ROI STYLES
 # ==========================================
 ZONE_STYLES = {
-    "top_open": {"mpl": "#ff4500", "cv2": (0, 69, 255)},        # orangered
-    "right_closed": {"mpl": "#00ff7f", "cv2": (127, 255, 0)},   # springgreen
-    "bottom_open": {"mpl": "#1e90ff", "cv2": (255, 144, 30)},   # dodgerblue
-    "left_closed": {"mpl": "#ba55d3", "cv2": (211, 85, 186)},   # mediumorchid
+    "top_open": {"mpl": "#ff4500", "cv2": (0, 69, 255)},  # orangered
+    "right_closed": {"mpl": "#00ff7f", "cv2": (127, 255, 0)},  # springgreen
+    "bottom_open": {"mpl": "#1e90ff", "cv2": (255, 144, 30)},  # dodgerblue
+    "left_closed": {"mpl": "#ba55d3", "cv2": (211, 85, 186)},  # mediumorchid
     "center": {"mpl": "#800080", "cv2": (128, 0, 128)},
     "none": {"mpl": HEX_MAGENTA, "cv2": BGR_MAGENTA},
     "missing": {"mpl": HEX_MAGENTA, "cv2": BGR_MAGENTA},

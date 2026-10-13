@@ -3,7 +3,9 @@ import pandas as pd
 from scipy.interpolate import CubicSpline
 
 
-def apply_rolling_window_filter(data_x: pd.Series, data_y: pd.Series, window_size: int = 5, jump_threshold: int = 150) -> tuple[pd.Series, pd.Series]:
+def apply_rolling_window_filter(
+    data_x: pd.Series, data_y: pd.Series, window_size: int = 5, jump_threshold: int = 150
+) -> tuple[pd.Series, pd.Series]:
     """
     Applies a rolling window filter to remove tracking jumps that exceed the threshold,
     and performs a cubic spline interpolation to bridge the resulting gaps.

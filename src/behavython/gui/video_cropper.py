@@ -311,7 +311,8 @@ class VideoCropperDialog:
     @staticmethod
     def _has_trim_settings(data: dict) -> bool:
         return bool(
-            VideoCropperDialog._coerce_trim_value(data.get("trim_start", 0.0)) or VideoCropperDialog._coerce_trim_value(data.get("trim_end", 0.0))
+            VideoCropperDialog._coerce_trim_value(data.get("trim_start", 0.0))
+            or VideoCropperDialog._coerce_trim_value(data.get("trim_end", 0.0))
         )
 
     @staticmethod

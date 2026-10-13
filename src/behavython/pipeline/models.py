@@ -302,7 +302,11 @@ class Animal:
 
                 if canonical in self.bodyparts:
                     self.logs.append(
-                        {"level": "warning", "message": f"Duplicate bodypart detected, overwriting: {canonical}", "context": "position_loading"}
+                        {
+                            "level": "warning",
+                            "message": f"Duplicate bodypart detected, overwriting: {canonical}",
+                            "context": "position_loading",
+                        }
                     )
 
                 try:
@@ -318,7 +322,9 @@ class Animal:
 
             if self.experiment_type in MAZE_EXPERIMENT_TYPES:
                 if not self.bodyparts:
-                    self.logs.append({"level": "error", "message": "No valid bodyparts found in tracking data", "context": "position_loading"})
+                    self.logs.append(
+                        {"level": "error", "message": "No valid bodyparts found in tracking data", "context": "position_loading"}
+                    )
                     self.eligible = False
             else:
                 required = ["nose", "left_ear", "right_ear"]
@@ -351,7 +357,9 @@ class Animal:
                     continue
 
                 if bone in self.skeleton:
-                    self.logs.append({"level": "warning", "message": f"Duplicate bone detected, overwriting: {bone}", "context": "skeleton_loading"})
+                    self.logs.append(
+                        {"level": "warning", "message": f"Duplicate bone detected, overwriting: {bone}", "context": "skeleton_loading"}
+                    )
 
                 try:
                     bone_df = df[bone]
@@ -461,7 +469,9 @@ class MazeAnimal:
             raise AnalysisError(f"[{self.animal.id}] Open Field requires exactly 4 arena corners.")
 
         if self.experiment_type == "elevated_plus_maze" and len(self.maze_points) != 12:
-            raise AnalysisError(f"[{self.animal.id}] Elevated Plus Maze requires exactly 12 maze points. Please verify the JSON configuration.")
+            raise AnalysisError(
+                f"[{self.animal.id}] Elevated Plus Maze requires exactly 12 maze points. Please verify the JSON configuration."
+            )
 
     def get_primary_tracking_data(self, preferred_bodypart: str = "center") -> tuple[pd.Series, pd.Series]:
         """

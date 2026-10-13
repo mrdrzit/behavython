@@ -58,7 +58,13 @@ from behavython.pipeline.models import (
 )
 from behavython.gui.video_cropper import VideoCropperDialog
 from behavython.tasks.task_runner import TaskRunner
-from behavython.gui.dependencies import get_model_path, is_ffmpeg_installed, get_os_name, get_unix_install_instructions, dependencyDownloadDialog
+from behavython.gui.dependencies import (
+    get_model_path,
+    is_ffmpeg_installed,
+    get_os_name,
+    get_unix_install_instructions,
+    dependencyDownloadDialog,
+)
 from PySide6.QtCore import QThread, Signal
 
 
@@ -673,7 +679,9 @@ class BehavythonMainWindow(QWidget):
             show_warning(self.interface, "Annotated Video Validation", "\n".join(errors))
             return
 
-        request = DLCAnnotatedVideoRequest(config_path=config_path, video_paths=resolved_video_input.paths, output_path=output_path, snapshot_index=self.snapshot_index)
+        request = DLCAnnotatedVideoRequest(
+            config_path=config_path, video_paths=resolved_video_input.paths, output_path=output_path, snapshot_index=self.snapshot_index
+        )
 
         self.logs.clear("dlc")
         self.progress_bar.setValue(0)
@@ -1018,7 +1026,9 @@ class BehavythonMainWindow(QWidget):
             return
 
         video_extensions = ANALYSIS_REQUIRED_SUFFIXES["video"]
-        videos = os_sorted([str(item.resolve()) for item in folder_path.iterdir() if item.is_file() and item.suffix.lower() in video_extensions])
+        videos = os_sorted(
+            [str(item.resolve()) for item in folder_path.iterdir() if item.is_file() and item.suffix.lower() in video_extensions]
+        )
 
         if not videos:
             show_warning(self.interface, "No Videos", "No video files found in the selected folder.")

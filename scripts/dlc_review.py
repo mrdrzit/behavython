@@ -61,7 +61,9 @@ def import_folder(source: Path, project: dict) -> Path | None:
         missing = [bp for bp in project["bodyparts"] if bp not in df.columns.get_level_values("bodyparts")]
         if missing:
             print(f"  {source.name}: bodyparts not in source, left empty: {missing}")
-        columns = pd.MultiIndex.from_product([[project["scorer"]], project["bodyparts"], ["x", "y"]], names=["scorer", "bodyparts", "coords"])
+        columns = pd.MultiIndex.from_product(
+            [[project["scorer"]], project["bodyparts"], ["x", "y"]], names=["scorer", "bodyparts", "coords"]
+        )
         values = {}
         for _, bodypart, coord in columns:
             match = [c for c in df.columns if c[1] == bodypart and c[2] == coord]

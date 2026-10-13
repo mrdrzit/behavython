@@ -183,7 +183,9 @@ class DLCAssistedLabelSession:
         config_bodyparts: list[str] = config.get("bodyparts", [])
 
         if not config_scorer:
-            raise ProjectIntegrityError("The config.yaml does not define a scorer. The project may be corrupted or was not created by DeepLabCut.")
+            raise ProjectIntegrityError(
+                "The config.yaml does not define a scorer. The project may be corrupted or was not created by DeepLabCut."
+            )
 
         # Populate model metadata for logging and future-proofing
         self.model_metadata = {
@@ -652,7 +654,9 @@ class DLCAssistedLabelSession:
         try:
             shutil.copy2(original, backup_path)
         except OSError as e:
-            raise BackupError(f"Could not back up {original.name} before modifying it.\nReason: {e}\nNo changes will be made to this file.") from e
+            raise BackupError(
+                f"Could not back up {original.name} before modifying it.\nReason: {e}\nNo changes will be made to this file."
+            ) from e
 
         self.backup_registry[original] = backup_path
         logger.debug(f"Backed up {original.name} → {backup_path}")

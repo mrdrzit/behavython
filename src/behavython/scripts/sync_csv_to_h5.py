@@ -91,7 +91,7 @@ def synchronize_csv_to_h5(csv_path: Path, config_path: str = None):
 
     # 6. Save to H5 and back to CSV to ensure consistency
     h5_path = csv_path.with_suffix(".h5")
-    
+
     try:
         # Save H5 with format fixed, required for DLC CollectedData
         data.to_hdf(h5_path, key="df_with_missing", mode="w", format="fixed")
@@ -112,7 +112,7 @@ def process_folders(folders: list[str], config_path: str = None):
 
         print(f"Processing folder: {folder_path.name}")
         csv_files = list(folder_path.glob("CollectedData_*.csv"))
-        
+
         if not csv_files:
             print(f"  Warning: No CollectedData_*.csv found in {folder_path.name}. Skipping.")
             continue
@@ -132,11 +132,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter)
 
-    parser.add_argument(
-        "folders",
-        nargs="+",
-        help="One or more directory paths containing CollectedData_*.csv files."
-    )
+    parser.add_argument("folders", nargs="+", help="One or more directory paths containing CollectedData_*.csv files.")
 
     parser.add_argument(
         "-c",

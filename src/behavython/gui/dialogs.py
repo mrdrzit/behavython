@@ -4,6 +4,7 @@ from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QPlainTextEdit, QVBoxLayout, QWidget
 from PySide6.QtWidgets import QFileDialog, QDialogButtonBox
 
+
 def show_warning(parent: QWidget | None, title: str, text: str) -> None:
     QMessageBox.warning(parent, title, text)
 
@@ -37,13 +38,15 @@ class ScrollableQuestionDialog(QDialog):
 def ask_yes_no(parent: QWidget | None, title: str, text: str) -> bool:
     dialog = ScrollableQuestionDialog(parent, title, text)
     # PySide6 exec() can return int (1 for Accepted) or QDialog.DialogCode.Accepted
-    # Depending on the PySide6 version, casting or comparing to int is safest 
+    # Depending on the PySide6 version, casting or comparing to int is safest
     # to avoid Enum equality issues, or simply compare to QDialog.DialogCode.Accepted
     return int(dialog.exec()) == int(QDialog.DialogCode.Accepted)
+
 
 def show_worker_error(parent: QWidget | None, error_info: tuple) -> None:
     dialog = WorkerErrorDialog(parent, error_info)
     dialog.exec()
+
 
 def select_file(parent: QWidget, title: str, filter_str: str = "All Files (*)", start_dir: str = "") -> str:
     path, _ = QFileDialog.getOpenFileName(parent, title, start_dir, filter_str)
@@ -61,6 +64,7 @@ def select_folder(parent: QWidget, title: str) -> str:
 
 def select_save_folder(parent: QWidget, title: str = "Select output folder") -> str:
     return QFileDialog.getExistingDirectory(parent, title)
+
 
 class WorkerErrorDialog(QDialog):
     def __init__(

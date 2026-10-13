@@ -53,27 +53,42 @@ HOLDOUT_GROUPS = [AGRUP_CA2, ISO_CA2, RETESTE, BASAL_AGRUP, BASAL_ISO, PRE_ANTAG
 # (experiment, batch, day) -> number of videos
 QUOTAS = {
     "bootstrap_pos": {
-        (AGRUP_CA2, "Leva_2", "D1"): 4, (AGRUP_CA2, "Leva_2", "D2"): 4,
-        (AGRUP_CA2, "Leva_1", "D1"): 2, (AGRUP_CA2, "Leva_1", "D2"): 3,
-        (ISO_CA2, "", "D1"): 2, (ISO_CA2, "", "D2"): 4,
-        (RETESTE, "", "D1"): 2, (RETESTE, "", "D2"): 4,
-        (BASAL_AGRUP, "", "D1"): 2, (BASAL_AGRUP, "", "D2"): 1,
-        (BASAL_ISO, "", "D1"): 2, (BASAL_ISO, "", "D2"): 1,
+        (AGRUP_CA2, "Leva_2", "D1"): 4,
+        (AGRUP_CA2, "Leva_2", "D2"): 4,
+        (AGRUP_CA2, "Leva_1", "D1"): 2,
+        (AGRUP_CA2, "Leva_1", "D2"): 3,
+        (ISO_CA2, "", "D1"): 2,
+        (ISO_CA2, "", "D2"): 4,
+        (RETESTE, "", "D1"): 2,
+        (RETESTE, "", "D2"): 4,
+        (BASAL_AGRUP, "", "D1"): 2,
+        (BASAL_AGRUP, "", "D2"): 1,
+        (BASAL_ISO, "", "D1"): 2,
+        (BASAL_ISO, "", "D2"): 1,
     },
     "outliers": {
-        (AGRUP_CA2, "Leva_2", "D1"): 2, (AGRUP_CA2, "Leva_2", "D2"): 1,
-        (AGRUP_CA2, "Leva_1", "D1"): 1, (AGRUP_CA2, "Leva_1", "D2"): 1,
-        (ISO_CA2, "", "D1"): 1, (ISO_CA2, "", "D2"): 2,
-        (RETESTE, "", "D1"): 1, (RETESTE, "", "D2"): 1,
+        (AGRUP_CA2, "Leva_2", "D1"): 2,
+        (AGRUP_CA2, "Leva_2", "D2"): 1,
+        (AGRUP_CA2, "Leva_1", "D1"): 1,
+        (AGRUP_CA2, "Leva_1", "D2"): 1,
+        (ISO_CA2, "", "D1"): 1,
+        (ISO_CA2, "", "D2"): 2,
+        (RETESTE, "", "D1"): 1,
+        (RETESTE, "", "D2"): 1,
         (BASAL_AGRUP, "", "D1"): 1,
         (BASAL_ISO, "", "D2"): 1,
     },
     "bootstrap_pre": {
-        (PRE_ANTAG, "Leva_1", "D1"): 1, (PRE_ANTAG, "Leva_1", "D2"): 1,
-        (PRE_ANTAG, "Leva_2", "D1"): 1, (PRE_ANTAG, "Leva_2", "D2"): 1,
-        (PRE_ANTAG, "Levas_3e4", "D1"): 1, (PRE_ANTAG, "Levas_3e4", "D2"): 1,
-        (PRE_PRETR, "Leva_1", "D1"): 1, (PRE_PRETR, "Leva_1", "D2"): 1,
-        (PRE_PRETR, "Leva_2", "D1"): 1, (PRE_PRETR, "Leva_2", "D2"): 1,
+        (PRE_ANTAG, "Leva_1", "D1"): 1,
+        (PRE_ANTAG, "Leva_1", "D2"): 1,
+        (PRE_ANTAG, "Leva_2", "D1"): 1,
+        (PRE_ANTAG, "Leva_2", "D2"): 1,
+        (PRE_ANTAG, "Levas_3e4", "D1"): 1,
+        (PRE_ANTAG, "Levas_3e4", "D2"): 1,
+        (PRE_PRETR, "Leva_1", "D1"): 1,
+        (PRE_PRETR, "Leva_1", "D2"): 1,
+        (PRE_PRETR, "Leva_2", "D1"): 1,
+        (PRE_PRETR, "Leva_2", "D2"): 1,
     },
 }
 STAGED_ROLES = ["holdout", "bootstrap_pos", "bootstrap_pre", "outliers"]
@@ -182,8 +197,15 @@ def build(args):
         fallback = next((p for p in VIDEO_ROOT.rglob(f"{stem}.mp4") if not p.relative_to(VIDEO_ROOT).parts[0].startswith("nao-usar")), None)
         if fallback:
             match = STEM_PATTERN.match(stem)
-            videos[stem] = {"stem": stem, "path": fallback, "group": fallback.relative_to(VIDEO_ROOT).parts[0], "batch": "",
-                            "day": "D1" if match["phase"] == "TR" else "D2", "animal": match["animal"], "timestamp": ""}
+            videos[stem] = {
+                "stem": stem,
+                "path": fallback,
+                "group": fallback.relative_to(VIDEO_ROOT).parts[0],
+                "batch": "",
+                "day": "D1" if match["phase"] == "TR" else "D2",
+                "animal": match["animal"],
+                "timestamp": "",
+            }
     missing = [stem for stem in labeled if stem not in videos]
     if missing:
         raise SystemExit(f"Labeled folders without a source video: {missing}")
@@ -223,7 +245,15 @@ def build(args):
                 staging = project / "staging" / role
                 staging.mkdir(parents=True, exist_ok=True)
                 link_or_copy(v["path"], staging / v["path"].name)
-            rows.append({"role": role, **{k: v[k] for k in ("stem", "group", "batch", "day", "animal")}, "width": width, "height": height, "source": v["path"]})
+            rows.append(
+                {
+                    "role": role,
+                    **{k: v[k] for k in ("stem", "group", "batch", "day", "animal")},
+                    "width": width,
+                    "height": height,
+                    "source": v["path"],
+                }
+            )
 
     cfg = auxiliaryfunctions.read_config(str(BASE_PROJECT / "config.yaml"))
     cfg.update(
@@ -351,7 +381,9 @@ def frames(args):
 
     with ProcessPoolExecutor(max_workers=args.workers) as pool:
         jobs = {
-            pool.submit(write_frames, row["source"], str(output / round_of[row["stem"]] / row["stem"]), [f for f, _ in picks], n_frames): row["stem"]
+            pool.submit(
+                write_frames, row["source"], str(output / round_of[row["stem"]] / row["stem"]), [f for f, _ in picks], n_frames
+            ): row["stem"]
             for row, n_frames, picks, _ in plan
         }
         written = {jobs[job]: set(job.result()) for job in jobs}
@@ -361,7 +393,17 @@ def frames(args):
         writer.writerow(["round", "role", "stem", "frame", "kind", "feb13_min_likelihood", "written"])
         for row, _, picks, min_likelihood in plan:
             for frame, kind in picks:
-                writer.writerow([round_of[row["stem"]], row["role"], row["stem"], frame, kind, f"{min_likelihood[frame]:.3f}", frame in written[row["stem"]]])
+                writer.writerow(
+                    [
+                        round_of[row["stem"]],
+                        row["role"],
+                        row["stem"],
+                        frame,
+                        kind,
+                        f"{min_likelihood[frame]:.3f}",
+                        frame in written[row["stem"]],
+                    ]
+                )
     failed = sum(len(picks) - len(written[r["stem"]]) for r, _, picks, _ in plan)
     print(f"Frames written to {output}" + (f" ({failed} frames could not be decoded, see frames_manifest.csv)" if failed else ""))
 
