@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import sys
 import shutil
 import logging
@@ -49,6 +50,59 @@ def prepare_dlc_config(config_path: str) -> tuple[dict[str, Any], str, bool]:
     """
     config_dict, resolved_path, was_repaired = load_or_repair_dlc_yaml(config_path)
     return config_dict, str(Path(resolved_path)), was_repaired
+
+
+def snapshot_index_from_file(snapshot_path: str | Path) -> tuple[int, str]:
+    """Index DLC uses for a snapshot file, and the snapshot name.
+
+    PyTorch snapshots are ``snapshot-*.pt``, ordered by epoch with the "best" snapshot last.
+    TensorFlow snapshots are ``snapshot-<iteration>.index/.meta/.data-*``, ordered by iteration.
+    Raises ValueError for files that are not regular pose snapshots.
+    """
+    path = Path(snapshot_path)
+    folder = path.parent
+
+    if path.suffix == ".pt":
+        snapshots = [p for p in folder.glob("snapshot-*.pt") if "detector" not in p.name]
+
+        def sort_key(p: Path) -> tuple[bool, int]:
+            digits = "".join(c for c in p.stem if c.isdigit())
+            return ("best" in p.stem, int(digits) if digits else 0)
+
+        names = [p.name for p in sorted(snapshots, key=sort_key)]
+        if path.name not in names:
+            raise ValueError("Please select a regular (non-detector) snapshot-*.pt file.")
+        return names.index(path.name), path.name
+
+    # TensorFlow: any of the checkpoint files names the snapshot; DLC lists them through the .index files.
+    name = path.name.split(".")[0]
+    iterations = sorted(int(p.name.split(".")[0].split("-")[1]) for p in folder.glob("snapshot-*.index"))
+    try:
+        return iterations.index(int(name.split("-")[1])), name
+    except (IndexError, ValueError):
+        raise ValueError("Please select a snapshot-*.pt (PyTorch) or snapshot-*.index (TensorFlow) file.") from None
+
+
+def prepare_snapshot_config(config_path: str, config_dict: dict[str, Any], snapshot_index: int | None) -> tuple[str, dict[str, Any]]:
+    """Config path and extra DLC kwargs that make DLC use ``snapshot_index``.
+
+    PyTorch takes ``snapshot_index`` as an argument. TensorFlow only reads ``snapshotindex`` from config.yaml,
+    so it gets a ``*_snapshot.yaml`` copy next to the original with that key set. The original is not touched.
+    """
+    if snapshot_index is None:
+        return config_path, {}
+    if validate_dlc_backend(config_dict, config_path) == "pytorch":
+        return config_path, {"snapshot_index": snapshot_index}
+
+    source = Path(config_path)
+    text = source.read_text(encoding="utf-8")
+    line = f"snapshotindex: {snapshot_index}"
+    text, count = re.subn(r"^snapshotindex:.*$", line, text, flags=re.MULTILINE)
+    if count == 0:
+        text = text.rstrip("\n") + f"\n{line}\n"
+    out_path = source.with_name(f"{source.stem}_snapshot{source.suffix}")
+    out_path.write_text(text, encoding="utf-8")
+    return str(out_path), {}
 
 
 def _emit_config_repair_logs(original_path: str, usable_path: str, was_repaired: bool, log) -> None:
@@ -222,7 +276,7 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
 
     extension = os.path.splitext(request.video_paths[0])[1].lower()
 
-    snapshot_kwargs = {} if request.snapshot_index is None else {"snapshot_index": request.snapshot_index}
+    dlc_config_path, snapshot_kwargs = prepare_snapshot_config(usable_config_path, config_dict, request.snapshot_index)
 
     if videos_to_analyze:
         if log:
@@ -238,7 +292,7 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
             _, usable_config_path, was_repaired = prepare_dlc_config(request.config_path)
             with capture_external_output("behavython.external"):
                 deeplabcut.analyze_videos(
-                    usable_config_path,
+                    dlc_config_path,
                     [video],
                     videotype=extension,
                     gputouse=gpu_to_use,
@@ -257,7 +311,7 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
         with capture_external_output("behavython.external"):
             _, usable_config_path, was_repaired = prepare_dlc_config(request.config_path)
             deeplabcut.filterpredictions(
-                usable_config_path,
+                dlc_config_path,
                 videos_to_filter,
                 videotype=extension,
                 filtertype="median",
@@ -266,7 +320,7 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
             )
             try:
                 deeplabcut.analyzeskeleton(
-                    usable_config_path,
+                    dlc_config_path,
                     videos_to_filter,
                     filtered=True,
                     save_as_csv=True,
@@ -288,7 +342,7 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, log=
 
         from behavython.pipeline.plotting import plot_custom_likelihood
 
-        scorer = _scorer_for_snapshot(usable_config_path, request.snapshot_index)
+        scorer = _scorer_for_snapshot(dlc_config_path, request.snapshot_index)
         for video in videos_to_filter:
             video_path = Path(video)
             candidates = [f for f in video_path.parent.glob(f"{video_path.stem}*_filtered.h5") if scorer is None or scorer in f.name]
@@ -323,7 +377,10 @@ def _scorer_for_snapshot(config_path: str, snapshot_index: int | None) -> str | 
     from deeplabcut.utils import auxiliaryfunctions
 
     cfg = auxiliaryfunctions.read_config(config_path)
-    scorer, _ = auxiliaryfunctions.get_scorer_name(cfg, 1, trainFraction=cfg["TrainingFraction"][0], snapshot_index=snapshot_index)
+    # TensorFlow reads the index from the config; DLC 2.3 get_scorer_name has no snapshot_index argument.
+    cfg["snapshotindex"] = snapshot_index
+    kwargs = {"snapshot_index": snapshot_index} if validate_dlc_backend(cfg, config_path) == "pytorch" else {}
+    scorer, _ = auxiliaryfunctions.get_scorer_name(cfg, 1, trainFraction=cfg["TrainingFraction"][0], **kwargs)
     return scorer
 
 
@@ -647,15 +704,16 @@ def run_create_annotated_video(request: DLCAnnotatedVideoRequest, progress=None,
     log.emit("dlc", f"Starting labeled video generation for {len(request.video_paths)} videos...")
     console_logger.info(f"Creating annotated videos with DeepLabCut for {len(request.video_paths)} video(s)")
 
+    dlc_config_path, snapshot_kwargs = prepare_snapshot_config(str(config_path_used), config_data, request.snapshot_index)
     try:
         deeplabcut.create_labeled_video(
-            str(config_path_used),
+            dlc_config_path,
             request.video_paths,
             videotype=videotype,
             filtered=True,
             draw_skeleton=True,
             destfolder=request.output_path,
-            **({} if request.snapshot_index is None else {"snapshot_index": request.snapshot_index}),
+            **snapshot_kwargs,
         )
     except AnalysisError as e:
         dlc_logger.exception("DLC labeled video creation failed")

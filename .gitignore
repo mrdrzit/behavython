@@ -123,3 +123,6 @@ create_diff_patch.bat
 
 # Github config files
 .github
+
+# Per-machine Claude Code permissions
+.claude/settings.local.json

@@ -11,7 +11,7 @@ from typing import Any, List
 from natsort import os_sorted
 from pathlib import Path
 from dataclasses import dataclass, field
-from behavython.pipeline.plugins.dlc import load_deeplabcut, infer_dlc_shuffle_and_trainingsetindex
+from behavython.pipeline.plugins.dlc import load_deeplabcut, infer_dlc_shuffle_and_trainingsetindex, prepare_snapshot_config
 from behavython.pipeline.models import DLCAnalyzeFramesRequest
 from behavython.core.defaults import ANALYSIS_REQUIRED_SUFFIXES
 from behavython.services.logging import capture_external_output
@@ -392,15 +392,18 @@ class DLCAssistedLabelSession:
             shuffle = self.request.shuffle
             trainingsetindex = self.request.trainingsetindex
 
+        # TensorFlow takes the snapshot from a config copy, so only PyTorch gets kwargs here.
+        dlc_config_path, snapshot_kwargs = prepare_snapshot_config(str(usable_config_path), config_dict, self.request.snapshot_index)
+
         final_label_files = []
 
         for folder in assets.video_folders:
             console_logger.info(f"Analyzing folder: {folder.name}...")
 
             with capture_external_output("behavython.external"):
-                if self.request.snapshot_index is None:
+                if not snapshot_kwargs:
                     deeplabcut.analyze_time_lapse_frames(
-                        str(usable_config_path),
+                        dlc_config_path,
                         str(folder),
                         frametype=self.request.frame_extension,
                         shuffle=shuffle,

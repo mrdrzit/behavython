@@ -2554,7 +2554,7 @@ QPushButton:disabled {
                  <enum>Qt::ContextMenuPolicy::CustomContextMenu</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Pick a specific PyTorch snapshot from dlc-models-pytorch. Right-click to go back to the config.yaml snapshotindex.</string>
+                 <string>Pick a specific snapshot from dlc-models-pytorch (snapshot-*.pt) or dlc-models (TensorFlow, snapshot-*.index). Right-click to go back to the config.yaml snapshotindex.</string>
                 </property>
                 <property name="styleSheet">
                  <string notr="true">QPushButton {

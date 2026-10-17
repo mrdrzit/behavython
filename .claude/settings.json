@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/miniforge3/envs/behavython/python.exe\" -I \"$CLAUDE_PROJECT_DIR/.claude/hooks/block_bare_python.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

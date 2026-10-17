@@ -35,6 +35,7 @@ from behavython.pipeline.plugins.dlc import (
     run_extract_frames,
     run_create_annotated_video,
     run_analyze_frames,
+    snapshot_index_from_file,
 )
 from behavython.services.validation import validate_json_config
 from behavython.gui.dialogs import ask_yes_no, show_warning, show_info, show_worker_error
@@ -528,22 +529,22 @@ class BehavythonMainWindow(QWidget):
             show_warning(self.interface, "Snapshot", "Select the config.yaml first.")
             return
         models_dir = Path(config_path).parent / "dlc-models-pytorch"
-        path = select_file(self.interface, "Select snapshot", "PyTorch snapshot (snapshot-*.pt)", str(models_dir))
+        if not models_dir.is_dir():
+            models_dir = Path(config_path).parent / "dlc-models"
+        path = select_file(
+            self.interface,
+            "Select snapshot",
+            "DLC snapshot (snapshot-*.pt snapshot-*.index);;PyTorch snapshot (snapshot-*.pt);;TensorFlow snapshot (snapshot-*.index)",
+            str(models_dir),
+        )
         if not path:
             return
-        folder = Path(path).parent
-        # Same ordering DLC uses: by epoch, with the "best" snapshot last.
-        snapshots = [p for p in folder.glob("snapshot-*.pt") if "detector" not in p.name]
-
-        def sort_key(p: Path) -> tuple[bool, int]:
-            digits = "".join(c for c in p.stem if c.isdigit())
-            return ("best" in p.stem, int(digits) if digits else 0)
-
-        names = [p.name for p in sorted(snapshots, key=sort_key)]
-        if Path(path).name not in names:
-            show_warning(self.interface, "Snapshot", "Please select a regular (non-detector) snapshot-*.pt file.")
+        try:
+            index, name = snapshot_index_from_file(path)
+        except ValueError as e:
+            show_warning(self.interface, "Snapshot", str(e))
             return
-        self._set_snapshot(names.index(Path(path).name), Path(path).name)
+        self._set_snapshot(index, name)
         self.snapshot_config = Path(config_path).resolve()
 
     def _reset_snapshot_if_set(self, *_) -> None:
