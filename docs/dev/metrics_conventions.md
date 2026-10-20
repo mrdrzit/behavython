@@ -47,6 +47,9 @@ Input positions are DeepLabCut `*filtered.csv` files (`ANALYSIS_REQUIRED_SUFFIXE
 - Each approach is linked to the next collision, then retreat, within `LINK_WINDOW_S` (1.0 s, converted to frames with the video fps). Outcome: `collision`, `abortive_retreat`, or `approach_only`.
 - `MIN_EVENT_FRAMES` and `ROI_DELTA_LOOKBACK_FRAMES` are still in frames.
 - Inter-bout intervals only count positive gaps.
+- Two different units are called "bout" in this project. Summary keys `total_bouts`, `*_proportion`, `*_bouts` and `*_interval_*` count approach sequences (above), not collision runs. A collision with no linked approach is not in them.
+- Investigation bout (`compute_investigation_bouts`) = contiguous run of collision frames, at least `MIN_EVENT_FRAMES`, per ROI, independent of approach and retreat. `duration_s` = frames / fps, so durations sum to `exploration_time_s` except for runs shorter than `MIN_EVENT_FRAMES`.
+- Known limit: sequences are pooled in ROI order, not time order, so with 2 or more ROIs `mean_inter_bout_interval_s` and the per-outcome intervals pair bouts that are not neighbours in time. Not changed, because it would change published numbers.
 
 ## 7. Zones and Crossings (maze experiments)
 - Each frame gets the first polygon from `geometry.py` that contains the point; `none` if outside, `missing` if NaN.
@@ -58,4 +61,5 @@ Input positions are DeepLabCut `*filtered.csv` files (`ANALYSIS_REQUIRED_SUFFIXE
 - Result dict keys: snake_case with a unit suffix (`_s`, `_cm`, `_cm_s`); per-frame arrays end in `_array`.
 - `export_summary_metrics` writes `analysis_summary.csv` / `.xlsx`, metrics as rows and animals as columns, with human labels in the form `name (unit)`.
 - `export_results_to_parquet` writes `analysis_summary.parquet`, `analysis_timeseries.parquet`, and `analysis_collisions.parquet`.
+- `export_bouts_tables` writes `bouts.xlsx` (sheets `investigation_bouts`, `approach_sequences`) and `investigation_bouts.parquet` / `approach_sequences.parquet`: long tables, one row per event, `animal_id` and `roi_name` columns, times in seconds, stages that did not happen left empty.
 - A new metric must be added to the result dict, both exporters, and the README outputs section.

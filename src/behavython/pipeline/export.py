@@ -111,6 +111,35 @@ def export_results_to_parquet(results: list[dict], output_folder: str) -> None:
         pq.write_table(pa.Table.from_pandas(full_col_df), col_path)
 
 
+def export_bouts_tables(results: list[dict], output_folder: str) -> None:
+    """
+    Long tables with one row per event, all animals stacked (`animal_id` column):
+    investigation bouts (contiguous collision runs) and approach sequences (linked outcome).
+    Written to `bouts.xlsx` (one sheet each) and to one Parquet file each. Empty tables are skipped.
+    """
+    tables = {"investigation_bouts": "investigation_bouts_df", "approach_sequences": "approach_sequences_df"}
+    frames = {}
+    for sheet, key in tables.items():
+        parts = []
+        for res in results:
+            df = res.get(key)
+            if df is not None and not df.empty:
+                df = df.copy()
+                df.insert(0, "animal_id", res["animal_id"])
+                parts.append(df)
+        if parts:
+            frames[sheet] = pd.concat(parts, ignore_index=True)
+
+    if not frames:
+        return
+
+    with pd.ExcelWriter(os.path.join(output_folder, "bouts.xlsx"), engine="openpyxl") as writer:
+        for sheet, df in frames.items():
+            df.to_excel(writer, sheet_name=sheet, index=False)
+            writer.sheets[sheet].auto_filter.ref = writer.sheets[sheet].dimensions
+            pq.write_table(pa.Table.from_pandas(df), os.path.join(output_folder, f"{sheet}.parquet"))
+
+
 def export_summary_metrics(results: list[dict], output_folder: str, log: Callable | None = None) -> None:
     """
     Filters metrics based on experiment type, transposes them (metrics as rows,

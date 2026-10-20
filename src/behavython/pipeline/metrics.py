@@ -590,6 +590,55 @@ def compute_crossings(state_array: pd.Series, experiment_type: str) -> dict:
     return counts
 
 
+def _get_blocks(roi_df: pd.DataFrame, condition: pd.Series, min_frames: int) -> list[dict]:
+    """Contiguous runs of `condition` in one ROI's frame-sorted rows, at least `min_frames` long."""
+    run_id = condition.ne(condition.shift()).cumsum()
+    blocks = []
+    for _, block in roi_df[condition].groupby(run_id):
+        if len(block) >= min_frames:
+            blocks.append({"start_frame": block["frame"].iloc[0], "end_frame": block["frame"].iloc[-1]})
+    return blocks
+
+
+def compute_investigation_bouts(collisions_df: pd.DataFrame, fps: float, min_frames: int = 3) -> pd.DataFrame:
+    """
+    One row per investigation bout: a contiguous run of collision frames (at least `min_frames`) in one ROI.
+    Independent of approach/retreat linking. Times are in seconds; `end_s` is the end of the last collision frame,
+    so `duration_s` is frames / fps and sums to `exploration_time_s` apart from runs shorter than `min_frames`.
+    """
+    columns = ["roi_name", "bout_id", "start_s", "end_s", "duration_s", "start_frame", "end_frame"]
+    rows = []
+    if not collisions_df.empty:
+        for roi_name, roi_df in collisions_df.groupby("roi_name"):
+            roi_df = roi_df.sort_values("frame").reset_index(drop=True)
+            blocks = _get_blocks(roi_df, roi_df["collision_flag"] == 1, min_frames)
+            for n, b in enumerate(blocks, start=1):
+                s, e = int(b["start_frame"]), int(b["end_frame"])
+                rows.append([roi_name, n, s / fps, (e + 1) / fps, (e - s + 1) / fps, s, e])
+    return pd.DataFrame(rows, columns=columns)
+
+
+def _sequences_to_df(sequences: list[dict], fps: float) -> pd.DataFrame:
+    """One row per approach sequence, sorted by ROI then time. Stages that did not happen stay empty."""
+    rows = []
+    for s in sorted(sequences, key=lambda s: (str(s["roi_name"]), s["start_frame"])):
+        row = {"roi_name": s["roi_name"], "outcome": s["outcome"]}
+        for stage in ("approach", "collision", "retreat"):
+            ev = s[stage]
+            row[f"{stage}_start_s"] = ev["start_frame"] / fps if ev else None
+            row[f"{stage}_end_s"] = (ev["end_frame"] + 1) / fps if ev else None
+        row.update(
+            start_s=s["start_frame"] / fps,
+            end_s=(s["end_frame"] + 1) / fps,
+            start_frame=int(s["start_frame"]),
+            end_frame=int(s["end_frame"]),
+        )
+        rows.append(row)
+    df = pd.DataFrame(rows)
+    df.insert(1, "sequence_id", df.groupby("roi_name").cumcount() + 1)
+    return df
+
+
 def compute_social_behavior_metrics(collisions_df: pd.DataFrame, fps: float, min_frames: int = 3, link_window_s: float = 1.0) -> dict:
     """
     Extracts bout counts, mean inter-bout intervals, and outcome proportions
@@ -617,19 +666,10 @@ def compute_social_behavior_metrics(collisions_df: pd.DataFrame, fps: float, min
         # Ensure correct temporal ordering for this specific ROI
         roi_df = roi_df.sort_values("frame").reset_index(drop=True)
 
-        # Helper to extract valid contiguous blocks
-        def get_blocks(condition):
-            blocks = condition.ne(condition.shift()).cumsum()
-            valid_blocks = []
-            for _, block in roi_df[condition].groupby(blocks):
-                if len(block) >= min_frames:
-                    valid_blocks.append({"start_frame": block["frame"].iloc[0], "end_frame": block["frame"].iloc[-1]})
-            return valid_blocks
-
         # 2. Extract Events
-        approaches = get_blocks(roi_df["interaction_state"] == "approaching")
-        collisions = get_blocks(roi_df["collision_flag"] == 1)
-        retreats = get_blocks(roi_df["interaction_state"] == "retreating")
+        approaches = _get_blocks(roi_df, roi_df["interaction_state"] == "approaching", min_frames)
+        collisions = _get_blocks(roi_df, roi_df["collision_flag"] == 1, min_frames)
+        retreats = _get_blocks(roi_df, roi_df["interaction_state"] == "retreating", min_frames)
 
         used_collisions = set()
         used_retreats = set()
@@ -674,7 +714,17 @@ def compute_social_behavior_metrics(collisions_df: pd.DataFrame, fps: float, min
 
             seq_end = linked_ret["end_frame"] if linked_ret else (linked_col["end_frame"] if linked_col else a_end)
 
-            sequences.append({"start_frame": a_start, "end_frame": seq_end, "outcome": outcome})
+            sequences.append(
+                {
+                    "roi_name": roi_name,
+                    "start_frame": a_start,
+                    "end_frame": seq_end,
+                    "outcome": outcome,
+                    "approach": a,
+                    "collision": linked_col,
+                    "retreat": linked_ret,
+                }
+            )
 
     # 4. Global Aggregation (Combine sequences from all ROIs)
     total_bouts = len(sequences)
@@ -691,6 +741,7 @@ def compute_social_behavior_metrics(collisions_df: pd.DataFrame, fps: float, min
             "mean_interval_collision_s": 0.0,
             "mean_interval_approach_only_s": 0.0,
             "mean_interval_abortive_retreat_s": 0.0,
+            "approach_sequences_df": pd.DataFrame(),
         }
 
     outcomes = [s["outcome"] for s in sequences]
@@ -731,4 +782,6 @@ def compute_social_behavior_metrics(collisions_df: pd.DataFrame, fps: float, min
         "mean_interval_collision_s": get_mean_interval(col_seqs),
         "mean_interval_approach_only_s": get_mean_interval(app_seqs),
         "mean_interval_abortive_retreat_s": get_mean_interval(abt_seqs),
+        # Per-sequence table for export (not a scalar metric)
+        "approach_sequences_df": _sequences_to_df(sequences, fps),
     }

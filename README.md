@@ -326,7 +326,10 @@ The pipeline outputs data in multiple formats for both statistical aggregation a
 
   * Investigation and approach proportions.
   * Mean inter-bout intervals (seconds).
-  * Discrete bout analysis (Collision bouts, approach-only bouts, abortive retreats).
+  * Discrete bout analysis (Collision bouts, approach-only bouts, abortive retreats). These counts, the proportions and the intervals above are computed on **approach sequences**: each approach is linked to a following collision and retreat within 1 s. A collision with no preceding approach is not counted in them.
+  * **`bouts.xlsx`**: two long tables for manual analysis, one row per event, all animals stacked, with `animal_id` and `roi_name` columns and times in seconds. Also saved as `investigation_bouts.parquet` and `approach_sequences.parquet`.
+      * `investigation_bouts` sheet: one row per contiguous run of collision frames (at least 3 frames) in one ROI, regardless of approach or retreat. Columns: `bout_id`, `start_s`, `end_s`, `duration_s`, `start_frame`, `end_frame`. Durations add up to the exploration time, except for runs under 3 frames.
+      * `approach_sequences` sheet: one row per approach sequence, with its `outcome` (`collision`, `abortive_retreat` or `approach_only`) and the start and end of each stage (approach, collision, retreat). Stages that did not happen are empty.
   * `analysis_collisions.parquet`: Granular export containing distance to objects, interaction angles, and frame-by-frame flags.
 
 -----

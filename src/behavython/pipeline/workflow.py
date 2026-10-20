@@ -9,6 +9,7 @@ from behavython.pipeline import filters, geometry  # noqa: F401
 from behavython.pipeline.models import AnalysisRequest, Animal, MazeAnimal
 from behavython.pipeline.metrics import (
     compute_crossings,
+    compute_investigation_bouts,
     compute_social_behavior_metrics,
     compute_zone_metrics,
     extract_collision_coordinates,
@@ -19,7 +20,7 @@ from behavython.pipeline.metrics import (
     compute_exploration_metrics,
 )
 from behavython.services.validation import validate_analysis_request
-from behavython.pipeline.export import export_results_to_parquet, export_summary_metrics
+from behavython.pipeline.export import export_bouts_tables, export_results_to_parquet, export_summary_metrics
 from behavython.pipeline.plotting import plot_animal_analysis
 from behavython.core.utils import group_analysis_files
 from behavython.core.exceptions import AnalysisError, CriticalSystemError
@@ -72,6 +73,7 @@ def analyze_animal(animal: Animal, request: AnalysisRequest) -> dict:
         **collision_data,
         **latent_social_behavior_metrics,
         "collisions_df": interaction_data["collisions"],
+        "investigation_bouts_df": compute_investigation_bouts(interaction_data["collisions"], data["fps"], min_frames=MIN_EVENT_FRAMES),
     }
 
 
@@ -279,6 +281,7 @@ def run_analysis_workflow(request: AnalysisRequest, progress: Callable = None, l
         try:
             export_results_to_parquet(results, request.output_folder)
             export_summary_metrics(results, request.output_folder, log=log)
+            export_bouts_tables(results, request.output_folder)
         except Exception as e:
             if warning:
                 warning.emit("Export Error", f"Failed to save Parquet files: {str(e)}")
