@@ -149,17 +149,19 @@ Return codes: `0` = all animals valid, `1` = fatal error, `2` = completed with w
 
 ## Pretrained Models
 
-Behavython comes with a pretrained model for roi and mouse tracking (c57 black on white arena top view) These can be downloaded from the [GitHub Releases page](https://github.com/mrdrzit/behavython/releases/tag/models-v1.0).
+Pretrained DeepLabCut networks are published on the [GitHub Releases page](https://github.com/mrdrzit/behavython/releases/tag/models-v2.0). The GUI downloads them when an action needs one.
 
-The latest release (`models-v1.0`) includes:
+The latest release (`models-v2.0`) includes:
 
-  * `c57_network_2025_minified.zip` - Optimized for C57 rodent tracking.
-  * `roi_network.zip` - Dedicated network for Region of Interest detection in social recognition experiments.
+  * `c57_network_2025_minified.zip` - Pose tracking of C57BL/6 mice, top view, white arena (TensorFlow).
+  * `cd1_network_2026.zip` - Pose tracking of CD1 mice, top view (PyTorch).
+  * `roi_network_2026.zip` - Cup detection for automatic ROI creation in social recognition (PyTorch).
 
-Extract these ZIP archives into .behavython/models/ folder in your home directory located in: <br>
-- **Windows:** `C:\Users\<YourUsername>\.behavython\models\`
-- **Linux/Mac:** `~/.behavython/models/`
-- **Note:** Ensure the extracted model files are directly within the `models` folder, not nested inside additional subdirectories.
+These networks are trained on the social recognition setups of our lab. On other setups, check the results, or train your own network.
+
+To install by hand, extract each ZIP into a folder with the same name inside `.behavython/models/` in your home directory, so that `config.yaml` sits directly inside it:
+- **Windows:** `C:\Users\<YourUsername>\.behavython\models\roi_network_2026\config.yaml`
+- **Linux/Mac:** `~/.behavython/models/roi_network_2026/config.yaml`
 
 -----
 
@@ -297,6 +299,8 @@ For interaction paradigms (like Social Recognition or Object Discrimination), Be
  ,Area,X,Y,BX,BY,Width,Height
 1,24065,376.500,387.500,289,300,175,175
 ```
+
+**Automatic ROIs (Social Recognition):** The **CREATE ROIS** button in the DeepLabCut tab, or `behavython-cli -f <folder> --create-rois`, writes `video_name_roi.csv` for each video with `roi_network_2026`. The network finds the top, right, bottom and left points of the cup on 5 frames per video, skipping the first 10%. The median of each point gives the center (X, Y), Width (left-right) and Height (top-bottom). Existing ROI files are never overwritten. Check the images in the `roi_check` folder, draw the ROIs that are wrong by hand, and read the warnings in the log about frames or videos that disagree. The network is trained on our CD1 and C57 cups only. For other setups, right-click the button (or pass `--roi-config`) to use your own DLC network with the bodyparts `top`, `right`, `bottom` and `left`.
 
 -----
 

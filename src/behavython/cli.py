@@ -29,8 +29,10 @@ from behavython.core.defaults import (
     MAZE_EXPERIMENT_TYPES,
     ANALYSIS_REQUIRED_SUFFIXES,
     MOVEMENT_THRESHOLD_CM_BY_ANIMAL,
+    DEFAULT_POSE_NETWORKS,
+    ROI_NETWORK_MODEL_NAME,
 )
-from behavython.core.paths import PACKAGE_ROOT
+from behavython.core.paths import MODELS_URLS, PACKAGE_ROOT, USER_MODELS_ROOT
 
 
 # ===========================================================================
@@ -60,6 +62,7 @@ _TERMINAL_ACTIONS: tuple[str, ...] = (
     "standardize",
     "run_cropping",
     "extract_frames",
+    "create_rois",
     "cleanup",
     "run_tracking",
     "likelihood_plots",
@@ -320,6 +323,11 @@ examples:
     parser.add_argument("--experiment-type", metavar="TYPE", help=f"Experiment type. One of: {', '.join(sorted(_VALID_EXPERIMENT_TYPES))}")
     parser.add_argument("--run-tracking", action="store_true", help="Run DeepLabCut tracking (analysis + filtering) on the input videos.")
     parser.add_argument("--dlc-config", metavar="PATH", help="Path to the DeepLabCut config.yaml file (required for --run-tracking).")
+    parser.add_argument(
+        "--network",
+        choices=sorted(DEFAULT_POSE_NETWORKS),
+        help="Use a downloaded default pose network instead of --dlc-config (c57: C57BL/6 on white arena, cd1: CD1 mice).",
+    )
     parser.add_argument("--shuffle", type=int, default=None, help="DeepLabCut shuffle index (inferred automatically if not provided).")
     parser.add_argument(
         "--trainingsetindex", type=int, default=None, help="DeepLabCut training set index (inferred automatically if not provided)."
@@ -340,6 +348,22 @@ examples:
         metavar="N",
         default=None,
         help="Override the frame index used by --extract-frames (default: 50%% of video duration).",
+    )
+    parser.add_argument(
+        "--create-rois",
+        action="store_true",
+        help=(
+            "Create <video>_roi.csv (cup circle) for each video with the ROI network. The bundled network is trained on "
+            "CD1 and C57 social recognition videos only. Existing _roi.csv files are kept. Check images go to roi_check/."
+        ),
+    )
+    parser.add_argument(
+        "--roi-config",
+        metavar="PATH",
+        help=(
+            "config.yaml of a DLC network with the bodyparts top, right, bottom and left on the cup circle "
+            "(used with --create-rois). Default: the downloaded roi_network_2026."
+        ),
     )
     parser.add_argument(
         "--cleanup", action="store_true", help="Move files not needed for the given experiment type to an 'unwanted_files/' subfolder."
@@ -378,6 +402,8 @@ def _validate_args(args: argparse.Namespace) -> list[str]:
         errors.append("--frame-number has no effect without --extract-frames.")
     if args.crop_config and not args.run_cropping:
         errors.append("--crop-config has no effect without --run-cropping.")
+    if args.roi_config and not args.create_rois:
+        errors.append("--roi-config has no effect without --create-rois.")
     if args.dlc_config and not any(getattr(args, a, False) for a in _DLC_ACTIONS):
         errors.append(
             "--dlc-config has no effect without a DLC action (--run-tracking, --likelihood-plots, --annotate-video, or --transfer-labels)."
@@ -390,11 +416,11 @@ def _validate_args(args: argparse.Namespace) -> list[str]:
     if args.run_cropping and not args.crop_config:
         errors.append("--run-cropping requires --crop-config <PATH>.")
     if args.run_tracking and not args.dlc_config:
-        errors.append("--run-tracking requires --dlc-config <PATH>.")
+        errors.append("--run-tracking requires --dlc-config <PATH> or --network.")
     if args.likelihood_plots and not args.dlc_config:
-        errors.append("--likelihood-plots requires --dlc-config <PATH>.")
+        errors.append("--likelihood-plots requires --dlc-config <PATH> or --network.")
     if args.annotate_video and not args.dlc_config:
-        errors.append("--annotate-video requires --dlc-config <PATH>.")
+        errors.append("--annotate-video requires --dlc-config <PATH> or --network.")
     if args.transfer_labels and not args.dlc_config:
         errors.append("--transfer-labels requires --dlc-config <PATH> (the TARGET project's config.yaml).")
     if args.transfer_labels and not args.label_folders:
@@ -561,6 +587,46 @@ def _run_extract_frames(ctx: _ActionContext) -> bool:
     return True
 
 
+def _run_create_rois(ctx: _ActionContext) -> bool:
+    video_extensions = tuple(ANALYSIS_REQUIRED_SUFFIXES["video"])
+    video_files = [f for f in ctx.input_files if f.lower().endswith(video_extensions)]
+    if not video_files:
+        ctx.logger.error("No video files found for ROI creation in: %s", ctx.input_folder or "provided files")
+        return False
+
+    config_path = ctx.args.roi_config or str(USER_MODELS_ROOT / ROI_NETWORK_MODEL_NAME / "config.yaml")
+    if not os.path.isfile(config_path):
+        ctx.logger.error(
+            "ROI network not found: %s\nDownload %s and extract it to %s, or pass --roi-config <PATH>.",
+            config_path,
+            MODELS_URLS[ROI_NETWORK_MODEL_NAME],
+            USER_MODELS_ROOT / ROI_NETWORK_MODEL_NAME,
+        )
+        return False
+
+    ctx.logger.info("Videos: %d | ROI network: %s", len(video_files), config_path)
+    from behavython.pipeline.models import DLCCreateRoisRequest
+    from behavython.pipeline.plugins.dlc import run_create_rois
+
+    try:
+        result = run_create_rois(
+            request=DLCCreateRoisRequest(video_paths=video_files, config_path=config_path),
+            progress=ctx.progress,
+            log=ctx.log,
+            warning=ctx.warning,
+        )
+        ctx.logger.info(
+            "ROI creation complete. Created: %d | Skipped (existing): %d | To check: %d",
+            result["created"],
+            result["skipped"],
+            len(result["flagged"]),
+        )
+    except Exception as exc:
+        ctx.logger.error("ROI creation failed: %s", exc)
+        return False
+    return True
+
+
 def _run_cleanup(ctx: _ActionContext) -> bool:
     experiment_type = ctx.args.experiment_type or ctx.file_config.get("experiment_type", "")
     ctx.logger.info("Experiment type: %s", experiment_type)
@@ -687,6 +753,7 @@ _ACTION_MAP: dict[str, Callable[[_ActionContext], bool]] = {
     "standardize": _run_standardize,
     "run_cropping": _run_cropping,
     "extract_frames": _run_extract_frames,
+    "create_rois": _run_create_rois,
     "cleanup": _run_cleanup,
     "run_tracking": _run_tracking,
     "likelihood_plots": _run_likelihood_plots,
@@ -702,6 +769,20 @@ _ACTION_MAP: dict[str, Callable[[_ActionContext], bool]] = {
 def main() -> int:
     parser = _build_parser()
     args = parser.parse_args()
+
+    if args.network:
+        if args.dlc_config:
+            print("[ERROR] Use either --network or --dlc-config, not both.", file=sys.stderr)
+            return 1
+        model_name = DEFAULT_POSE_NETWORKS[args.network]
+        args.dlc_config = str(USER_MODELS_ROOT / model_name / "config.yaml")
+        if not os.path.isfile(args.dlc_config):
+            print(
+                f"[ERROR] Network not found: {args.dlc_config}\n"
+                f"Download {MODELS_URLS[model_name]} and extract it to {USER_MODELS_ROOT / model_name}.",
+                file=sys.stderr,
+            )
+            return 1
 
     arg_errors = _validate_args(args)
     if arg_errors:

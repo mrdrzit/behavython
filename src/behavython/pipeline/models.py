@@ -104,6 +104,12 @@ class DLCFrameExtractionRequest:
 
 
 @dataclass(slots=True)
+class DLCCreateRoisRequest:
+    video_paths: list[str]
+    config_path: str
+
+
+@dataclass(slots=True)
 class DLCClearUnusedFilesRequest:
     folder_path: str
     task_type: str

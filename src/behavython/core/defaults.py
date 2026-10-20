@@ -296,6 +296,25 @@ ANALYSIS_REQUIRED_SUFFIXES = {
     "maze_rois": (".json",),
 }
 
+# Default pose networks, in the order of the GUI default_network_combobox. Keys are the CLI --network choices.
+DEFAULT_POSE_NETWORKS = {
+    "c57": "c57_network_2025_minified",
+    "cd1": "cd1_network_2026",
+}
+
+# ==========================================
+# AUTOMATIC ROI CREATION (find_cup_circle network)
+# ==========================================
+# The bundled network is trained on the CD1 and C57 social recognition setups of our lab.
+# Other setups need their own DLC network with these four bodyparts on the cup circle.
+ROI_NETWORK_MODEL_NAME = "roi_network_2026"
+ROI_NETWORK_BODYPARTS = ("top", "right", "bottom", "left")
+ROI_FRAMES_PER_VIDEO = 5
+ROI_SKIP_START_FRACTION = 0.1  # the animal is being placed in the arena
+ROI_FRAME_DEVIATION_WARNING_PX = 10.0  # a sampled frame whose circle center or diameter differs this much from the median
+ROI_DIAMETER_OUTLIER_FRACTION = 0.1  # a video whose diameter differs this much from the folder median
+ROI_CHECK_FOLDER = "roi_check"
+
 LOGGING_NAME_MAP = {
     "behavython": "CORE",
     "behavython.dlc": "DLC",
@@ -346,6 +365,8 @@ CV2_CROSSING_COLOR = (255, 255, 255)
 CV2_TEXT_COLOR = (0, 0, 0)
 CV2_TEXT_BG_COLOR = (255, 255, 255)
 CV2_GEOMETRY_OUTLINE = (100, 100, 100)
+CV2_ROI_CHECK_COLOR = (0, 0, 255)
+CV2_ROI_POINT_COLOR = BGR_CYAN
 
 CV2_POLY_COLORS = [
     (230, 216, 173),

@@ -38,6 +38,7 @@ ICON_PATH = GUI_IMAGES_ROOT / "VY.ico"
 
 FFMPEG_URL: str | None = FFMPEG_DOWNLOAD_URLS.get(platform.system())
 MODELS_URLS = {
-    "c57_network_2025_minified": "https://github.com/mrdrzit/behavython/releases/download/models-v1.0/c57_network_2025_minified.zip",
-    "roi_network": "https://github.com/mrdrzit/behavython/releases/download/models-v1.0/roi_network.zip",
+    "c57_network_2025_minified": "https://github.com/mrdrzit/behavython/releases/download/models-v2.0/c57_network_2025_minified.zip",
+    "cd1_network_2026": "https://github.com/mrdrzit/behavython/releases/download/models-v2.0/cd1_network_2026.zip",
+    "roi_network_2026": "https://github.com/mrdrzit/behavython/releases/download/models-v2.0/roi_network_2026.zip",
 }

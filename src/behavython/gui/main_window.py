@@ -17,6 +17,9 @@ from behavython.core.defaults import (
     VALIDATION_CHECKBOX_FADED,
     ANALYSIS_REQUIRED_SUFFIXES,
     MOVEMENT_THRESHOLD_CM_BY_ANIMAL,
+    DEFAULT_POSE_NETWORKS,
+    ROI_CHECK_FOLDER,
+    ROI_NETWORK_MODEL_NAME,
 )
 from behavython.core.paths import FFMPEG_URL, MODELS_URLS
 from behavython.pipeline.models import (
@@ -24,6 +27,7 @@ from behavython.pipeline.models import (
     AnalysisRequest,
     DLCAnnotatedVideoRequest,
     DLCClearUnusedFilesRequest,
+    DLCCreateRoisRequest,
     DLCFrameExtractionRequest,
     DLCVideoAnalysisRequest,
     DLCAnalyzeFramesRequest,
@@ -33,6 +37,7 @@ from behavython.pipeline.plugins.dlc import (
     run_clear_unused_files,
     run_dlc_video_analysis,
     run_extract_frames,
+    run_create_rois,
     run_create_annotated_video,
     run_analyze_frames,
     snapshot_index_from_file,
@@ -491,8 +496,11 @@ class BehavythonMainWindow(QWidget):
         self.interface.clear_unused_files_button.clicked.connect(self.on_clear_unused_files_clicked)
         self.interface.get_frames_button.clicked.connect(self.on_get_frames_clicked)
         self.interface.analyze_from_file_get_frames_button.clicked.connect(self.on_get_frames_from_file_clicked)
+        self.interface.create_rois_button.clicked.connect(self.on_create_rois_clicked)
+        self.interface.create_rois_button.customContextMenuRequested.connect(lambda _: self.on_create_rois_custom_network())
         self.interface.create_annotated_video_button.clicked.connect(self.on_create_annotated_video_clicked)
         self.interface.use_default_network_button.toggled.connect(self.on_use_default_network_toggled)
+        self.interface.default_network_combobox.currentIndexChanged.connect(self.on_default_network_changed)
 
         # Assisted Labeling (Data Process)
         self.interface.get_config_path_data_process.clicked.connect(self.on_select_refining_dlc_config_clicked)
@@ -581,6 +589,7 @@ class BehavythonMainWindow(QWidget):
     def enable_analysis_buttons(self) -> None:
         enabled = bool(self.interface.video_folder_lineedit.text().strip())
         self.interface.get_frames_button.setEnabled(enabled)
+        self.interface.create_rois_button.setEnabled(enabled)
         self.interface.clear_unused_files_button.setEnabled(enabled)
 
     def _toggle_likelihood_button(self) -> None:
@@ -778,6 +787,30 @@ class BehavythonMainWindow(QWidget):
         self.runner.submit(run_extract_frames, request, debug_mode=self.debug_mode)
         self.logger.info("Frame extraction submitted for %d video(s).", len(request.video_paths))
 
+    def on_create_rois_clicked(self) -> None:
+        if not self._ensure_model_installed(ROI_NETWORK_MODEL_NAME):
+            return
+        self._run_create_rois(str(get_model_path(ROI_NETWORK_MODEL_NAME) / "config.yaml"))
+
+    def on_create_rois_custom_network(self) -> None:
+        # The built-in network only knows our CD1 and C57 setups; other labs bring their own.
+        path = select_file(self.interface, "Select the ROI network config.yaml (bodyparts top, right, bottom, left)", "YAML files (*.yaml)")
+        if path:
+            self._run_create_rois(path)
+
+    def _run_create_rois(self, config_path: str) -> None:
+        resolved_video_input = self._build_video_input()
+        errors = validate_video_paths(resolved_video_input.paths)
+        if errors:
+            show_warning(self.interface, "ROI creation validation", "\n".join(errors))
+            return
+
+        request = DLCCreateRoisRequest(video_paths=resolved_video_input.paths, config_path=config_path)
+        self.logs.clear("dlc")
+        self.progress_bar.setValue(0)
+        self.runner.submit(run_create_rois, request, debug_mode=self.debug_mode)
+        self.logger.info("ROI creation submitted for %d video(s). Config: %s", len(request.video_paths), config_path)
+
     def toggle_assisted_analysis_ready(self) -> None:
         analysis_button = self.interface.start_assisted_labeling_data_process
         config_path = self.interface.config_path_data_process_path.text().strip()
@@ -928,21 +961,29 @@ class BehavythonMainWindow(QWidget):
             self.logs.append("resume", "🛡️ Debug mode deactivated")
             self.logs.append("dlc", "🛡️ Debug mode deactivated")
 
+    def on_default_network_changed(self) -> None:
+        if self.interface.use_default_network_button.isChecked():
+            self.on_use_default_network_toggled(True)
+
     def on_use_default_network_toggled(self, checked: bool) -> None:
         if checked:
-            if not self._ensure_model_installed("c57_network_2025_minified"):
+            key = list(DEFAULT_POSE_NETWORKS)[self.interface.default_network_combobox.currentIndex()]
+            model_name = DEFAULT_POSE_NETWORKS[key]
+            if not self._ensure_model_installed(model_name):
                 self.interface.use_default_network_button.blockSignals(True)
                 self.interface.use_default_network_button.setChecked(False)
                 self.interface.use_default_network_button.blockSignals(False)
+                self.interface.config_path_lineedit.clear()
+                self.interface.get_config_path_button.setEnabled(True)
                 return
 
-            model_path = get_model_path("c57_network_2025_minified")
+            model_path = get_model_path(model_name)
             config_yaml_path = model_path / "config.yaml"
 
             self.interface.config_path_lineedit.setText(str(config_yaml_path))
             self.interface.get_config_path_button.setEnabled(False)
 
-            self._set_gui_log_message("dlc", "Default C57 network loaded and ready.")
+            self._set_gui_log_message("dlc", f"Default {key.upper()} network loaded and ready.")
             self.logger.info("User selected default network: %s", config_yaml_path)
 
         else:
@@ -1120,6 +1161,17 @@ class BehavythonMainWindow(QWidget):
         elif kind == "dlc_frames":
             self.logger.info("Frame extraction completed for %d video(s).", result["videos"])
             show_info(self.interface, "Frame extraction completed", f"Processed {result['videos']} video(s).")
+        elif kind == "dlc_create_rois":
+            self.logger.info(
+                "ROI creation completed. created=%d skipped=%d flagged=%d", result["created"], result["skipped"], len(result["flagged"])
+            )
+            text = f"Created {result['created']} ROI file(s). Skipped {result['skipped']} video(s) that already had one."
+            text += f"\n\nCheck the images in the {ROI_CHECK_FOLDER} folder and draw unacceptable ROIs manually."
+            if result["flagged"]:
+                text += "\n\nThese videos look suspicious (details in the log):\n" + "\n".join(result["flagged"])
+                show_warning(self.interface, "ROI creation completed", text)
+            else:
+                show_info(self.interface, "ROI creation completed", text)
         elif kind == "dlc_clear_unused_files":
             moved_count = len(result["moved_files"])
             self.logger.info(

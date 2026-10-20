@@ -299,7 +299,7 @@ QTabBar::tab:disabled {
           <enum>QTabWidget::TabShape::Rounded</enum>
          </property>
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <property name="usesScrollButtons">
           <bool>true</bool>
@@ -2220,7 +2220,7 @@ QComboBox {
              <property name="minimumSize">
               <size>
                <width>0</width>
-               <height>210</height>
+               <height>246</height>
               </size>
              </property>
              <property name="styleSheet">
@@ -2265,8 +2265,8 @@ QGroupBox::title {
               <property name="spacing">
                <number>6</number>
               </property>
-              <item row="2" column="0" colspan="3">
-               <widget class="QCheckBox" name="use_default_network_button">
+              <item row="3" column="0" colspan="3">
+               <widget class="QLabel" name="video_folder">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                   <horstretch>0</horstretch>
@@ -2275,108 +2275,8 @@ QGroupBox::title {
                 </property>
                 <property name="minimumSize">
                  <size>
-                  <width>281</width>
-                  <height>16</height>
-                 </size>
-                </property>
-                <property name="cursor">
-                 <cursorShape>WhatsThisCursor</cursorShape>
-                </property>
-                <property name="toolTip">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;
-
-&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Enable this option to use the built-in pretrained DeepLabCut network provided with Behavython.&lt;/span&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;This model is specifically optimized for tracking &lt;b&gt;C57BL/6 mice&lt;/b&gt; recorded from an &lt;b&gt;overhead (top-down) view&lt;/b&gt; in a &lt;b&gt;white arena&lt;/b&gt;, and supports both animal pose estimation and ROI detection.&lt;/span&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;The pretrained models are distributed via Behavython releases and must be downloaded and extracted before use.&lt;/span&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;Example model files:&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;- c57_network_2025_minified.zip (mouse tracking)&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;- roi_network.zip (region of interest detection)&lt;/span&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;After downloading, extract the contents into the Behavython models directory:&lt;/span&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;Windows: C:\Users\YourUsername\.behavython\models\&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;Linux/Mac: ~/.behavython/models/&lt;/span&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;Important: Ensure that the model files are placed directly inside the &lt;b&gt;models&lt;/b&gt; folder (not inside additional nested subfolders).&lt;/span&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;Use this option only if your experimental setup closely matches these conditions. Otherwise, provide your own DeepLabCut config.yaml.&lt;/span&gt;&lt;/p&gt;
-
-&lt;/body&gt;&lt;/html&gt;</string>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QCheckBox {
-    font-family: Arial;
-    font-size: 8pt;
-    spacing: 6px;
-    color: #E6E6E6;
-background: transparent;
-}
-
-QCheckBox::indicator {
-    width: 14px;
-    height: 14px;
-    background-color: #606060;
-    border: 1px solid #7A7A7A;
-    border-radius: 4px;
-}
-
-QCheckBox::indicator:hover {
-    background-color: #6D6D6D;
-    border: 1px solid #909090;
-}
-
-QCheckBox::indicator:pressed {
-    background-color: #555555;
-}
-
-QCheckBox::indicator:checked {
-    background-color: #A21F27;
-    border: 1px solid #C52A34;
-}
-
-QCheckBox::indicator:checked:hover {
-    background-color: #B5232C;
-}
-
-QCheckBox::indicator:disabled {
-    background-color: #3F3F3F;
-    border: 1px solid #555555;
-}
-
-QCheckBox:disabled {
-    color: #7A7A7A;
-}
-QCheckBox{font:7pt&quot;Arial&quot;;font-weight:bold}</string>
-                </property>
-                <property name="text">
-                 <string>Use default network (C57 mice overhead on white arena)</string>
-                </property>
-                <property name="checked">
-                 <bool>false</bool>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="3">
-               <widget class="QPushButton" name="get_videos_path_button">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>91</width>
-                  <height>30</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>30</height>
+                  <width>191</width>
+                  <height>0</height>
                  </size>
                 </property>
                 <property name="font">
@@ -2388,79 +2288,19 @@ QCheckBox{font:7pt&quot;Arial&quot;;font-weight:bold}</string>
                  </font>
                 </property>
                 <property name="cursor">
-                 <cursorShape>PointingHandCursor</cursorShape>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">/* Base button */
-QPushButton {
-    font: 8pt &quot;Arial&quot;;
-    font-weight: bold;
-
-    border: 2px solid #A21F27;
-    border-radius: 8px;
-
-    background-color: #2C53A1;
-    color: #FFFFFF;
-}
-
-/* Hover */
-QPushButton:hover {
-    background-color: #3A63B8; /* slightly lighter than base */
-}
-
-/* Pressed */
-QPushButton:pressed {
-    background-color: #A21F27;
-    color: #FFFFFF;
-}
-
-QPushButton:disabled {
-    background-color: gray;
-    color: white;
-    border: 2px solid darkgray;
-}</string>
-                </property>
-                <property name="text">
-                 <string notr="true">GET FOLDER</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="0" colspan="3">
-               <widget class="QLabel" name="config_path">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>191</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="cursor">
                  <cursorShape>WhatsThisCursor</cursorShape>
                 </property>
                 <property name="toolTip">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;
-&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Select the full path to the &lt;b&gt;config.yaml&lt;/b&gt; file generated by your DeepLabCut project.&lt;/span&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;This file is automatically created by DeepLabCut when you set up a project and contains all essential configuration details, such as defined body parts, training parameters, video references, and model settings.&lt;/span&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Typically, you can find this file inside your project folder.&lt;/span&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;Example (Windows): C:\Users\YourName\Documents\DeepLabCut\MyProject\config.yaml&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;Example (Linux/Mac): /home/yourname/DeepLabCut/MyProject/config.yaml&lt;/span&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;This file is required to correctly interpret pose estimation outputs and ensure compatibility with your trained DeepLabCut model.&lt;/span&gt;&lt;/p&gt;
-&lt;/body&gt;&lt;/html&gt;</string>
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Select the folder containing the video files to be processed.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;All compatible videos in this directory will be analyzed using the selected DeepLabCut configuration or pretrained model.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;Example (Windows): C:\Users\YourName\Documents\Experiments\Videos\&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;Example (Linux/Mac): /home/yourname/Experiments/Videos/&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="styleSheet">
                  <string notr="true">QLabel{color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}</string>
                 </property>
                 <property name="text">
-                 <string notr="true">Path to the config.yaml file </string>
+                 <string notr="true">Folder containing the videos to analyze</string>
+                </property>
+                <property name="wordWrap">
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -2533,54 +2373,191 @@ QPushButton:disabled {
                 </property>
                </widget>
               </item>
-              <item row="2" column="3">
-               <widget class="QPushButton" name="select_snapshot_button">
+              <item row="5" column="2" rowspan="2">
+               <widget class="QLabel" name="dlc_video_analyze_title">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="minimumSize">
                  <size>
-                  <width>91</width>
-                  <height>24</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>24</height>
+                  <width>150</width>
+                  <height>0</height>
                  </size>
                 </property>
                 <property name="cursor">
-                 <cursorShape>PointingHandCursor</cursorShape>
-                </property>
-                <property name="contextMenuPolicy">
-                 <enum>Qt::ContextMenuPolicy::CustomContextMenu</enum>
+                 <cursorShape>WhatsThisCursor</cursorShape>
                 </property>
                 <property name="toolTip">
-                 <string>Pick a specific snapshot from dlc-models-pytorch (snapshot-*.pt) or dlc-models (TensorFlow, snapshot-*.index). Right-click to go back to the config.yaml snapshotindex.</string>
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;
+
+&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Analyze the selected videos using the network configured above.&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Depending on your selection, this will use either a custom DeepLabCut &lt;b&gt;config.yaml&lt;/b&gt; or the default pretrained Behavython model.&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;This step generates tracking outputs (e.g., CSV files with pose coordinates) required for downstream behavioral analysis.&lt;/span&gt;&lt;/p&gt;
+
+&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">QPushButton {
-    font: 7pt &quot;Arial&quot;;
-    font-weight: bold;
-    border: 2px solid #A21F27;
-    border-radius: 8px;
-    background-color: #2C53A1;
-    color: #FFFFFF;
-}
-QPushButton:hover {
-    background-color: #3A63B8;
-}
-QPushButton:pressed {
-    background-color: #A21F27;
-}
-QPushButton:disabled {
-    background-color: gray;
-    color: white;
-    border: 2px solid darkgray;
-}</string>
+                 <string notr="true">QLabel{color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}</string>
                 </property>
                 <property name="text">
-                 <string notr="true">SNAPSHOT</string>
+                 <string notr="true">Analyze videos using network</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
                 </property>
                </widget>
+              </item>
+              <item row="6" column="0" rowspan="2">
+               <spacer name="horizontalSpacer_21">
+                <property name="orientation">
+                 <enum>Qt::Orientation::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>89</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="2" column="0" colspan="3">
+               <layout class="QHBoxLayout" name="default_network_layout">
+                <item>
+               <widget class="QCheckBox" name="use_default_network_button">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>16</height>
+                 </size>
+                </property>
+                <property name="cursor">
+                 <cursorShape>WhatsThisCursor</cursorShape>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;
+
+&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Enable this option to use the built-in pretrained DeepLabCut network provided with Behavython.&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Choose the network in the list: &lt;b&gt;C57&lt;/b&gt; is trained on C57BL/6 mice in a &lt;b&gt;white arena&lt;/b&gt;, &lt;b&gt;CD1&lt;/b&gt; on CD1 mice. Both are trained on &lt;b&gt;overhead (top-down)&lt;/b&gt; social recognition videos from our lab.&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;The pretrained models are distributed via Behavython releases and must be downloaded and extracted before use.&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;Example model files:&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;- c57_network_2025_minified.zip and cd1_network_2026.zip (mouse tracking)&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;- roi_network_2026.zip (cup ROI detection, CD1 and C57 social recognition)&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;After downloading, extract the contents into the Behavython models directory:&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;Windows: C:\Users\YourUsername\.behavython\models\&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;Linux/Mac: ~/.behavython/models/&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;Important: extract each archive into a folder with its own name, e.g. models/cd1_network_2026/config.yaml.&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;Use this option only if your experimental setup closely matches these conditions. Otherwise, provide your own DeepLabCut config.yaml.&lt;/span&gt;&lt;/p&gt;
+
+&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QCheckBox {
+    font-family: Arial;
+    font-size: 8pt;
+    spacing: 6px;
+    color: #E6E6E6;
+background: transparent;
+}
+
+QCheckBox::indicator {
+    width: 14px;
+    height: 14px;
+    background-color: #606060;
+    border: 1px solid #7A7A7A;
+    border-radius: 4px;
+}
+
+QCheckBox::indicator:hover {
+    background-color: #6D6D6D;
+    border: 1px solid #909090;
+}
+
+QCheckBox::indicator:pressed {
+    background-color: #555555;
+}
+
+QCheckBox::indicator:checked {
+    background-color: #A21F27;
+    border: 1px solid #C52A34;
+}
+
+QCheckBox::indicator:checked:hover {
+    background-color: #B5232C;
+}
+
+QCheckBox::indicator:disabled {
+    background-color: #3F3F3F;
+    border: 1px solid #555555;
+}
+
+QCheckBox:disabled {
+    color: #7A7A7A;
+}
+QCheckBox{font:7pt&quot;Arial&quot;;font-weight:bold}</string>
+                </property>
+                <property name="text">
+                 <string>Use default network (overhead view):</string>
+                </property>
+                <property name="checked">
+                 <bool>false</bool>
+                </property>
+               </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="default_network_combobox">
+                  <property name="cursor">
+                   <cursorShape>PointingHandCursor</cursorShape>
+                  </property>
+                  <property name="styleSheet">
+                   <string notr="true">QComboBox{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QListView{color:#FFFFFF;font:8pt&quot;Century Gothic&quot;;font-weight:bold;background-color:#969696;border:0px;}QListView{color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;background-color:#606060;border:0px;border-radius:6px;}QComboBox::drop-down{width:20px;border:5px;}QComboBox::down-arrow{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #FFFFFF;width:0.5px;height:1px;border-radius:2px;}QComboBox::down-arrow:hover{border-left:2px solid none;border-right:2px solid none;border-top:2px solid #A21F27;width:0.5px;height:1px;border-radius:2px;}QAbstractItemView{border:2px solid #969696;selection-background-color:#2C53A1;}</string>
+                  </property>
+                  <property name="sizeAdjustPolicy">
+                   <enum>QComboBox::SizeAdjustPolicy::AdjustToContents</enum>
+                  </property>
+                  <item>
+                   <property name="text">
+                    <string notr="true">C57</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string notr="true">CD1</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item row="8" column="3">
+               <spacer name="horizontalSpacer_27">
+                <property name="orientation">
+                 <enum>Qt::Orientation::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>89</width>
+                  <height>15</height>
+                 </size>
+                </property>
+               </spacer>
               </item>
               <item row="4" column="0" colspan="4">
                <widget class="QLineEdit" name="video_folder_lineedit">
@@ -2638,8 +2615,60 @@ QPushButton:disabled {
                 </property>
                </spacer>
               </item>
-              <item row="3" column="0" colspan="3">
-               <widget class="QLabel" name="video_folder">
+              <item row="2" column="3">
+               <widget class="QPushButton" name="select_snapshot_button">
+                <property name="minimumSize">
+                 <size>
+                  <width>91</width>
+                  <height>24</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>24</height>
+                 </size>
+                </property>
+                <property name="cursor">
+                 <cursorShape>PointingHandCursor</cursorShape>
+                </property>
+                <property name="contextMenuPolicy">
+                 <enum>Qt::ContextMenuPolicy::CustomContextMenu</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Pick a specific snapshot from dlc-models-pytorch (snapshot-*.pt) or dlc-models (TensorFlow, snapshot-*.index). Right-click to go back to the config.yaml snapshotindex.</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton {
+    font: 7pt &quot;Arial&quot;;
+    font-weight: bold;
+    border: 2px solid #A21F27;
+    border-radius: 8px;
+    background-color: #2C53A1;
+    color: #FFFFFF;
+}
+QPushButton:hover {
+    background-color: #3A63B8;
+}
+QPushButton:pressed {
+    background-color: #A21F27;
+}
+QPushButton:disabled {
+    background-color: gray;
+    color: white;
+    border: 2px solid darkgray;
+}</string>
+                </property>
+                <property name="text">
+                 <string notr="true">SNAPSHOT</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0" colspan="4">
+               <widget class="QLineEdit" name="config_path_lineedit">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                   <horstretch>0</horstretch>
@@ -2648,32 +2677,39 @@ QPushButton:disabled {
                 </property>
                 <property name="minimumSize">
                  <size>
-                  <width>191</width>
-                  <height>0</height>
+                  <width>0</width>
+                  <height>20</height>
                  </size>
                 </property>
-                <property name="font">
-                 <font>
-                  <family>Arial</family>
-                  <pointsize>8</pointsize>
-                  <italic>false</italic>
-                  <bold>true</bold>
-                 </font>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>20</height>
+                 </size>
                 </property>
-                <property name="cursor">
-                 <cursorShape>WhatsThisCursor</cursorShape>
-                </property>
-                <property name="toolTip">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Select the folder containing the video files to be processed.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;All compatible videos in this directory will be analyzed using the selected DeepLabCut configuration or pretrained model.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;Example (Windows): C:\Users\YourName\Documents\Experiments\Videos\&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;Example (Linux/Mac): /home/yourname/Experiments/Videos/&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                <property name="mouseTracking">
+                 <bool>false</bool>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">QLabel{color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}</string>
+                 <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
                 </property>
                 <property name="text">
-                 <string notr="true">Folder containing the videos to analyze</string>
+                 <string notr="true"/>
                 </property>
-                <property name="wordWrap">
+                <property name="frame">
+                 <bool>false</bool>
+                </property>
+                <property name="cursorPosition">
+                 <number>0</number>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
+                </property>
+                <property name="readOnly">
                  <bool>true</bool>
+                </property>
+                <property name="placeholderText">
+                 <string>path\to\project_folder\network_name_date\config.yaml</string>
                 </property>
                </widget>
               </item>
@@ -2753,17 +2789,17 @@ QPushButton:disabled {
                 </property>
                </spacer>
               </item>
-              <item row="5" column="2" rowspan="2">
-               <widget class="QLabel" name="dlc_video_analyze_title">
+              <item row="0" column="0" colspan="3">
+               <widget class="QLabel" name="config_path">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
                 <property name="minimumSize">
                  <size>
-                  <width>150</width>
+                  <width>191</width>
                   <height>0</height>
                  </size>
                 </property>
@@ -2772,57 +2808,28 @@ QPushButton:disabled {
                 </property>
                 <property name="toolTip">
                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;
+&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Select the full path to the &lt;b&gt;config.yaml&lt;/b&gt; file generated by your DeepLabCut project.&lt;/span&gt;&lt;/p&gt;
 
-&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Analyze the selected videos using the network configured above.&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;This file is automatically created by DeepLabCut when you set up a project and contains all essential configuration details, such as defined body parts, training parameters, video references, and model settings.&lt;/span&gt;&lt;/p&gt;
 
-&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Depending on your selection, this will use either a custom DeepLabCut &lt;b&gt;config.yaml&lt;/b&gt; or the default pretrained Behavython model.&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Typically, you can find this file inside your project folder.&lt;/span&gt;&lt;/p&gt;
 
-&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;This step generates tracking outputs (e.g., CSV files with pose coordinates) required for downstream behavioral analysis.&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;Example (Windows): C:\Users\YourName\Documents\DeepLabCut\MyProject\config.yaml&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;Example (Linux/Mac): /home/yourname/DeepLabCut/MyProject/config.yaml&lt;/span&gt;&lt;/p&gt;
 
+&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;This file is required to correctly interpret pose estimation outputs and ensure compatibility with your trained DeepLabCut model.&lt;/span&gt;&lt;/p&gt;
 &lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="styleSheet">
                  <string notr="true">QLabel{color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}</string>
                 </property>
                 <property name="text">
-                 <string notr="true">Analyze videos using network</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignCenter</set>
+                 <string notr="true">Path to the config.yaml file </string>
                 </property>
                </widget>
               </item>
-              <item row="6" column="0" rowspan="2">
-               <spacer name="horizontalSpacer_21">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>89</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item row="8" column="3">
-               <spacer name="horizontalSpacer_27">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>89</width>
-                  <height>15</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item row="1" column="0" colspan="4">
-               <widget class="QLineEdit" name="config_path_lineedit">
-                <property name="enabled">
-                 <bool>true</bool>
-                </property>
+              <item row="3" column="3">
+               <widget class="QPushButton" name="get_videos_path_button">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                   <horstretch>0</horstretch>
@@ -2831,39 +2838,59 @@ QPushButton:disabled {
                 </property>
                 <property name="minimumSize">
                  <size>
-                  <width>0</width>
-                  <height>20</height>
+                  <width>91</width>
+                  <height>30</height>
                  </size>
                 </property>
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>20</height>
+                  <height>30</height>
                  </size>
                 </property>
-                <property name="mouseTracking">
-                 <bool>false</bool>
+                <property name="font">
+                 <font>
+                  <family>Arial</family>
+                  <pointsize>8</pointsize>
+                  <italic>false</italic>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="cursor">
+                 <cursorShape>PointingHandCursor</cursorShape>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">QLineEdit{border:#969696;background-color:#606060;border-bottom-left-radius:6px;border-top-left-radius:6px;color:#FFFFFF;font:7pt&quot;Arial&quot;;font-weight:bold;border-bottom-right-radius:6px;border-top-right-radius:6px}</string>
+                 <string notr="true">/* Base button */
+QPushButton {
+    font: 8pt &quot;Arial&quot;;
+    font-weight: bold;
+
+    border: 2px solid #A21F27;
+    border-radius: 8px;
+
+    background-color: #2C53A1;
+    color: #FFFFFF;
+}
+
+/* Hover */
+QPushButton:hover {
+    background-color: #3A63B8; /* slightly lighter than base */
+}
+
+/* Pressed */
+QPushButton:pressed {
+    background-color: #A21F27;
+    color: #FFFFFF;
+}
+
+QPushButton:disabled {
+    background-color: gray;
+    color: white;
+    border: 2px solid darkgray;
+}</string>
                 </property>
                 <property name="text">
-                 <string notr="true"/>
-                </property>
-                <property name="frame">
-                 <bool>false</bool>
-                </property>
-                <property name="cursorPosition">
-                 <number>0</number>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignCenter</set>
-                </property>
-                <property name="readOnly">
-                 <bool>true</bool>
-                </property>
-                <property name="placeholderText">
-                 <string>path\to\project_folder\network_name_date\config.yaml</string>
+                 <string notr="true">GET FOLDER</string>
                 </property>
                </widget>
               </item>
@@ -3417,6 +3444,108 @@ QPushButton:disabled {
                 </property>
                 <property name="text">
                  <string notr="true">GENERATE PLOTS</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="0">
+               <widget class="QLabel" name="create_rois_label">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="cursor">
+                 <cursorShape>WhatsThisCursor</cursorShape>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Create the cup ROI (&amp;lt;video&amp;gt;_roi.csv) for each video with a neural network. Existing _roi.csv files are kept.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Check the images in the roi_check folder and draw the ROIs that are not acceptable manually.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400; font-style:italic;&quot;&gt;The built-in network is trained on our CD1 and C57 social recognition setups only. For other setups, right-click the button and select the config.yaml of your own DLC network with the bodyparts top, right, bottom and left on the cup circle.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QLabel{color:#FFFFFF;font:8pt&quot;Arial&quot;;font-weight:bold;}</string>
+                </property>
+                <property name="text">
+                 <string notr="true">Create ROIs automatically</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <spacer name="horizontalSpacer_32">
+                <property name="orientation">
+                 <enum>Qt::Orientation::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>108</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="4" column="2" colspan="2">
+               <widget class="QPushButton" name="create_rois_button">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>30</height>
+                 </size>
+                </property>
+                <property name="cursor">
+                 <cursorShape>PointingHandCursor</cursorShape>
+                </property>
+                <property name="contextMenuPolicy">
+                 <enum>Qt::ContextMenuPolicy::CustomContextMenu</enum>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">/* Base button */
+QPushButton {
+    font: 8pt &quot;Arial&quot;;
+    font-weight: bold;
+
+    border: 2px solid #A21F27;
+    border-radius: 8px;
+
+    background-color: #2C53A1;
+    color: #FFFFFF;
+}
+
+/* Hover */
+QPushButton:hover {
+    background-color: #3A63B8; /* slightly lighter than base */
+}
+
+/* Pressed */
+QPushButton:pressed {
+    background-color: #A21F27;
+    color: #FFFFFF;
+}
+
+QPushButton:disabled {
+    background-color: gray;
+    color: white;
+    border: 2px solid darkgray;
+}</string>
+                </property>
+                <property name="text">
+                 <string notr="true">CREATE ROIS</string>
                 </property>
                </widget>
               </item>
@@ -4462,7 +4591,7 @@ QPushButton:disabled {
                 </property>
                </widget>
               </item>
-              <item row="0" column="4" alignment="Qt::AlignmentFlag::AlignHCenter">
+              <item row="0" column="4" alignment="">
                <widget class="QComboBox" name="file_extension_confirmation_combobox_data_process">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">

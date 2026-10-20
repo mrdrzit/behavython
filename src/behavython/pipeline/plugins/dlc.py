@@ -6,17 +6,32 @@ import sys
 import shutil
 import logging
 import subprocess
+import tempfile
+import cv2
+import numpy as np
 import pandas as pd
 
 from pathlib import Path
 from typing import Any
-from behavython.core.defaults import ANALYSIS_REQUIRED_SUFFIXES, MAZE_EXPERIMENT_TYPES
+from behavython.core.defaults import (
+    ANALYSIS_REQUIRED_SUFFIXES,
+    MAZE_EXPERIMENT_TYPES,
+    ROI_NETWORK_BODYPARTS,
+    ROI_FRAMES_PER_VIDEO,
+    ROI_SKIP_START_FRACTION,
+    ROI_FRAME_DEVIATION_WARNING_PX,
+    ROI_DIAMETER_OUTLIER_FRACTION,
+    ROI_CHECK_FOLDER,
+    CV2_ROI_CHECK_COLOR,
+    CV2_ROI_POINT_COLOR,
+)
 from behavython.core.utils import load_or_repair_dlc_yaml, get_ffmpeg_path, get_ffprobe_path, detect_gpu
 from behavython.core.exceptions import AnalysisError
 from behavython.services.validation import validate_config_path, validate_video_paths, validate_dlc_backend
 from behavython.services.logging import capture_external_output
 from behavython.pipeline.models import (
     DLCClearUnusedFilesRequest,
+    DLCCreateRoisRequest,
     DLCFrameExtractionRequest,
     DLCVideoAnalysisRequest,
     DLCAnnotatedVideoRequest,
@@ -461,6 +476,181 @@ def run_extract_frames(request: DLCFrameExtractionRequest, progress=None, log=No
     return {
         "kind": "dlc_frames",
         "videos": len(request.video_paths),
+    }
+
+
+def _sample_frame_indices(frame_count: int) -> list[int]:
+    start = frame_count * ROI_SKIP_START_FRACTION
+    step = (frame_count - start) / ROI_FRAMES_PER_VIDEO
+    return [int(start + step * (i + 0.5)) for i in range(ROI_FRAMES_PER_VIDEO)]
+
+
+def predict_cup_points(config_path: str, video_paths: list[str], frames_dir: Path) -> dict[str, list[tuple[int, Path, np.ndarray]]]:
+    """Runs the ROI network on frames sampled from each video.
+
+    Returns, per video, a list of (frame index, frame image, points) where points has shape (4, 2)
+    in ROI_NETWORK_BODYPARTS order. The frame images are written to ``frames_dir``.
+    """
+    config_dict, usable_config_path, _ = prepare_dlc_config(config_path)
+    missing = [bp for bp in ROI_NETWORK_BODYPARTS if bp not in (config_dict.get("bodyparts") or [])]
+    if missing:
+        raise AnalysisError(f"The ROI network must have the bodyparts {', '.join(ROI_NETWORK_BODYPARTS)}. Missing: {', '.join(missing)}.")
+
+    sources: dict[str, tuple[str, int]] = {}
+    for video in video_paths:
+        cap = cv2.VideoCapture(video)
+        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        for index in _sample_frame_indices(frame_count):
+            cap.set(cv2.CAP_PROP_POS_FRAMES, index)
+            ok, frame = cap.read()
+            if not ok:
+                dlc_logger.warning("Could not read frame %d of %s", index, video)
+                continue
+            # Numbered names keep video names with spaces or accents out of OpenCV and DLC paths.
+            name = f"{len(sources):05d}.png"
+            cv2.imwrite(str(frames_dir / name), frame)
+            sources[name] = (video, index)
+        cap.release()
+
+    if not sources:
+        raise AnalysisError("No frames could be read from the selected videos.")
+
+    try:
+        has_gpu, _ = detect_gpu()
+        gpu_to_use = 0 if has_gpu else None
+    except Exception:
+        gpu_to_use = None
+
+    deeplabcut = load_deeplabcut()
+    with capture_external_output("behavython.external"):
+        deeplabcut.analyze_time_lapse_frames(usable_config_path, str(frames_dir), frametype=".png", gputouse=gpu_to_use)
+
+    h5_files = list(frames_dir.glob("*.h5"))
+    if not h5_files:
+        raise AnalysisError("DeepLabCut did not produce predictions for the ROI frames.")
+    predictions = pd.read_hdf(h5_files[0])
+    # Shape (frames, 4, 2); selecting by level name works with or without an "individuals" level.
+    coords = np.stack(
+        [
+            [predictions.xs((bp, axis), level=("bodyparts", "coords"), axis=1).iloc[:, 0].to_numpy(dtype=float) for axis in ("x", "y")]
+            for bp in ROI_NETWORK_BODYPARTS
+        ]
+    ).transpose(2, 0, 1)
+
+    results: dict[str, list[tuple[int, Path, np.ndarray]]] = {}
+    for row_name, points in zip(predictions.index, coords):
+        name = Path(row_name[-1] if isinstance(row_name, tuple) else str(row_name)).name
+        video, index = sources[name]
+        results.setdefault(video, []).append((index, frames_dir / name, points))
+    return results
+
+
+def _circle_from_points(points: np.ndarray) -> tuple[np.ndarray, int, int]:
+    """Center, width (left-right) and height (top-bottom) of the cup from the top, right, bottom and left points.
+
+    A tilted cup projects as an ellipse, so the two axes are kept apart; the analysis uses their mean as the diameter.
+    Each half-axis is truncated to whole pixels, as in the legacy ROI files.
+    """
+    center = points.mean(axis=0)
+    width = int(np.linalg.norm(points[3] - points[1]) / 2) * 2
+    height = int(np.linalg.norm(points[2] - points[0]) / 2) * 2
+    return center, width, height
+
+
+def run_create_rois(request: DLCCreateRoisRequest, progress=None, log=None, warning=None) -> dict:
+    """Creates <video>_roi.csv for each video with the find_cup_circle ROI network.
+
+    Existing _roi.csv files are never overwritten. A check image per video goes to ROI_CHECK_FOLDER.
+    """
+    errors = validate_config_path(request.config_path) + validate_video_paths(request.video_paths)
+    if errors:
+        raise AnalysisError("\n".join(errors))
+
+    def report(message: str) -> None:
+        console_logger.info(message)
+        if log:
+            log.emit("dlc", message)
+
+    def flag(video: str, message: str) -> None:
+        console_logger.warning(f"{Path(video).name}: {message}")
+        if log:
+            log.emit("dlc", f"WARNING {Path(video).name}: {message}")
+        flagged.setdefault(Path(video).name, []).append(message)
+
+    flagged: dict[str, list[str]] = {}
+    skipped = []
+    pending = []
+    for video in request.video_paths:
+        roi_path = Path(video).with_name(f"{Path(video).stem}_roi.csv")
+        if roi_path.exists():
+            skipped.append(video)
+            report(f"Skipped {Path(video).name}: {roi_path.name} already exists.")
+        else:
+            pending.append(video)
+
+    created: dict[str, float] = {}
+    if pending:
+        report(f"Predicting cup circles on {ROI_FRAMES_PER_VIDEO} frames from each of {len(pending)} video(s)...")
+        if progress:
+            progress.emit(10)
+
+        with tempfile.TemporaryDirectory(prefix="behavython_roi_") as tmp:
+            predictions = predict_cup_points(request.config_path, pending, Path(tmp))
+            if progress:
+                progress.emit(80)
+
+            for video in pending:
+                frames = predictions.get(video)
+                if not frames:
+                    flag(video, "no frames could be read, no ROI was created.")
+                    continue
+
+                median_points = np.median(np.stack([points for _, _, points in frames]), axis=0)
+                center, width, height = _circle_from_points(median_points)
+                diameter = (width + height) / 2
+
+                for index, _, points in frames:
+                    frame_center, frame_width, frame_height = _circle_from_points(points)
+                    frame_diameter = (frame_width + frame_height) / 2
+                    shift = float(np.linalg.norm(frame_center - center))
+                    if shift > ROI_FRAME_DEVIATION_WARNING_PX or abs(frame_diameter - diameter) > ROI_FRAME_DEVIATION_WARNING_PX:
+                        flag(
+                            video,
+                            f"frame {index}: circle is {shift:.0f} px from the median center, diameter {frame_diameter:.0f} vs {diameter:.0f} px.",
+                        )
+
+                roi_path = Path(video).with_name(f"{Path(video).stem}_roi.csv")
+                roi = {"X": center[0], "Y": center[1], "BX": int(center[0]), "BY": int(center[1]), "Width": width, "Height": height}
+                pd.DataFrame(roi, index=[0]).to_csv(roi_path, index=False)
+                created[video] = diameter
+
+                check_dir = Path(video).parent / ROI_CHECK_FOLDER
+                check_dir.mkdir(exist_ok=True)
+                image = cv2.imread(str(frames[len(frames) // 2][1]))
+                cv2.ellipse(image, (int(center[0]), int(center[1])), (width // 2, height // 2), 0, 0, 360, CV2_ROI_CHECK_COLOR, 2)
+                for x, y in median_points:
+                    cv2.circle(image, (int(x), int(y)), 4, CV2_ROI_POINT_COLOR, -1)
+                cv2.imwrite(str(check_dir / f"{Path(video).stem}_roi_check.jpg"), image)
+                report(f"Created {roi_path.name} (center {center[0]:.1f}, {center[1]:.1f}; width {width} x height {height} px)")
+
+    # A video whose circle is consistent across frames can still be wrong as a whole; compare it with the others.
+    if len(created) >= 3:
+        folder_median = float(np.median(list(created.values())))
+        for video, diameter in created.items():
+            if abs(diameter - folder_median) > ROI_DIAMETER_OUTLIER_FRACTION * folder_median:
+                flag(video, f"diameter {diameter:.0f} px is far from the median of all videos ({folder_median:.0f} px).")
+
+    if flagged:
+        console_logger.warning(f"Check these ROIs in {ROI_CHECK_FOLDER}/ and redo them manually if needed: {', '.join(flagged)}")
+
+    if progress:
+        progress.emit(100)
+
+    return {
+        "kind": "dlc_create_rois",
+        "created": len(created),
+        "skipped": len(skipped),
+        "flagged": list(flagged),
     }
 
 
