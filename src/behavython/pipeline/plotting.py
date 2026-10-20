@@ -21,6 +21,7 @@ from behavython.core.defaults import (
     FALLBACK_ZONE_STYLE,
     MAZE_EXPERIMENT_TYPES,
     PLOT_COLORMAP,
+    PLOT_KDE_GRIDSIZE,
     PLOT_TRAJECTORY_COLOR,
     PLOT_TRAJECTORY_LINEWIDTH,
     PLOT_SCATTER_SIZE,
@@ -178,7 +179,7 @@ def _plot_object_recognition(animal: Animal, result: dict, request: AnalysisRequ
         fig2, ax2 = plt.subplots(figsize=new_size)
         ax2.set_title(f"Exploration Map: {animal_name}")
         if len(x_collisions) > 1:
-            sns.kdeplot(x=x_collisions, y=y_collisions, ax=ax2, cmap=PLOT_COLORMAP, fill=True, alpha=0.5)
+            sns.kdeplot(x=x_collisions, y=y_collisions, ax=ax2, cmap=PLOT_COLORMAP, fill=True, alpha=0.5, gridsize=PLOT_KDE_GRIDSIZE)
         if animal_image is not None:
             ax2.imshow(animal_image, interpolation="bessel")
         ax2.axis("off")

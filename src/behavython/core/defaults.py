@@ -338,6 +338,8 @@ BGR_MAGENTA = (255, 0, 255)
 # PLOTTING & VISUALIZATION STYLES (MATPLOTLIB)
 # ==========================================
 PLOT_COLORMAP = "inferno"
+# KDE evaluation grid per axis for the exploration map; seaborn's default is 200 and is 4x slower with no visible change.
+PLOT_KDE_GRIDSIZE = 100
 PLOT_TRAJECTORY_COLOR = HEX_ORANGERED
 PLOT_TRAJECTORY_LINEWIDTH = 1.5
 PLOT_SCATTER_SIZE = 6

@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 from shapely.geometry import Point
-from scipy import stats
 from collections import deque
 from behavython.pipeline.geometry import line_trough_triangle_vertex, detect_collision, create_frequency_grid
 from behavython.core.defaults import (
@@ -338,8 +337,7 @@ def compute_movement_metrics(
 
 def compute_spatial_metrics(data: dict, movement_metrics: dict) -> dict:
     """
-    Calculates all spatial metrics including frequency grids (heatmaps),
-    spatial density (KDE), and path smoothing for downstream visualization.
+    Calculates the position frequency grid (heatmap) and the nose coordinates in the analysis window.
     """
     coords = data["coords"]
     start, end = data["analysis_range"]
@@ -353,43 +351,10 @@ def compute_spatial_metrics(data: dict, movement_metrics: dict) -> dict:
 
     position_grid = create_frequency_grid(x_values=nose_bp["x"], y_values=nose_bp["y"], bin_size=bin_size, analysis_range=analysis_range)
 
-    # Base coordinates for KDE/Smoothing
-    x_axe = nose_bp["x"][start:end]
-    y_axe = nose_bp["y"][start:end]
-    kde_space_coordinates = np.vstack([x_axe, y_axe])
-
-    # KDE Density Map
-    try:
-        kde_instance = stats.gaussian_kde(kde_space_coordinates)
-        point_density_function = kde_instance.evaluate(kde_space_coordinates)
-
-        min_pdf = np.min(point_density_function)
-        max_pdf = np.max(point_density_function)
-
-        if max_pdf > min_pdf:
-            color_limits = (point_density_function - min_pdf) / (max_pdf - min_pdf)
-        else:
-            color_limits = np.zeros_like(point_density_function)
-
-    except np.linalg.LinAlgError:
-        # Fallback for singular matrix errors
-        point_density_function = np.zeros_like(x_axe)
-        color_limits = np.zeros_like(x_axe)
-
-    # Path Smoothing
-    movement_points = np.column_stack([x_axe, y_axe]).reshape(-1, 1, 2)
-    movement_segments = np.concatenate([movement_points[:-1], movement_points[1:]], axis=1)
-    filter_size = 4
-    moving_average_filter = np.ones((filter_size,)) / filter_size
-    smooth_segs = np.apply_along_axis(lambda m: np.convolve(m, moving_average_filter, mode="same"), axis=0, arr=movement_segments)
-
     return {
         "position_grid": position_grid,
-        "kde_density_array": point_density_function,
-        "color_limits_array": color_limits,
-        "smooth_segments_array": smooth_segs,
-        "raw_x_pos_array": x_axe,
-        "raw_y_pos_array": y_axe,
+        "raw_x_pos_array": nose_bp["x"][start:end],
+        "raw_y_pos_array": nose_bp["y"][start:end],
     }
 
 
