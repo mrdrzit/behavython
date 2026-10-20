@@ -10,12 +10,23 @@ Folders to review (combine freely; default = every folder in the target's labele
   names          folders already inside <target>/labeled-data, e.g. TR_A1_2026-06-21_09-30-00
   paths          folders anywhere else (another project, a pre-labeling output, ...). They are imported
                  first: copied into <target>/labeled-data, with labels converted to the target's
-                 scorer and bodyparts. Existing folders in the target are never overwritten.
+                 scorer and bodyparts. If the folder already exists in the target, only images it
+                 lacks are added (with their labels); its existing images and labels stay as they are,
+                 and its CollectedData file is backed up first.
   --list FILE    text file with one name or path per line
   --match GLOB   only folders whose name matches, e.g. "TT_*2026-07*"
 
 Progress is kept in <target>/review_log.csv, so re-running resumes where you stopped.
 napari-deeplabcut can only save folders that sit inside a project's labeled-data, hence the import.
+
+Copying points to many frames (e.g. an ROI that does not move within a video):
+  1. Correct one frame. Click an empty spot (clears the selection), drag a box around its points, Ctrl+C.
+  2. D (next frame). Box all of that frame's points, Delete, then Ctrl+V. Check, and repeat on each frame.
+     No need to copy again: the clipboard stays after a paste.
+  - Paste only adds keypoints the frame does not have yet, and the clipboard keeps only what was pasted.
+    Delete all points of a frame before pasting, or later frames get fewer points.
+  - The selection spans the whole layer, not one frame. Clear it before Ctrl+C, or points selected in
+    other frames are copied too. Shift+A selects every point of every frame; A and D change frames.
 """
 
 import argparse
@@ -46,10 +57,15 @@ def import_folder(source: Path, project: dict) -> Path | None:
     import pandas as pd
 
     destination = project["root"] / "labeled-data" / source.name
-    if destination.exists():
-        print(f"  already in target, using the existing copy: {source.name}")
+    if destination.resolve() == source.resolve():
         return destination
     images = [p for p in source.iterdir() if p.is_file() and p.suffix.lower() in IMAGE_SUFFIXES]
+    if destination.exists():
+        # Merge: only images the target lacks are added; its existing images and labels are never touched.
+        images = [p for p in images if not (destination / p.name).exists()]
+        if not images:
+            print(f"  already in target, nothing new: {source.name}")
+            return destination
     if not images:
         print(f"  skip (no images): {source}")
         return None
@@ -74,13 +90,21 @@ def import_folder(source: Path, project: dict) -> Path | None:
         labels.index = pd.MultiIndex.from_arrays([["labeled-data"] * len(labels), [source.name] * len(labels), image_names])
         labels = labels[labels.index.get_level_values(2).isin({p.name for p in images})]
 
-    destination.mkdir(parents=True)
+    label_file = destination / f"CollectedData_{project['scorer']}.h5"
+    merged = label_file.exists()
+    if merged:
+        shutil.copy2(label_file, label_file.with_name(label_file.name + f".bak-{datetime.now().astimezone():%Y%m%d-%H%M%S}"))
+        existing = pd.read_hdf(label_file)
+        labels = existing if labels is None else pd.concat([existing, labels]).sort_index()
+
+    destination.mkdir(parents=True, exist_ok=True)
     for image in images:
         shutil.copy2(image, destination / image.name)
     if labels is not None:
-        labels.to_hdf(destination / f"CollectedData_{project['scorer']}.h5", key="df_with_missing", mode="w")
-        labels.to_csv(destination / f"CollectedData_{project['scorer']}.csv")
-    print(f"  imported: {source} -> labeled-data/{source.name}" + ("" if labels is not None else " (no labels, starts empty)"))
+        labels.to_hdf(label_file, key="df_with_missing", mode="w")
+        labels.to_csv(label_file.with_suffix(".csv"))
+    action = f"merged {len(images)} new images" if merged else "imported"
+    print(f"  {action}: {source} -> labeled-data/{source.name}" + ("" if labels is not None else " (no labels, starts empty)"))
     return destination
 
 
