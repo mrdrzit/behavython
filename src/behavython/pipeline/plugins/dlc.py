@@ -151,7 +151,7 @@ def get_dlc_file_status(video_path: str) -> dict:
             continue
 
         remaining = file.name[len(stem) :]
-        if not (remaining.startswith("DLC") or remaining.startswith("SuperAnimal") or remaining.startswith("CollectedData")):
+        if not remaining.startswith(("DLC", "SuperAnimal", "CollectedData")):
             continue
 
         # Ignore known non-dlc tracking files
@@ -709,9 +709,8 @@ def _is_file_needed_for_task(file_path: Path, task_type: str) -> bool:
     elif normalized_task == "social_recognition":
         if any(lower_name.endswith(ending) for ending in ANALYSIS_REQUIRED_SUFFIXES["social_recognition_rois"]):
             return True
-    elif normalized_task in MAZE_EXPERIMENT_TYPES:
-        if suffix in ANALYSIS_REQUIRED_SUFFIXES["maze_rois"]:
-            return True
+    elif normalized_task in MAZE_EXPERIMENT_TYPES and suffix in ANALYSIS_REQUIRED_SUFFIXES["maze_rois"]:
+        return True
 
     return False
 
@@ -822,7 +821,7 @@ def run_clear_unused_files(request: DLCClearUnusedFilesRequest, progress=None, l
         if progress:
             progress.emit(round((index / total) * 100))
 
-    status, missing_files = _get_required_files_status(folder_path, task_type)
+    _status, missing_files = _get_required_files_status(folder_path, task_type)
 
     if not missing_files:
         if log:
@@ -866,7 +865,7 @@ def run_create_annotated_video(request: DLCAnnotatedVideoRequest, progress=None,
         if was_repaired:
             log.emit("dlc", f"Config repaired: {os.path.basename(config_path_used)}")
     except Exception as e:
-        log.emit("dlc", f"[ERROR]: Could not load config: {str(e)}")
+        log.emit("dlc", f"[ERROR]: Could not load config: {e!s}")
         return {"success": False, "error": str(e)}
 
     video_suffixes = {Path(video_path).suffix for video_path in request.video_paths if Path(video_path).suffix}
@@ -907,8 +906,8 @@ def run_create_annotated_video(request: DLCAnnotatedVideoRequest, progress=None,
         )
     except AnalysisError as e:
         dlc_logger.exception("DLC labeled video creation failed")
-        log.emit("dlc", f"[ERROR]: DLC error: {str(e)}")
-        raise AnalysisError(f"[ERROR]: DLC error: {str(e)}")
+        log.emit("dlc", f"[ERROR]: DLC error: {e!s}")
+        raise AnalysisError(f"[ERROR]: DLC error: {e!s}")
 
     return {
         "kind": "dlc_annotated_video",
@@ -1025,7 +1024,7 @@ def run_generate_likelihood_plots(request: DLCLikelihoodPlotRequest, progress=No
     if log:
         log.emit("dlc", "Starting custom likelihood plot generation...")
 
-    config_dict, usable_config_path, was_repaired = prepare_dlc_config(request.config_path)
+    config_dict, usable_config_path, _was_repaired = prepare_dlc_config(request.config_path)
 
     folder = Path(request.folder_path)
     if not folder.exists() or not folder.is_dir():

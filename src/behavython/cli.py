@@ -19,7 +19,8 @@ import sys
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
+from collections.abc import Callable
 
 if TYPE_CHECKING:
     from behavython.services.logging import AppLoggingService
@@ -80,7 +81,6 @@ class _ProgressAdapter:
 
     def emit(self, value: int) -> None:
         """Silenced in CLI to avoid overlap with standard log messages."""
-        pass
 
 
 class _LogAdapter:
@@ -792,7 +792,7 @@ def main() -> int:
         print("\nRun 'behavython-cli --help' for usage information.", file=sys.stderr)
         return 1
 
-    app_logging, logger = _setup_logging(args)
+    _app_logging, logger = _setup_logging(args)
 
     if not any(getattr(args, action, False) for action in _TERMINAL_ACTIONS) and not args.config and not args.experiment_type:
         parser.print_help()

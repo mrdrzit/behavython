@@ -3,9 +3,9 @@ import math
 import json
 import logging
 from tqdm import tqdm
-from typing import Callable
+from collections.abc import Callable
 from behavython.core.defaults import MAZE_EXPERIMENT_TYPES, MIN_EVENT_FRAMES, LINK_WINDOW_S
-from behavython.pipeline import filters, geometry  # noqa: F401
+from behavython.pipeline import filters, geometry
 from behavython.pipeline.models import AnalysisRequest, Animal, MazeAnimal
 from behavython.pipeline.metrics import (
     compute_crossings,
@@ -182,7 +182,9 @@ def analyze_maze_animal(maze_animal: MazeAnimal, request: AnalysisRequest) -> di
     }
 
 
-def run_analysis_workflow(request: AnalysisRequest, progress: Callable = None, log: Callable = None, warning: Callable = None) -> dict:
+def run_analysis_workflow(
+    request: AnalysisRequest, progress: Callable | None = None, log: Callable | None = None, warning: Callable | None = None
+) -> dict:
     """
     Orchestrates the batch processing of multiple animals.
     """
@@ -263,12 +265,12 @@ def run_analysis_workflow(request: AnalysisRequest, progress: Callable = None, l
 
         except CriticalSystemError as e:
             if warning:
-                warning.emit("Critical System Error", f"Execution halted: {str(e)}")
-            raise e
+                warning.emit("Critical System Error", f"Execution halted: {e!s}")
+            raise
 
         except Exception as e:
             console_logger.exception(f"Unexpected bug during analysis of {animal.id}")
-            animal.logs.append({"level": "error", "message": f"Unexpected bug: {str(e)}", "context": "analysis"})
+            animal.logs.append({"level": "error", "message": f"Unexpected bug: {e!s}", "context": "analysis"})
             animal.eligible = False
             has_issues = True
 
@@ -284,7 +286,7 @@ def run_analysis_workflow(request: AnalysisRequest, progress: Callable = None, l
             export_bouts_tables(results, request.output_folder)
         except Exception as e:
             if warning:
-                warning.emit("Export Error", f"Failed to save Parquet files: {str(e)}")
+                warning.emit("Export Error", f"Failed to save Parquet files: {e!s}")
             has_issues = True
 
     all_logs = []

@@ -8,6 +8,7 @@ from PySide6 import QtUiTools
 import logging
 import tempfile
 from pathlib import Path
+from typing import ClassVar
 from behavython.services.video_service import VideoService
 
 from behavython.core.paths import GUI_UI_ROOT
@@ -53,7 +54,7 @@ class ResizableRectItem(QGraphicsRectItem):
 
     handleSize = +8.0
 
-    handleCursors = {
+    handleCursors: ClassVar[dict] = {
         handleTopLeft: Qt.SizeFDiagCursor,
         handleTopRight: Qt.SizeBDiagCursor,
         handleBottomLeft: Qt.SizeBDiagCursor,
@@ -188,7 +189,7 @@ class ResizableRectItem(QGraphicsRectItem):
         painter.setRenderHint(QPainter.Antialiasing)
         painter.setBrush(QBrush(QColor(255, 255, 255)))
         painter.setPen(QPen(QColor(0, 0, 0), 1))
-        for handle, rect in self.handles.items():
+        for rect in self.handles.values():
             if self.isSelected():
                 painter.drawRect(rect)
 

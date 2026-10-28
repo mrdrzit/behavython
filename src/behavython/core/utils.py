@@ -71,7 +71,7 @@ def _collect_videos_from_txt(txt_path: str) -> tuple[list[str], list[str]]:
     skipped_entries: list[str] = []
 
     with open(txt_path, "r", encoding="utf-8") as handle:
-        for raw_line in handle.readlines():
+        for raw_line in handle:
             raw_entry = raw_line.rstrip("\n\r")
             cleaned_entry = _normalize_path_text(raw_entry)
 
@@ -266,7 +266,7 @@ def _looks_like_broken_video_key_start(line: str) -> bool:
 
 def _looks_like_video_key_continuation(line: str) -> bool:
     stripped = line.strip().lower()
-    return stripped.endswith(".mp4:") or stripped.endswith(".avi:") or stripped.endswith(".mov:") or stripped.endswith(".mkv:")
+    return stripped.endswith((".mp4:", ".avi:", ".mov:", ".mkv:"))
 
 
 def _repair_multiline_video_keys(raw_text: str) -> tuple[str, bool]:
@@ -459,7 +459,7 @@ def detect_gpu():
         return False, []
 
 
-def adjust_window_geometry(window, ratio=0.90):
+def adjust_window_geometry(window, ratio=1.0):
     """
     Resizes the window to a percentage of the available screen
     and centers it perfectly.

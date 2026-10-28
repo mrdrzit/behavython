@@ -32,11 +32,11 @@ def compute_roi_interaction(data) -> dict:
 
     # --- calculate body length for normalized thresholds ---
     # 1. Try Full Body (Nose to Tail)
-    if "tail" in coords.keys():
+    if "tail" in coords:
         dist = np.sqrt((nose_x[runtime] - coords["tail"]["x"][runtime]) ** 2 + (nose_y[runtime] - coords["tail"]["y"][runtime]) ** 2)
         median_body_length = np.nanmedian(dist)
     # 2. Try Half Body (Nose to Center)
-    elif "center" in coords.keys():
+    elif "center" in coords:
         dist = np.sqrt((nose_x[runtime] - coords["center"]["x"][runtime]) ** 2 + (nose_y[runtime] - coords["center"]["y"][runtime]) ** 2)
         median_body_length = np.nanmedian(dist) * 2.0
     # 3. Guaranteed Fallback: Head Length (Nose to Ears)
@@ -56,7 +56,7 @@ def compute_roi_interaction(data) -> dict:
         C = np.array([right_x[i], right_y[i]])
 
         # --- center locomotion speed ---
-        if "center" in coords.keys():
+        if "center" in coords:
             c_pt = np.array([coords["center"]["x"][i], coords["center"]["y"][i]])
         else:
             c_pt = A  # fallback to nose
@@ -344,7 +344,7 @@ def compute_spatial_metrics(data: dict, movement_metrics: dict) -> dict:
     analysis_range = data["analysis_range"]
     bin_size = 10
 
-    nose_bp = coords["nose"] if "nose" in coords else None
+    nose_bp = coords.get("nose", None)
 
     if nose_bp is None:
         raise AnalysisError("Missing 'nose' bodypart required for spatial metrics.")

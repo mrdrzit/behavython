@@ -1,7 +1,7 @@
 import os
 import yaml
 from flask import json
-from typing import Any, Optional
+from typing import Any
 from pathlib import Path
 from importlib.util import find_spec
 from behavython.core.defaults import ANALYSIS_REQUIRED_SUFFIXES
@@ -55,7 +55,7 @@ def validate_yaml_file(path: str | Path) -> dict[str, Any]:
         return validate_yaml_text(handle.read())
 
 
-def validate_json_config(path: str) -> Optional[dict[str, Any]]:
+def validate_json_config(path: str) -> dict[str, Any] | None:
     try:
         with open(path, "r", encoding="utf-8") as handle:
             data = json.load(handle)
@@ -111,7 +111,7 @@ BACKEND_PACKAGES: dict[str, list[str]] = {
 }
 
 
-def _infer_engine_from_folders(project_root: Path) -> Optional[str]:
+def _infer_engine_from_folders(project_root: Path) -> str | None:
     """Infers engine based on DeepLabCut model folder conventions."""
     if not project_root.exists() or not project_root.is_dir():
         return None
@@ -142,7 +142,7 @@ def validate_dlc_backend(config: dict[str, Any], config_path: str | Path | None 
         MissingBackendError: If the required backend is not installed.
     """
     raw_engine = config.get("engine")
-    engine_candidate: Optional[str] = None
+    engine_candidate: str | None = None
 
     if isinstance(raw_engine, str) and raw_engine.strip():
         normalized = raw_engine.strip().lower()
@@ -152,7 +152,7 @@ def validate_dlc_backend(config: dict[str, Any], config_path: str | Path | None 
         engine_candidate = ENGINE_ALIASES[normalized]
 
     if engine_candidate is None:
-        project_dir: Optional[Path] = None
+        project_dir: Path | None = None
         if config_path:
             project_dir = Path(config_path).resolve().parent
         elif config.get("project_path"):

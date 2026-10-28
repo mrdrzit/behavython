@@ -7,7 +7,7 @@ import logging
 import subprocess
 import numpy as np
 import pandas as pd
-from typing import Any, List
+from typing import Any
 from natsort import os_sorted
 from pathlib import Path
 from dataclasses import dataclass, field
@@ -27,9 +27,9 @@ console_logger = logging.getLogger("behavython.console")
 class ResolvedFrameAssets:
     """Result of discovering and/or extracting frames from the target folder."""
 
-    video_folders: List[Path] = field(default_factory=list)  # Paths to subfolders in session_temp
-    newly_extracted: List[Path] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
+    video_folders: list[Path] = field(default_factory=list)  # Paths to subfolders in session_temp
+    newly_extracted: list[Path] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
 
     @property
     def is_ready(self) -> bool:
@@ -255,15 +255,14 @@ class DLCAssistedLabelSession:
 
         # 1. Check for existing subfolders (each video is usually its own folder in DLC)
         for item in self.target_folder.iterdir():
-            if item.is_dir() and item.name != "temp_folder":
-                # Check if it contains frames
-                if any(item.glob(f"*{frame_ext}")):
-                    # Stage this folder to temp
-                    temp_folder = self.session_temp / item.name
-                    temp_folder.mkdir(exist_ok=True)
-                    for frame in item.glob(f"*{frame_ext}"):
-                        shutil.copy2(frame, temp_folder)
-                    video_folders.append(temp_folder)
+            # Check if it contains frames
+            if item.is_dir() and item.name != "temp_folder" and any(item.glob(f"*{frame_ext}")):
+                # Stage this folder to temp
+                temp_folder = self.session_temp / item.name
+                temp_folder.mkdir(exist_ok=True)
+                for frame in item.glob(f"*{frame_ext}"):
+                    shutil.copy2(frame, temp_folder)
+                video_folders.append(temp_folder)
 
         # 2. Extract new frames from videos (only if in video mode)
         if self.request.mode == "video" and video_files:
@@ -366,7 +365,7 @@ class DLCAssistedLabelSession:
 
         return video_subfolder
 
-    def run_inference(self, assets: ResolvedFrameAssets) -> List[Path]:
+    def run_inference(self, assets: ResolvedFrameAssets) -> list[Path]:
         """
         Runs DLC inference on each video folder and transforms results to 'CollectedData' format.
         """
@@ -380,7 +379,7 @@ class DLCAssistedLabelSession:
         except Exception:
             gpu_to_use = None
 
-        config_dict, usable_config_path, was_repaired = load_or_repair_dlc_yaml(str(self.config_path))
+        config_dict, usable_config_path, _was_repaired = load_or_repair_dlc_yaml(str(self.config_path))
         deeplabcut = load_deeplabcut()
 
         if self.request.shuffle is None or self.request.trainingsetindex is None:
@@ -519,12 +518,11 @@ class DLCAssistedLabelSession:
 
             # Clean up all raw DLC inference files (anything that isn't our final CollectedData)
             for raw_file in h5_path.parent.glob("*"):
-                if raw_file.suffix in [".h5", ".csv", ".pickle"]:
-                    if not raw_file.name.startswith("CollectedData_"):
-                        try:
-                            raw_file.unlink()
-                        except OSError:
-                            pass
+                if raw_file.suffix in [".h5", ".csv", ".pickle"] and not raw_file.name.startswith("CollectedData_"):
+                    try:
+                        raw_file.unlink()
+                    except OSError:
+                        pass
 
             return dest_h5
         except Exception as e:

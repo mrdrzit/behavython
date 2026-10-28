@@ -372,7 +372,7 @@ class Animal:
                     self.skeleton[bone] = {
                         "length": bone_df["length"],
                         "orientation": bone_df["orientation"],
-                        "likelihood": bone_df["likelihood"] if "likelihood" in bone_df else None,
+                        "likelihood": bone_df.get("likelihood", None),
                     }
                 except KeyError:
                     self.logs.append({"level": "error", "message": f"Incomplete skeleton data: {bone}", "context": "skeleton_loading"})

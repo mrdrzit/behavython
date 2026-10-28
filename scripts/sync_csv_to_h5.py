@@ -22,7 +22,7 @@ def guarantee_multiindex_rows(df: pd.DataFrame):
         pass
 
 
-def synchronize_csv_to_h5(csv_path: Path, config_path: str = None):
+def synchronize_csv_to_h5(csv_path: Path, config_path: str | None = None):
     """
     Reads a DLC-style CSV file, ensures its headers and index are formatted correctly,
     and saves both the cleaned CSV and its required H5 counterpart.
@@ -101,7 +101,7 @@ def synchronize_csv_to_h5(csv_path: Path, config_path: str = None):
         print(f"  Error saving files for {csv_path.name}: {e}")
 
 
-def process_folders(folders: list[str], config_path: str = None):
+def process_folders(folders: list[str], config_path: str | None = None):
     """Iterates through folders and syncs any CollectedData CSVs found."""
     for folder_str in folders:
         print("-" * 50)

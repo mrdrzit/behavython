@@ -344,7 +344,7 @@ def build_grid_open_field_geometry(corners: list[tuple[float, float]], grid_size
         raise AnalysisError(f"Open Field grid requires exactly 4 corners, got {len(corners)}")
 
     rows, cols = grid_size
-    tl, tr, br, bl = [np.array(pt) for pt in corners]
+    tl, tr, _br, bl = [np.array(pt) for pt in corners]
 
     grid_polygons = {}
 

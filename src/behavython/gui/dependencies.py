@@ -66,10 +66,7 @@ def is_ffmpeg_installed() -> bool:
         return True
 
     # 2. Check system PATH (for macOS/Linux/Windows PATH)
-    if shutil.which("ffmpeg"):
-        return True
-
-    return False
+    return bool(shutil.which("ffmpeg"))
 
 
 def get_unix_install_instructions() -> str:

@@ -54,7 +54,7 @@ class VideoService:
             ffmpeg = get_ffmpeg_path()
             cmd = [ffmpeg, "-y", "-f", "lavfi", "-i", "color=c=black:s=256x256:d=1", "-c:v", "h264_nvenc", "-f", "null", "-"]
             try:
-                result = subprocess.run(cmd, capture_output=True)
+                result = subprocess.run(cmd, capture_output=True, check=False)
                 cls._nvenc_available = result.returncode == 0
             except Exception:
                 cls._nvenc_available = False
@@ -114,7 +114,7 @@ class VideoService:
             return 0.0
 
     @staticmethod
-    def run_ffmpeg_with_tqdm(cmd: list, video_path: Path, desc: str, position: int = None, total_frames: int | None = None) -> bool:
+    def run_ffmpeg_with_tqdm(cmd: list, video_path: Path, desc: str, position: int | None = None, total_frames: int | None = None) -> bool:
         """
         Runs FFmpeg and uses tqdm to display a progress bar based on frame count.
         """
@@ -174,7 +174,7 @@ class VideoService:
         crop_data: dict | None,
         trim_start_seconds: float = 0.0,
         trim_end_seconds: float = 0.0,
-        position: int = None,
+        position: int | None = None,
     ) -> bool:
         """
         Uses FFmpeg with Nvidia hardware acceleration to crop and/or trim the video.

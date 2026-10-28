@@ -555,7 +555,7 @@ def _matplotlib_animate_maze_crossings(animal: Animal, result: dict, request: An
                 textcoords="offset points",
                 fontsize=8,
                 color="black",
-                bbox=dict(facecolor="white", edgecolor="black", boxstyle="round,pad=0.3"),
+                bbox={"facecolor": "white", "edgecolor": "black", "boxstyle": "round,pad=0.3"},
             )
             annotations.append(annotation)
 

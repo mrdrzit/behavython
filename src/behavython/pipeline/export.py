@@ -3,7 +3,7 @@ import logging
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
-from typing import Callable
+from collections.abc import Callable
 
 console_logging = logging.getLogger("behavython.console")
 

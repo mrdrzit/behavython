@@ -251,32 +251,35 @@ class BehavythonMainWindow(QWidget):
         return False
 
     def eventFilter(self, obj, event):
-        if hasattr(self.interface, "behavython_logo") and obj == self.interface.behavython_logo:
-            # Catch BOTH standard clicks and double-clicks to prevent the "Double-Click Trap"
-            if event.type() in (QEvent.Type.MouseButtonPress, QEvent.Type.MouseButtonDblClick):
-                # Method 1: Instant Modifier Click (Ctrl + Shift + Click)
-                modifiers = event.modifiers()
-                if (modifiers & Qt.KeyboardModifier.ControlModifier) and (modifiers & Qt.KeyboardModifier.ShiftModifier):
-                    self._debug_click_count = 0  # Reset the counter cleanly
-                    self.toggle_debug_mode()
-                    return True
+        # Catch BOTH standard clicks and double-clicks to prevent the "Double-Click Trap"
+        if (
+            hasattr(self.interface, "behavython_logo")
+            and obj == self.interface.behavython_logo
+            and event.type() in (QEvent.Type.MouseButtonPress, QEvent.Type.MouseButtonDblClick)
+        ):
+            # Method 1: Instant Modifier Click (Ctrl + Shift + Click)
+            modifiers = event.modifiers()
+            if (modifiers & Qt.KeyboardModifier.ControlModifier) and (modifiers & Qt.KeyboardModifier.ShiftModifier):
+                self._debug_click_count = 0  # Reset the counter cleanly
+                self.toggle_debug_mode()
+                return True
 
-                # Method 2: Rapid 3-Click
-                current_time = time.time()
+            # Method 2: Rapid 3-Click
+            current_time = time.time()
 
-                # Reset counter if more than 1 second passes between clicks
-                if current_time - self._last_debug_click_time > 1.0:
-                    self._debug_click_count = 0
+            # Reset counter if more than 1 second passes between clicks
+            if current_time - self._last_debug_click_time > 1.0:
+                self._debug_click_count = 0
 
-                self._debug_click_count += 1
-                self._last_debug_click_time = current_time
+            self._debug_click_count += 1
+            self._last_debug_click_time = current_time
 
-                # Trigger on 3 fast clicks
-                if self._debug_click_count >= 3:
-                    self._debug_click_count = 0
-                    self.toggle_debug_mode()
+            # Trigger on 3 fast clicks
+            if self._debug_click_count >= 3:
+                self._debug_click_count = 0
+                self.toggle_debug_mode()
 
-                return True  # Event handled, prevent default
+            return True  # Event handled, prevent default
 
         return super().eventFilter(obj, event)
 
@@ -442,7 +445,7 @@ class BehavythonMainWindow(QWidget):
             request.output_folder,
         )
 
-    def on_experiment_type_changed(self, text: str = None) -> None:
+    def on_experiment_type_changed(self, text: str | None = None) -> None:
         if text is None:
             text = self.interface.type_combobox.currentText()
 
@@ -581,7 +584,7 @@ class BehavythonMainWindow(QWidget):
 
     def enable_analysis(self) -> None:
         path = self.interface.config_path_lineedit.text().lower()
-        enabled = path.endswith(".yaml") or path.endswith(".yml")
+        enabled = path.endswith((".yaml", ".yml"))
         self.interface.dlc_video_analyze_button.setEnabled(enabled)
         self.interface.create_annotated_video_button.setEnabled(enabled)
         self.interface.folder_to_create_annotated_video_button.setEnabled(enabled)
@@ -597,7 +600,7 @@ class BehavythonMainWindow(QWidget):
             return
 
         path = self.interface.config_path_lineedit.text().lower()
-        config_ok = path.endswith(".yaml") or path.endswith(".yml")
+        config_ok = path.endswith((".yaml", ".yml"))
         folder_path = self.interface.video_folder_lineedit.text().strip()
         folder_ok = bool(folder_path) and os.path.isdir(folder_path)
 

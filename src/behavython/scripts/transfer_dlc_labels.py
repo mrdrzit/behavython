@@ -6,7 +6,7 @@ import yaml
 import shutil
 
 
-def transfer_dlc_labels(folders: list[str], target_config_path: str, output_dir: str = None):
+def transfer_dlc_labels(folders: list[str], target_config_path: str, output_dir: str | None = None):
     """
     Transfers DLC labels from a source project to a newly created target project.
 
@@ -129,7 +129,7 @@ def transfer_dlc_labels(folders: list[str], target_config_path: str, output_dir:
         print(f"  -> Saved CSV and H5 to {out_dir.name}")
         if frames_copied > 0:
             print(f"  -> Copied {frames_copied} frames.")
-        print("")
+        print()
 
 
 if __name__ == "__main__":
