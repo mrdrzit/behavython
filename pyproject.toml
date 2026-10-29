@@ -60,6 +60,10 @@ torch = [
 behavython     = "behavython.main:main"
 behavython-cli = "behavython.cli:main"
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
 [tool.setuptools]
 package-dir = {"" = "src"}
 include-package-data = true
