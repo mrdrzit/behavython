@@ -219,7 +219,7 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, warn
 
     backend = validate_dlc_backend(config_dict)
 
-    logger.info("DeepLabCut network backend: %s", backend)
+    logger.info(f"DeepLabCut network backend: {backend}")
 
     # Check if the user has a gpu available for DLC to use, and if not, warn them that the analysis may be very slow
     try:
@@ -231,7 +231,6 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, warn
         else:
             if warning:
                 warning.emit("Warning", "No GPU detected. DeepLabCut will run on CPU (this can be very slow).")
-            logger.warning("No GPU detected. Falling back to CPU.")
             gpu_to_use = None
 
     except Exception as e:
@@ -242,9 +241,7 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, warn
         raise AnalysisError("\n".join(errors))
 
     logger.info(
-        "Deeplabcut video analysis started for %d video(s). config=%s",
-        len(request.video_paths),
-        request.config_path,
+        f"Deeplabcut video analysis started for {len(request.video_paths)} video(s). config={request.config_path}",
     )
 
     if progress:
@@ -283,7 +280,7 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, warn
     dlc_config_path, snapshot_kwargs = prepare_snapshot_config(usable_config_path, config_dict, request.snapshot_index)
 
     if videos_to_analyze:
-        logger.info(f"Analyzing {len(videos_to_analyze)} video(s)...")
+        logger.info(f"Analyzing {len(videos_to_analyze)} video(s)")
         logger.debug("Calling deeplabcut.analyze_videos")
 
         if progress:
@@ -303,7 +300,7 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, warn
                 )
 
     if videos_to_filter:
-        logger.info(f"Filtering predictions for {len(videos_to_filter)} video(s)...")
+        logger.info(f"Filtering predictions for {len(videos_to_filter)} video(s)")
 
         if progress:
             progress.emit(60)
@@ -337,7 +334,7 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, warn
     if request.create_plots:
         if progress:
             progress.emit(80)
-        logger.info("Generating likelihood plots...")
+        logger.info("Generating likelihood plots")
 
         from behavython.pipeline.plotting import plot_custom_likelihood
 
@@ -346,13 +343,12 @@ def run_dlc_video_analysis(request: DLCVideoAnalysisRequest, progress=None, warn
             video_path = Path(video)
             candidates = [f for f in video_path.parent.glob(f"{video_path.stem}*_filtered.h5") if scorer is None or scorer in f.name]
             if not candidates:
-                logger.warning("No filtered .h5 found for %s; skipping likelihood plot.", video_path.name)
+                logger.warning(f"No filtered .h5 found for {video_path.name}; skipping likelihood plot.")
                 continue
             h5_file = max(candidates, key=lambda f: f.stat().st_mtime)
             try:
                 plot_custom_likelihood(str(h5_file), config_dict, str(h5_file.with_name(h5_file.stem + "_likelihood.png")))
             except Exception as e:
-                logger.error(f"Failed to plot {h5_file.name}: {e}")
                 if warning:
                     warning.emit("Warning", f"Failed to plot likelihood for {h5_file.name}: {e}")
 
@@ -488,7 +484,7 @@ def predict_cup_points(config_path: str, video_paths: list[str], frames_dir: Pat
             cap.set(cv2.CAP_PROP_POS_FRAMES, index)
             ok, frame = cap.read()
             if not ok:
-                logger.warning("Could not read frame %d of %s", index, video)
+                logger.warning(f"Could not read frame {index} of {video}")
                 continue
             # Numbered names keep video names with spaces or accents out of OpenCV and DLC paths.
             name = f"{len(sources):05d}.png"
@@ -823,14 +819,14 @@ def run_create_annotated_video(request: DLCAnnotatedVideoRequest, progress=None,
     Creates an annotated video using DeepLabCut.
     Handles uncleaned folders and utilizes automated YAML repair.
     """
-    logger.info("Importing DeepLabCut...")
+    logger.info("Importing DeepLabCut")
     try:
         import deeplabcut
     except ImportError:
         logger.error("DeepLabCut not found in environment.")
         return {"success": False, "error": "ImportError"}
 
-    logger.info("Validating DLC configuration...")
+    logger.info("Validating DLC configuration")
     try:
         config_data, config_path_used, was_repaired = load_or_repair_dlc_yaml(request.config_path)
         if was_repaired:
@@ -861,7 +857,7 @@ def run_create_annotated_video(request: DLCAnnotatedVideoRequest, progress=None,
                     shutil.copy(src, dst)
                     logger.info(f"Restored from unwanted_files: {f}")
 
-    logger.info(f"Starting labeled video generation for {len(request.video_paths)} video(s)...")
+    logger.info(f"Starting labeled video generation for {len(request.video_paths)} video(s)")
 
     dlc_config_path, snapshot_kwargs = prepare_snapshot_config(str(config_path_used), config_data, request.snapshot_index)
     try:
@@ -895,7 +891,7 @@ def run_analyze_frames(request: DLCAnalyzeFramesRequest, progress=None, warning=
     """
     from behavython.services.dlc_assisted_label_session import DLCAssistedLabelSession
 
-    logger.info("Starting Assisted Label session...")
+    logger.info("Starting Assisted Label session")
 
     if progress:
         progress.emit(5)
@@ -903,17 +899,16 @@ def run_analyze_frames(request: DLCAnalyzeFramesRequest, progress=None, warning=
     try:
         with DLCAssistedLabelSession(request) as session:
             logger.info(
-                f"Model: {session.model_metadata.get('network_name', 'unknown')} | Scorer: {session.model_metadata.get('scorer', 'unknown')}"
+                f"Model: {session.model_metadata.get('network_name', 'unknown')}, scorer: {session.model_metadata.get('scorer', 'unknown')}"
             )
 
             if progress:
                 progress.emit(15)
 
-            logger.info("Resolving frame assets...")
+            logger.info("Resolving frame assets")
             assets = session.resolve_frame_assets()
 
             for warn_msg in assets.warnings:
-                logger.warning(warn_msg)
                 if warning:
                     warning.emit("Warning", warn_msg)
 
@@ -930,10 +925,10 @@ def run_analyze_frames(request: DLCAnalyzeFramesRequest, progress=None, warning=
             if progress:
                 progress.emit(35)
 
-            logger.info("Running DLC inference (this may take a while)...")
+            logger.info("Running DLC inference (this may take a while)")
             generated_files = session.run_inference(assets)
 
-            logger.info(f"Inference complete | {len(generated_files)} video folder(s) processed")
+            logger.info(f"Inference complete: {len(generated_files)} video folder(s) processed")
 
             # 4. Verification Plots
             if generated_files:
@@ -975,7 +970,7 @@ def run_analyze_frames(request: DLCAnalyzeFramesRequest, progress=None, warning=
 def run_generate_likelihood_plots(request: DLCLikelihoodPlotRequest, progress=None, warning=None) -> dict:
     from behavython.pipeline.plotting import plot_custom_likelihood
 
-    logger.info("Starting custom likelihood plot generation...")
+    logger.info("Starting custom likelihood plot generation")
 
     config_dict, usable_config_path, _was_repaired = prepare_dlc_config(request.config_path)
 
@@ -1017,7 +1012,6 @@ def run_generate_likelihood_plots(request: DLCLikelihoodPlotRequest, progress=No
             logger.info(f"Generated: {output_name}")
 
         except Exception as e:
-            logger.error(f"Failed to plot {h5_file.name}: {e}")
             if warning:
                 warning.emit("Warning", f"Failed to plot likelihood for {h5_file.name}: {e}")
 

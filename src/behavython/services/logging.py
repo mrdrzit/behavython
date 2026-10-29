@@ -116,6 +116,14 @@ class _FilteredExternalStream(io.TextIOBase):
         self._buffer = ""
 
 
+def log_popup(title: str, text: str) -> None:
+    """Writes a popup's content as one WARNING line. A generic "Warning" title is dropped, the level already says it."""
+    message = " ".join(text.split())
+    if title.strip().lower() not in ("warning", ""):
+        message = f"{title}: {message}"
+    logging.getLogger("behavython.popup").warning(message)
+
+
 class _ShortNameFormatter(logging.Formatter):
     """Exposes the logger name without the shared "behavython." prefix as %(short_name)s."""
 

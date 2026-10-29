@@ -212,23 +212,19 @@ def preprocess_animal(animal, request) -> dict:
             raise AnalysisError(f"Trim amount ({trim_seconds}s) exceeds the entire video length ({n_frames / fps:.1f}s).")
 
         if end > n_frames:
-            animal.logs.append(
-                {
-                    "level": "warning",
-                    "message": f"Requested {max_time}s after {trim_seconds}s trim, but video is only {n_frames / fps:.1f}s. Analyzing remaining {(n_frames - start) / fps:.1f}s.",
-                    "context": "analysis_range",
-                }
+            animal.log(
+                "warning",
+                f"Requested {max_time}s after {trim_seconds}s trim, but video is only {n_frames / fps:.1f}s. Analyzing remaining {(n_frames - start) / fps:.1f}s.",
+                "analysis_range",
             )
             end = n_frames
     else:
         start = 0
         if total_frames > n_frames:
-            animal.logs.append(
-                {
-                    "level": "warning",
-                    "message": f"Requested {max_time}s analysis, but video is only {n_frames / fps:.1f}s. Analyzing entire video.",
-                    "context": "analysis_range",
-                }
+            animal.log(
+                "warning",
+                f"Requested {max_time}s analysis, but video is only {n_frames / fps:.1f}s. Analyzing entire video.",
+                "analysis_range",
             )
         end = min(total_frames, n_frames)
 

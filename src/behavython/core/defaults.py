@@ -291,6 +291,7 @@ SESSION_LOGS_TO_KEEP = 20  # one log file per app or CLI session in ~/.behavytho
 GUI_LOG_PANELS = {
     "behavython.pipeline.workflow": "resume",
     "behavython.pipeline.export": "resume",
+    "behavython.pipeline.models": "resume",  # per-animal issues from Animal.log
     "behavython.pipeline.plugins.dlc": "dlc",
     "behavython.services.video_service": "dlc",
 }

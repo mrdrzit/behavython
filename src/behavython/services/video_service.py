@@ -32,7 +32,7 @@ class VideoService:
                 return True, width, height
             return False, width, height
         except Exception as e:
-            logger.error(f"Error extracting frame: {e}")
+            logger.error(f"Frame extraction failed: {e}")
             return False, 0, 0
 
     _nvenc_available = None
@@ -163,7 +163,7 @@ class VideoService:
             return True
 
         except Exception as e:
-            logger.error(f"Error running FFmpeg with tqdm: {e}")
+            logger.error(f"FFmpeg run failed: {e}")
             return False
 
     @classmethod
@@ -367,11 +367,11 @@ def run_batch_crop(request: dict, progress=None, warning=None) -> dict:
 
         with io_lock:
             if has_crop and has_trim:
-                logger.info(f"[{index + 1}/{total}] Cropping and trimming {video_path.name}...")
+                logger.info(f"[{index + 1}/{total}] Cropping and trimming {video_path.name}")
             elif has_crop:
-                logger.info(f"[{index + 1}/{total}] Cropping {video_path.name}...")
+                logger.info(f"[{index + 1}/{total}] Cropping {video_path.name}")
             else:
-                logger.info(f"[{index + 1}/{total}] Trimming {video_path.name}...")
+                logger.info(f"[{index + 1}/{total}] Trimming {video_path.name}")
 
         # Run FFmpeg with tqdm progress bar
         success = VideoService.crop_video(
@@ -434,7 +434,7 @@ def run_standardize_videos(request: dict, progress=None, warning=None) -> dict:
     def standardize_single(vid, index):
         vid_path = Path(vid)
         with io_lock:
-            logger.info(f"[{index + 1}/{total}] Standardizing {vid_path.name}...")
+            logger.info(f"[{index + 1}/{total}] Standardizing {vid_path.name}")
 
         # Create a temp output file
         temp_out = vid_path.parent / f"temp_std_{vid_path.name}"

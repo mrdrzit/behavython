@@ -165,7 +165,7 @@ class DLCAssistedLabelSession:
         # 3. Config Lifecycle — extract model metadata and validate compatibility
         self._validate_project_compatibility()
 
-        logger.info(f"DLC Session {self.session_id.hex[:8]} initialized | Target: {self.target_folder.name}")
+        logger.info(f"DLC session {self.session_id.hex[:8]} initialized, target: {self.target_folder.name}")
 
         return self
 
@@ -296,7 +296,7 @@ class DLCAssistedLabelSession:
         if not video_folders:
             warnings.append(f"No valid frame folders, videos, or image assets resolved in {self.target_folder}.")
 
-        logger.info(f"Asset resolution | folders_to_analyze={len(video_folders)} | newly_extracted={len(newly_extracted)}")
+        logger.info(f"Asset resolution: folders_to_analyze={len(video_folders)}, newly_extracted={len(newly_extracted)}")
 
         return ResolvedFrameAssets(
             video_folders=os_sorted(video_folders),
@@ -360,7 +360,7 @@ class DLCAssistedLabelSession:
                 text=True,
                 check=True,
             )
-            logger.debug(f"Extracted frame {idx + 1}/{count} from {video_path.name} → {out_name}")
+            logger.debug(f"Extracted frame {idx + 1}/{count} from {video_path.name} as {out_name}")
 
         return video_subfolder
 
@@ -396,7 +396,7 @@ class DLCAssistedLabelSession:
         final_label_files = []
 
         for folder in assets.video_folders:
-            logger.info(f"Analyzing folder: {folder.name}...")
+            logger.info(f"Analyzing folder: {folder.name}")
 
             with capture_external_output("behavython.external"):
                 if not snapshot_kwargs:
@@ -549,7 +549,7 @@ class DLCAssistedLabelSession:
         plots_dir = self.session_temp / "verification_plots"
         plots_dir.mkdir(exist_ok=True)
 
-        logger.info(f"Generating verification plots in {plots_dir.name}...")
+        logger.info(f"Generating verification plots in {plots_dir.name}")
 
         # Load the machinelabels (usually H5)
         df = pd.read_hdf(machinelabels_path)
@@ -659,7 +659,7 @@ class DLCAssistedLabelSession:
             ) from e
 
         self.backup_registry[original] = backup_path
-        logger.debug(f"Backed up {original.name} → {backup_path}")
+        logger.debug(f"Backed up {original.name} to {backup_path}")
 
     def commit(self):
         """Finalizes the session, making all changes permanent."""
@@ -699,7 +699,7 @@ class DLCAssistedLabelSession:
             logger.info(f"Verification plots saved to {dst_plots.name}")
 
         self.is_committed = True
-        logger.info(f"Commit successful | {moved_count} video subfolder(s) transferred to {self.target_folder.name}")
+        logger.info(f"Commit successful: {moved_count} video subfolder(s) transferred to {self.target_folder.name}")
 
         # 3. Final Synchronization: Run localized convertcsv2h5 on the destination
         # This ensures the H5 files have the perfect structure expected by DLC GUI.
@@ -783,7 +783,7 @@ class DLCAssistedLabelSession:
 
     def cleanup(self):
         """Housekeeping: remove temporary files and the session folder."""
-        logger.info("Cleaning up session temp data...")
+        logger.info("Cleaning up session temp data")
         # 1. Delete the specific session folder
         try:
             if hasattr(self, "session_temp") and self.session_temp.exists():

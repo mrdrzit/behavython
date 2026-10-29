@@ -54,6 +54,7 @@ After: review `git diff`, run ruff on changed files, smoke-test, and check downs
 ## 8. Domain Guides
 - Metrics, units, filters, and analysis windows: [docs/dev/metrics_conventions.md](docs/dev/metrics_conventions.md). Changing a metric definition changes numbers users may have published.
 - Plots and videos: [docs/dev/plotting_conventions.md](docs/dev/plotting_conventions.md). Describes current practice; no restyling unless asked.
+- Logging, GUI log boxes, popups, and per-animal issues: [docs/dev/logging_conventions.md](docs/dev/logging_conventions.md). Read it before adding a log call.
 
 ## 9. Network Creation
 - Location and name: `E:\Matheus\Deeplabcut_networks\<Task>-<SCORER>-<YYYY-MM-DD>`, for example `CD1-GUSTAVO-2026-10-12`. Check existing folders there before naming.

@@ -349,7 +349,7 @@ def _opencv_animate_maze_crossings(animal: Animal, result: dict, request: Analys
     Generates an MP4 validation video using OpenCV for massive performance gains.
     Directly manipulates pixel arrays instead of rendering Matplotlib figures.
     """
-    logger.info(f"\nStarting OpenCV video generation for {animal.id}...")
+    logger.info(f"\nStarting OpenCV video generation for {animal.id}")
     save_folder = request.output_folder
     animal_name = animal.id
 
@@ -490,7 +490,7 @@ def _matplotlib_animate_maze_crossings(animal: Animal, result: dict, request: An
     """
     Legacy Matplotlib animation generation. Preserved for reference or fallback.
     """
-    logger.info(f"Starting animation generation for {animal.id}... This may take a moment.")
+    logger.info(f"Starting animation generation for {animal.id}, this may take a moment")
     save_folder = request.output_folder
     animal_name = animal.id
     dpi = 100
@@ -661,17 +661,9 @@ def _opencv_animate_roi_interactions(animal: Animal, result: dict, request: Anal
             video_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
             video_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         else:
-            animal.logs.append(
-                {
-                    "level": "warning",
-                    "message": "Video could not be opened. Rendering animation on static background.",
-                    "context": "plotting",
-                }
-            )
+            animal.log("warning", "Video could not be opened. Rendering animation on static background.", "plotting")
     else:
-        animal.logs.append(
-            {"level": "warning", "message": "No video provided. Rendering animation on static background.", "context": "plotting"}
-        )
+        animal.log("warning", "No video provided. Rendering animation on static background.", "plotting")
 
     if (video_w <= 0 or video_h <= 0) and animal.image is not None:
         video_h, video_w = animal.image.shape[:2]

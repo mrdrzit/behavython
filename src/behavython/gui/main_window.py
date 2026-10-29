@@ -327,13 +327,13 @@ class BehavythonMainWindow(QWidget):
         config_data = validate_json_config(path)
 
         if not config_data:
-            logger.info("Invalid configuration file selected: %s", path)
+            logger.info(f"Invalid configuration file selected: {path}")
             show_warning(self.interface, "Configuration file", "The selected file is not a valid JSON configuration.")
             return
 
         self.apply_analysis_configuration(config_data)
         self._set_gui_log_message("resume", "Configuration file loaded successfully!")
-        logger.info("Configuration file loaded: %s", path)
+        logger.info(f"Configuration file loaded: {path}")
 
     def apply_analysis_configuration(self, data: dict) -> None:
         mapping = {
@@ -351,7 +351,7 @@ class BehavythonMainWindow(QWidget):
                     if val is not None and str(val).strip() != "":
                         widget.setValue(int(float(val)))
                 except (ValueError, TypeError):
-                    logger.warning("Could not parse config value '%s' for %s", data[key], key)
+                    logger.warning(f"Could not parse config value '{data[key]}' for {key}")
 
     def build_analysis_options(self) -> AnalysisOptions:
         animal = self.interface.animal_combobox.currentText().strip().lower()
@@ -431,7 +431,7 @@ class BehavythonMainWindow(QWidget):
 
         errors = validate_analysis_request(request)
         if errors:
-            logger.info("Analysis request validation failed: %s", "; ".join(errors))
+            logger.info(f"Analysis request validation failed: {'; '.join(errors)}")
             show_warning(self.interface, "Analysis validation", "\n".join(errors))
             return
 
@@ -439,9 +439,7 @@ class BehavythonMainWindow(QWidget):
         self.progress_bar.setValue(0)
         self.runner.submit(run_analysis_workflow, request, debug_mode=self.debug_mode)
         logger.info(
-            "Analysis workflow submitted with %d input file(s). Output folder: %s",
-            len(request.input_files),
-            request.output_folder,
+            f"Analysis workflow submitted with {len(request.input_files)} input file(s). Output folder: {request.output_folder}",
         )
 
     def on_experiment_type_changed(self, text: str | None = None) -> None:
@@ -629,7 +627,7 @@ class BehavythonMainWindow(QWidget):
         self.logs.clear("dlc")
         self.progress_bar.setValue(0)
         self.runner.submit(run_generate_likelihood_plots, request, debug_mode=self.debug_mode)
-        logger.info("Likelihood plot generation submitted for folder: %s", folder_path)
+        logger.info(f"Likelihood plot generation submitted for folder: {folder_path}")
 
     def toggle_analyze_from_file_button(self) -> None:
         file_path = self.interface.analyze_from_file_lineedit.text().strip()
@@ -669,7 +667,7 @@ class BehavythonMainWindow(QWidget):
         self.logs.clear("dlc")
         self.progress_bar.setValue(0)
         self.runner.submit(run_clear_unused_files, request, debug_mode=self.debug_mode)
-        logger.info("Clear-unused-files submitted for folder: %s", request.folder_path)
+        logger.info(f"Clear-unused-files submitted for folder: {request.folder_path}")
 
     def on_select_annotated_output_clicked(self) -> None:
         path = select_save_folder(self.interface, "Select output folder for annotated videos")
@@ -746,7 +744,7 @@ class BehavythonMainWindow(QWidget):
         errors = validate_config_path(config_path) + validate_video_paths(resolved_video_input.paths)
 
         if errors:
-            logger.info("DLC validation failed: %s", "; ".join(errors))
+            logger.info(f"DLC validation failed: {'; '.join(errors)}")
             show_warning(self.interface, "DLC validation", "\n".join(errors))
             return
 
@@ -765,9 +763,7 @@ class BehavythonMainWindow(QWidget):
         self.progress_bar.setValue(0)
         self.runner.submit(run_dlc_video_analysis, request, debug_mode=self.debug_mode)
         logger.info(
-            "DLC video analysis submitted for %d video(s). Config: %s",
-            len(request.video_paths),
-            request.config_path,
+            f"DLC video analysis submitted for {len(request.video_paths)} video(s). Config: {request.config_path}",
         )
 
     def on_get_frames_clicked(self) -> None:
@@ -779,7 +775,7 @@ class BehavythonMainWindow(QWidget):
     def _run_get_frames(self, resolved_video_input: ResolvedVideoInput) -> None:
         errors = validate_video_paths(resolved_video_input.paths)
         if errors:
-            logger.info("Frame extraction validation failed: %s", "; ".join(errors))
+            logger.info(f"Frame extraction validation failed: {'; '.join(errors)}")
             show_warning(self.interface, "Frame extraction validation", "\n".join(errors))
             return
 
@@ -787,7 +783,7 @@ class BehavythonMainWindow(QWidget):
         self.logs.clear("dlc")
         self.progress_bar.setValue(0)
         self.runner.submit(run_extract_frames, request, debug_mode=self.debug_mode)
-        logger.info("Frame extraction submitted for %d video(s).", len(request.video_paths))
+        logger.info(f"Frame extraction submitted for {len(request.video_paths)} video(s).")
 
     def on_create_rois_clicked(self) -> None:
         if not self._ensure_model_installed(ROI_NETWORK_MODEL_NAME):
@@ -811,7 +807,7 @@ class BehavythonMainWindow(QWidget):
         self.logs.clear("dlc")
         self.progress_bar.setValue(0)
         self.runner.submit(run_create_rois, request, debug_mode=self.debug_mode)
-        logger.info("ROI creation submitted for %d video(s). Config: %s", len(request.video_paths), config_path)
+        logger.info(f"ROI creation submitted for {len(request.video_paths)} video(s). Config: {config_path}")
 
     def toggle_assisted_analysis_ready(self) -> None:
         analysis_button = self.interface.start_assisted_labeling_data_process
@@ -943,20 +939,20 @@ class BehavythonMainWindow(QWidget):
         self.logs.clear("dlc")
         self.progress_bar.setValue(0)
         self.runner.submit(run_analyze_frames, request, debug_mode=self.debug_mode)
-        logger.info("Assisted Labeling (analyze frames) submitted. Config: %s, Folder: %s", config_path, frames_folder)
+        logger.info(f"Assisted Labeling (analyze frames) submitted. Config: {config_path}, Folder: {frames_folder}")
 
     def toggle_debug_mode(self) -> None:
         self.debug_mode = not self.debug_mode
         self.set_advanced_tabs_visible(self.debug_mode)
         enabled = self.debug_mode
 
-        logger.info("Debug mode toggled: %s", enabled)
+        logger.info(f"Debug mode toggled: {enabled}")
 
         if enabled:
             self.interface.setStyleSheet(DEBUG_STYLE)
             self.logs.clear_all()
-            self.logs.append("resume", "🛠️ Debug mode active")
-            self.logs.append("dlc", "🛠️ Debug mode active")
+            self.logs.append("resume", "Debug mode active")
+            self.logs.append("dlc", "Debug mode active")
         else:
             self.interface.setStyleSheet(DEFAULT_STYLE)
             self.logs.clear_all()
@@ -986,7 +982,7 @@ class BehavythonMainWindow(QWidget):
             self.interface.get_config_path_button.setEnabled(False)
 
             self._set_gui_log_message("dlc", f"Default {key.upper()} network loaded and ready.")
-            logger.info("User selected default network: %s", config_yaml_path)
+            logger.info(f"User selected default network: {config_yaml_path}")
 
         else:
             # User unchecked the box. Revert to manual mode.
@@ -1131,7 +1127,7 @@ class BehavythonMainWindow(QWidget):
         kind = result.get("kind")
 
         if kind == "analysis":
-            logger.info("Analysis completed. Output path: %s", result["output_path"])
+            logger.info(f"Analysis completed. Output path: {result['output_path']}")
             show_info(
                 self.interface,
                 "Analysis completed",
@@ -1142,9 +1138,7 @@ class BehavythonMainWindow(QWidget):
             if result.get("config_was_repaired"):
                 extra = f"\n\nA repaired config was used:\n{result['config_path_used']}"
             logger.info(
-                "DLC analysis completed for %d video(s). repaired_config=%s",
-                result["videos"],
-                result.get("config_was_repaired", False),
+                f"DLC analysis completed for {result['videos']} video(s). repaired_config={result.get('config_was_repaired', False)}",
             )
             show_info(self.interface, "DLC analysis completed", f"Processed {result['videos']} video(s).{extra}")
         elif kind == "dlc_skeleton":
@@ -1152,18 +1146,14 @@ class BehavythonMainWindow(QWidget):
             if result.get("config_was_repaired"):
                 extra = f"\n\nA repaired config was used:\n{result['config_path_used']}"
             logger.info(
-                "Skeleton extraction completed for %d video(s). repaired_config=%s",
-                result["videos"],
-                result.get("config_was_repaired", False),
+                f"Skeleton extraction completed for {result['videos']} video(s). repaired_config={result.get('config_was_repaired', False)}",
             )
             show_info(self.interface, "Skeleton extraction completed", f"Processed {result['videos']} video(s).{extra}")
         elif kind == "dlc_frames":
-            logger.info("Frame extraction completed for %d video(s).", result["videos"])
+            logger.info(f"Frame extraction completed for {result['videos']} video(s).")
             show_info(self.interface, "Frame extraction completed", f"Processed {result['videos']} video(s).")
         elif kind == "dlc_create_rois":
-            logger.info(
-                "ROI creation completed. created=%d skipped=%d flagged=%d", result["created"], result["skipped"], len(result["flagged"])
-            )
+            logger.info(f"ROI creation completed. created={result['created']} skipped={result['skipped']} flagged={len(result['flagged'])}")
             text = f"Created {result['created']} ROI file(s). Skipped {result['skipped']} video(s) that already had one."
             text += f"\n\nCheck the images in the {ROI_CHECK_FOLDER} folder and draw unacceptable ROIs manually."
             if result["flagged"]:
@@ -1174,9 +1164,7 @@ class BehavythonMainWindow(QWidget):
         elif kind == "dlc_clear_unused_files":
             moved_count = len(result["moved_files"])
             logger.info(
-                "Cleanup completed. moved_files=%d all_required_present=%s",
-                moved_count,
-                result["all_required_present"],
+                f"Cleanup completed. moved_files={moved_count} all_required_present={result['all_required_present']}",
             )
 
             if result["all_required_present"]:
@@ -1202,7 +1190,7 @@ class BehavythonMainWindow(QWidget):
         self._toggle_likelihood_button()
 
     def on_worker_error(self, error_info) -> None:
-        logger.error("Worker error dialog shown: %s", error_info[1])
+        logger.error(f"Worker error dialog shown: {error_info[1]}")
         show_worker_error(self.interface, error_info)
 
     def on_worker_finished(self) -> None:

@@ -116,31 +116,27 @@ def analyze_maze_animal(maze_animal: MazeAnimal, request: AnalysisRequest) -> di
         end = trim_frames + total_frames
 
         if start >= n_frames:
-            raise AnalysisError(f"[{maze_animal.animal.id}] Trim amount ({trim_seconds}s) exceeds the video length ({n_frames / fps:.1f}s).")
+            raise AnalysisError(f"Trim amount ({trim_seconds}s) exceeds the video length ({n_frames / fps:.1f}s).")
 
         if end > n_frames:
-            maze_animal.animal.logs.append(
-                {
-                    "level": "warning",
-                    "message": f"Requested {max_time}s after {trim_seconds}s trim, but video is only {n_frames / fps:.1f}s. Analyzing remaining {(n_frames - start) / fps:.1f}s.",
-                    "context": "analysis_range",
-                }
+            maze_animal.animal.log(
+                "warning",
+                f"Requested {max_time}s after {trim_seconds}s trim, but video is only {n_frames / fps:.1f}s. Analyzing remaining {(n_frames - start) / fps:.1f}s.",
+                "analysis_range",
             )
             end = n_frames
     else:
         start = 0
         if total_frames > n_frames:
-            maze_animal.animal.logs.append(
-                {
-                    "level": "warning",
-                    "message": f"Requested {max_time}s analysis, but video is only {n_frames / fps:.1f}s. Analyzing entire video.",
-                    "context": "analysis_range",
-                }
+            maze_animal.animal.log(
+                "warning",
+                f"Requested {max_time}s analysis, but video is only {n_frames / fps:.1f}s. Analyzing entire video.",
+                "analysis_range",
             )
         end = min(total_frames, n_frames)
 
     if start >= end:
-        raise AnalysisError(f"[{maze_animal.animal.id}] Invalid runtime range (start >= end).")
+        raise AnalysisError("Invalid runtime range (start >= end).")
 
     sliced_x = raw_x.iloc[start:end].reset_index(drop=True)
     sliced_y = raw_y.iloc[start:end].reset_index(drop=True)
@@ -190,11 +186,17 @@ def run_analysis_workflow(request: AnalysisRequest, progress: Callable | None = 
     if errors:
         raise AnalysisError("\n".join(errors))
 
-    logger.info("Starting analysis workflow...")
+    options = request.options
+    logger.info(
+        f"Analysis settings: experiment={options.experiment_type}, fps={options.frames_per_second}, "
+        f"arena={options.arena_width}x{options.arena_height} cm, task_duration={options.task_duration} s, "
+        f"trim={options.trim_amount} s, crop_video={options.crop_video}, threshold={options.threshold}, "
+        f"plots={options.plot_options}, input_files={len(request.input_files)}, output_folder={request.output_folder}"
+    )
 
     groups = group_analysis_files(request.input_files)
 
-    logger.info(f"Detected {len(groups)} animal groups")
+    logger.info(f"Detected {len(groups)} animal(s)")
 
     animals = []
     for index, group in enumerate(groups, start=1):
@@ -214,7 +216,7 @@ def run_analysis_workflow(request: AnalysisRequest, progress: Callable | None = 
     valid_animals_for_processing = [a for a in animals if a.eligible]
     initial_invalid_count = len(animals) - len(valid_animals_for_processing)
 
-    logger.info(f"Valid animals for processing: {len(valid_animals_for_processing)} | Initial invalid: {initial_invalid_count}")
+    logger.info(f"{len(valid_animals_for_processing)} animal(s) ready for analysis, {initial_invalid_count} not eligible")
 
     results = []
     has_issues = False
@@ -236,7 +238,7 @@ def run_analysis_workflow(request: AnalysisRequest, progress: Callable | None = 
                             maze_points = config_data.get("maze_points", [])
 
                     config_type = "individual" if animal.config_path else "global fallback"
-                    logger.info(f"[{animal.id}] Using {config_type} config: {os.path.basename(active_config_path)}")
+                    logger.info(f"{animal.id}: Using {config_type} config: {os.path.basename(active_config_path)}")
                 else:
                     raise AnalysisError("Arena configuration file is missing or invalid.")
 
@@ -253,7 +255,7 @@ def run_analysis_workflow(request: AnalysisRequest, progress: Callable | None = 
                 plot_animal_analysis(animal, result, request)
 
         except AnalysisError as e:
-            animal.logs.append({"level": "error", "message": str(e), "context": "analysis"})
+            animal.log("error", str(e), "analysis")
             animal.eligible = False
             has_issues = True
 
@@ -263,8 +265,8 @@ def run_analysis_workflow(request: AnalysisRequest, progress: Callable | None = 
             raise
 
         except Exception as e:
-            logger.exception(f"Unexpected bug during analysis of {animal.id}")
-            animal.logs.append({"level": "error", "message": f"Unexpected bug: {e!s}", "context": "analysis"})
+            animal.log("error", f"Unexpected bug: {e!s}", "analysis")
+            logger.debug("Unexpected bug traceback", exc_info=True)
             animal.eligible = False
             has_issues = True
 
@@ -272,7 +274,7 @@ def run_analysis_workflow(request: AnalysisRequest, progress: Callable | None = 
             progress.emit(round((index / len(valid_animals_for_processing)) * 100))
 
     if results:
-        logger.info("Exporting results to Parquet...")
+        logger.info("Exporting results")
         try:
             export_results_to_parquet(results, request.output_folder)
             export_summary_metrics(results, request.output_folder)
@@ -280,6 +282,7 @@ def run_analysis_workflow(request: AnalysisRequest, progress: Callable | None = 
         except Exception as e:
             if warning:
                 warning.emit("Export Error", f"Failed to save Parquet files: {e!s}")
+            logger.debug("Export error traceback", exc_info=True)
             has_issues = True
 
     all_logs = []
@@ -302,7 +305,6 @@ def run_analysis_workflow(request: AnalysisRequest, progress: Callable | None = 
         with open(log_path, "w", encoding="utf-8") as f:
             json.dump(all_logs, f, indent=2)
 
-        logger.info(f"Log file written to: {log_path}")
         if warning:
             warning.emit("Warning", f"Analysis completed with issues. Log saved to:\n{log_path}")
 

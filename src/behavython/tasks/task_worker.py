@@ -19,7 +19,7 @@ class TaskWorker(QRunnable):
     @Slot()
     def run(self) -> None:
         try:
-            logger.info("Worker started: %s", getattr(self.fn, "__name__", str(self.fn)))
+            logger.info(f"Worker started: {getattr(self.fn, '__name__', str(self.fn))}")
 
             if self.debug_mode:
                 try:
@@ -32,10 +32,10 @@ class TaskWorker(QRunnable):
 
             result = self.fn(self.request, progress=self.signals.progress, warning=self.signals.warning)
         except Exception as exc:
-            logger.exception("Worker failed: %s", getattr(self.fn, "__name__", str(self.fn)))
+            logger.exception(f"Worker failed: {getattr(self.fn, '__name__', str(self.fn))}")
             self.signals.error.emit((type(exc), str(exc), traceback.format_exc()))
         else:
-            logger.info("Worker finished successfully: %s", getattr(self.fn, "__name__", str(self.fn)))
+            logger.info(f"Worker finished successfully: {getattr(self.fn, '__name__', str(self.fn))}")
             self.signals.result.emit(result)
         finally:
             self.signals.finished.emit()

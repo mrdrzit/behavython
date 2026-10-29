@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import re
 import cv2
@@ -9,6 +10,9 @@ from pathlib import Path
 from typing import Any
 from behavython.core.defaults import BODYPART_MAPPING, MAZE_EXPERIMENT_TYPES, ROI_COUNT_BY_EXPERIMENT
 from behavython.core.exceptions import AnalysisError
+
+logger = logging.getLogger(__name__)
+_ANIMAL_LOG_LEVELS = {"info": logging.INFO, "warning": logging.WARNING, "error": logging.ERROR}
 
 
 @dataclass(slots=True)
@@ -195,13 +199,13 @@ class Animal:
         if self.eligible:
             self._load_all()
 
-    def _log(self, level, message, context=None):
-        entry = {
-            "level": level,
-            "message": message,
-            "context": context,
-        }
-        self.logs.append(entry)
+    def log(self, level: str, message: str, context: str) -> None:
+        """Records an issue for analysis_log.json and writes it to the session log.
+
+        level is "info", "warning" or "error"; context names the step, for example "position_loading".
+        """
+        self.logs.append({"level": level, "message": message, "context": context})
+        logger.log(_ANIMAL_LOG_LEVELS[level], f"{self.id}: {message}")
 
     def _validate(self):
         # Base requirements for EVERY analysis
@@ -218,38 +222,34 @@ class Animal:
             if path is None or not os.path.exists(path):
                 self.eligible = False
                 self.missing_files.append(key)
-                self._log(
-                    "ERROR",
-                    f"Missing required file: {key}",
-                    {"path": path},
-                )
+                self.log("error", f"Missing required file: {key}" + (f" ({path})" if path else ""), "file_validation")
 
         if self.experiment_type not in MAZE_EXPERIMENT_TYPES:
             if not self.roi_paths:
                 self.eligible = False
                 self.missing_files.append("roi_paths")
-                self._log("ERROR", "Missing required file: roi_paths", {"path": None})
+                self.log("error", "Missing required file: roi_paths", "file_validation")
             else:
                 expected_rois = ROI_COUNT_BY_EXPERIMENT.get(self.experiment_type)
                 if expected_rois is not None and len(self.roi_paths) != expected_rois:
                     self.eligible = False
                     self.missing_files.append("roi_paths")
-                    self._log(
-                        "ERROR",
-                        f"Experiment '{self.experiment_type}' requires exactly {expected_rois} ROI files, found {len(self.roi_paths)}",
-                        {"paths": self.roi_paths},
+                    self.log(
+                        "error",
+                        f"Experiment '{self.experiment_type}' requires exactly {expected_rois} ROI files, found {len(self.roi_paths)}: {self.roi_paths}",
+                        "file_validation",
                     )
 
                 for path in self.roi_paths:
                     if path is None or not os.path.exists(path):
                         self.eligible = False
                         self.missing_files.append("roi_paths")
-                        self._log("ERROR", "Missing required ROI file", {"path": path})
+                        self.log("error", f"Missing required ROI file: {path}", "file_validation")
 
         # Video is optional
         if isinstance(self.video_path, list):
             if len(self.video_path) > 1:
-                self._log("WARNING", "Multiple video files detected. Using first.", {"files": self.video_path})
+                self.log("warning", f"Multiple video files detected, using the first: {self.video_path}", "file_validation")
                 self.video_path = self.video_path[0]
             elif len(self.video_path) == 1:
                 self.video_path = self.video_path[0]
@@ -257,11 +257,7 @@ class Animal:
                 self.video_path = None
 
         if not self.eligible:
-            self._log(
-                "ERROR",
-                "Animal marked as NOT ELIGIBLE for analysis due to missing required files",
-                {"missing": self.missing_files},
-            )
+            self.log("error", f"Not eligible for analysis, missing required files: {', '.join(self.missing_files)}", "file_validation")
 
     def _load_all(self):
         self._load_position()
@@ -285,13 +281,7 @@ class Animal:
                 canonical = BODYPART_MAPPING.get(bp_norm, bp_norm)
 
                 if canonical in self.bodyparts:
-                    self.logs.append(
-                        {
-                            "level": "warning",
-                            "message": f"Duplicate bodypart detected, overwriting: {canonical}",
-                            "context": "position_loading",
-                        }
-                    )
+                    self.log("warning", f"Duplicate bodypart detected, overwriting: {canonical}", "position_loading")
 
                 try:
                     bp_df = df[bp]
@@ -302,30 +292,22 @@ class Animal:
                         "likelihood": bp_df["likelihood"],
                     }
                 except KeyError:
-                    self.logs.append({"level": "error", "message": f"Incomplete data for bodypart: {bp}", "context": "position_loading"})
+                    self.log("error", f"Incomplete data for bodypart: {bp}", "position_loading")
 
             if self.experiment_type in MAZE_EXPERIMENT_TYPES:
                 if not self.bodyparts:
-                    self.logs.append(
-                        {"level": "error", "message": "No valid bodyparts found in tracking data", "context": "position_loading"}
-                    )
+                    self.log("error", "No valid bodyparts found in tracking data", "position_loading")
                     self.eligible = False
             else:
                 required = ["nose", "left_ear", "right_ear"]
                 missing = [bp for bp in required if bp not in self.bodyparts]
 
                 if missing:
-                    self.logs.append(
-                        {
-                            "level": "error",
-                            "message": f"Missing required bodyparts for {self.experiment_type}: {', '.join(missing)}",
-                            "context": "position_loading",
-                        }
-                    )
+                    self.log("error", f"Missing required bodyparts for {self.experiment_type}: {', '.join(missing)}", "position_loading")
                     self.eligible = False
 
         except Exception as e:
-            self.logs.append({"level": "error", "message": str(e), "context": "position_loading"})
+            self.log("error", str(e), "position_loading")
             self.eligible = False
 
     def _load_skeleton(self):
@@ -341,9 +323,7 @@ class Animal:
                     continue
 
                 if bone in self.skeleton:
-                    self.logs.append(
-                        {"level": "warning", "message": f"Duplicate bone detected, overwriting: {bone}", "context": "skeleton_loading"}
-                    )
+                    self.log("warning", f"Duplicate bone detected, overwriting: {bone}", "skeleton_loading")
 
                 try:
                     bone_df = df[bone]
@@ -353,14 +333,14 @@ class Animal:
                         "likelihood": bone_df.get("likelihood", None),
                     }
                 except KeyError:
-                    self.logs.append({"level": "error", "message": f"Incomplete skeleton data: {bone}", "context": "skeleton_loading"})
+                    self.log("error", f"Incomplete skeleton data: {bone}", "skeleton_loading")
 
             if not self.skeleton:
-                self.logs.append({"level": "error", "message": "No valid skeleton data found", "context": "skeleton_loading"})
+                self.log("error", "No valid skeleton data found", "skeleton_loading")
                 self.eligible = False
 
         except Exception as e:
-            self.logs.append({"level": "error", "message": "Failed to load skeleton CSV", "context": "skeleton_loading", "error": str(e)})
+            self.log("error", f"Failed to load skeleton CSV: {e}", "skeleton_loading")
             self.eligible = False
 
     def _load_rois(self):
@@ -397,10 +377,10 @@ class Animal:
 
             except AnalysisError as e:
                 self.eligible = False
-                self._log("ERROR", str(e), {"context": "roi_loading", "path": path})
+                self.log("error", f"{e} ({path})", "roi_loading")
             except Exception as e:
                 self.eligible = False
-                self._log("ERROR", "Failed to load ROI CSV", {"error": str(e), "path": path})
+                self.log("error", f"Failed to load ROI CSV {path}: {e}", "roi_loading")
 
     def _load_image(self):
         try:
@@ -411,11 +391,7 @@ class Animal:
 
         except Exception as e:
             self.eligible = False
-            self._log(
-                "ERROR",
-                "Failed to load image",
-                {"error": str(e)},
-            )
+            self.log("error", f"Failed to load image {self.image_path}: {e}", "image_loading")
 
     def exp_length(self):
         if not self.bodyparts:
@@ -447,15 +423,13 @@ class MazeAnimal:
 
     def _validate_maze_requirements(self):
         if not self.animal.eligible:
-            raise AnalysisError(f"[{self.animal.id}] Base animal data is ineligible for analysis.")
+            raise AnalysisError("Base animal data is ineligible for analysis.")
 
         if self.experiment_type == "open_field" and len(self.arena_corners) != 4:
-            raise AnalysisError(f"[{self.animal.id}] Open Field requires exactly 4 arena corners.")
+            raise AnalysisError("Open Field requires exactly 4 arena corners.")
 
         if self.experiment_type == "elevated_plus_maze" and len(self.maze_points) != 12:
-            raise AnalysisError(
-                f"[{self.animal.id}] Elevated Plus Maze requires exactly 12 maze points. Please verify the JSON configuration."
-            )
+            raise AnalysisError("Elevated Plus Maze requires exactly 12 maze points. Please verify the JSON configuration.")
 
     def get_primary_tracking_data(self, preferred_bodypart: str = "center") -> tuple[pd.Series, pd.Series]:
         """

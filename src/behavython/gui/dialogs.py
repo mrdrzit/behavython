@@ -1,15 +1,13 @@
 from __future__ import annotations
 
-import logging
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QPlainTextEdit, QVBoxLayout, QWidget
 from PySide6.QtWidgets import QFileDialog, QDialogButtonBox
-
-logger = logging.getLogger(__name__)
+from behavython.services.logging import log_popup
 
 
 def show_warning(parent: QWidget | None, title: str, text: str) -> None:
-    logger.warning(f"{title}: {text}")
+    log_popup(title, text)
     QMessageBox.warning(parent, title, text)
 
 

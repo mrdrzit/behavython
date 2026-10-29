@@ -84,14 +84,12 @@ class _ProgressAdapter:
 
 
 class _WarningAdapter:
-    """Mimics a Qt Signal with a .emit(title: str, message: str) method."""
-
-    def __init__(self, logger: logging.Logger) -> None:
-        self._logger = logger
+    """Mimics a Qt Signal with a .emit(title: str, message: str) method; logs what the GUI shows as a popup."""
 
     def emit(self, title: str, message: str) -> None:
-        msg = f"{title}: {message}" if title.lower() not in message.lower() else message
-        self._logger.warning(msg)
+        from behavython.services.logging import log_popup
+
+        log_popup(title, message)
 
 
 # ===========================================================================
@@ -196,15 +194,15 @@ def _load_config(args: argparse.Namespace, logger: logging.Logger) -> dict[str, 
     if args.config:
         config_path = os.path.abspath(args.config)
         if not os.path.isfile(config_path):
-            logger.error("Config file not found: %s", config_path)
+            logger.error(f"Config file not found: {config_path}")
             raise FileNotFoundError(config_path)
         with open(config_path, "r", encoding="utf-8") as f:
             try:
                 file_config = json.load(f)
             except json.JSONDecodeError as exc:
-                logger.error("Failed to parse config file: %s", exc)
+                logger.error(f"Failed to parse config file: {exc}")
                 raise
-        logger.info("Loaded config: %s", config_path)
+        logger.info(f"Loaded config: {config_path}")
     return file_config
 
 
@@ -224,15 +222,15 @@ def _resolve_inputs(args: argparse.Namespace, file_config: dict[str, Any], logge
             try:
                 input_files.extend(_collect_analysis_files_from_folder(folder))
             except ValueError as exc:
-                logger.error("%s", exc)
+                logger.error(f"{exc}")
                 raise
 
         if not input_files:
-            logger.error("No recognizable analysis files found in folders: %s", ", ".join(input_folders))
-            logger.error("Expected extensions: %s", ", ".join(_ANALYSIS_SUFFIXES))
+            logger.error(f"No recognizable analysis files found in folders: {', '.join(input_folders)}")
+            logger.error(f"Expected extensions: {', '.join(_ANALYSIS_SUFFIXES)}")
             raise ValueError("No recognizable analysis files found in folders.")
 
-        logger.info("Collected %d file(s) from %d folder(s).", len(input_files), len(input_folders))
+        logger.info(f"Collected {len(input_files)} file(s) from {len(input_folders)} folder(s).")
         primary_folder = input_folders[0]
 
     else:
@@ -243,9 +241,7 @@ def _resolve_inputs(args: argparse.Namespace, file_config: dict[str, Any], logge
 
         missing = [p for p in input_files if not os.path.exists(p)]
         if missing:
-            logger.error("The following input files do not exist:")
-            for p in missing:
-                logger.error("  %s", p)
+            logger.error(f"Input files not found: {', '.join(missing)}")
             raise ValueError("One or more required input files do not exist.")
 
     return primary_folder if input_folders else "", input_files
@@ -490,10 +486,10 @@ def _run_standardize(ctx: _ActionContext) -> bool:
     video_extensions = (".mp4", ".avi", ".mov", ".mkv")
     video_files = [f for f in ctx.input_files if f.lower().endswith(video_extensions)]
     if not video_files:
-        ctx.logger.error("No video files found for standardization in: %s", ctx.input_folder or "provided files")
+        ctx.logger.error(f"No video files found for standardization in: {ctx.input_folder or 'provided files'}")
         return False
 
-    ctx.logger.info("Videos to process: %d", len(video_files))
+    ctx.logger.info(f"Videos to process: {len(video_files)}")
     from behavython.services.video_service import run_standardize_videos
 
     try:
@@ -504,24 +500,24 @@ def _run_standardize(ctx: _ActionContext) -> bool:
         )
         ctx.logger.info("Standardization complete.")
     except Exception as exc:
-        ctx.logger.error("Standardization failed: %s", exc)
+        ctx.logger.error(f"Standardization failed: {exc}")
         return False
     return True
 
 
 def _run_cropping(ctx: _ActionContext) -> bool:
     if not os.path.isfile(ctx.args.crop_config):
-        ctx.logger.error("Cropping project JSON not found: %s", ctx.args.crop_config)
+        ctx.logger.error(f"Cropping project JSON not found: {ctx.args.crop_config}")
         return False
 
     with open(ctx.args.crop_config, "r", encoding="utf-8") as f:
         try:
             project_data = json.load(f)
         except json.JSONDecodeError as exc:
-            ctx.logger.error("Failed to parse crop config: %s", exc)
+            ctx.logger.error(f"Failed to parse crop config: {exc}")
             return False
 
-    ctx.logger.info("Project: %s", ctx.args.crop_config)
+    ctx.logger.info(f"Project: {ctx.args.crop_config}")
     from behavython.services.video_service import run_batch_crop
 
     try:
@@ -532,7 +528,7 @@ def _run_cropping(ctx: _ActionContext) -> bool:
         )
         ctx.logger.info("Cropping complete.")
     except Exception as exc:
-        ctx.logger.error("Cropping failed: %s", exc)
+        ctx.logger.error(f"Cropping failed: {exc}")
         return False
     return True
 
@@ -541,10 +537,10 @@ def _run_extract_frames(ctx: _ActionContext) -> bool:
     video_extensions = tuple(ANALYSIS_REQUIRED_SUFFIXES["video"])
     video_files = [f for f in ctx.input_files if f.lower().endswith(video_extensions)]
     if not video_files:
-        ctx.logger.error("No video files found for frame extraction in: %s", ctx.input_folder or "provided files")
+        ctx.logger.error(f"No video files found for frame extraction in: {ctx.input_folder or 'provided files'}")
         return False
 
-    ctx.logger.info("Videos: %d | Frame override: %s", len(video_files), ctx.args.frame_number or "50%% of duration")
+    ctx.logger.info(f"Videos: {len(video_files)}, frame override: {ctx.args.frame_number or '50% of duration'}")
     from behavython.pipeline.models import DLCFrameExtractionRequest
     from behavython.pipeline.plugins.dlc import run_extract_frames
 
@@ -559,7 +555,7 @@ def _run_extract_frames(ctx: _ActionContext) -> bool:
         )
         ctx.logger.info("Frame extraction complete.")
     except Exception as exc:
-        ctx.logger.error("Frame extraction failed: %s", exc)
+        ctx.logger.error(f"Frame extraction failed: {exc}")
         return False
     return True
 
@@ -568,20 +564,17 @@ def _run_create_rois(ctx: _ActionContext) -> bool:
     video_extensions = tuple(ANALYSIS_REQUIRED_SUFFIXES["video"])
     video_files = [f for f in ctx.input_files if f.lower().endswith(video_extensions)]
     if not video_files:
-        ctx.logger.error("No video files found for ROI creation in: %s", ctx.input_folder or "provided files")
+        ctx.logger.error(f"No video files found for ROI creation in: {ctx.input_folder or 'provided files'}")
         return False
 
     config_path = ctx.args.roi_config or str(USER_MODELS_ROOT / ROI_NETWORK_MODEL_NAME / "config.yaml")
     if not os.path.isfile(config_path):
         ctx.logger.error(
-            "ROI network not found: %s\nDownload %s and extract it to %s, or pass --roi-config <PATH>.",
-            config_path,
-            MODELS_URLS[ROI_NETWORK_MODEL_NAME],
-            USER_MODELS_ROOT / ROI_NETWORK_MODEL_NAME,
+            f"ROI network not found: {config_path}\nDownload {MODELS_URLS[ROI_NETWORK_MODEL_NAME]} and extract it to {USER_MODELS_ROOT / ROI_NETWORK_MODEL_NAME}, or pass --roi-config <PATH>.",
         )
         return False
 
-    ctx.logger.info("Videos: %d | ROI network: %s", len(video_files), config_path)
+    ctx.logger.info(f"Videos: {len(video_files)}, ROI network: {config_path}")
     from behavython.pipeline.models import DLCCreateRoisRequest
     from behavython.pipeline.plugins.dlc import run_create_rois
 
@@ -592,21 +585,18 @@ def _run_create_rois(ctx: _ActionContext) -> bool:
             warning=ctx.warning,
         )
         ctx.logger.info(
-            "ROI creation complete. Created: %d | Skipped (existing): %d | To check: %d",
-            result["created"],
-            result["skipped"],
-            len(result["flagged"]),
+            f"ROI creation complete. Created: {result['created']} | Skipped (existing): {result['skipped']} | To check: {len(result['flagged'])}",
         )
     except Exception as exc:
-        ctx.logger.error("ROI creation failed: %s", exc)
+        ctx.logger.error(f"ROI creation failed: {exc}")
         return False
     return True
 
 
 def _run_cleanup(ctx: _ActionContext) -> bool:
     experiment_type = ctx.args.experiment_type or ctx.file_config.get("experiment_type", "")
-    ctx.logger.info("Experiment type: %s", experiment_type)
-    ctx.logger.info("Folder: %s", ctx.input_folder or "provided files")
+    ctx.logger.info(f"Experiment type: {experiment_type}")
+    ctx.logger.info(f"Folder: {ctx.input_folder or 'provided files'}")
 
     from behavython.pipeline.models import DLCClearUnusedFilesRequest
     from behavython.pipeline.plugins.dlc import run_clear_unused_files
@@ -620,12 +610,12 @@ def _run_cleanup(ctx: _ActionContext) -> bool:
             progress=ctx.progress,
             warning=ctx.warning,
         )
-        ctx.logger.info("Cleanup complete. Moved %d file(s).", len(result.get("moved_files", [])))
+        ctx.logger.info(f"Cleanup complete. Moved {len(result.get('moved_files', []))} file(s).")
         if result.get("missing_files"):
             for mf in result["missing_files"]:
-                ctx.logger.warning("Missing required file: %s", mf)
+                ctx.logger.warning(f"Missing required file: {mf}")
     except Exception as exc:
-        ctx.logger.error("Cleanup failed: %s", exc)
+        ctx.logger.error(f"Cleanup failed: {exc}")
         return False
     return True
 
@@ -634,11 +624,11 @@ def _run_tracking(ctx: _ActionContext) -> bool:
     video_extensions = tuple(ANALYSIS_REQUIRED_SUFFIXES["video"])
     video_files = [f for f in ctx.input_files if f.lower().endswith(video_extensions)]
     if not video_files:
-        ctx.logger.error("No video files found for tracking in: %s", ctx.input_folder or "provided files")
+        ctx.logger.error(f"No video files found for tracking in: {ctx.input_folder or 'provided files'}")
         return False
 
-    ctx.logger.info("Videos: %d", len(video_files))
-    ctx.logger.info("Config: %s", ctx.args.dlc_config)
+    ctx.logger.info(f"Videos: {len(video_files)}")
+    ctx.logger.info(f"Config: {ctx.args.dlc_config}")
 
     from behavython.pipeline.models import DLCVideoAnalysisRequest
     from behavython.pipeline.plugins.dlc import run_dlc_video_analysis
@@ -657,14 +647,14 @@ def _run_tracking(ctx: _ActionContext) -> bool:
         )
         ctx.logger.info("Tracking task complete.")
     except Exception as exc:
-        ctx.logger.error("Tracking failed: %s", exc)
+        ctx.logger.error(f"Tracking failed: {exc}")
         return False
     return True
 
 
 def _run_likelihood_plots(ctx: _ActionContext) -> bool:
-    ctx.logger.info("Folder: %s", ctx.input_folder or "provided files")
-    ctx.logger.info("Config: %s", ctx.args.dlc_config)
+    ctx.logger.info(f"Folder: {ctx.input_folder or 'provided files'}")
+    ctx.logger.info(f"Config: {ctx.args.dlc_config}")
 
     from behavython.pipeline.models import DLCLikelihoodPlotRequest
     from behavython.pipeline.plugins.dlc import run_generate_likelihood_plots
@@ -678,9 +668,9 @@ def _run_likelihood_plots(ctx: _ActionContext) -> bool:
             progress=ctx.progress,
             warning=ctx.warning,
         )
-        ctx.logger.info("Generated %d likelihood plot(s).", result.get("plots_generated", 0))
+        ctx.logger.info(f"Generated {result.get('plots_generated', 0)} likelihood plot(s).")
     except Exception as exc:
-        ctx.logger.error("Likelihood plot generation failed: %s", exc)
+        ctx.logger.error(f"Likelihood plot generation failed: {exc}")
         return False
     return True
 
@@ -689,15 +679,15 @@ def _run_annotate_video(ctx: _ActionContext) -> bool:
     video_extensions = tuple(ANALYSIS_REQUIRED_SUFFIXES["video"])
     video_files = [f for f in ctx.input_files if f.lower().endswith(video_extensions)]
     if not video_files:
-        ctx.logger.error("No video files found for annotation in: %s", ctx.input_folder or "provided files")
+        ctx.logger.error(f"No video files found for annotation in: {ctx.input_folder or 'provided files'}")
         return False
 
     output_folder_annotated = ctx.args.output or ctx.file_config.get("output_folder", ctx.input_folder)
     os.makedirs(output_folder_annotated, exist_ok=True)
 
-    ctx.logger.info("Videos: %d", len(video_files))
-    ctx.logger.info("Config: %s", ctx.args.dlc_config)
-    ctx.logger.info("Output: %s", output_folder_annotated)
+    ctx.logger.info(f"Videos: {len(video_files)}")
+    ctx.logger.info(f"Config: {ctx.args.dlc_config}")
+    ctx.logger.info(f"Output: {output_folder_annotated}")
 
     from behavython.pipeline.models import DLCAnnotatedVideoRequest
     from behavython.pipeline.plugins.dlc import run_create_annotated_video
@@ -714,7 +704,7 @@ def _run_annotate_video(ctx: _ActionContext) -> bool:
         )
         ctx.logger.info("Annotated video creation complete.")
     except Exception as exc:
-        ctx.logger.error("Annotated video creation failed: %s", exc)
+        ctx.logger.error(f"Annotated video creation failed: {exc}")
         return False
     return True
 
@@ -792,7 +782,7 @@ def main() -> int:
         args=args,
         logger=logger,
         progress=_ProgressAdapter(),
-        warning=_WarningAdapter(logger),
+        warning=_WarningAdapter(),
         input_folder=input_folder,
         input_files=input_files,
         file_config=file_config,
@@ -827,7 +817,7 @@ def main() -> int:
     try:
         options = _build_options_from_config(file_config, cli_overrides)
     except ValueError as exc:
-        logger.error("Configuration error: %s", exc)
+        logger.error(f"Configuration error: {exc}")
         return 1
 
     from behavython.pipeline.models import AnalysisRequest
@@ -838,12 +828,6 @@ def main() -> int:
         options=options,
         config_path=arena_config_path,
     )
-
-    logger.info("Experiment type  : %s", options.experiment_type)
-    logger.info("Input files      : %d file(s)", len(input_files))
-    logger.info("Output folder    : %s", output_folder)
-    logger.info("Plots            : %s", options.plot_options)
-    logger.info("Figure resolution: %s x %s px", *options.max_fig_res)
 
     from behavython.pipeline.workflow import run_analysis_workflow
     from behavython.core.exceptions import AnalysisError
@@ -856,20 +840,17 @@ def main() -> int:
             warning=ctx.warning,
         )
     except AnalysisError as exc:
-        logger.error("Analysis failed: %s", exc)
+        logger.error(f"Analysis failed: {exc}")
         return 1
     except Exception:
         logger.exception("Unexpected error during analysis.")
         return 1
 
     print()
-    logger.info("─" * 50)
-    logger.info("Analysis complete.")
-    logger.info("  Valid animals   : %d", result.get("valid_animals", 0))
-    logger.info("  Invalid animals : %d", result.get("invalid_animals", 0))
-    logger.info("  Output path     : %s", result.get("output_path", output_folder))
-    if result.get("log_path"):
-        logger.warning("Issues were logged to: %s", result["log_path"])
+    logger.info(
+        f"Analysis complete: {result.get('valid_animals', 0)} valid, {result.get('invalid_animals', 0)} invalid animal(s). "
+        f"Output: {result.get('output_path', output_folder)}"
+    )
 
     return 0 if result.get("invalid_animals", 0) == 0 else 2
 
