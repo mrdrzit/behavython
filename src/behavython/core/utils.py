@@ -9,7 +9,7 @@ from pathlib import Path
 from natsort import os_sorted
 from collections import defaultdict
 from behavython.core.defaults import ANALYSIS_REQUIRED_SUFFIXES
-from behavython.core.paths import DATA_ROOT, PACKAGE_ROOT, RUNTIME_ROOT, USER_BIN_ROOT
+from behavython.core.paths import USER_BIN_ROOT
 from behavython.services.validation import validate_yaml_file, validate_yaml_text
 from behavython.pipeline.models import (
     AnalysisInputSource,
@@ -401,17 +401,6 @@ def load_or_repair_dlc_yaml(path: str | Path) -> tuple[dict[str, Any], Path, boo
         if not result.success or result.config is None or result.repaired_path is None:
             raise
         return result.config, result.repaired_path, result.changed
-
-
-def migrate_legacy_data():
-    legacy_data = PACKAGE_ROOT / "data"
-    legacy_runtime = PACKAGE_ROOT / "runtime"
-
-    if legacy_data.exists() and not DATA_ROOT.exists():
-        shutil.move(str(legacy_data), str(DATA_ROOT))
-
-    if legacy_runtime.exists() and not RUNTIME_ROOT.exists():
-        shutil.move(str(legacy_runtime), str(RUNTIME_ROOT))
 
 
 def resolve_binary(name: str) -> str:

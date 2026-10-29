@@ -284,7 +284,7 @@ CANONICAL_SKELETON = [
 # ==========================================
 # FILE & SYSTEM CONFIGURATION
 # ==========================================
-TOTAL_SESSION_STORAGE_QUOTA = 5
+SESSION_LOGS_TO_KEEP = 20  # one log file per app or CLI session in ~/.behavython/logs
 
 ANALYSIS_REQUIRED_SUFFIXES = {
     "image": (".png", ".jpg", ".jpeg", ".tiff"),
@@ -314,13 +314,6 @@ ROI_SKIP_START_FRACTION = 0.1  # the animal is being placed in the arena
 ROI_FRAME_DEVIATION_WARNING_PX = 10.0  # a sampled frame whose circle center or diameter differs this much from the median
 ROI_DIAMETER_OUTLIER_FRACTION = 0.1  # a video whose diameter differs this much from the folder median
 ROI_CHECK_FOLDER = "roi_check"
-
-LOGGING_NAME_MAP = {
-    "behavython": "CORE",
-    "behavython.dlc": "DLC",
-    "behavython.console": "SYSTEM",
-    "behavython.external": "EXTERNAL",
-}
 
 # ==========================================
 # CORE COLOR PALETTE

@@ -194,19 +194,9 @@ def _build_options_from_config(config: dict[str, Any], overrides: dict[str, Any]
 
 
 def _setup_logging(args: argparse.Namespace) -> tuple[AppLoggingService, logging.Logger]:
-    from behavython.core.paths import RUNTIME_ROOT, DATA_ROOT
-    from behavython.pipeline.models import RuntimeStorageConfig
-    from behavython.services.storage import RuntimeStorage
     from behavython.services.logging import AppLoggingService, register_logging_service
 
-    runtime_storage = RuntimeStorage(
-        config=RuntimeStorageConfig(
-            runtime_root=RUNTIME_ROOT,
-            data_root=DATA_ROOT,
-            keep_last_sessions=10,
-        )
-    )
-    app_logging = AppLoggingService(runtime_storage, is_cli=True, console_level=logging.DEBUG if args.verbose else logging.INFO)
+    app_logging = AppLoggingService(is_cli=True, console_level=logging.DEBUG if args.verbose else logging.INFO)
     register_logging_service(app_logging)
     return app_logging, app_logging.cli_logger
 

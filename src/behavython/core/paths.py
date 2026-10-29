@@ -9,13 +9,7 @@ PACKAGE_ROOT = Path(__file__).resolve().parent.parent
 USER_HOME = Path(os.getenv("BEHAVYTHON_HOME", Path.home() / ".behavython"))
 
 # --- USER RUNTIME STRUCTURE ---
-RUNTIME_ROOT = USER_HOME / "runtime"
-DATA_ROOT = USER_HOME / "data"
-
-DATA_LOGS_ROOT = DATA_ROOT / "logs"
-DATA_HISTORY_ROOT = DATA_ROOT / "history"
-DATA_CACHE_ROOT = DATA_ROOT / "cache"
-
+USER_LOGS_ROOT = USER_HOME / "logs"
 USER_BIN_ROOT = USER_HOME / "bin"
 USER_MODELS_ROOT = USER_HOME / "models"
 

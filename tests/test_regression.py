@@ -33,7 +33,8 @@ def run_analysis(dataset: str, output_dir: Path) -> None:
     if arena.exists():
         cmd += ["--arena-config", str(arena)]
 
-    env = {**os.environ, "PYTHONPATH": str(REPO_ROOT / "src")}
+    # A throwaway BEHAVYTHON_HOME keeps test runs out of the user's session logs.
+    env = {**os.environ, "PYTHONPATH": str(REPO_ROOT / "src"), "BEHAVYTHON_HOME": str(output_dir.parent / "behavython_home")}
     result = subprocess.run(cmd, capture_output=True, text=True, env=env, check=False)
     # 2 means the run finished but some animals were invalid, which these datasets contain on purpose.
     assert result.returncode in (0, 2), f"CLI failed with exit code {result.returncode}:\n{result.stdout[-3000:]}\n{result.stderr[-3000:]}"

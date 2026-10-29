@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 import os
 import re
 import cv2
@@ -8,7 +7,7 @@ import pandas as pd
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-from behavython.core.defaults import BODYPART_MAPPING, MAZE_EXPERIMENT_TYPES, TOTAL_SESSION_STORAGE_QUOTA, ROI_COUNT_BY_EXPERIMENT
+from behavython.core.defaults import BODYPART_MAPPING, MAZE_EXPERIMENT_TYPES, ROI_COUNT_BY_EXPERIMENT
 from behavython.core.exceptions import AnalysisError
 
 
@@ -144,13 +143,6 @@ class DLCAnalyzeFramesRequest:
 
 
 @dataclass(slots=True)
-class RuntimeStorageConfig:
-    runtime_root: Path
-    data_root: Path
-    keep_last_sessions: int = TOTAL_SESSION_STORAGE_QUOTA
-
-
-@dataclass(slots=True)
 class YamlRepairResult:
     success: bool
     original_path: Path
@@ -158,20 +150,6 @@ class YamlRepairResult:
     changed: bool
     message: str
     config: dict[str, Any] | None = None
-
-
-class MappedFormatter(logging.Formatter):
-    def __init__(self, *args, name_map: dict[str, str], **kwargs):
-        super().__init__(*args, **kwargs)
-        self.name_map = name_map
-
-    def format(self, record):
-        original_name = record.name
-        record.name = self.name_map.get(record.name, record.name)
-        try:
-            return super().format(record)
-        finally:
-            record.name = original_name
 
 
 class Animal:

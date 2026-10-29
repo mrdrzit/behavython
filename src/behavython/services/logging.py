@@ -6,11 +6,11 @@ import warnings
 import os
 import sys
 import re
-from contextlib import contextmanager, redirect_stderr, redirect_stdout
-from logging.handlers import RotatingFileHandler
-from behavython.core.defaults import LOGGING_NAME_MAP
-from behavython.pipeline.models import MappedFormatter
-from behavython.services.storage import RuntimeStorage
+from contextlib import contextmanager, redirect_stderr, redirect_stdout, suppress
+from datetime import datetime
+from pathlib import Path
+from behavython.core.defaults import SESSION_LOGS_TO_KEEP
+from behavython.core.paths import USER_LOGS_ROOT
 
 console = logging.getLogger("behavython.console")
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
@@ -151,16 +151,42 @@ class CLIQuietFilter(logging.Filter):
         return not any(p in msg for p in noise)
 
 
+class _ShortNameFormatter(logging.Formatter):
+    """Exposes the logger name without the shared "behavython." prefix as %(short_name)s."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        record.short_name = record.name.removeprefix("behavython.")
+        return super().format(record)
+
+
+def create_session_log_path(logs_root: Path = USER_LOGS_ROOT, keep: int = SESSION_LOGS_TO_KEEP) -> Path:
+    """Returns a new timestamped log file path and deletes the oldest session logs beyond `keep`."""
+    logs_root.mkdir(parents=True, exist_ok=True)
+
+    existing = sorted(logs_root.glob("*.log"))
+    for old_log in existing[: max(len(existing) - (keep - 1), 0)]:
+        with suppress(OSError):  # still open by another running session
+            old_log.unlink()
+
+    stamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    path = logs_root / f"{stamp}.log"
+    counter = 1
+    while path.exists():
+        counter += 1
+        path = logs_root / f"{stamp}_{counter}.log"
+    return path
+
+
 class AppLoggingService:
-    def __init__(
-        self,
-        runtime_storage: RuntimeStorage,
-        is_cli: bool = False,
-        console_level: int = logging.INFO,
-    ) -> None:
-        self.runtime_storage = runtime_storage
+    """Configures the "behavython" logger tree: one file per session plus the terminal.
+
+    Child loggers (behavython.dlc, behavython.cli, ...) have no handlers of their own and propagate here.
+    """
+
+    def __init__(self, is_cli: bool = False, console_level: int = logging.INFO) -> None:
         self.is_cli = is_cli
         self.console_level = console_level
+        self.session_log_path = create_session_log_path()
 
         self.app_logger = logging.getLogger("behavython")
         self.dlc_logger = logging.getLogger("behavython.dlc")
@@ -171,83 +197,36 @@ class AppLoggingService:
         self._configure()
 
     def _configure(self) -> None:
-        # Base level for all managed loggers
-        for lg in [self.app_logger, self.dlc_logger, self.external_logger, self.console_logger, self.cli_logger]:
-            lg.setLevel(logging.DEBUG)
-            lg.propagate = False  # Each is a branch head for our logging system
-            self._clear_handlers(lg)
+        root = self.app_logger
+        root.setLevel(logging.DEBUG)
+        root.propagate = False
+        for handler in list(root.handlers):
+            root.removeHandler(handler)
+            handler.close()
 
-        # 1. Formatters
-        # Rich formatter for file logs and GUI console
-        file_formatter = MappedFormatter(
-            fmt="%(asctime)s | %(levelname)-7s | %(name)-4s | %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
-            name_map=LOGGING_NAME_MAP,
-        )
-
-        # Compact formatter for CLI terminal
+        file_formatter = _ShortNameFormatter(fmt="%(asctime)s | %(levelname)-7s | %(short_name)s | %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
         if self.is_cli:
-            console_formatter = logging.Formatter(
-                fmt="%(asctime)s | %(levelname)-7s | %(message)s",
-                datefmt="%H:%M:%S",
-            )
+            console_formatter = logging.Formatter(fmt="%(asctime)s | %(levelname)-7s | %(message)s", datefmt="%H:%M:%S")
         else:
             console_formatter = file_formatter
 
-        # 2. Handlers
-        persistent_log_path = self.runtime_storage.logs_root / "app.log"
-        session_log_path = self.runtime_storage.session_logs_dir / "session.log"
-        external_log_path = self.runtime_storage.session_dlc_output_dir / "external_output.log"
-
-        persistent_handler = RotatingFileHandler(
-            persistent_log_path,
-            maxBytes=2_000_000,
-            backupCount=5,
-            encoding="utf-8",
-        )
-        persistent_handler.setLevel(logging.DEBUG)
-        persistent_handler.setFormatter(file_formatter)
-
-        session_handler = logging.FileHandler(session_log_path, encoding="utf-8")
+        session_handler = logging.FileHandler(self.session_log_path, encoding="utf-8")
         session_handler.setLevel(logging.DEBUG)
         session_handler.setFormatter(file_formatter)
 
-        # Unified Console Handler
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setLevel(self.console_level)
         console_handler.setFormatter(console_formatter)
-
         if self.is_cli:
             console_handler.addFilter(CLIQuietFilter())
+        else:
+            # The GUI terminal only shows behavython messages; DLC and TensorFlow output stays in the file.
+            console_handler.addFilter(lambda record: not record.name.startswith("behavython.external"))
 
-        external_handler = logging.FileHandler(external_log_path, encoding="utf-8")
-        external_handler.setLevel(logging.DEBUG)
-        external_handler.setFormatter(file_formatter)
-
-        # 3. Attachment
-        # Core loggers get file + terminal
-        for lg in [self.app_logger, self.dlc_logger, self.cli_logger]:
-            lg.addHandler(persistent_handler)
-            lg.addHandler(session_handler)
-            lg.addHandler(console_handler)
-
-        # Console logger only gets terminal (used for specific SYSTEM messages)
-        self.console_logger.addHandler(console_handler)
-
-        # External logger (TF/DLC output) always gets file logs
-        self.external_logger.addHandler(external_handler)
-        self.external_logger.addHandler(session_handler)
-
-        # In CLI mode, we also want external output in the terminal
-        if self.is_cli:
-            self.external_logger.addHandler(console_handler)
+        root.addHandler(session_handler)
+        root.addHandler(console_handler)
 
         self._quiet_noisy_loggers()
-
-    def _clear_handlers(self, logger: logging.Logger) -> None:
-        for handler in list(logger.handlers):
-            logger.removeHandler(handler)
-            handler.close()
 
     def _quiet_noisy_loggers(self) -> None:
         """Normally silences external loggers, but unlocked for auditing."""
