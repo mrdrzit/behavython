@@ -4,9 +4,8 @@ from behavython.tasks.task_worker import TaskWorker
 
 
 class TaskRunner:
-    def __init__(self, threadpool, on_log, on_warning, on_progress, on_result, on_error, on_finished):
+    def __init__(self, threadpool, on_warning, on_progress, on_result, on_error, on_finished):
         self.threadpool = threadpool
-        self.on_log = on_log
         self.on_warning = on_warning
         self.on_progress = on_progress
         self.on_result = on_result
@@ -15,7 +14,6 @@ class TaskRunner:
 
     def submit(self, fn, request, debug_mode: bool = False) -> None:
         worker = TaskWorker(fn, request, debug_mode=debug_mode)
-        worker.signals.log.connect(self.on_log)
         worker.signals.warning.connect(self.on_warning)
         worker.signals.progress.connect(self.on_progress)
         worker.signals.result.connect(self.on_result)

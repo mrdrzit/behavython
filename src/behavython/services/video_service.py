@@ -6,7 +6,7 @@ import math
 from pathlib import Path
 from behavython.core.utils import get_ffmpeg_path, get_ffprobe_path
 
-logger = logging.getLogger("behavython.console")
+logger = logging.getLogger(__name__)
 
 
 class VideoService:
@@ -305,7 +305,7 @@ class VideoService:
         return cls.run_ffmpeg_with_tqdm(cmd, video_path, f"{action} {video_path.name}", position=position, total_frames=estimated_frames)
 
 
-def run_batch_crop(request: dict, progress=None, log=None, warning=None) -> dict:
+def run_batch_crop(request: dict, progress=None, warning=None) -> dict:
     """
     Worker task that runs the FFmpeg batch crop pipeline and updates the GUI progress bar.
     Runs 2 videos in parallel using ThreadPoolExecutor.
@@ -328,8 +328,7 @@ def run_batch_crop(request: dict, progress=None, log=None, warning=None) -> dict
     videos_to_process = [vid for vid, data in project_data.items() if has_export_settings(data) and not data.get("video_cropped")]
 
     if not videos_to_process:
-        if log:
-            log.emit("dlc", "No new videos to export (or no crop/trim settings set).")
+        logger.info("No new videos to export (or no crop/trim settings set).")
         return {"kind": "batch_crop", "processed": 0, "total": 0}
 
     total = len(videos_to_process)
@@ -341,8 +340,7 @@ def run_batch_crop(request: dict, progress=None, log=None, warning=None) -> dict
         video_path = Path(vid)
         if not video_path.exists():
             with io_lock:
-                if log:
-                    log.emit("dlc", f"File not found: {video_path.name}")
+                logger.info(f"File not found: {video_path.name}")
             return False
 
         data = project_data[vid]
@@ -368,13 +366,12 @@ def run_batch_crop(request: dict, progress=None, log=None, warning=None) -> dict
         output_path = build_output_path()
 
         with io_lock:
-            if log:
-                if has_crop and has_trim:
-                    log.emit("dlc", f"[{index + 1}/{total}] Cropping and trimming {video_path.name}...")
-                elif has_crop:
-                    log.emit("dlc", f"[{index + 1}/{total}] Cropping {video_path.name}...")
-                else:
-                    log.emit("dlc", f"[{index + 1}/{total}] Trimming {video_path.name}...")
+            if has_crop and has_trim:
+                logger.info(f"[{index + 1}/{total}] Cropping and trimming {video_path.name}...")
+            elif has_crop:
+                logger.info(f"[{index + 1}/{total}] Cropping {video_path.name}...")
+            else:
+                logger.info(f"[{index + 1}/{total}] Trimming {video_path.name}...")
 
         # Run FFmpeg with tqdm progress bar
         success = VideoService.crop_video(
@@ -392,12 +389,10 @@ def run_batch_crop(request: dict, progress=None, log=None, warning=None) -> dict
                 # Save progress incrementally to the JSON file
                 with open(project_path, "w") as f:
                     json.dump(project_data, f, indent=4)
-                if log:
-                    log.emit("dlc", f"Successfully saved to {output_path.name}")
+                logger.info(f"Successfully saved to {output_path.name}")
         else:
             with io_lock:
-                if log:
-                    log.emit("dlc", f"FFmpeg failed to export {video_path.name}")
+                logger.info(f"FFmpeg failed to export {video_path.name}")
 
         return success
 
@@ -418,7 +413,7 @@ def run_batch_crop(request: dict, progress=None, log=None, warning=None) -> dict
     return {"kind": "batch_crop", "processed": processed, "total": total}
 
 
-def run_standardize_videos(request: dict, progress=None, log=None, warning=None) -> dict:
+def run_standardize_videos(request: dict, progress=None, warning=None) -> dict:
     """
     Worker task that converts all videos in a folder to standardized H.264 (CFR, NVENC).
     Runs 2 videos in parallel.
@@ -439,8 +434,7 @@ def run_standardize_videos(request: dict, progress=None, log=None, warning=None)
     def standardize_single(vid, index):
         vid_path = Path(vid)
         with io_lock:
-            if log:
-                log.emit("dlc", f"[{index + 1}/{total}] Standardizing {vid_path.name}...")
+            logger.info(f"[{index + 1}/{total}] Standardizing {vid_path.name}...")
 
         # Create a temp output file
         temp_out = vid_path.parent / f"temp_std_{vid_path.name}"
@@ -461,8 +455,7 @@ def run_standardize_videos(request: dict, progress=None, log=None, warning=None)
         # Validation: ensure output exists and is not empty
         if not success or not temp_out.exists() or temp_out.stat().st_size == 0:
             with io_lock:
-                if log:
-                    log.emit("dlc", f"Failed to standardize {vid_path.name}")
+                logger.info(f"Failed to standardize {vid_path.name}")
             if temp_out.exists():
                 temp_out.unlink()  # Cleanup failed temp file
             return False
@@ -477,8 +470,7 @@ def run_standardize_videos(request: dict, progress=None, log=None, warning=None)
             # Rename temp to original name so we don't break downstream workflows
             shutil.move(str(temp_out), str(vid_path))
 
-            if log:
-                log.emit("dlc", f"Successfully standardized {vid_path.name}")
+            logger.info(f"Successfully standardized {vid_path.name}")
         return True
 
     with ThreadPoolExecutor(max_workers=2) as executor:

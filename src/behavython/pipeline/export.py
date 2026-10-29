@@ -3,9 +3,8 @@ import logging
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
-from collections.abc import Callable
 
-console_logging = logging.getLogger("behavython.console")
+logger = logging.getLogger(__name__)
 
 
 def export_results_to_parquet(results: list[dict], output_folder: str) -> None:
@@ -140,7 +139,7 @@ def export_bouts_tables(results: list[dict], output_folder: str) -> None:
             pq.write_table(pa.Table.from_pandas(df), os.path.join(output_folder, f"{sheet}.parquet"))
 
 
-def export_summary_metrics(results: list[dict], output_folder: str, log: Callable | None = None) -> None:
+def export_summary_metrics(results: list[dict], output_folder: str) -> None:
     """
     Filters metrics based on experiment type, transposes them (metrics as rows,
     animals as columns), and exports to CSV and Excel.
@@ -234,7 +233,4 @@ def export_summary_metrics(results: list[dict], output_folder: str, log: Callabl
     try:
         final_df.to_excel(xlsx_path)
     except ModuleNotFoundError:
-        if log:
-            log.emit("warning", "Excel export failed: 'openpyxl' not found")
-        elif console_logging:
-            console_logging.warning("Excel export failed: 'openpyxl' not found")
+        logger.warning("Excel export failed: 'openpyxl' not found")

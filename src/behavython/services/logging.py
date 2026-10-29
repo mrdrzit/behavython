@@ -12,31 +12,8 @@ from pathlib import Path
 from behavython.core.defaults import SESSION_LOGS_TO_KEEP
 from behavython.core.paths import USER_LOGS_ROOT
 
-console = logging.getLogger("behavython.console")
+logger = logging.getLogger(__name__)
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-
-
-class LoggingService:
-    def __init__(self, interface):
-        self.interface = interface
-        self._map = {
-            "resume": self.interface.resume_lineedit,
-            "dlc": self.interface.clear_unused_files_lineedit,
-        }
-
-    def append(self, target: str, message: str) -> None:
-        widget = self._map.get(target)
-        if widget is not None:
-            widget.append(message)
-
-    def clear(self, target: str) -> None:
-        widget = self._map.get(target)
-        if widget is not None:
-            widget.clear()
-
-    def clear_all(self) -> None:
-        for widget in self._map.values():
-            widget.clear()
 
 
 class _FilteredExternalStream(io.TextIOBase):
@@ -112,7 +89,7 @@ class _FilteredExternalStream(io.TextIOBase):
                     msg = f"Progress: {percent}%{speed_str}".replace("it/s", " frames/sec")
                     self.logger.log(self.level, msg)
                     if not self.is_cli:
-                        logging.getLogger("behavython.console").info(msg)
+                        logger.info(msg)
                     self._last_percent = percent
             return
 
@@ -137,18 +114,6 @@ class _FilteredExternalStream(io.TextIOBase):
         if self._buffer:
             self._emit_line(self._buffer)
         self._buffer = ""
-
-
-class CLIQuietFilter(logging.Filter):
-    """Silences redundant or interactive-only logs for the CLI."""
-
-    def filter(self, record: logging.LogRecord) -> bool:
-        noise = (
-            "Calling deeplabcut.",
-            "Filtering predictions with DeepLabCut for",
-        )
-        msg = record.getMessage()
-        return not any(p in msg for p in noise)
 
 
 class _ShortNameFormatter(logging.Formatter):
@@ -180,24 +145,17 @@ def create_session_log_path(logs_root: Path = USER_LOGS_ROOT, keep: int = SESSIO
 class AppLoggingService:
     """Configures the "behavython" logger tree: one file per session plus the terminal.
 
-    Child loggers (behavython.dlc, behavython.cli, ...) have no handlers of their own and propagate here.
+    Modules log with logging.getLogger(__name__); those loggers have no handlers of their own and propagate here.
     """
 
     def __init__(self, is_cli: bool = False, console_level: int = logging.INFO) -> None:
         self.is_cli = is_cli
         self.console_level = console_level
         self.session_log_path = create_session_log_path()
-
-        self.app_logger = logging.getLogger("behavython")
-        self.dlc_logger = logging.getLogger("behavython.dlc")
-        self.external_logger = logging.getLogger("behavython.external")
-        self.console_logger = logging.getLogger("behavython.console")
-        self.cli_logger = logging.getLogger("behavython.cli")
-
         self._configure()
 
     def _configure(self) -> None:
-        root = self.app_logger
+        root = logging.getLogger("behavython")
         root.setLevel(logging.DEBUG)
         root.propagate = False
         for handler in list(root.handlers):
@@ -217,9 +175,7 @@ class AppLoggingService:
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setLevel(self.console_level)
         console_handler.setFormatter(console_formatter)
-        if self.is_cli:
-            console_handler.addFilter(CLIQuietFilter())
-        else:
+        if not self.is_cli:
             # The GUI terminal only shows behavython messages; DLC and TensorFlow output stays in the file.
             console_handler.addFilter(lambda record: not record.name.startswith("behavython.external"))
 

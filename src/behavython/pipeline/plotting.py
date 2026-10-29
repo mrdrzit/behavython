@@ -36,7 +36,7 @@ from behavython.core.defaults import (
     ANGLE_CONE_EXIT,
 )
 
-console_logger = logging.getLogger("behavython.console")
+logger = logging.getLogger(__name__)
 
 
 def apply_scientific_style():
@@ -349,7 +349,7 @@ def _opencv_animate_maze_crossings(animal: Animal, result: dict, request: Analys
     Generates an MP4 validation video using OpenCV for massive performance gains.
     Directly manipulates pixel arrays instead of rendering Matplotlib figures.
     """
-    console_logger.info(f"\nStarting OpenCV video generation for {animal.id}...")
+    logger.info(f"\nStarting OpenCV video generation for {animal.id}...")
     save_folder = request.output_folder
     animal_name = animal.id
 
@@ -410,7 +410,7 @@ def _opencv_animate_maze_crossings(animal: Animal, result: dict, request: Analys
             if start_frame > 0:
                 cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
         else:
-            console_logger.warning(f"Video could not be opened for {animal.id}. Falling back to static background.")
+            logger.warning(f"Video could not be opened for {animal.id}. Falling back to static background.")
 
     # 5. Setup Video Writer
     save_path = os.path.join(save_folder, f"{animal_name} - Validation Video.mp4")
@@ -490,7 +490,7 @@ def _matplotlib_animate_maze_crossings(animal: Animal, result: dict, request: An
     """
     Legacy Matplotlib animation generation. Preserved for reference or fallback.
     """
-    console_logger.info(f"Starting animation generation for {animal.id}... This may take a moment.")
+    logger.info(f"Starting animation generation for {animal.id}... This may take a moment.")
     save_folder = request.output_folder
     animal_name = animal.id
     dpi = 100
@@ -580,7 +580,7 @@ def _matplotlib_animate_maze_crossings(animal: Animal, result: dict, request: An
             try:
                 ani.save(save_path, writer=get_ffmpeg_path(), fps=fps, progress_callback=progress_callback)
             except Exception as e:
-                console_logger.error(f"Failed to save animation for {animal_name}. Error: {e}")
+                logger.error(f"Failed to save animation for {animal_name}. Error: {e}")
 
     plt.close(fig)
 

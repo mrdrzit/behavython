@@ -13,7 +13,7 @@ from behavython.services.video_service import VideoService
 
 from behavython.core.paths import GUI_UI_ROOT
 
-logger = logging.getLogger("behavython.console")
+logger = logging.getLogger(__name__)
 
 
 class ViewportEventFilter(QObject):

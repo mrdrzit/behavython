@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import logging
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QPlainTextEdit, QVBoxLayout, QWidget
 from PySide6.QtWidgets import QFileDialog, QDialogButtonBox
 
+logger = logging.getLogger(__name__)
+
 
 def show_warning(parent: QWidget | None, title: str, text: str) -> None:
+    logger.warning(f"{title}: {text}")
     QMessageBox.warning(parent, title, text)
 
 

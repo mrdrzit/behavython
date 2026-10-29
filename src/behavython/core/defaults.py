@@ -286,6 +286,15 @@ CANONICAL_SKELETON = [
 # ==========================================
 SESSION_LOGS_TO_KEEP = 20  # one log file per app or CLI session in ~/.behavython/logs
 
+# GUI text box that shows the INFO and higher messages of each module. Keys are logger names (module paths);
+# a key also covers its submodules. Modules not listed only log to the session file and the terminal.
+GUI_LOG_PANELS = {
+    "behavython.pipeline.workflow": "resume",
+    "behavython.pipeline.export": "resume",
+    "behavython.pipeline.plugins.dlc": "dlc",
+    "behavython.services.video_service": "dlc",
+}
+
 ANALYSIS_REQUIRED_SUFFIXES = {
     "image": (".png", ".jpg", ".jpeg", ".tiff"),
     "video": (".mp4", ".avi", ".mov"),

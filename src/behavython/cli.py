@@ -83,16 +83,6 @@ class _ProgressAdapter:
         """Silenced in CLI to avoid overlap with standard log messages."""
 
 
-class _LogAdapter:
-    """Mimics a Qt Signal with a .emit(kind: str, message: str) method."""
-
-    def __init__(self, logger: logging.Logger) -> None:
-        self._logger = logger
-
-    def emit(self, kind: str, message: str) -> None:
-        self._logger.info("[%s] %s", kind.upper(), message)
-
-
 class _WarningAdapter:
     """Mimics a Qt Signal with a .emit(title: str, message: str) method."""
 
@@ -113,7 +103,6 @@ class _WarningAdapter:
 class _ActionContext:
     args: argparse.Namespace
     logger: logging.Logger
-    log: _LogAdapter
     progress: _ProgressAdapter
     warning: _WarningAdapter
     input_folder: str
@@ -198,7 +187,8 @@ def _setup_logging(args: argparse.Namespace) -> tuple[AppLoggingService, logging
 
     app_logging = AppLoggingService(is_cli=True, console_level=logging.DEBUG if args.verbose else logging.INFO)
     register_logging_service(app_logging)
-    return app_logging, app_logging.cli_logger
+    # Explicit name: under "python -m behavython.cli" __name__ is "__main__", outside the behavython logger tree.
+    return app_logging, logging.getLogger("behavython.cli")
 
 
 def _load_config(args: argparse.Namespace, logger: logging.Logger) -> dict[str, Any]:
@@ -510,7 +500,6 @@ def _run_standardize(ctx: _ActionContext) -> bool:
         run_standardize_videos(
             request={"videos": video_files},
             progress=ctx.progress,
-            log=ctx.log,
             warning=ctx.warning,
         )
         ctx.logger.info("Standardization complete.")
@@ -539,7 +528,6 @@ def _run_cropping(ctx: _ActionContext) -> bool:
         run_batch_crop(
             request={"project_data": project_data, "project_path": ctx.args.crop_config},
             progress=ctx.progress,
-            log=ctx.log,
             warning=ctx.warning,
         )
         ctx.logger.info("Cropping complete.")
@@ -567,7 +555,6 @@ def _run_extract_frames(ctx: _ActionContext) -> bool:
                 override_frame_number=ctx.args.frame_number,
             ),
             progress=ctx.progress,
-            log=ctx.log,
             warning=ctx.warning,
         )
         ctx.logger.info("Frame extraction complete.")
@@ -602,7 +589,6 @@ def _run_create_rois(ctx: _ActionContext) -> bool:
         result = run_create_rois(
             request=DLCCreateRoisRequest(video_paths=video_files, config_path=config_path),
             progress=ctx.progress,
-            log=ctx.log,
             warning=ctx.warning,
         )
         ctx.logger.info(
@@ -632,7 +618,6 @@ def _run_cleanup(ctx: _ActionContext) -> bool:
                 task_type=experiment_type,
             ),
             progress=ctx.progress,
-            log=ctx.log,
             warning=ctx.warning,
         )
         ctx.logger.info("Cleanup complete. Moved %d file(s).", len(result.get("moved_files", [])))
@@ -668,7 +653,6 @@ def _run_tracking(ctx: _ActionContext) -> bool:
                 trainingsetindex=ctx.args.trainingsetindex,
             ),
             progress=ctx.progress,
-            log=ctx.log,
             warning=ctx.warning,
         )
         ctx.logger.info("Tracking task complete.")
@@ -692,7 +676,6 @@ def _run_likelihood_plots(ctx: _ActionContext) -> bool:
                 folder_path=ctx.input_folder,
             ),
             progress=ctx.progress,
-            log=ctx.log,
             warning=ctx.warning,
         )
         ctx.logger.info("Generated %d likelihood plot(s).", result.get("plots_generated", 0))
@@ -727,7 +710,6 @@ def _run_annotate_video(ctx: _ActionContext) -> bool:
                 output_path=output_folder_annotated,
             ),
             progress=ctx.progress,
-            log=ctx.log,
             warning=ctx.warning,
         )
         ctx.logger.info("Annotated video creation complete.")
@@ -809,7 +791,6 @@ def main() -> int:
     ctx = _ActionContext(
         args=args,
         logger=logger,
-        log=_LogAdapter(logger),
         progress=_ProgressAdapter(),
         warning=_WarningAdapter(logger),
         input_folder=input_folder,
@@ -872,7 +853,6 @@ def main() -> int:
         result = run_analysis_workflow(
             request=request,
             progress=ctx.progress,
-            log=ctx.log,
             warning=ctx.warning,
         )
     except AnalysisError as exc:

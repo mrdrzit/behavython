@@ -25,7 +25,7 @@ from behavython.pipeline.plotting import plot_animal_analysis
 from behavython.core.utils import group_analysis_files
 from behavython.core.exceptions import AnalysisError, CriticalSystemError
 
-console_logger = logging.getLogger("behavython.console")
+logger = logging.getLogger(__name__)
 
 
 def analyze_animal(animal: Animal, request: AnalysisRequest) -> dict:
@@ -182,9 +182,7 @@ def analyze_maze_animal(maze_animal: MazeAnimal, request: AnalysisRequest) -> di
     }
 
 
-def run_analysis_workflow(
-    request: AnalysisRequest, progress: Callable | None = None, log: Callable | None = None, warning: Callable | None = None
-) -> dict:
+def run_analysis_workflow(request: AnalysisRequest, progress: Callable | None = None, warning: Callable | None = None) -> dict:
     """
     Orchestrates the batch processing of multiple animals.
     """
@@ -192,13 +190,11 @@ def run_analysis_workflow(
     if errors:
         raise AnalysisError("\n".join(errors))
 
-    if log:
-        log.emit("resume", "Starting analysis workflow...")
+    logger.info("Starting analysis workflow...")
 
     groups = group_analysis_files(request.input_files)
 
-    if log:
-        log.emit("resume", f"Detected {len(groups)} animal groups")
+    logger.info(f"Detected {len(groups)} animal groups")
 
     animals = []
     for index, group in enumerate(groups, start=1):
@@ -218,8 +214,7 @@ def run_analysis_workflow(
     valid_animals_for_processing = [a for a in animals if a.eligible]
     initial_invalid_count = len(animals) - len(valid_animals_for_processing)
 
-    if log:
-        log.emit("resume", f"Valid animals for processing: {len(valid_animals_for_processing)} | Initial invalid: {initial_invalid_count}")
+    logger.info(f"Valid animals for processing: {len(valid_animals_for_processing)} | Initial invalid: {initial_invalid_count}")
 
     results = []
     has_issues = False
@@ -240,9 +235,8 @@ def run_analysis_workflow(
                         elif request.options.experiment_type == "elevated_plus_maze":
                             maze_points = config_data.get("maze_points", [])
 
-                    if log:
-                        config_type = "individual" if animal.config_path else "global fallback"
-                        log.emit("resume", f"[{animal.id}] Using {config_type} config: {os.path.basename(active_config_path)}")
+                    config_type = "individual" if animal.config_path else "global fallback"
+                    logger.info(f"[{animal.id}] Using {config_type} config: {os.path.basename(active_config_path)}")
                 else:
                     raise AnalysisError("Arena configuration file is missing or invalid.")
 
@@ -269,7 +263,7 @@ def run_analysis_workflow(
             raise
 
         except Exception as e:
-            console_logger.exception(f"Unexpected bug during analysis of {animal.id}")
+            logger.exception(f"Unexpected bug during analysis of {animal.id}")
             animal.logs.append({"level": "error", "message": f"Unexpected bug: {e!s}", "context": "analysis"})
             animal.eligible = False
             has_issues = True
@@ -278,11 +272,10 @@ def run_analysis_workflow(
             progress.emit(round((index / len(valid_animals_for_processing)) * 100))
 
     if results:
-        if log:
-            log.emit("resume", "Exporting results to Parquet...")
+        logger.info("Exporting results to Parquet...")
         try:
             export_results_to_parquet(results, request.output_folder)
-            export_summary_metrics(results, request.output_folder, log=log)
+            export_summary_metrics(results, request.output_folder)
             export_bouts_tables(results, request.output_folder)
         except Exception as e:
             if warning:
@@ -309,8 +302,7 @@ def run_analysis_workflow(
         with open(log_path, "w", encoding="utf-8") as f:
             json.dump(all_logs, f, indent=2)
 
-        if log:
-            log.emit("resume", f"Log file written to: {log_path}")
+        logger.info(f"Log file written to: {log_path}")
         if warning:
             warning.emit("Warning", f"Analysis completed with issues. Log saved to:\n{log_path}")
 
