@@ -29,16 +29,18 @@
   - [Standalone Offline Installer (Windows)](#standalone-offline-installer-windows)
   - [Automated Installation (Windows)](#automated-installation-windows)
   - [Step-by-Step Installation (Manual)](#step-by-step-installation-manual)
-  - [GPU Setup](#gpu-setup)
+  - [Launching Behavython](#launching-behavython)
+- [Using the GUI](#using-the-gui)
 - [CLI Usage](#cli-usage)
 - [Pretrained Models](#pretrained-models)
-- [Video Pre-processing](#video-pre-processing)
+- [Video Pre-processing](#video-pre-processing-experimental)
 - [Workflow & Configuration](#workflow--configuration)
 - [Outputs & Metrics](#outputs--metrics)
 - [Contributing](#contributing)
 - [Citation](#citation)
 - [License](#license)
 - [Contact](#contact)
+- [Acknowledgments](#acknowledgments)
 
 ---
 
@@ -48,7 +50,7 @@ Behavython is an automated, high-throughput behavioral analysis interface. It fe
 
 It natively supports:
 - **Geometry-based paradigms:** Open Field, Elevated Plus Maze (EPM)
-- **Interaction-based paradigms:** Social Recognition, Social Discrimination, Object Discrimination
+- **Interaction-based paradigms:** Social Recognition, Social Discrimination
 
 The software enforces strict scientific reproducibility through automated environment management, robust data validation, and granular metric exports.
 
@@ -109,6 +111,51 @@ Behavython checks backend availability before starting video analysis or assiste
 - **Automatic detection:** When `engine` is omitted (standard for networks trained before DLC 3.0), Behavython inspects the model folder structure: `dlc-models-pytorch/` resolves to PyTorch, and `dlc-models/` resolves to TensorFlow.
 - **Dependency checks:** If the required backend (`torch` or `tensorflow`/`tf_slim`) is missing from the active environment, Behavython halts early with `MissingBackendError` and names the missing packages.
 
+### Launching Behavython
+
+- **Standalone offline installer:** open Behavython from the Desktop or Start Menu shortcut.
+- **Automated or manual installation:** activate the environment you installed Behavython into, then run `behavython`:
+
+```bash
+mamba activate behavython-torch   # or behavython-tf
+behavython
+```
+
+The main window opens with two tabs: **DEEPLABCUT** (track the videos) and **ANALYSIS** (compute the metrics). For batch runs without the window, see [CLI Usage](#cli-usage).
+
+-----
+
+## Using the GUI
+
+A typical session goes from raw videos to metrics in two steps: track the videos in the **DEEPLABCUT** tab, then analyze the tracking in the **ANALYSIS** tab. Keep each experiment in its own folder, with every video next to its tracking, image and ROI files.
+
+### 1. Track the videos (DEEPLABCUT tab)
+
+1. **Choose the network.** Check **Use default network (overhead view)** and pick `C57` or `CD1` to use one of our [pretrained models](#pretrained-models) (downloaded the first time you use it). To use your own network, click **GET FILE** and select its `config.yaml`. **SNAPSHOT** is optional: it picks a specific snapshot instead of the one set in `config.yaml` (right-click to reset).
+2. **Choose the videos.** Click **GET FOLDER** and select the folder with the videos. To analyze a list of videos from different folders, use **ANALYZE FROM FILE** with a `.txt` file that has one video path per line.
+3. **Click ANALYZE.** Behavython lists the videos, asks for confirmation, then runs DeepLabCut and filters the predictions. The tracking files (`<video>DLC..._filtered.csv` and `<video>DLC..._filtered_skeleton.csv`) are saved next to each video. Videos that are already tracked are skipped.
+4. **Click GET FRAME.** This saves one frame from the middle of each video as `<video>.jpg`, next to the video. The analysis uses it as the background of the plots.
+5. **Create the ROIs** (interaction tasks only). For Social Recognition, **CREATE ROIS** draws the cup ROI for each video (see [Automatic ROIs](#roi-configuration-interaction-tasks)). For the other interaction tasks, draw them in ImageJ as described in [ROI Configuration](#roi-configuration-interaction-tasks). For Open Field and EPM, prepare the arena `.json` described in [Arena Configuration](#arena-configuration-geometry-tasks).
+6. **Optional: click CLEANUP FOLDER.** This moves files that the selected experiment type does not need into an `unwanted_files` subfolder, so they cannot be matched to the wrong animal. Nothing is deleted.
+
+The **GENERATE PLOTS** button saves likelihood plots for the tracked videos, to check tracking quality before the analysis.
+
+### 2. Compute the metrics (ANALYSIS tab)
+
+1. **Set the parameters** in the SETTINGS panel: experiment type, experimental animal (mouse or rat), arena width and height in cm, frames per second, and task duration in seconds. Check **Trim Video Start** and set the seconds to skip if the first part of the video must be ignored (for example, while the animal is placed in the arena). **LOAD CONFIGURATION** fills the arena size, frame rate, duration and trim from a `.json` file, and **RESET** restores the defaults.
+2. **Choose the outputs.** **Plot data?** saves the per-animal plots at the **Desired figure size**. **Generate validation video** also saves an annotated video for each animal (slow).
+3. **Click ANALYZE.** Select all the files of all animals at once (tracking CSVs, `.jpg` frames, ROI CSVs and arena `.json` files; `Ctrl+A` in the folder works). Behavython groups them by video name.
+4. **Select the output folder.** For Open Field and EPM, if any animal has no arena `.json` of its own, Behavython asks for one arena `.json` for those animals (see [Arena Configuration](#arena-configuration-geometry-tasks)). If you cancel, it lists those animals and asks whether to continue without them; they are then skipped and marked invalid in the log.
+5. **Read the log.** Progress and per-animal warnings appear in the log box. Animals with missing or invalid files are skipped and listed there. The results are described in [Outputs & Metrics](#outputs--metrics).
+
+**Files needed per animal:**
+
+| Experiment | Files |
+|---|---|
+| Open Field, Elevated Plus Maze | `<video>DLC..._filtered.csv`, `<video>.jpg`, `<video>.json` (or one arena `.json` for the batch) |
+| Social Recognition | `<video>DLC..._filtered.csv`, `<video>DLC..._filtered_skeleton.csv`, `<video>.jpg`, `<video>_roi.csv` |
+| Social Discrimination | `<video>DLC..._filtered.csv`, `<video>DLC..._filtered_skeleton.csv`, `<video>.jpg`, `<video>_roiL.csv`, `<video>_roiR.csv` |
+
 -----
 
 ## CLI Usage
@@ -125,12 +172,35 @@ behavython-cli --config run.json
 behavython-cli --config run.json --output /data/results --no-plots
 ```
 
-A ready-to-edit config template ships with the package at `behavython/config/cli_config.json`. Fields:
+**From raw videos to metrics** (Social Recognition with the CD1 network). Run the preparation and the analysis as two calls, because the files in the folder are listed once at the start of each call:
+```bash
+behavython-cli -f ./videos --extract-frames --create-rois --run-tracking --network cd1
+behavython-cli -f ./videos --experiment-type social_recognition -o ./results
+```
+
+**Get the templates:** `behavython-cli --init -o ./my_run` copies `cli_config.example.json` and the arena config templates into `./my_run`. Add `--experiment-type open_field` to copy only the matching arena template.
+
+### Analysis settings
+
+Analysis runs when `--config` or `--experiment-type` is given. The config file holds the analysis settings. Flags override the matching config values:
+
+| Flag | Overrides | Description |
+|---|---|---|
+| `--config`, `-c PATH` | | JSON config file with the fields below |
+| `--input-folder`, `-f DIR [DIR ...]` | `input_folder` | One or more folders with the animal files |
+| `--output`, `-o DIR` | `output_folder` | Output folder |
+| `--experiment-type TYPE` | `experiment_type` | Experiment type (see the table below) |
+| `--arena-config PATH` | `config_path` | Global arena JSON for animals without their own (Open Field, EPM) |
+| `--no-plots` | `no_plots` | Skip plot generation |
+| `--verbose`, `-v` | | Print debug messages |
+
+Config template: `cli_config.example.json` (copy it with `--init`). Fields:
 
 | Field | Description | Default |
 |---|---|---|
 | `experiment_type` | One of: `open_field`, `elevated_plus_maze`, `social_recognition`, `social_discrimination`, `object_discrimination` | — |
 | `input_folder` | Folder containing all animal files (CSVs, images, ROI/JSON configs) | — |
+| `input_files` | Explicit file list, for non-standard folder layouts. Ignored when `input_folder` is set | `[]` |
 | `output_folder` | Destination directory for results | — |
 | `config_path` | Global fallback arena JSON (maze experiments only) | `null` |
 | `arena_width` / `arena_height` | Physical arena dimensions in cm | `30` |
@@ -142,6 +212,24 @@ A ready-to-edit config template ships with the package at `behavython/config/cli
 | `figure_resolution` | Max plot resolution: `640x480`, `1280x720`, `1920x1080`, `2560x1440` | `1920x1080` |
 | `no_plots` | Skip plot generation | `false` |
 | `generate_video` | Generate annotated output video | `false` |
+
+### Actions
+
+Action flags run on the videos in `--input-folder`. They can be combined with each other and with an analysis. They always run in the order below, and the analysis runs last. If an action fails, the run stops.
+
+| Flag | What it does | Needs |
+|---|---|---|
+| `--transfer-labels` | Copies DLC labels into another project, dropping bodyparts the target does not have | `--dlc-config` (target project), `--label-folders DIR [DIR ...]` |
+| `--standardize` | Converts videos to H.264 with a constant frame rate (see [Video Pre-processing](#video-pre-processing-experimental)) | |
+| `--run-cropping` | Crops videos from a saved cropping project | `--crop-config PATH` |
+| `--extract-frames` | Saves one frame per video as `<video>.jpg` (middle of the video, or `--frame-number N`) | |
+| `--create-rois` | Creates `<video>_roi.csv` with the ROI network (see [Automatic ROIs](#roi-configuration-interaction-tasks)) | optional `--roi-config PATH` |
+| `--cleanup` | Moves files not needed for the experiment type into `unwanted_files/` | `--experiment-type` or `experiment_type` in the config |
+| `--run-tracking` | Runs DeepLabCut on the videos and filters the predictions | `--dlc-config PATH` or `--network c57\|cd1` |
+| `--likelihood-plots` | Saves likelihood plots for the tracked videos | `--dlc-config` or `--network` |
+| `--annotate-video` | Creates DeepLabCut annotated videos | `--dlc-config` or `--network` |
+
+`--network` uses a downloaded [pretrained model](#pretrained-models). The CLI does not download it: install it by hand or open it once in the GUI. `--shuffle` and `--trainingsetindex` select the DeepLabCut shuffle and training set (inferred when omitted).
 
 Return codes: `0` = all animals valid, `1` = fatal error, `2` = completed with warnings/invalid animals.
 
@@ -212,6 +300,13 @@ Video → DeepLabCut → Filtered CSV → Behavython Core Pipeline → Metrics &
 ### Arena Configuration (Geometry Tasks)
 
 For Open Field and Elevated Plus Maze (EPM) experiments, Behavython requires a `.json` configuration file defining the spatial geometry. You can extract these coordinates using the ImageJ Point Tool.
+
+There are two ways to give it, and they can be mixed in one batch:
+
+  * **Per animal:** name the file after the video (`video_name.json`, `video_name_maze.json` or `video_name_config.json`) and select it together with the other files of that animal. Use this when the arena position changes between videos.
+  * **One for the batch:** if any animal has no `.json` of its own, Behavython asks for one file after you pick the output folder (`--arena-config` or `config_path` in the CLI). It is used only for the animals without their own file. Without it, those animals are skipped and the others still run.
+
+An animal's own `.json` always wins over the batch file.
 
   * **Open Field:** Requires exactly 4 ordered corners (Top-Left, Top-Right, Bottom-Right, Bottom-Left).
   * **Elevated Plus Maze:** Requires exactly 12 ordered points defining the outer boundaries, arms, and center zone.
@@ -313,6 +408,7 @@ The pipeline outputs data in multiple formats for both statistical aggregation a
   * **`analysis_summary.xlsx` / `.csv`**: Scalar metrics aggregated per animal.
   * **`analysis_timeseries.parquet`**: Highly compressed, frame-by-frame data utilizing Apache Arrow for efficient downstream data science workflows.
   * **`analysis_log.json`**: Comprehensive error and warning logs per session.
+  * **Session logs**: every GUI or CLI session also writes a full log to `.behavython/logs/` in your home directory (the last 20 are kept). Attach it when you report a bug.
 
 ### Task-Specific Metrics
 
@@ -353,7 +449,7 @@ If you use Behavython in your research, please cite:
   title        = {Behavython: Automated behavioral analysis software and pipeline for neuroscience},
   year         = {2026},
   publisher    = {Zenodo},
-  version      = {0.9.9rc11},
+  version      = {0.9.9rc13},
   url          = {https://github.com/mrdrzit/behavython}
 }
 ```

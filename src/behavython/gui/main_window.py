@@ -376,7 +376,7 @@ class BehavythonMainWindow(QWidget):
         selected_files = select_files(
             self.interface,
             "Select analysis files",
-            "DLC files (*.csv *.jpg *.jpeg *.png *.mp4)",
+            "DLC files (*.csv *.jpg *.jpeg *.png *.mp4 *.json)",
         )
         resolved_input = self._build_analysis_input(selected_files)
 
@@ -408,19 +408,22 @@ class BehavythonMainWindow(QWidget):
         config_path = None
         if options.experiment_type in ["open_field", "elevated_plus_maze"]:
             groups = group_analysis_files(resolved_input.paths)
-            missing_configs = any(not group["files"]["config"] for group in groups)
+            missing_configs = [group["animal_id"] for group in groups if not group["files"]["config"]]
 
             if missing_configs:
                 config_path = select_file(
-                    self.interface, "Select Global Fallback Configuration (Optional if all animals have configs)", "JSON Files (*.json)"
+                    self.interface,
+                    "Select a global arena config for animals without their own (cancel to skip them)",
+                    "JSON Files (*.json)",
                 )
                 if not config_path:
-                    show_warning(
-                        self.interface,
-                        "Missing Configuration",
-                        "You must select an arena configuration JSON to run a maze analysis for animals missing individual configs.",
+                    message = (
+                        f"{len(missing_configs)} animal(s) have no arena config and will be skipped:\n\n"
+                        + "\n".join(missing_configs)
+                        + "\n\nContinue?"
                     )
-                    return
+                    if not ask_yes_no(self.interface, "Missing arena configuration", message):
+                        return
 
         request = AnalysisRequest(
             input_files=resolved_input.paths,
@@ -1066,9 +1069,7 @@ class BehavythonMainWindow(QWidget):
             return
 
         video_extensions = ANALYSIS_REQUIRED_SUFFIXES["video"]
-        videos = os_sorted(
-            [str(item.resolve()) for item in folder_path.iterdir() if item.is_file() and item.suffix.lower() in video_extensions]
-        )
+        videos = os_sorted([str(item.resolve()) for item in folder_path.iterdir() if item.is_file() and item.suffix.lower() in video_extensions])
 
         if not videos:
             show_warning(self.interface, "No Videos", "No video files found in the selected folder.")
