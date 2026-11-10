@@ -63,10 +63,17 @@ def main():
             return old
         return str(root.joinpath(*parts[parts.index("dlc-models-pytorch") :]))
 
+    def rebundle(old: str) -> str:
+        """The backbone checkpoint lives in <project>/weights when make_dlc_network.py bundled it."""
+        name = re.split(r"[\\/]", old.strip("'\""))[-1]
+        bundled = root / "weights" / name
+        return str(bundled) if bundled.is_file() else old
+
     total = rewrite(root / "config.yaml", {"project_path": str(root)}, args.dry_run)
     models = root / "dlc-models-pytorch"
     for file in sorted(models.rglob("pytorch_config*")) if models.exists() else []:
-        total += rewrite(file, {"project_path": str(root), "pose_config_path": relocate}, args.dry_run)
+        rules = {"project_path": str(root), "pose_config_path": relocate, "snapshot_path": rebundle}
+        total += rewrite(file, rules, args.dry_run)
     for file in sorted(models.rglob("pose_cfg.yaml")) if models.exists() else []:
         total += rewrite(file, {"dataset": str(root)}, args.dry_run)
     print(f"{total} field(s) {'would change' if args.dry_run else 'changed'}.")

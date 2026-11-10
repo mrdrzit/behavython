@@ -83,6 +83,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("source")
     parser.add_argument("--date", required=True, help="YYYY-MM-DD, used in the folder name and as the config date.")
+    parser.add_argument("--name", help="New network (DLC Task) name, used in the folder name and config (default: the source's Task).")
     parser.add_argument("--recipe", choices=sorted(RECIPES), help="Preset of the options below; explicit options win.")
     parser.add_argument("--dest-root", help="Folder that receives the new project (default: the source's parent).")
     parser.add_argument("--net", default="hrnet_w32")
@@ -124,7 +125,8 @@ def main():
     if source_pytorch_cfg is None:
         print(f"{source_models} has no shuffle 1 pytorch_config.yaml: TensorFlow source, using the template's settings")
     root = Path(args.dest_root) if args.dest_root else source.parent
-    dest = root / (f"{cfg['Task']}-{cfg['scorer']}-{args.date}" + (f"-{args.suffix}" if args.suffix else ""))
+    task = args.name or cfg["Task"]
+    dest = root / (f"{task}-{cfg['scorer']}-{args.date}" +(f"-{args.suffix}" if args.suffix else ""))
     if dest.exists():
         raise SystemExit(f"{dest} already exists")
 
@@ -156,7 +158,9 @@ def main():
     for folder in folders:
         target = dest / "labeled-data" / folder
         target.mkdir(parents=True)
-        shutil.copy2(source / "labeled-data" / folder / f"CollectedData_{cfg['scorer']}.h5", target / f"CollectedData_{cfg['scorer']}.h5")
+        # Old (TF-era) label files can hold object dtype, which breaks np.isnan in create_training_dataset.
+        labels = pd.read_hdf(source / "labeled-data" / folder / f"CollectedData_{cfg['scorer']}.h5").astype(float)
+        labels.to_hdf(target / f"CollectedData_{cfg['scorer']}.h5", key="df_with_missing", mode="w")
     for index in table.index:
         relative = Path(*[str(x) for x in index])
         link_or_copy(source / relative, dest / relative)
@@ -164,6 +168,7 @@ def main():
     new_cfg = dict(cfg)
     new_cfg["date"] = day.strftime("%b%d")
     new_cfg["iteration"] = 0
+    new_cfg["Task"] = task
     new_cfg["project_path"] = str(dest)
     new_cfg["default_net_type"] = args.net
     # create_training_dataset names the split after round(train / total, 2); config must match or training cannot find it
@@ -247,6 +252,12 @@ def main():
         print("head: plateau target, BCE loss, sigmoid output")
     # The source's train_settings would drop the weight_init that create_training_dataset wrote.
     weight_init_cfg = new["train_settings"].get("weight_init")
+    if weight_init_cfg and weight_init_cfg.get("snapshot_path"):
+        # Bundle the backbone so the project trains on another machine; fix_project_paths.py repoints it after a move.
+        bundled = dest / "weights" / Path(weight_init_cfg["snapshot_path"]).name
+        bundled.parent.mkdir()
+        shutil.copy2(weight_init_cfg["snapshot_path"], bundled)
+        weight_init_cfg["snapshot_path"] = str(bundled)
     new["train_settings"] = {**old["train_settings"], "epochs": args.epochs, "weight_init": weight_init_cfg}
     lr = new["runner"]["optimizer"]["params"]["lr"]
     new["runner"]["scheduler"] = {
