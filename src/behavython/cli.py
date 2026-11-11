@@ -812,6 +812,13 @@ def main() -> int:
     if not args.config and not args.experiment_type:
         return 0
 
+    # Actions create files the analysis needs (frames, ROIs, tracking), so collect the inputs again
+    if any(getattr(args, action, False) for action in _TERMINAL_ACTIONS):
+        try:
+            input_folder, input_files = _resolve_inputs(args, file_config, logger)
+        except Exception:
+            return 1
+
     output_folder: str = args.output or file_config.get("output_folder", "")
     if not output_folder:
         logger.error("No output folder specified. Use --output or set 'output_folder' in the config.")
