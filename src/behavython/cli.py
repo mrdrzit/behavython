@@ -214,7 +214,7 @@ def _resolve_inputs(args: argparse.Namespace, file_config: dict[str, Any], logge
     config_folder = file_config.get("input_folder", "")
     config_folders = file_config.get("input_folders", [])
 
-    input_folders = cli_folders or config_folders or ([config_folder] if config_folder else [])
+    input_folders = [] if args.input_files else cli_folders or config_folders or ([config_folder] if config_folder else [])
     input_files: list[str] = []
 
     if input_folders:
@@ -234,9 +234,11 @@ def _resolve_inputs(args: argparse.Namespace, file_config: dict[str, Any], logge
         primary_folder = input_folders[0]
 
     else:
-        input_files = file_config.get("input_files", [])
+        input_files = args.input_files or file_config.get("input_files", [])
         if not input_files:
-            logger.error("No input source specified. Use --input-folder or set 'input_folder' / 'input_files' in the config.")
+            logger.error(
+                "No input source specified. Use --input-folder, --input-files, or set 'input_folder' / 'input_files' in the config."
+            )
             raise ValueError("No input source specified.")
 
         missing = [p for p in input_files if not os.path.exists(p)]
@@ -288,6 +290,12 @@ examples:
             "Overrides 'input_folder' in config. "
             "Alternatively, set 'input_files' in the config for a hand-picked file list."
         ),
+    )
+    parser.add_argument(
+        "--input-files",
+        nargs="+",
+        metavar="PATH",
+        help="One or more files to process instead of whole folders (for example single videos). Overrides 'input_files' in config.",
     )
     parser.add_argument("--output", "-o", metavar="DIR", help="Output directory for results. Overrides 'output_folder' in config.")
     parser.add_argument(
@@ -374,6 +382,8 @@ examples:
 def _validate_args(args: argparse.Namespace) -> list[str]:
     errors: list[str] = []
 
+    if args.input_folder and args.input_files:
+        errors.append("Use either --input-folder or --input-files, not both.")
     if args.frame_number is not None and not args.extract_frames:
         errors.append("--frame-number has no effect without --extract-frames.")
     if args.crop_config and not args.run_cropping:

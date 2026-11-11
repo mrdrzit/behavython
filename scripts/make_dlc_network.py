@@ -126,7 +126,7 @@ def main():
         print(f"{source_models} has no shuffle 1 pytorch_config.yaml: TensorFlow source, using the template's settings")
     root = Path(args.dest_root) if args.dest_root else source.parent
     task = args.name or cfg["Task"]
-    dest = root / (f"{task}-{cfg['scorer']}-{args.date}" +(f"-{args.suffix}" if args.suffix else ""))
+    dest = root / (f"{task}-{cfg['scorer']}-{args.date}" + (f"-{args.suffix}" if args.suffix else ""))
     if dest.exists():
         raise SystemExit(f"{dest} already exists")
 

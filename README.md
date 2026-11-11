@@ -188,6 +188,7 @@ Analysis runs when `--config` or `--experiment-type` is given. The config file h
 |---|---|---|
 | `--config`, `-c PATH` | | JSON config file with the fields below |
 | `--input-folder`, `-f DIR [DIR ...]` | `input_folder` | One or more folders with the animal files |
+| `--input-files PATH [PATH ...]` | `input_files` | Single files instead of whole folders, for example a few videos for `--run-tracking` |
 | `--output`, `-o DIR` | `output_folder` | Output folder |
 | `--experiment-type TYPE` | `experiment_type` | Experiment type (see the table below) |
 | `--arena-config PATH` | `config_path` | Global arena JSON for animals without their own (Open Field, EPM) |
@@ -215,7 +216,7 @@ Config template: `cli_config.example.json` (copy it with `--init`). Fields:
 
 ### Actions
 
-Action flags run on the videos in `--input-folder`. They can be combined with each other and with an analysis. They always run in the order below, and the analysis runs last. If an action fails, the run stops.
+Action flags run on the videos in `--input-folder` (or the files in `--input-files`). They can be combined with each other and with an analysis. They always run in the order below, and the analysis runs last. If an action fails, the run stops.
 
 | Flag | What it does | Needs |
 |---|---|---|
