@@ -267,10 +267,10 @@ Behavython includes a dedicated pipeline for standardizing and cropping raw beha
 - **Non-Destructive:** Original videos are preserved; results are saved in a `/cropped` subfolder.
 
 ### Video Standardization
-Many acquisition systems save videos in legacy formats (like MPEG4 or AVI) that are not "reliably seekable." This can lead to desynced frames during tracking. Behavython's **Standardization Tool**:
-1. **Automatic Detection:** Background probing detects problematic codecs or variable frame rates.
-2. **Lossless Conversion:** Converts videos to a pristine H.264 format with Constant Frame Rate (CFR).
-3. **Unlocks GPU Speed:** Standardizing moves the decoding workload from the CPU to the GPU, often increasing processing speed by 5x to 10x.
+Some acquisition systems save videos in legacy codecs (MPEG4, AVI) or with a variable frame rate, which makes frame seeking unreliable and can desync frames. Behavython's **Standardization Tool**:
+1. **Detection:** when a folder is loaded, videos whose codec is not H.264 or HEVC are flagged.
+2. **Conversion:** re-encodes them to H.264 with a constant frame rate (NVENC on the GPU when available, otherwise libx264, quality 23).
+3. **Originals:** the original files are moved to `unwanted_files/`, and the new files take their names.
 
 ### Standard Workflow
 1. **Select Folder:** Click `GET FOLDER` to choose the directory where your videos are stored (ideally, this folder should only contain the videos you intend to crop).
