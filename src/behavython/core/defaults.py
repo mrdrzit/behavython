@@ -312,6 +312,9 @@ DEFAULT_POSE_NETWORKS = {
     "cd1": "cd1_network_2026",
 }
 
+# DeepLabCut 2.x has no PyTorch engine; it silently looks for a TensorFlow model instead.
+DLC_MIN_MAJOR_FOR_PYTORCH = 3
+
 # ==========================================
 # AUTOMATIC ROI CREATION (find_cup_circle network)
 # ==========================================

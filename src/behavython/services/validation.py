@@ -4,7 +4,8 @@ from flask import json
 from typing import Any
 from pathlib import Path
 from importlib.util import find_spec
-from behavython.core.defaults import ANALYSIS_REQUIRED_SUFFIXES
+from importlib.metadata import version, PackageNotFoundError
+from behavython.core.defaults import ANALYSIS_REQUIRED_SUFFIXES, DLC_MIN_MAJOR_FOR_PYTORCH
 from behavython.core.paths import USER_MODELS_ROOT
 from behavython.pipeline.models import AnalysisRequest
 from behavython.core.exceptions import AnalysisError, UnsupportedBackendError, MissingBackendError
@@ -170,5 +171,17 @@ def validate_dlc_backend(config: dict[str, Any], config_path: str | Path | None 
     if missing_packages:
         pkgs_str = ", ".join(repr(p) for p in missing_packages)
         raise MissingBackendError(f"This DeepLabCut network requires the {engine_candidate} backend, but {pkgs_str} is not installed.")
+
+    if engine_candidate == "pytorch":
+        try:
+            dlc_version = version("deeplabcut")
+        except PackageNotFoundError:
+            dlc_version = None  # load_deeplabcut() reports a missing DeepLabCut
+        if dlc_version and int(dlc_version.split(".")[0]) < DLC_MIN_MAJOR_FOR_PYTORCH:
+            raise MissingBackendError(
+                f"This DeepLabCut network uses the PyTorch engine, which needs DeepLabCut {DLC_MIN_MAJOR_FOR_PYTORCH}.0 "
+                f"or newer, but DeepLabCut {dlc_version} is installed. Use an environment with DeepLabCut "
+                f"{DLC_MIN_MAJOR_FOR_PYTORCH} (PyTorch), or pick a TensorFlow network."
+            )
 
     return engine_candidate
