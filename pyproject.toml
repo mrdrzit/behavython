@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "behavython"
-version = "0.9.9rc13"
+version = "0.9.10"
 description = "Automated behavioral analysis software and pipeline for neuroscience."
 readme = "README.md"
 requires-python = ">=3.10, <3.11"
